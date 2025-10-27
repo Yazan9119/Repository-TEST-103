@@ -1,0 +1,98 @@
+FUNCTION "FC_DMC_ROB_Beladen" : VOID
+TITLE =
+//$Revision: 1.8 $
+//$Date: 2009/01/29 08:38:09CET $
+//$Author: riedlh $
+//
+//Ablauf Spannstelle beladen
+//==========================
+VERSION : 0.1
+
+
+VAR_INPUT
+  EX_BEF_ROB_spannen_oCTRL : BOOL ;	
+  EX_BEF_ROB_spannen_mCTRL : BOOL ;	
+  EX_BEF_ROB_leerfahren : BOOL ;	
+  EX_MEL_DMC_SpSt_gesp : BOOL ;	
+  EX_MEL_ROB_SpSt_beladen : BOOL ;	
+  EX_MEL_ROB_SpSt_entladen : BOOL ;	
+  EX_RPL_Status_Leerpal : BOOL ;	
+  EX_Spannst_konfiguriert : BOOL ;	
+  EX_Auflagenkontr_aktiv : BOOL ;	
+  EX_Auflagenkontr_ok : BOOL ;	
+  EX_RPL_Tuer_offen : BOOL ;	
+  EX_Auflagenkontr_FM : BOOL ;	
+  EX_RPL_Stat_1_Leerpalett : BOOL ;	//RPL-Paletten-Status = 1: Leerpalette
+  EX_RPL_Stat_2_Rohteil : BOOL ;	//RPL-Paletten-Status = 2: Rohteil
+  EX_RPL_Stat_3_inArbeit : BOOL ;	//RPL-Paletten-Status = 3: in Arbeit
+  EX_RPL_Stat_4_Fertig : BOOL ;	//RPL-Paletten-Status = 4: Fertigteil
+  EX_RPL_Stat_5_Defekt : BOOL ;	//RPL-Paletten-Status = 5: Störung/Defekt
+END_VAR
+VAR_IN_OUT
+  EAX_FRG_DMC_Beladen : BOOL ;	
+  EAX_AKT_DMC_Spannstelle : BOOL ;	
+  EAX_BEF_DMC_SpSt_spannen : BOOL ;	
+  EAX_MEL_DMC_gesp_oFehl : BOOL ;	
+  EAX_MEL_DMC_gesp_mFehl : BOOL ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =Freigabe an Roboter für Beladen
+// Netzwerk-Übersicht
+// ==================
+// NW 1: Freigabe an Roboter für Beladen
+// NW 2: Meldung an Roboter Spannstelle gespannt ohne Fehler
+// NW 3: Meldung an Roboter Spannstelle gespannt mit Fehler
+// NW 4: Ausgabe Spannstelle aktivieren für Ablauf Spannen
+// NW 5: Ausgabe Befehl Spannstelle spannen
+      U(    ; 
+      O     #EX_RPL_Status_Leerpal; 
+      O     #EX_MEL_ROB_SpSt_entladen; 
+      )     ; 
+      U     #EX_Spannst_konfiguriert; 
+      UN    #EX_MEL_ROB_SpSt_beladen; 
+      UN    #EX_BEF_ROB_leerfahren; 
+      S     #EAX_FRG_DMC_Beladen; 
+      U(    ; 
+      O     #EX_MEL_ROB_SpSt_beladen; 
+      O     ; 
+      U     #EX_MEL_DMC_SpSt_gesp; 
+      UN    #EX_RPL_Status_Leerpal; 
+      O     "DB_HR".ROB_Interface.RPL_Nr_9999; 
+      O     "DB_HR".ROB_Interface.PW_Freigabe; 
+      O     "DB_HR".RPT.RP_PWFG_oRSP_aktiv; 
+      ON    "M_PW_GRDST"; 
+      )     ; 
+      R     #EAX_FRG_DMC_Beladen; 
+      NOP   0; 
+NETWORK
+TITLE =Meldung an Roboter Spannstelle gespannt ohne Fehler
+
+      U(    ; 
+      U     #EX_BEF_ROB_spannen_mCTRL; 
+      U     #EX_Auflagenkontr_ok; 
+      U     #EX_Auflagenkontr_aktiv; 
+      O     #EX_BEF_ROB_spannen_oCTRL; 
+      )     ; 
+      U     #EX_MEL_DMC_SpSt_gesp; 
+      S     #EAX_MEL_DMC_gesp_oFehl; 
+      UN    #EX_MEL_DMC_SpSt_gesp; 
+      R     #EAX_MEL_DMC_gesp_oFehl; 
+      NOP   0; 
+NETWORK
+TITLE =Meldung an Roboter Spannstelle gespannt mit Fehler
+
+      U     #EX_BEF_ROB_spannen_mCTRL; 
+      U     #EX_Auflagenkontr_aktiv; 
+      UN    #EX_Auflagenkontr_ok; 
+      U     #EX_Auflagenkontr_FM; 
+      =     #EAX_MEL_DMC_gesp_mFehl; 
+NETWORK
+TITLE =Ausgabe Befehl Spannstelle spannen + aktivieren
+
+      O     #EX_BEF_ROB_spannen_oCTRL; 
+      O     #EX_BEF_ROB_spannen_mCTRL; 
+      =     #EAX_BEF_DMC_SpSt_spannen; 
+      =     #EAX_AKT_DMC_Spannstelle; 
+END_FUNCTION
+

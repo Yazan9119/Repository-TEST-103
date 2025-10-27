@@ -1,0 +1,541 @@
+FUNCTION_BLOCK "FB_TEMP_SPINDEL"
+TITLE =
+//$Revision: 1.21 $
+//$Date: 2007/12/07 13:50:36CET $
+//$Author: sth $
+//
+//17.03.03 JW Aufrufe zum Kompensieren jetzt im FC40 --> sonst PLC Fehler 
+//Lokaldatenüberlauf
+//10.06.02 JW Ini Temp_komp mit 0 bei Reset raus!
+//24.04.02 JW PT100 und Glättung komplett überarbeitet
+//         variabler Anstieg über Hex[49]; Einlesetakt über Hex[48] programmierbar
+//
+//08.02.02 JW KTY-weitere Messfühler möglich
+//21.11.01 mogs
+//- für KTY: Anzeigevariable für aktuelle Temperatur geändert
+//10.11.01 mogs
+//- Grenzwert 2. Geber auf 99999
+//24.10.01 mogs/grü
+//- Unterstützung 2x Temp-Fühler + Tabellenwert-Addition
+//- optional 1x KTY-Geber Spindellagertemperatur
+{ S7_language := '7(1) Deutsch (Deutschland)  18.12.2007  07:40:27' }
+VERSION : 0.1
+
+
+VAR_INPUT
+  lager_grenz_temp : INT ;	
+  MSST_Reset : BOOL ;	
+END_VAR
+VAR
+  Fehler_Nennwert_1 : BOOL ;	
+  Fehler_Nennwert_2 : BOOL ;	
+  Fehler_Grenzwert_1 : BOOL ;	//Lager
+  Fehler_Grenzwert_2 : BOOL ;	//Lager
+  mwert_1 : REAL ;	
+  old_mwert_1 : REAL ;	
+  res3 : REAL ;	
+  mwert_2 : REAL ;	
+  old_mwert_2 : REAL ;	
+  res2 : REAL ;	
+  Temp_komp1 : REAL ;	//bearbeiteter Kompensationswert Sens 1
+  Temp_komp2 : REAL ;	//bearbeiteter Kompensationswert Sens 2
+  Messdelay : INT ;	
+  res8 : INT ;	
+  ip_neu_temp_mw : BOOL ;	
+  feld_loeschen : BOOL ;	
+  Fehler_Auswertebaugruppe : BOOL ;	
+  Glaettung : INT ;	//für Anstiegsbegrenzung Sens.1
+  MW_INT : INT ;	//aktueller Messwert in 10-tel Grad
+  zwei_Sensoren : BOOL ;	
+  First_Ini : BOOL ;	//wenn noch keine alten Werte da sind
+  res1 : BOOL ;	
+END_VAR
+VAR_TEMP
+  baugruppe_ok : BOOL ;	
+  opt_KTY : BOOL ;	
+  opt_Pt100 : BOOL ;	
+  grenz_temp : REAL ;	
+  weiterer_geber : BYTE ;	
+  baugruppe2_ok : BOOL ;	//für 2. AD-Karte
+  res5 : BOOL ;	// 
+  Opt_Anst_begr : BOOL ;	//wenn Hex[48]<>0
+  KTY_1S : BOOL ;	
+  PT100_1S : BOOL ;	
+  KTY_2S : BOOL ;	
+  PT100_2S : BOOL ;	
+  Dummy : INT ;	
+  Dummy_1 : BOOL ;	
+  Dummy_2 : WORD ;	
+  Analog_Eingang_1 : INT ;	
+  Analog_Eingang_2 : INT ;	
+  KTY_PT100 : BOOL ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =Löschen Fehler
+
+      O     #MSST_Reset; 
+
+      SPBN  l1; 
+
+      SET   ; 
+      R     "DB_FM_GERI".AB10.VSS_HA._701010; //VSS-Hauptachsen
+
+      R     "DB_FM_GERI".AB2.FM._700263; //falscher Optionscode
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt._700207_Spindel_Temp; 
+
+      R     #Fehler_Auswertebaugruppe; 
+      R     #Fehler_Grenzwert_1; 
+      R     #Fehler_Nennwert_1; 
+      R     #Fehler_Grenzwert_2; 
+      R     #Fehler_Nennwert_2; 
+
+      R     "DB_FM_GERI".AB11.FM._701100; 
+      R     "DB_FM_GERI".AB11.FM._701109; 
+      R     "DB_FM_GERI".AB11.FM._701110; 
+      R     "DB_FM_GERI".AB11.FM._701111; 
+      R     "DB_FM_GERI".AB11.FM._701112; 
+      R     "DB_FM_GERI".AB11.FM._701113; 
+      R     "DB_FM_GERI".AB11.FM._701114; 
+      R     "DB_FM_GERI".AB11.FM._701115; 
+      R     "DB_FM_GERI".AB11.FM._701116; 
+      R     "DB_FM_GERI".AB11.FM._701117; 
+      R     "DB_FM_GERI".VSH_AX6._600600; //generelle Spindelsperre
+      S     #First_Ini; // für Anstiegsbegrenzung
+      BEA   ; 
+NETWORK
+TITLE =Option gesetzt ?
+// NOP   0
+//      L     #lager_grenz_temp
+//      ITD   
+//      DTR   
+//      T     #grenz_temp
+//
+//      L     "DB_PLC_MD_DB20".UDInt._025_ANWAHL_TEMP_KOMP
+//      T     #weiterer_geber
+//      L     1
+//      >=I   
+//      =     #zwei_Sensoren
+//
+//      L     "DB_PLC_MD_DB20".UDInt._023_ANWAHL_MESSTASTER
+//      L     1
+//      ==I   
+//      =     #opt_KTY
+//      TAK   
+//      L     2
+//      ==I   
+//      =     #opt_Pt100
+//
+//      U     #opt_KTY                    //Transmitter
+//      SPB   kty
+//      U     #opt_Pt100
+//      SPB   pt10                        //sonst !! 
+//      SET   
+//      S     "DB_Fehlermeldung_Geri".AB2.FM._700263    //falscher Optionscode
+//
+//      S     "DB_Fehlermeldung_Geri".VSH_AX6._600600    //generelle Spindelsperre
+//      S     "DB_Fehlermeldung_Geri".AB10.VSS_HA._701010    //VSS-Hauptachsen 
+//"Grenztemperatur"
+//      BEA   
+//
+//
+//Anwahl Temkomp Auswertung
+//
+//KTY 1 Sensor
+//1Sensor KTY 2Sensor PT100
+l1:   CALL "FC_TEMP_FUNKTIONEN" (
+           int_funktion             := 1,
+           int_mp                   := "DB_PLC_MD_DB20".UDInt._025_ANWAHL_TEMP_KOMP,
+           int_dekade               := 2,
+           int_wert                 := 5,
+           boo_ergebnis             := #KTY_PT100);
+
+      U     #KTY_PT100; 
+      S     #zwei_Sensoren; 
+      S     #opt_Pt100; 
+      S     "DB_Temp_Comp".SSPI.Tab2_act; 
+      SPB   pt10; 
+
+
+      CALL "FC_TEMP_FUNKTIONEN" (
+           int_funktion             := 1,
+           int_mp                   := "DB_PLC_MD_DB20".UDInt._025_ANWAHL_TEMP_KOMP,
+           int_dekade               := 2,
+           int_wert                 := 1,
+           boo_ergebnis             := #KTY_1S);
+
+      U     #KTY_1S; 
+      R     #zwei_Sensoren; 
+      R     "DB_Temp_Comp".SSPI.Tab2_act; 
+      SPB   kty; 
+
+//KTY 2 Sensoren
+      CALL "FC_TEMP_FUNKTIONEN" (
+           int_funktion             := 1,
+           int_mp                   := "DB_PLC_MD_DB20".UDInt._025_ANWAHL_TEMP_KOMP,
+           int_dekade               := 2,
+           int_wert                 := 2,
+           boo_ergebnis             := #KTY_2S);
+
+      U     #KTY_2S; 
+      S     #zwei_Sensoren; 
+      SPB   kty; 
+
+//PT100 1 Sensor
+      CALL "FC_TEMP_FUNKTIONEN" (
+           int_funktion             := 1,
+           int_mp                   := "DB_PLC_MD_DB20".UDInt._025_ANWAHL_TEMP_KOMP,
+           int_dekade               := 2,
+           int_wert                 := 3,
+           boo_ergebnis             := #PT100_1S);
+
+      U     #PT100_1S; 
+      S     #opt_Pt100; 
+      R     #zwei_Sensoren; 
+      R     "DB_Temp_Comp".SSPI.Tab2_act; 
+      SPB   pt10; 
+
+//PT100 2 Sensoren
+
+      CALL "FC_TEMP_FUNKTIONEN" (
+           int_funktion             := 1,
+           int_mp                   := "DB_PLC_MD_DB20".UDInt._025_ANWAHL_TEMP_KOMP,
+           int_dekade               := 2,
+           int_wert                 := 4,
+           boo_ergebnis             := #PT100_2S);
+
+      U     #PT100_2S; 
+      S     #zwei_Sensoren; 
+      S     #opt_Pt100; 
+      SPB   pt10; 
+
+      R     "DB_Temp_Comp".SSPI.Tab1_act; 
+      R     "DB_Temp_Comp".SSPI.Tab2_act; 
+      R     #zwei_Sensoren; 
+      SPA   fin; 
+
+NETWORK
+TITLE =Pt100-Erfassung: Diagnose 
+
+pt10: UN    "m_takt_1sec."; 
+      SPB   ausg; 
+
+      UN    #Fehler_Auswertebaugruppe; 
+      U     #opt_Pt100; 
+      UN    "DB_FM_GERI".AB11.FM._701106; 
+      =     #baugruppe_ok; 
+
+      UN    #Fehler_Auswertebaugruppe; 
+      U     #opt_Pt100; 
+      UN    "DB_FM_GERI".AB11.FM._701107; 
+      =     #baugruppe2_ok; 
+      SET   ; 
+      S     #ip_neu_temp_mw; // neuen Messwert holen
+
+NETWORK
+TITLE =//1Sensor KTY 2Sensor PT100
+
+      UN    #KTY_PT100; 
+      SPB   Mes1; 
+// KTY
+      CALL "FB_TEMP_KTY_TRANSMIT" , "DI_TEMP_KTY_TRANSMIT" (
+           E_TimerCPU               := "m_takt_0,8sec.",
+           E_TempTransmitter_TXD    := "I_AL_Tempkomp_TXD",
+           E_Transmitter_ok         := "M_MA_Maschine_Ein",
+           E_SpindleTemperaturTimer := "Te_TempTransmitter_t10",
+           A_TempTransmitter_DSR    := "O_AL_Tempkomp_DSR",
+           A_TempTransmitter_CTS    := "O_AL_Tempkomp_CTS");
+
+      L     "DI_TEMP_KTY_TRANSMIT".mwert; 
+      T     #mwert_1; 
+
+// PT100
+      UN    #ip_neu_temp_mw; 
+      SPB   au2; 
+      L     "I_SPI_PT100"; 
+      T     #Analog_Eingang_2; 
+
+      L     "DB_PLC_MD_DB20".UDInt._100_SPDL_MAX_TEMP; 
+      ITD   ; 
+      DTR   ; 
+      L     1.000000e+001; 
+      /R    ; 
+      T     #grenz_temp; 
+
+      CALL "FC_TEMP_PT100" (// 2. PT100
+           enable                   := #baugruppe2_ok,
+           in_addr                  := #Analog_Eingang_2,
+           grenzwert                := #grenz_temp,
+           Messimpuls               := TRUE,
+           fehler_Nennwert          := #Fehler_Nennwert_2,
+           fehler_Grenzwert         := #Fehler_Grenzwert_2,
+           messwert_akt             := #mwert_2);
+
+      L     #weiterer_geber; 
+      L     2; 
+      >=I   ; 
+      SPBN  au1; 
+
+au2:  R     #ip_neu_temp_mw; 
+      SPA   ausg; 
+NETWORK
+TITLE =2 Pt100-Sensoren
+
+Mes1: NOP   0; 
+      UN    #ip_neu_temp_mw; 
+      SPB   au1; 
+
+      L     "I_SPI_TEMP"; 
+      T     #Analog_Eingang_1; 
+
+      L     "DB_PLC_MD_DB20".UDInt._100_SPDL_MAX_TEMP; 
+      ITD   ; 
+      DTR   ; 
+      L     1.000000e+001; 
+      /R    ; 
+      T     #grenz_temp; 
+
+      CALL "FC_TEMP_PT100" (// 1. PT100
+           enable                   := #baugruppe_ok,
+           in_addr                  := #Analog_Eingang_1,
+           grenzwert                := #grenz_temp,
+           Messimpuls               := TRUE,
+           fehler_Nennwert          := #Fehler_Nennwert_1,
+           fehler_Grenzwert         := #Fehler_Grenzwert_1,
+           messwert_akt             := #mwert_1);
+
+      UN    #zwei_Sensoren; 
+      SPB   au1; 
+// 2. Geber =..................
+// ---------------------------------------
+      L     "I_SPI_PT100"; 
+      T     #Analog_Eingang_2; 
+
+      CALL "FC_TEMP_PT100" (// 2. PT100
+           enable                   := #baugruppe2_ok,
+           in_addr                  := #Analog_Eingang_2,
+           grenzwert                := #grenz_temp,
+           Messimpuls               := TRUE,
+           fehler_Nennwert          := #Fehler_Nennwert_2,
+           fehler_Grenzwert         := #Fehler_Grenzwert_2,
+           messwert_akt             := #mwert_2);
+
+      L     #weiterer_geber; 
+      L     2; 
+      >=I   ; 
+      SPBN  au1; 
+au1:  R     #ip_neu_temp_mw; 
+      SPA   ausg; 
+NETWORK
+TITLE =KTY-Geberauswertung
+
+kty:  NOP   0; 
+
+      CALL "FB_TEMP_KTY_TRANSMIT" , "DI_TEMP_KTY_TRANSMIT" (
+           E_TimerCPU               := "m_takt_0,8sec.",
+           E_TempTransmitter_TXD    := "I_AL_Tempkomp_TXD",
+           E_Transmitter_ok         := "M_MA_Maschine_Ein",
+           E_SpindleTemperaturTimer := "Te_TempTransmitter_t10",
+           A_TempTransmitter_DSR    := "O_AL_Tempkomp_DSR",
+           A_TempTransmitter_CTS    := "O_AL_Tempkomp_CTS");
+
+      L     "DI_TEMP_KTY_TRANSMIT".mwert; 
+      T     #mwert_1; 
+
+      UN    #zwei_Sensoren; 
+      SPB   ekty; 
+// 2. Geber =..................
+// ---------------------------------------
+
+      CALL "FB_TEMP_KTY_TRANSMIT" , "DI_TEMP_KTY_TRANSMIT" (
+           E_TimerCPU               := "m_takt_0,8sec.",
+           E_TempTransmitter_TXD    := "I_AL_Tempkomp_TXD",
+           E_Transmitter_ok         := "M_MA_Maschine_Ein",
+           E_SpindleTemperaturTimer := "Te_TempTransmitter_t10",
+           A_TempTransmitter_DSR    := "O_AL_Tempkomp_DSR",
+           A_TempTransmitter_CTS    := "O_AL_Tempkomp_CTS");
+
+      L     "DI_TEMP_KTY_TRANSMIT".mwert; 
+      T     #mwert_2; 
+ekty: SPA   ausg; 
+NETWORK
+TITLE =SpindelTemperatur
+//eingebaut : 05.12.01 AB
+//
+//
+ausg: L     "DB_PLC_MD_DB20".UDInt._100_SPDL_MAX_TEMP; 
+      L     0; 
+      ==I   ; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt._700207_Spindel_Temp; 
+      SPB   x1; 
+
+      U     #zwei_Sensoren; 
+      SPBN  a001; 
+
+      L     #mwert_2; 
+      L     1.000000e+001; 
+      *R    ; 
+      L     "DB_PLC_MD_DB20".UDInt._100_SPDL_MAX_TEMP; 
+      ITD   ; 
+      DTR   ; 
+      >R    ; 
+      L     S5T#1M; 
+      SE    "Te_Spi_Temp_2"; 
+      U     "Te_Spi_Temp_2"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt._700207_Spindel_Temp; 
+
+a001: L     #mwert_1; 
+      L     1.000000e+001; 
+      *R    ; 
+      L     "DB_PLC_MD_DB20".UDInt._100_SPDL_MAX_TEMP; 
+      ITD   ; 
+      DTR   ; 
+      >R    ; 
+      L     S5T#1M; 
+      SE    "Te_Spi_Temp_1"; 
+      U     "Te_Spi_Temp_1"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt._700207_Spindel_Temp; 
+x1:   NOP   0; 
+NETWORK
+TITLE =Anstiegsbegrenzung 
+//1/10 Grad pro n sek; n in Hex[49]
+//Modul mit Hex[49]=0 deaktivierbar
+      SET   ; 
+      R     #Opt_Anst_begr; 
+
+      UN    "m_takt_1sec."; 
+      UN    #First_Ini; 
+      SPB   komp; 
+
+      UN    #First_Ini; 
+      SPB   l3; 
+// Vergangenheit vorbelegen
+      L     #mwert_1; 
+      T     #old_mwert_1; 
+      L     #mwert_2; 
+      T     #old_mwert_2; 
+      L     DB20.DBB  419; // USER_DATA_HEX[49]
+      T     #Glaettung; 
+      R     #First_Ini; 
+
+l3:   SET   ; 
+      L     DB20.DBB  419; // USER_DATA_HEX[49]
+      L     0; 
+      ==I   ; 
+      SPB   zero; // Option abgewählt
+
+      S     #Opt_Anst_begr; // Option gewählt
+      L     0; 
+      L     #Glaettung; 
+      <>I   ; 
+      SPB   dec; 
+      L     DB20.DBB  419; // USER_DATA_HEX[49]
+      T     #Glaettung; 
+      SPA   Gl1; 
+
+dec:  L     #Glaettung; 
+      DEC   1; 
+      T     #Glaettung; 
+      SPA   fin; 
+
+Gl1:  SET   ; 
+      L     #mwert_1; 
+      L     1.000000e+001; 
+      *R    ; 
+      TRUNC ; 
+      T     #MW_INT; 
+      L     #old_mwert_1; 
+      L     1.000000e+001; 
+      *R    ; 
+      TRUNC ; 
+      L     #MW_INT; 
+      <I    ; 
+      SPB   inc1; 
+      >I    ; 
+      SPB   dec1; 
+      L     #mwert_1; 
+      SPA   aus1; 
+inc1: L     #old_mwert_1; 
+      L     1.000000e-001; // Anstieg 1/10 Grad
+      +R    ; 
+      SPA   aus1; 
+dec1: L     #old_mwert_1; 
+      L     1.000000e-001; // Anstieg 1/10 Grad
+      -R    ; 
+aus1: T     #old_mwert_1; 
+      T     #Temp_komp1; // Ausgabe
+
+// ******* 2. Sensor betrachten ***********
+      UN    #zwei_Sensoren; 
+      SPB   zero; // Absprung
+      L     #mwert_2; 
+      L     1.000000e+001; 
+      *R    ; 
+      TRUNC ; 
+      T     #MW_INT; 
+      L     #old_mwert_2; 
+      L     1.000000e+001; 
+      *R    ; 
+      TRUNC ; 
+      L     #MW_INT; 
+      <I    ; 
+      SPB   inc2; 
+      >I    ; 
+      SPB   dec2; 
+      L     #mwert_2; 
+      SPA   aus2; 
+inc2: L     #old_mwert_2; 
+      L     1.000000e-001; // Anstieg 1/10 Grad
+      +R    ; 
+      SPA   aus2; 
+dec2: L     #old_mwert_2; 
+      L     1.000000e-001; // Anstieg 1/10 Grad
+      -R    ; 
+aus2: T     #old_mwert_2; 
+      T     #Temp_komp2; // Ausgabe
+      SPA   zero; 
+
+NETWORK
+TITLE =Temperaturwert speichern + Kompensationswert auslesen
+//wenn keine Anstiegsbegrenzung --> Messwert "aufschalten"
+zero: SET   ; 
+      U     #Opt_Anst_begr; //sonst keine Glättungswerte
+      SPB   komp; 
+
+      L     #mwert_1; 
+      T     #Temp_komp1; 
+      L     #mwert_2; 
+      T     #Temp_komp2; 
+NETWORK
+TITLE =Kompensation nach aktiver Tabelle
+
+komp: SET   ; 
+      U     #zwei_Sensoren; 
+      SPB   kmp1; 
+
+// nur 1 Sensor gewählt
+      U     "DB_Temp_Comp".SSPI.Tab2_act; 
+      R     "DB_Temp_Comp".SSPI.Tab2_act; 
+      L     0; 
+      T     #Temp_komp2; 
+      T     #mwert_2; 
+
+kmp1: L     #Temp_komp1; 
+      T     "DB_Temp_Comp".SSPI.SPI_temp_Z_gespeichert; //> Wizard-Anzeige Spindel
+      L     #Temp_komp2; 
+      T     "DB_Temp_Comp".SSPI.SPI_temp_X_gespeichert; //> Wizard-Anzeige Sensor 2
+
+//      T     "SERVICE_DB97".SSPI.SPI_temp_Y_gespeichert    //> Wizard-Anzeige
+
+
+NETWORK
+TITLE =ENDE
+
+fin:  BEA   ; 
+
+
+
+
+
+END_FUNCTION_BLOCK
+

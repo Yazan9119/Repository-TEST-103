@@ -1,0 +1,626 @@
+FUNCTION "FC_ACHS_6" : VOID
+TITLE =
+//$Revision: 1.26 $
+//$Date: 2008/10/28 08:43:41CET $
+//$Author: hgc $
+//
+//Funktionsbeschreibung
+//
+//     Alle Spindel-Funktionen im Kanal aktivieren:
+//      o Fehlerqiuttierung (auch in FC140 Achsen  -> später zentral !)
+//      o Spindel-Override initialisieren (100% setzen im 1.ten OB1-Zykl)
+//      o M3/M4/M5 Rücksetzlogik
+//      o Abfrage: Achse/Spindeln vorhanden ?
+//      o Aufruf Spindel_1: Allgemeine Funktionen
+//      o Aufruf Spindel_2: Allgemeine Funktionen (z.B. Vorsatzspindel)
+//     ModulEnde
+//
+//Logbuch:
+//
+//27.02.2001 SCH: Modulaufrufe angepasst, Stern Dreieck vorbereitet
+//
+//V2.0 /17-07-00 /SJA 
+//- Alle Sekunde Request Spindelistdrehzahl, Toolnr.,d-Nr
+//- bei T-Nr Aenderung Reuqest der neuen Werkzeugdaten 
+//- Aufruf des Spindelueberwachungsbausteins FC153
+//
+//V1.0 /14-06-00/ BAG
+//- Modul-Struktur reduziert um eine Ebene (FC151 entfällt)
+//- Modul-Schnittstelle geändert
+//
+//28.03.00/ M3/M4/M5 Rücksetzlogik eingebaut /AB
+//
+//V0.1 /28.10.99/ BAG
+//- Modul angelegt
+{ S7_language := '7(1) Deutsch (Deutschland)  08.05.2008  13:04:05' }
+AUTHOR : BAG
+FAMILY : DM_Basis
+NAME : SP_Main
+VERSION : 1.0
+
+
+VAR_INPUT
+  E_EN : BOOL ;	//Modul-Freigabe
+END_VAR
+VAR_TEMP
+  T_Fehler_Quit : BOOL ;	
+  T_VS_SPERRE : BOOL ;	
+  tx_SpxSyn : BOOL ;	
+  TX_TCminus : BOOL ;	
+  TX_TCplus : BOOL ;	
+  tx_dummy_6 : BOOL ;	
+  TX_Vorsch_Sperre_6 : BOOL ;	
+  TX_ImpFrg_6Achs : BOOL ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =Modul-Freigabe
+
+      UN    #E_EN; 
+      BEB   ; 
+
+NETWORK
+TITLE =SW cam activation
+
+      UN    "DB_PLC_MD_DB20".UDHex._02_BIT5_ACHSE6_MESSYST; 
+      U     "DB_ACHSE6_SPINDEL".E_RefSyn1; 
+      O     ; 
+      U     "DB_PLC_MD_DB20".UDHex._02_BIT5_ACHSE6_MESSYST; 
+      U     "DB_ACHSE6_SPINDEL".E_RefSyn2; 
+      =     "DB_ACHSE6_SPINDEL".A_SWCam; 
+NETWORK
+TITLE =Start auslesen der Werkzeuglängendaten
+//-- wenn sich Tool nummer ändert neue Längendaten des Werkzeugs auslesen
+      L     "DB_TOOL_DATA".T_NR_alt; 
+      L     "DB_TOOL_DATA".T_NR; 
+      <>I   ; 
+      =     "M_Tool_Nr_geaendert"; 
+      T     "DB_TOOL_DATA".T_NR_alt; 
+
+NETWORK
+TITLE =Spindel-Override initialisieren (100% setzen im 1.ten OB1-Zykl)
+
+      U     "M_1_ter_OB1_Zyklus"; 
+      SPBNB _002; 
+      L     B#16#E; //100%
+      T     "DB_ACHSE6_SPINDEL".A_SpOR; //Spindeloverride
+_002: NOP   0; 
+NETWORK
+TITLE =Spindel neu referieren
+
+      U     "DB_ACHSE6_SPINDEL".E_GearChange; 
+      =     "MX_Spdl_Neu_Referenz"; 
+NETWORK
+TITLE =Spindel neu referieren
+
+      U(    ; 
+      O     "I_AL_1_Stufe_Getriebe"; 
+      O     "I_AL_2_Stufe_Getriebe"; 
+      )     ; 
+      U     "M_Hauptspindel_steht"; 
+      UN    "DB_STERN_DREIECK".MX_Freigabe_Impulse_Spdl; 
+      =     "MX_Spdl_Bei_Pos_NeuRef"; 
+NETWORK
+TITLE =Stern Dreieck Umschaltung
+
+      L     "DB_PLC_MD_DB20".UDInt._006_ANWAHL_GETRIEBE; 
+      L     3; 
+      ==I   ; 
+      SPB   NW7; 
+
+      CALL "FC_SP_STERN_DREIECK" (
+           EX_Enable                := TRUE,
+           EX_Spdl_E_GearCh_82x3    := "DB_ACHSE6_SPINDEL".E_GearChange,
+           EX_Spdl_E_Stat_61x4      := "DB_ACHSE6_SPINDEL".E_Stat,
+           EX_Spdl_E_SetpGearA_82x0 := "DB_ACHSE6_SPINDEL".E_SetpGearA,
+           EX_Spdl_E_SetpGearB_82x1 := "DB_ACHSE6_SPINDEL".E_SetpGearB,
+           EX_Spdl_E_SetpGearC_82x2 := "DB_ACHSE6_SPINDEL".E_SetpGearC,
+           EX_Spdl_E_Stat_61x41     := "M_Hauptspindel_steht",
+           EX_I_Dreieck             := "I_AL_Dreieckschaltung",
+           EX_I_Stern               := "I_AL_Sternschaltung",
+           EI_Timer_YD              := 62,
+           EI_Spindel_Db            := 6,
+           EI_Anwahl_Getriebe       := "DB_PLC_MD_DB20".UDInt._006_ANWAHL_GETRIEBE,
+           ET_S5Time_YD             := S5T#100MS,
+           ET_Timer_Ueberw          := "Te_Timer_Uebw_Yd",
+           EAX_Spdl_A_ActGearA_16x0 := "DB_ACHSE6_SPINDEL".A_ActGearA,
+           EAX_Spdl_A_ActGearB_16x1 := "DB_ACHSE6_SPINDEL".A_ActGearB,
+           EAX_Spdl_A_ActGearC_16x2 := "DB_ACHSE6_SPINDEL".A_ActGearC,
+           EAX_Spdl_A_GearChan_16x3 := "DB_ACHSE6_SPINDEL".A_GearChangeOv,
+           EAX_O_Dreieck            := "O_D_Umschaltung_SPI",
+           EAX_O_Stern              := "O_Y_Umschaltung_SPI",
+           EAX_Anforderung_Stern    := "DB_STERN_DREIECK".MX_Anforderung_Stern,
+           EAX_Anforderung_Dreieck  := "DB_STERN_DREIECK".MX_Anforderung_Dreieck,
+           EAX_Freigabe_Schalten    := "DB_STERN_DREIECK".MX_Freigabe_Schalten,
+           EAX_Start_Schalten       := "DB_STERN_DREIECK".MX_Start_Schalten,
+           EAX_YD_Umschalten        := "DB_STERN_DREIECK".MX_Anforderung_StDr,
+           EAX_Impulsfreigabe       := "DB_STERN_DREIECK".MX_Freigabe_Impulse_Spdl,
+           EAX_FP_YD_Schalten       := "MX_FP_YD_Schalten",
+           EAX_Fehler_Stern_0Sig    := "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700747_StDr_Eg_Dreieck0,
+           EAX_Fehler_Dreieck_0Sig  := "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700748_StDr_Eg_Stern0,
+           EAX_Undef_Zust_StDr      := "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700749_StDr_Undef_Eing,
+           EAX_VorschubSperre_StDr  := "DB_FEHLERMELDUNG".Meldung._702109_StDr_VSP,
+           EAX_Zustand_YD           := "MW_Zust_Stern_Dreieck");
+
+
+NETWORK
+TITLE =2stufiges Getriebe plus Stern Dreieck
+
+NW7:  L     "DB_PLC_MD_DB20".UDInt._006_ANWAHL_GETRIEBE; 
+      L     3; 
+      <>I   ; 
+      SPB   NW9; 
+
+      CALL "FC_SP_4STUFEN_GETR" (
+           EX_Spdl_E_GearCh_82x3    := "DB_ACHSE6_SPINDEL".E_GearChange,
+           EX_Spdl_E_Stat_61x4      := "DB_ACHSE6_SPINDEL".E_Stat,
+           EX_Spdl_E_SetpGearA_82x0 := "DB_ACHSE6_SPINDEL".E_SetpGearA,
+           EX_Spdl_E_SetpGearB_82x1 := "DB_ACHSE6_SPINDEL".E_SetpGearB,
+           EX_Spdl_E_SetpGearC_82x2 := "DB_ACHSE6_SPINDEL".E_SetpGearC,
+           EX_Spdl_E_Stat_61x41     := "M_Hauptspindel_steht",
+           EX_I_Dreieck             := "I_AL_Dreieckschaltung",
+           EX_I_Stern               := "I_AL_Sternschaltung",
+           EX_Getriebe1             := "I_AL_1_Stufe_Getriebe",
+           EX_Getriebe2             := "I_AL_2_Stufe_Getriebe",
+           EI_Timer_YD              := 62,
+           ET_S5Time_YD             := S5T#100MS,
+           ET_Timer_Ueberw          := "Te_Timer_Uebw_Yd",
+           ET_Timer_Getriebe        := "Tv_2Stufiges_Getr",
+           EAX_Spdl_A_ActGearA_16x0 := "DB_ACHSE6_SPINDEL".A_ActGearA,
+           EAX_Spdl_A_ActGearB_16x1 := "DB_ACHSE6_SPINDEL".A_ActGearB,
+           EAX_Spdl_A_ActGearC_16x2 := "DB_ACHSE6_SPINDEL".A_ActGearC,
+           EAX_Spdl_A_GearChan_16x3 := "DB_ACHSE6_SPINDEL".A_GearChangeOv,
+           EAX_O_Dreieck            := "O_D_Umschaltung_SPI",
+           EAX_O_Stern              := "O_Y_Umschaltung_SPI",
+           EAX_O_Getrieb1           := "O_SK_1_Stufe_Getriebe",
+           EAX_O_Getrieb2           := "O_SK_2_Stufe_Getriebe",
+           EAX_Anforderung_StufeA   := "DB_STERN_DREIECK".Mx_Anford_Stufe1,
+           EAX_Anforderung_StufeB   := "DB_STERN_DREIECK".Mx_Anford_Stufe2,
+           EAX_Anforderung_StufeC   := "DB_STERN_DREIECK".Mx_Anford_Stufe3,
+           EAX_Anforderung_StufeD   := "DB_STERN_DREIECK".Mx_Anford_Stufe4,
+           EAX_Freigabe_Schalten    := "DB_STERN_DREIECK".MX_Freigabe_Schalten,
+           EAX_Start_Schalten       := "DB_STERN_DREIECK".MX_Start_Schalten,
+           EAX_YD_schalten          := "DB_STERN_DREIECK".MX_Anforderung_StDr,
+           EAX_Impulsfreigabe       := "DB_STERN_DREIECK".MX_Freigabe_Impulse_Spdl,
+           EAX_FP_Getriebe_geschalt := "MX_FP_YD_Schalten",
+           EAX_Fehler_Stern_0Sig    := "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700747_StDr_Eg_Dreieck0,
+           EAX_Fehler_Dreieck_0Sig  := "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700748_StDr_Eg_Stern0,
+           EAX_Fehler_Getriebestuf1 := "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700752_2Getr_StufeI_0S,
+           EAX_Fehler_Getriebestuf2 := "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700753_2Getr_StufeII_0S,
+           EAX_Undef_Zust_StDr      := "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700749_StDr_Undef_Eing,
+           EAX_Undef_Zust_Getriebe  := "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700754_2Getr_Undef,
+           EAX_VorschubSperre_StDr  := "DB_FEHLERMELDUNG".Meldung._702109_StDr_VSP,
+           EAX_Zustand_YD           := "MW_Zust_Stern_Dreieck",
+           EAX_SKZ_Getriebe         := "MB_SKZ_Getriebe",
+           EAX_Request_Stufe2       := "MX_2Getr_AnfStufe",
+           EAX_Getr_Vorschubfreigab := "MX_2GETR_VorFreig",
+           EAB_Anzahl_Versuche      := "MB_Getr_AnzVersuch");
+
+NETWORK
+TITLE =Abfrage: Achse/Spindeln vorhanden ?
+
+NW9:  UN    "DB_SIEM_STARTUP".ActivAxis[6]; 
+      SPB   SP02; 
+NETWORK
+TITLE =Fehler löschen
+
+      U     "M_Ruecksetze_Fehler"; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._701039_SPI_bd_gekle; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700915_Ax6_Klmm_zu_0Sig; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt1._510113_SPI_BD_NI_GEKLEM; 
+      R     "DB_FEHLERMELDUNG".MELDUNG5._510304_SPI_nicht_geloe; 
+NETWORK
+TITLE =Abfrage: Spindel mit Klemmung ?
+
+      L     "DB_PLC_MD_DB20".UDInt._005_ANWAHL_SONDER_SPDL; 
+      L     2; 
+      ==I   ; 
+      SPBN  SP01; 
+NETWORK
+TITLE =Spindel Klemmung beide 1 Signal
+
+      U     "I_SPI_geloest"; 
+      U     "I_SPI_geklemmt"; 
+      L     S5T#7S; 
+      SE    "Te_SpiKlemm_beide_1Signa"; 
+      NOP   0; 
+      NOP   0; 
+      NOP   0; 
+      U     "Te_SpiKlemm_beide_1Signa"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._701039_SPI_bd_gekle; 
+
+NETWORK
+TITLE =Spindel Klemmung beide 0 Signal
+
+      UN    "I_SPI_geloest"; 
+      UN    "I_SPI_geklemmt"; 
+      L     S5T#7S; 
+      SE    "Te_SpiKlemm_beide_0Signa"; 
+      NOP   0; 
+      NOP   0; 
+      NOP   0; 
+      U     "Te_SpiKlemm_beide_0Signa"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt1._510113_SPI_BD_NI_GEKLEM; 
+NETWORK
+TITLE =FD Spindel gelöst
+
+      U     "I_SPI_geloest"; 
+      U(    ; 
+      L     "MB_SKZ_RundachsAnf"; 
+      L     1; 
+      ==I   ; 
+      )     ; 
+      =     "DB_NC_PLC".FD_Spindel_geloest; 
+NETWORK
+TITLE =FD Spindel geklemmt
+
+      UN    "I_SPI_geloest"; 
+      U(    ; 
+      L     "MB_SKZ_RundachsAnf"; 
+      L     1; 
+      ==I   ; 
+      )     ; 
+      =     "DB_NC_PLC".FD_Spindel_geklemmt; 
+NETWORK
+TITLE =DM_TURN aktiv
+
+      U     "DB_NC_PLC".FD_DM_TURN_AKTIV; 
+      =     "M_FD_DM_TURN_AKTIV"; 
+NETWORK
+TITLE =Klemmung offen halten
+
+      U     "DB_ACHSE4".E_SpNA; //Wenn kein Drehbetrieb angewählt ist
+      U     "DB_NC_PLC".FD_DM_TURN_AKTIV; 
+      O     "DB_NC_PLC".DM_SPCL_AKTIV; 
+      SPB   nw8a; 
+
+      SET   ; 
+      S     "O_SPI_loesen"; //dann Klemmung immer offen halten
+      R     "DB_FEHLERMELDUNG".Meldung._702127_Vor_Freig_6Ax; 
+      S     "M_RF_6ACHS"; 
+      =     "MX_AX6_O_Klemm_Auf"; 
+      SPA   SP01; 
+NETWORK
+TITLE =Jog Minus aktiv
+
+nw8a: U     "DB_ACHSE6_SPINDEL".E_TCMinus; 
+      =     #TX_TCminus; 
+NETWORK
+TITLE =Jog Plus aktiv
+
+      U     "DB_ACHSE6_SPINDEL".E_TCPlus; 
+      =     #TX_TCplus; 
+NETWORK
+TITLE =Aufruf FC_ACHSE_RUND
+//// in Drehbetrieb kann HptSpindel nicht mit JogTasten verfahren werden 
+//// da nur alle Grad geklemmt werden darf
+//
+      CALL "FC_ACHSE_RUND" (
+           EX_ENABLE                := TRUE,
+           EX_Reset_Taste           := FALSE,//"M_Reset_Taste"
+           EX_Ruecksetze_Fehler     := "M_Ruecksetze_Fehler",
+           EX_Achse_vorhanden       := "M_6Achse_existiert",
+           EX_I_Klemmung_Auf        := "I_SPI_geloest",
+           EX_I_Klemmung_zu         := "I_SPI_geklemmt",
+           EX_Fahranf_Plus          := FALSE,//777#TX_TCminus    //"DB_Spindel_DB36".E_TCMinuS
+           EX_Fahranf_Minus         := FALSE,//#TX_TCplus    //"DB_Spindel_DB36".E_TCPlus
+           EX_Achse_steht           := TRUE,
+           EX_Klemmvor_Aktiv        := "M_RundAchse_aktiv",
+           EX_Achs_Typ              := "MB_6Achs_Typ",
+           EX_Achs_Konfig           := "MB_6Achs_Konfig",
+           EW_Einsch_Verz           := "DB_PLC_MD_DB20".UDInt._080_EINSCHALTVERZ_4_AX,
+           EW_Aussch_Verz           := "DB_PLC_MD_DB20".UDInt._081_AUSSCHALTVERZ_4_AX,
+           ET_Timer_Klemmung        := "Tv_Ax6_Klemmung",
+           ET_Timer_Ueberwachung    := "Tv_Ax6_Fehl_Ueb",
+           EX_Klemmung_offen_halten := FALSE,
+           EX_Ax_E_f92x4            := "DB_ACHSE6_SPINDEL".E_RLIact,
+           Ex_JogReqAx_plusminus    := FALSE,
+           EX_Takttisch             := FALSE,
+           EX_Takttisch_Teilungspos := FALSE,
+           EAX_Regler_ein           := "M_RF_6ACHS",
+           EAX_Vorschub_Sperre      := #tx_dummy_6,
+           EAX_O_Klemmung_Auf       := "O_SPI_loesen",
+           EAX_Req_Auf_Klemmung     := "M_Achse6_loesen",
+           EAX_Req_Zu_Klemmung      := "M_Achse6_klemmen",
+           EAX_Ready_Klemmung       := "M_Achse6_Ready",
+           EAX_Achse_Geloest        := "M_Achse6_geloest",
+           EAX_Klemmung_Auf         := "M_A6_loes_aktiv",
+           EAX_TR_Pos               := "M_Tr_pos_Ax6",
+           EAX_TR_Neg               := "M_Tr_neg_Ax6",
+           EAX_TO_Klemmung_Auf      := "MX_AX6_O_Klemm_Auf",
+           EAX_Klemmvor_Aktiv       := "DB_ACHSE6_SPINDEL".A_Clamp,//"MX_AX6_Klemm_Aktiv"
+           EAX_FP1_FUE              := "MX_AX6_FP1_FUe",
+           EAX_FP2_FUE              := "MX_AX6_FP2_FUe",
+           EAX_Klemmung_Zu_Os       := "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700915_Ax6_Klmm_zu_0Sig,
+           EAX_Klemmung_Auf_0s      := "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700916_Ax6_Klmm_auf_0Si,
+           EAB_SKZ_Achse            := "MB_SKZ_6ACHS");
+
+NETWORK
+TITLE =Vorschubsperre
+
+SP01: ON    "DB_ACHSE6_SPINDEL".A_ContrEnable; 
+      O     ; 
+      UN    "I_SPI_geloest"; 
+      U(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._005_ANWAHL_SONDER_SPDL; 
+      L     2; 
+      ==I   ; 
+      )     ; 
+      O     "DB_FAMILIEN_MODUL".Gesamt.A_Vorschub_Halt_6_Achse; 
+      O     ; 
+      U     "DB_ACHSE4".E_SpNA; 
+      U     "DB_NC_PLC".FD_DM_TURN_AKTIV; //Wenn kein Drehbetrieb angewählt ist
+      UN    "DB_ACHSE6_SPINDEL".E_PosMode; 
+      O     "M_Drehzahl_Sperre"; 
+      =     #TX_Vorsch_Sperre_6; 
+NETWORK
+TITLE =Meldung: Spindel nicht gelöst, keine Achsfreigabe
+
+      UN    "I_SPI_geloest"; 
+      U(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._005_ANWAHL_SONDER_SPDL; 
+      L     2; 
+      ==I   ; 
+      )     ; 
+      U(    ; 
+      O     "DB_ACHSE6_SPINDEL".E_TCMinus; 
+      O     "DB_ACHSE6_SPINDEL".E_TCPlus; 
+      O     "DB_ACHSE6_SPINDEL".E_TravRequ; 
+      )     ; 
+      S     "DB_FEHLERMELDUNG".MELDUNG5._510304_SPI_nicht_geloe; 
+NETWORK
+TITLE =Impulsfreigabe
+//gfr 09.06.06
+      U     "DB_STERN_DREIECK".MX_Freigabe_Impulse_Spdl; 
+      U(    ; 
+      U(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._005_ANWAHL_SONDER_SPDL; 
+      L     2; 
+      ==I   ; 
+      U     "M_RF_6ACHS"; 
+      )     ; 
+      O(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._005_ANWAHL_SONDER_SPDL; 
+      L     0; 
+      ==I   ; 
+      )     ; 
+      )     ; 
+      UN    "M_SPI_LEITUNG_TEMP_RFG"; 
+      =     #TX_ImpFrg_6Achs; 
+NETWORK
+TITLE =2=mit Klemmung bei Option Drehbetrieb mit Hirthverzahnung
+//sth 14.03.05 
+      L     "DB_PLC_MD_DB20".UDInt._005_ANWAHL_SONDER_SPDL; 
+      L     2; 
+      <>I   ; 
+      SPB   brt; 
+
+      UN    "O_SPI_loesen"; 
+      =     "O_SPI_klemmen"; 
+      SPA   krt; 
+
+brt:  SET   ; 
+      S     "O_SPI_loesen"; 
+      R     "O_SPI_klemmen"; 
+NETWORK
+TITLE =Restweg löschen
+
+krt:  O     "DB_ACHSE6_SPINDEL".E_TCPlus; 
+      O     "DB_ACHSE6_SPINDEL".E_TCMinus; 
+      UN    "DB_NC_PLC".WZW_NC_Aktiv; 
+      U     "DB_ACHSE4".E_SpNA; //Wenn kein Drehbetrieb angewählt ist
+      U     "DB_NC_PLC".FD_DM_TURN_AKTIV; 
+      UN    "DB_ACHSE6_SPINDEL".E_PosMode; 
+      O     "M_Reset_Taste"; 
+      O     ; 
+      UN    "DB_ACHSE4".E_SpNA; //Wenn kein Drehbetrieb angewählt ist
+      UN    "DB_NC_PLC".FD_DM_TURN_AKTIV; 
+      UN    "DB_ACHSE6_SPINDEL".E_PosMode; 
+      U     "M_Reset_Taste"; 
+      O     ; 
+      U     "M_SPI_RESTW_LOESCH_M30"; //Bei Solutionline fehlt Shopmill-PLC, es erfolgt kein Spindel Halt bei M30!
+      U     "DB_PLC_MD_DB20".UDHex._31_Bit1_SOLUTIONLINE; // deshalb über PLC Restweg löschen
+      =     "MX_Spdl_RestwegLoeschen"; 
+NETWORK
+TITLE =Aufruf FC_ACHSE_SPINDEL
+
+      CALL "FC_ACHSE_SPINDEL" (
+           EX_EN                    := TRUE,
+           EX_UDHex_00_IB_Bit_Achse := "DB_PLC_MD_DB20".UDHex._00_BIT5_ACHSE6_AUSBLEND,
+           EX_UDHex_01_Ax_Messystem := "DB_PLC_MD_DB20".UDHex._02_BIT5_ACHSE6_MESSYST,
+           EX_Spindel_Aktiv         := TRUE,
+           EX_Antrieb_Sperre        := "DB_FAMILIEN_MODUL".Achssperre_extern.E_Ax_6,
+           EX_Freigabe_Regler       := #TX_ImpFrg_6Achs,//"DB_STERN_DREIECK".MX_Freigabe_Impulse_Spdl
+           EX_Option_Safety         := TRUE,
+           EX_Safe_StopA_abgewaehlt := "DB_ACHSE6_SPINDEL".A_extStopA,
+           EX_Safe_Teststop_laeuft  := "DB_SPL".IPLC_ZD_GR1_RUN,
+           EX_Leistung_steht_an     := "M_Leistung_Steht_an",
+           EX_GewSchn_Aktiv         := "M_Gewindeschneid_aktiv",
+           EX_VSHalt_EinzelAchse    := #TX_Vorsch_Sperre_6,//"DB_FAMILIEN_MODUL".Gesamt.A_Vorschub_Halt_6_Achse
+           EX_VSHalt_Gruppe         := FALSE,
+           EX_VSHalt_Kanal          := "M_Spindel_Halt_Kanal",
+           EX_RefPkt_Achse          := "MX_RefPkt_Achse",
+           EX_Spdl_KorrWirksam      := "MX_Spdl_KorrWirksam",
+           EX_Spdl_Neu_Referenz     := "MX_Spdl_Neu_Referenz",
+           EX_Spdl_Bei_Pos_NeuRef   := "MX_Spdl_Bei_Pos_NeuRef",
+           EX_Spdl_RestwegLoeschen  := "MX_Spdl_RestwegLoeschen",
+           EX_Spdl_E_FahrAF_61x0    := "DB_ACHSE6_SPINDEL".E_TravRequ,
+           EX_Spdl_E_Steht_61x4     := "DB_ACHSE6_SPINDEL".E_Stat,
+           EX_Spdl_E_DrehzRegl_61x6 := "DB_ACHSE6_SPINDEL".E_SpeedContr,
+           EX_Spdl_E_Handrad_64x0   := "DB_ACHSE6_SPINDEL".E_HW1,
+           EX_Spdl_E_FBMinus_64x6   := "DB_ACHSE6_SPINDEL".E_TCMinus,
+           EX_Spdl_E_FBPlus_64x7    := "DB_ACHSE6_SPINDEL".E_TCPlus,
+           EX_Spdl_E_PLCASp_68x7    := "DB_ACHSE6_SPINDEL".E_PLCASp,
+           EX_Spdl_E_GetrUmsch_82x3 := "DB_ACHSE6_SPINDEL".E_GearChange,
+           EX_Spdl_E_DrehGrenz_83x0 := "DB_ACHSE6_SPINDEL".E_SpeedLimit,
+           EX_Spdl_E_SollDZbeg_83x1 := "DB_ACHSE6_SPINDEL".E_SetSpeedLimit,
+           EX_Spdl_E_SollBer_83x5   := "DB_ACHSE6_SPINDEL".E_SetRange,
+           EX_Spdl_E_GewBohren_84x3 := "DB_ACHSE6_SPINDEL".E_Tapping,
+           EX_Spdl_E_PosBetr_84x5   := "DB_ACHSE6_SPINDEL".E_PosMode,
+           EX_Spdl_E_PendBetr_84x6  := "DB_ACHSE6_SPINDEL".E_OscillMode,
+           EX_Spdl_E_MotOK_93x5     := "DB_ACHSE6_SPINDEL".E_MotOK,
+           EX_Spdl_E_ImpFrei_93x7   := "DB_ACHSE6_SPINDEL".E_PulseEnable,
+           EX_Spdl_E_MTempWarn_94x0 := "DB_ACHSE6_SPINDEL".E_MTempWarn,
+           EX_Spdl_E_KTempWarn_94x1 := "DB_ACHSE6_SPINDEL".E_HTempWarn,
+           EX_Spdl_E_RUCompl_94x2   := "DB_ACHSE6_SPINDEL".E_RUComplete,
+           EX_Spdl_E_Meldung_94x7   := "DB_ACHSE6_SPINDEL".E_Message,
+           EX_Fehler_Quit           := "M_Ruecksetze_Fehler",
+           EX_AxPark                := FALSE,
+           ES5T_RegFr_SA            := S5T#8S,
+           ET_Timer_RegFSA          := "Ta_RFGSpindelAbf_T60",
+           ET_Timer_RegFSE          := "Te_Timer_RegFES",
+           ET_Timer_Reg_Drive_ready := "TE_REQ_DRV_6_READY",
+           EDW_Spdl_SFunkt          := "DB_ACHSE6_SPINDEL".E_SFunct,
+           EDW_Spdl_MFunkt          := "DB_ACHSE6_SPINDEL".E_MFunct,
+           EB_A_SpOR                := "DB_ACHSE6_SPINDEL".A_SpOR,
+           EAX_Spdl_A_ASpSperre_1x3 := "DB_ACHSE6_SPINDEL".A_ASpDisable,
+           EAX_Spdl_A_NachfBetr_1x4 := "DB_ACHSE6_SPINDEL".A_Follow_upMode,
+           EAX_Spdl_A_LageMess1_1x5 := "DB_ACHSE6_SPINDEL".A_PosMeas1,
+           EAX_Spdl_A_LageMess2_1x6 := "DB_ACHSE6_SPINDEL".A_PosMeas2,
+           EAX_Spdl_A_KorrW_1x7     := "DB_ACHSE6_SPINDEL".A_ORactive,
+           EAX_Spdl_A_ReglFrei_2x1  := "DB_ACHSE6_SPINDEL".A_ContrEnable,
+           EAX_Spdl_A_RWLSpRes_2x2  := "DB_ACHSE6_SPINDEL".A_DelDTGSpReset,
+           EAX_Spdl_A_GeschDz_3x6   := "DB_ACHSE6_SPINDEL".A_VelocSpeedLimit,
+           EAX_Spdl_A_VSSpHalt_4x3  := "DB_ACHSE6_SPINDEL".A_FDSpStop,
+           EAX_Spdl_A_Para_A_9x0    := "DB_ACHSE6_SPINDEL".A_Para_A,
+           EAX_Spdl_A_Sp1Syn_16x4   := #tx_SpxSyn,//"DB_ACHSE6_SPINDEL".A_Sp2Syn    //"DB_ACHSE6_SPINDEL".A_Sp1Syn
+           EAX_Spdl_A_Sp1SynP_17x4  := "DB_ACHSE6_SPINDEL".A_Sp1SynP,
+           EAX_Spdl_A_ImpFrei_21x7  := "DB_ACHSE6_SPINDEL".A_PulseEnable,
+           EAX_Spdl_GetrUmsch_82x3  := "MX_Spdl_GetrUmsch_82x3",
+           EAX_Spdl_PosBetr_84x5    := "MX_Spdl_PosBetr_84x5",
+           EAX_Spdl_DrehGrenz_83x0  := "MX_Spdl_DrehGrenz_83x0",
+           EAX_Spdl_GewBohren_84x3  := "MX_Spdl_GewBohnre_84x3",
+           EAX_Spdl_SollBer_83x5    := "MX_Spdl_SollBer_83x5",
+           EAX_Spdl_PendBetr_84x4   := "MX_Spdl_PendBetr_84x5",
+           EAX_Spdl_E_RUCompl_94x2  := "MX_Spdl_E_RUCompl_94x2_",
+           EAX_Spdl_E_Message_94x7  := "MX_Spdl_Message_94x7",
+           EAX_Spdl_A_RefVerz_12x7  := "MX_Spdl_A_RefVerz_12x7",
+           EAX_Alarm_Regler         := "DB_FEHLERMELDUNG".Spi_VS_Halt._700121_6_IMP_REGFRG_0S,
+           EAX_Alarm_VSSP_Mot_Temp  := "DB_FEHLERMELDUNG".Spi_VS_Halt._700133_6_TEMP_ZU_HOCH,
+           EAX_Alarm_VSSP_KK_Temp   := "DB_FEHLERMELDUNG".Spi_VS_Halt1._510128_6_KK_TEMP_ZH,
+           EAX_Alarm_NA_MotOK       := "DB_FEHLERMELDUNG".Spi_VS_Halt3._701137_6_DR_READY_0,
+           EAX_Spdl_M3              := "MX_Spdl_M3",
+           EAX_Spdl_M4              := "MX_Spdl_M4",
+           EAX_Spdl_M5              := "MX_Spdl_M5",
+           EAX_Spdl_M3_M4           := "MX_Spdl_M3_M4",
+           EAX_Spdl_IMP_M3          := "MX_Spdl_IMP_M3",
+           EAX_Spdl_IMP_M4          := "MX_Spdl_IMP_M4",
+           EAX_Spdl_IMP_M5          := "MX_Spdl_IMP_M5",
+           EAX_Spdl_IMP_M3_M4       := "MX_Spdl_IMP_M3_M4",
+           EAX_Spdl_Reset_M3_4      := "MX_Spdl_Reset_M3_4",
+           EAX_Spdl_M3_Aktiv        := "MX_Spdl_M3_Aktiv",
+           EAX_Spdl_M4_Aktiv        := "MX_Spdl_M4_Aktiv",
+           EAX_Spdl_FP_M4           := "MX_Spdl_FP_M4",
+           EAX_Spdl_FP_M3           := "MX_Spdl_FP_M3",
+           EAX_Spdl_FP_M5           := "MX_Spdl_FP_M5",
+           EAB_Spdl_A_SpOR          := "MB_A_SpOV",
+           EAB_Spdl_SFunkt          := "MW_SFunct");
+
+
+NETWORK
+TITLE =Hauptspindel steht
+
+      U     "DB_ACHSE6_SPINDEL".E_Stat; 
+      =     "M_Hauptspindel_steht"; 
+NETWORK
+TITLE =3=zweistufiges Getriebe und Stern-Dreieck
+
+      L     "DB_PLC_MD_DB20".UDInt._006_ANWAHL_GETRIEBE; 
+      L     3; 
+      <>I   ; 
+      SPB   nw9a; 
+
+      U     #tx_SpxSyn; 
+      =     "DB_ACHSE6_SPINDEL".A_Sp2Syn; 
+      SPA   SP03; 
+
+nw9a: U     #tx_SpxSyn; 
+      =     "DB_ACHSE6_SPINDEL".A_Sp1Syn; 
+      SPA   SP03; 
+NETWORK
+TITLE =Merker ablöschen
+
+SP02: CLR   ; 
+      =     "MX_Spdl_PosBetr_84x5"; 
+      =     "MX_Spdl_DrehGrenz_83x0"; 
+      =     "MX_Spdl_GewBohnre_84x3"; 
+      =     "MX_Spdl_SollBer_83x5"; 
+      =     "MX_Spdl_A_RefVerz_12x7"; 
+      =     "MX_Spdl_PendBetr_84x5"; 
+      =     "MX_Spdl_GetrUmsch_82x3"; 
+      =     "MX_Spdl_M3"; 
+      =     "MX_Spdl_M4"; 
+      =     "MX_Spdl_M5"; 
+      =     "MX_Spdl_M3_M4"; 
+      =     "MX_Spdl_IMP_M3"; 
+      =     "MX_Spdl_IMP_M4"; 
+      =     "MX_Spdl_IMP_M5"; 
+      =     "MX_Spdl_IMP_M3_M4"; 
+      =     "MX_Spdl_Reset_M3_4"; 
+      =     "MX_Spdl_M3_Aktiv"; 
+      =     "MX_Spdl_M4_Aktiv"; 
+NETWORK
+TITLE =S-Wert und Override auf 0
+
+      L     0; 
+      T     "MW_SFunct"; 
+      T     "MB_A_SpOV"; 
+NETWORK
+TITLE =Gewindeschneiden auswerten
+
+SP03: U     "DB_DM_M_FUNKTION".MX_M[3]; 
+      R     "DB_DM_M_FUNKTION".MX_M[3]; 
+
+      U     "DB_DM_M_FUNKTION".MX_M[4]; 
+      R     "DB_DM_M_FUNKTION".MX_M[4]; 
+
+      U     "DB_DM_M_FUNKTION".MX_M[5]; 
+      R     "DB_DM_M_FUNKTION".MX_M[5]; 
+
+      L     "DB_SIEM_KANAL_1".GAct[1]; 
+      L     11; // 11  G331 - Gewindebohren ohne Ausgleichsfutter
+      ==I   ; 
+      O(    ; 
+      TAK   ; 
+      L     12; // 12  G332 - Rückzug (Gewindebohren) ohne Ausgleichsfutter
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     "DB_SIEM_KANAL_1".GAct[2]; 
+      L     2; // 2   G63 - Gewindebohren ohne Synchronisation
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     "DB_SIEM_KANAL_1".GAct[2]; 
+      L     10; // 10  G33 - Gewindebohren ohne Synchronisation
+      ==I   ; 
+      )     ; 
+      O     "MX_Spdl_GewBohnre_84x3"; // oder Gewindebohren von Achsen
+      =     "M_Gewindeschneid_aktiv"; // Gewindeschneiden aktiv
+
+NETWORK
+TITLE =Spindelueberwachungen
+
+      CALL "FC_SP_UEBERW" (
+           E_enabled                := TRUE,
+           E_Drehzahl_ist           := "DB_TOOL_DATA".Spindel_Ist_Drehzahl,
+           E_WZ_Radius              := "DB_TOOL_DATA".Radius,
+           E_D_nummer               := "DB_TOOL_DATA".D_NR,
+           E_T_nummer               := "DB_TOOL_DATA".T_NR,
+           E_Spindel_angewaehlt     := "DB_PLC_MD_DB20".UDHex._00_BIT5_ACHSE6_AUSBLEND,
+           E_MSST_Taste_RESET       := "MSSTstReset");
+
+NETWORK
+TITLE =Vibrationssensor
+
+      CALL "FC_VIBRATIONSSENSOR" ;
+      NOP   0; 
+NETWORK
+TITLE =Imulse Hauptantrieb gelöscht -> PNOZ Multi
+
+      U     "DB_PLC_MD_DB20".UDHex._31_Bit1_SOLUTIONLINE; 
+      U     "DB_ACHSE6_SPINDEL".E_StopAB; 
+      UN    "T_SA_HW_Test_laeuft"; 
+      =     "O_SPI_IMP_DELETE"; 
+END_FUNCTION
+

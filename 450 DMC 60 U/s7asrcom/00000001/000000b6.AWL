@@ -1,0 +1,165 @@
+FUNCTION "FC_MA_MAIN" : VOID
+TITLE =
+//$Revision: 1.25 $
+//$Date: 2008/07/14 07:44:59CEST $
+//$Author: hgc $
+//
+{ S7_language := '7(1) Deutsch (Deutschland)  26.03.2008  08:00:15' }
+AUTHOR : BAG
+FAMILY : DM_BASIS
+NAME : MA_MAIN
+VERSION : 0.1
+
+
+VAR_INPUT
+  E_EN_FC_NotAus : BOOL ;	//Freigabe Schmierung
+  E_EN_FC_Hydraulik : BOOL ;	//Freigabe Hydraulik
+  E_EN_FC_Schmierung : BOOL ;	//Freigabe Schmierung
+END_VAR
+BEGIN
+NETWORK
+TITLE =Maschinen-Konfiguration: Optionen und Ausbaustufen
+// Netzwerk-Übersicht
+// ==================
+// NW 1: Maschinen-Konfiguration: Optionen und Ausbaustufen
+// NW 2: Maschine Ein
+// NW 3: Hydraulik
+// NW 4: Schutztüren
+// NW 5: Betriebsarten
+// NW 6: Pneumatik
+// NW 7: Schmierung
+// NW 8: Allgemeine Überwachung
+// NW 9: Spindelschmierung
+// NW 10: Kühlaggregat
+// NW 11: Aufruf Warmlauf/Passwort/Feierabend
+// NW 12: Aufruf: Kuehlmittel
+// NW 13: Aufruf: FC Minimalschmierung Fa.Vogel
+// NW 14: Aufruf: Handlingsystem System 3R
+// NW 15: Aufruf Handlingsystem ERWOA / PROMOT
+// NW 16: Bild für Wuchten aufrufen
+      CALL "FC_CONFIG" ;
+      NOP   0; 
+NETWORK
+TITLE =Maschine Ein
+
+      U     #E_EN_FC_NotAus; 
+      =     L      0.0; 
+      BLD   103; 
+      CALL "FC_MA_MASCHINE_EIN" (
+           E_Enable                 := L      0.0);
+      NOP   0; 
+NETWORK
+TITLE =Hydraulik
+
+      U     #E_EN_FC_Hydraulik; 
+      =     L      0.0; 
+      BLD   103; 
+      U     "m_eins"; 
+      =     L      0.1; 
+      BLD   103; 
+      CALL "FC_MA_HYDRAULIK_EIN" (
+           E_Enable                 := L      0.0,
+           E_Hydraulik_Ein          := L      0.1);
+      NOP   0; 
+NETWORK
+TITLE =Schutztüren
+
+      CALL "FC_SAFETY_GATES" ;
+      NOP   0; 
+NETWORK
+TITLE =Betriebsarten
+
+      CALL "FC_BETRIEBSARTEN" ;
+      NOP   0; 
+NETWORK
+TITLE =Pneumatik
+
+      CALL "FC_MA_PNEUMATIK_EIN" ;
+      NOP   0; 
+NETWORK
+TITLE =Schmierung
+
+      U     #E_EN_FC_Schmierung; 
+      =     L      0.0; 
+      BLD   103; 
+      CALL "FC_MA_SCHMIERUNG" (
+           E_Enable                 := L      0.0);
+      NOP   0; 
+NETWORK
+TITLE =Allgemeine Überwachung
+
+      CALL "FC_MA_ALLG_UEBERW" ;
+      NOP   0; 
+NETWORK
+TITLE =Spindelschmierung
+
+      U     "m_eins"; 
+      =     L      0.0; 
+      BLD   103; 
+      CALL "FC_MA_SPI_SCHMIER" (
+           E_Enable                 := L      0.0);
+      NOP   0; 
+NETWORK
+TITLE =Kühlaggregat
+
+      U     "m_eins"; 
+      =     L      0.0; 
+      BLD   103; 
+      CALL "FC_KUEHLAGGREGAT" (
+           EX_Enable                := L      0.0);
+      NOP   0; 
+NETWORK
+TITLE =Aufruf Warmlauf/Passwort/Feierabend
+
+      U     "m_eins"; 
+      =     L      0.0; 
+      BLD   103; 
+      CALL "FC_MA_PASS_FEI_WAR" (
+           E_enabled                := L      0.0);
+      NOP   0; 
+NETWORK
+TITLE =Aufruf: Kuehlmittel
+
+      CALL "FC_KUEHLMITTEL" ;
+      NOP   0; 
+NETWORK
+TITLE =Aufruf: FC Minimalschmierung Fa.Vogel
+
+      CALL "FC_ML_SPI" ;
+      NOP   0; 
+
+
+NETWORK
+TITLE =Aufruf: Handlingsystem System 3R
+
+      U(    ; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.HASYS_3R_OHNE_RPC; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.HASYS_3R_MIT_RPC; 
+      )     ; 
+      SPBNB _002; 
+      CALL "FC_HANDLINGSYSTEM_3R" ;
+_002: NOP   0; 
+NETWORK
+TITLE =Aufruf Handlingsystem ERWOA / PROMOT
+
+      U(    ; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.HASYS_EROWA_OHNE_RPC; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.HASYS_EROWA_MIT_RPC; 
+      )     ; 
+      SPBNB _003; 
+      CALL "FC_HASYST_EROWA" ;
+_003: NOP   0; 
+NETWORK
+TITLE =Bild für Wuchten aufrufen
+
+      U     "DB_NC_PLC".BildWuchten_Anwahl; 
+      UN    "DB_CMM_PLC".CMM_OUT.cmm_mmc_activ; 
+      FP    "M_FP_BildAnwahl"; 
+      SPBN  kbil; 
+      L     51; 
+      T     "DB_SIEM_MMC".A_Hardkey; 
+
+kbil: NOP   0; 
+
+END_FUNCTION
+

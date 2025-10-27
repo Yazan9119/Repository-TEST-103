@@ -1,0 +1,150 @@
+FUNCTION_BLOCK "FB_IF_FASTEMS"
+TITLE =
+//$Revision: 1.13 $
+//$Date: 2008/08/18 08:57:29CEST $
+//$Author: sth $
+{ S7_language := '7(1) Deutsch (Deutschland)  26.03.2008  08:00:15' }
+VERSION : 0.1
+
+
+VAR_INPUT
+  MC_FMS_Reserved : BOOL ;	
+  MC_FMS_plc_Pallet_on_APC : BOOL ;	//1: if pallet exists on APC on crane side
+  MC_FMS_plc_APC_home_pos : BOOL ;	//1: if crane is allowed to load/unload to/from APC -->Hubunten und Drehzyl ok 
+  MC_FMS_plc_APC_ASide_out : BOOL ;	//APC-A-side out
+  MC_FMS_plc_APC_BSide_out : BOOL ;	//APC-B-side_out
+  MC_FMS_plc_PC_act : BOOL ;	//Pallet change active
+  MC_FMS_plc_oper_apc_door : BOOL ;	//1: Operator door or APC door closed--> HUB unten und Drehwand 0 oder 180 GRad
+  MC_FMS_plc_On_line : BOOL ;	//0: --> pallets are not transferred automatically to machine
+  MC_FMS_plc_Cycle_on : BOOL ;	//1: if NC program is running
+  MC_FMS_plc_Feed_on : BOOL ;	//1: if spindle is trotating and at least 1 axis feed movement is active
+  MC_FMS_plc_Alarm : BOOL ;	//1: if machine has fatal alarm and is not running
+  MC_FMS_FixtureonAPC : BOOL ;	//Photocell sensor tells, if fixture exists on APC on the top of the pallet. 
+  MC_FMS_FixtureReleased : BOOL ;	//1-signal when the fixture is not locked to the pallet.
+  MC_FMS_FixtureLocked : BOOL ;	//1-signal when the fixture is locked to the pallet.
+  MC_FMS_Program_end : BOOL ;	//1-signal if Program end and H67 has been executed before. Stays until next star
+  MC_FMS_Read_data_respons : BOOL ;	//response to signal read data command
+  MC_FMS_reserve_3bit0 : BOOL ;	
+  MC_FMS_reserve_3bit1 : BOOL ;	
+  MC_FMS_reserve_3bit2 : BOOL ;	
+  MC_FMS_Emergency_stop_ok : BOOL ;	//Diagnostics signal to inform the operator of the reason for broken safety circu
+  MC_FMS_Heartbeat_acknow : BOOL ;	
+  MC_FMS_APC_on_pc_rot_ok : BOOL ;	
+  MC_FMS_RPC_online : BOOL ;	
+  MC_FMS_reserve_3bit7 : BOOL ;	
+  MC_FMS_Program_result_co : BYTE ;	
+  MC_FMS_Read_data_result : BYTE ;	//When FMS receives Read data response, it checks the result of the operation
+  FMS_MC_Reserved_for_diag : BOOL ;	
+  FMS_MC_APC_movement_ok : BOOL ;	//When signal is on, APC movement is allowed 
+  FMS_MC_cycle_start : BOOL ;	//MMS start programs using this
+  FMS_MC_AutoPowerOffToMC : BOOL ;	//Auto power off to MC
+  FMS_MC_Release_Fixture : BOOL ;	//release the fixture locking before it loads/unloads fixture
+  FMS_MC_Read_data_command : BOOL ;	//FMS send the machine a command
+  FMS_MC_External_reset : BOOL ;	//external reset only when the programm was not found 
+  FMS_MC_Reserve_1bit7 : BOOL ;	
+  FMS_MC_Reserve_2bit0 : BOOL ;	
+  FMS_MC_Reserve_2bit1 : BOOL ;	
+  FMS_MC_Reserve_2bit2 : BOOL ;	
+  FMS_MC_Heartbeat_rquest : BOOL ;	//FMS is changing it every second, machine resposes it. It is used for monitoring
+  FMS_MC_Reserve_2bit4 : BOOL ;	
+  FMS_MC_Reserve_2bit5 : BOOL ;	
+  FMS_MC_Reserve_2bit6 : BOOL ;	
+  FMS_MC_Reserve_2bit7 : BOOL ;	
+  FMS_MC_Read_data_comtype : BYTE ;	//10=programm selection; 20=APC pallet number; 30=B-axis angle; 40= Hydraulik pal
+  FMS_MC_data_bus_string24 : STRING  [33 ];	
+  FMS_MC_I_RPC_palett_data : BYTE ;	////DB12.dbb60 palett data
+  FMS_MC_I_RPC_command : BYTE ;	//// DB12.dbb61 command default=1
+END_VAR
+VAR
+  fp_read_data_command : BOOL ;	
+  m_read_program_selection : BOOL ;	
+  m_read_pallet_number : BOOL ;	
+  m_read_b_axis_angle : BOOL ;	
+  m_read_hydraulik_info : BOOL ;	
+  mw_hydraulik_info : INT ;	//1=hydraulik pallet; 2=normal pallet
+  mw_b_axis_angle : INT ;	//"0" ... "359". No decimal values
+  fp_response_reset : BOOL ;	
+  prog_selec : STRUCT 	
+   Request : BOOL ;	
+   Error : BOOL ;	
+   Done : BOOL ;	
+   State : WORD ;	
+   State_save : WORD ;	
+   Pfad_Programm : STRING  [33 ];	
+   fp_error : BOOL ;	
+   fp_done : BOOL ;	
+   fp_prog_select : BOOL ;	
+  END_STRUCT ;	
+  gud_write : STRUCT 	
+   GUDVar1Token : STRUCT 	
+    syntax_id : BYTE ;	
+    area_and_unit : BYTE ;	
+    column : WORD ;	
+    line : WORD ;	
+    block_type : BYTE ;	
+    num_of_lines : BYTE ;	
+    typ : BYTE ;	
+    length : BYTE ;	
+   END_STRUCT ;	
+   read_token_request : BOOL ;	
+   read_token_done : BOOL ;	
+   read_token_error : BOOL ;	
+   read_token_Variable : STRING  [32 ] := '_DM_4AXIS_ANGLE';	//steht im GUD9
+   read_token_state : WORD ;	
+   read_token_Data : STRING  [8 ];	
+   read_token_ready : BOOL ;	
+   read_token_busy : BOOL ;	
+   gud_write_request : BOOL ;	
+   gud_write_done : BOOL ;	
+   gud_write_error : BOOL ;	
+   gud_write_state : WORD ;	
+   fp_m_read_b_axis_angle : BOOL ;	
+   MW_b_axis_angle_value : INT ;	
+   MD_b_axis_angle_value : DWORD ;	
+  END_STRUCT ;	
+  m_save_H67 : BOOL ;	
+  req_tool_to_TPU_or_load : BOOL ;	
+  req_tool_from_TPU : BOOL ;	
+  req_tool_unload : BOOL ;	
+  New_Tool : BOOL ;	
+  magnum_to_TPU_or_load : WORD ;	
+  platznum_to_TPU_or_load : WORD ;	
+  magnum_from_TPU : WORD ;	
+  platznum_from_TPU : WORD ;	
+  magnum3 : WORD ;	
+  platznum3 : WORD ;	
+END_VAR
+VAR_TEMP
+  ZS_DT : ARRAY  [1 .. 12 ] OF BYTE ;	
+  ZS_ClampCubeSide : WORD ;	
+  ZS_BA : BYTE ;	
+  ZS_Zustand : BYTE ;	
+  ZS_PLCMode : BYTE ;	
+  PalNr_Dez_1 : BYTE ;	
+  PalNr_Dez_10 : BYTE ;	
+  PalNr_Dez_100 : BYTE ;	
+  letztesByte : DWORD ;	
+  Ret_AR2 : DWORD ;	
+  FrgMeldHost : BOOL ;	
+  QuitBeEntladen : BOOL ;	
+  Dez1gelesen : BOOL ;	
+  Dez10gelesen : BOOL ;	
+  Dez100gelesen : BOOL ;	
+  Platz_Ma : BOOL ;	
+  StartTelWzg : BOOL ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE = Schnittstelle zum Leitrechner (RPC optoinal)
+//  U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.FMS_INTERF_V2X; 
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.HASYS_FASTEMS; 
+      UN    "I_FMS_APC_MOVEMENT_OK"; 
+      =     "m_PW_Abbruch_Fastems"; 
+NETWORK
+TITLE =
+
+      U     "m_eins"; 
+      SAVE  ; 
+      BEB   ; 
+END_FUNCTION_BLOCK
+

@@ -1,0 +1,345 @@
+FUNCTION_BLOCK "FB_NC_Fehler_Dekoder"
+TITLE =
+//$Revision: 1.7 $
+//$Date: 2008/09/12 12:52:08CEST $
+//$Author: hgc $
+//Fehler erkannt, dann Fehlernummer auslesen und auswerten
+{ S7_language := '7(1) Deutsch (Deutschland)  26.03.2008  08:00:15' }
+VERSION : 0.1
+
+
+VAR_INPUT
+  BEDIENUNG : DWORD ;	
+END_VAR
+VAR
+  FB_LESEN : "FB_SIEM_GET";	
+  NC_FLM_FEHL : BOOL ;	
+  NC_FEHL : BOOL ;	
+  FB2_ERROR : BOOL ;	
+  FB_NDR : BOOL ;	
+  NC_FEHL_PI : BOOL ;	
+  FB_STATE : WORD ;	
+  NC_fehler_1 : DINT ;	
+  NC_fehler_2 : DINT ;	
+  NC_fehler_3 : DINT ;	
+  NC_fehler_4 : DINT ;	
+  NC_fehler_5 : DINT ;	
+  NC_fehler_6 : DINT ;	
+  NC_fehler_7 : DINT ;	
+  NC_fehler_8 : DINT ;	
+END_VAR
+VAR_TEMP
+  out_uhrzeit_datum : DATE_AND_TIME ;	
+  out_datum : DATE ;	
+  out_day : INT ;	
+  fehler_sfc : INT ;	
+  out_uhrzeit : TIME_OF_DAY ;	
+  rett_ar1 : DWORD ;	
+  rett_ar2 : DWORD ;	
+  error_copy : INT ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =Lesen Fehler von NC
+
+      U(    ; 
+      O     "DB_SIEM_NCK".E_NCKalarm; 
+      O     "DB_SIEM_KANAL_1".E_NCKalarmChan; 
+      O     "DB_SIEM_KANAL_1".E_NCKalarmStop; 
+      )     ; 
+      UN    #NC_FEHL; 
+      U     "M_Takt_10s"; 
+      FP    #NC_FLM_FEHL; 
+      =     #NC_FEHL_PI; 
+NETWORK
+TITLE =Request PI-Dienst
+
+      U     #NC_FEHL_PI; 
+      S     #NC_FEHL; 
+      U(    ; 
+      O     #FB2_ERROR; 
+      O     #FB_NDR; 
+      )     ; 
+      R     #NC_FEHL; 
+      NOP   0; 
+NETWORK
+TITLE =NC Alarm auslesen
+
+      CALL #FB_LESEN (
+           Req                      := #NC_FEHL,
+           NumVar                   := 8,
+           Addr1                    := "DB_NC_VAR".N_SALAL_textIndex1_1,
+           Addr2                    := "DB_NC_VAR".N_SALAL_textIndex2_1,
+           Addr3                    := "DB_NC_VAR".N_SALAL_textIndex3_1,
+           Addr4                    := "DB_NC_VAR".N_SALAL_textIndex4_1,
+           Addr5                    := "DB_NC_VAR".N_SALAL_textIndex5_1,
+           Addr6                    := "DB_NC_VAR".N_SALAL_textIndex6_1,
+           Addr7                    := "DB_NC_VAR".N_SALAL_textIndex7_1,
+           Addr8                    := "DB_NC_VAR".N_SALAL_textIndex8_1,
+           Error                    := #FB2_ERROR,
+           NDR                      := #FB_NDR,
+           State                    := #FB_STATE,
+           RD1                      := #NC_fehler_1,
+           RD2                      := #NC_fehler_2,
+           RD3                      := #NC_fehler_3,
+           RD4                      := #NC_fehler_4,
+           RD5                      := #NC_fehler_5,
+           RD6                      := #NC_fehler_6,
+           RD7                      := #NC_fehler_7,
+           RD8                      := #NC_fehler_8);
+
+NETWORK
+TITLE =Fehlerstatus von FB 2  sichern
+
+      L     0; 
+      L     #FB_STATE; 
+      ==I   ; 
+      SPB   weit; 
+      L     #FB_STATE; 
+      T     #FB_STATE; 
+weit: NOP   0; 
+NETWORK
+TITLE =WZV: Drehmomentueberwachung Tol 1 hat angesprochen (Fehler 67109
+
+      U(    ; 
+      O(    ; 
+      L     #NC_fehler_1; 
+      L     L#67109; 
+      ==D   ; 
+      )     ; 
+      O(    ; 
+      L     #NC_fehler_2; 
+      L     L#67109; 
+      ==D   ; 
+      )     ; 
+      O(    ; 
+      L     #NC_fehler_3; 
+      L     L#67109; 
+      ==D   ; 
+      )     ; 
+      O(    ; 
+      L     #NC_fehler_4; 
+      L     L#67109; 
+      ==D   ; 
+      )     ; 
+      O(    ; 
+      L     #NC_fehler_5; 
+      L     L#67109; 
+      ==D   ; 
+      )     ; 
+      O(    ; 
+      L     #NC_fehler_6; 
+      L     L#67109; 
+      ==D   ; 
+      )     ; 
+      )     ; 
+      S     "MX_T_WZ_Drehmoment"; 
+      U     "M_Ruecksetze_Fehler"; 
+      R     "MX_T_WZ_Drehmoment"; 
+      NOP   0; 
+NETWORK
+TITLE =WZ: Drehmomentueberwachung Toleranz 2 Ueberschritten Maaschine s
+
+      U(    ; 
+      O(    ; 
+      L     #NC_fehler_1; 
+      L     L#65111; 
+      ==D   ; 
+      )     ; 
+      O(    ; 
+      L     #NC_fehler_2; 
+      L     L#65111; 
+      ==D   ; 
+      )     ; 
+      O(    ; 
+      L     #NC_fehler_3; 
+      L     L#65111; 
+      ==D   ; 
+      )     ; 
+      O(    ; 
+      L     #NC_fehler_4; 
+      L     L#65111; 
+      ==D   ; 
+      )     ; 
+      O(    ; 
+      L     #NC_fehler_5; 
+      L     L#65111; 
+      ==D   ; 
+      )     ; 
+      O(    ; 
+      L     #NC_fehler_6; 
+      L     L#65111; 
+      ==D   ; 
+      )     ; 
+      )     ; 
+      S     "MX_T_WZ_DREHMOMENT_STOP"; 
+      U     "M_Ruecksetze_Fehler"; 
+      R     "MX_T_WZ_DREHMOMENT_STOP"; 
+      NOP   0; 
+NETWORK
+TITLE =Werkzeugentladen Fehler 67015
+
+      U(    ; 
+      O(    ; 
+      L     #NC_fehler_1; 
+      L     L#67015; 
+      ==D   ; 
+      )     ; 
+      O(    ; 
+      L     #NC_fehler_2; 
+      L     L#67015; 
+      ==D   ; 
+      )     ; 
+      O(    ; 
+      L     #NC_fehler_3; 
+      L     L#67015; 
+      ==D   ; 
+      )     ; 
+      O(    ; 
+      L     #NC_fehler_4; 
+      L     L#67015; 
+      ==D   ; 
+      )     ; 
+      O(    ; 
+      L     #NC_fehler_5; 
+      L     L#67015; 
+      ==D   ; 
+      )     ; 
+      O(    ; 
+      L     #NC_fehler_6; 
+      L     L#67015; 
+      ==D   ; 
+      )     ; 
+      )     ; 
+      S     "m_WZ_entladen_67015"; 
+      U     "M_Ruecksetze_Fehler"; 
+      R     "m_WZ_entladen_67015"; 
+      NOP   0; 
+NETWORK
+TITLE =Werkzeugentladen Fehler 67027
+
+      U(    ; 
+      O(    ; 
+      L     #NC_fehler_1; 
+      L     L#67027; 
+      ==D   ; 
+      )     ; 
+      O(    ; 
+      L     #NC_fehler_2; 
+      L     L#67027; 
+      ==D   ; 
+      )     ; 
+      O(    ; 
+      L     #NC_fehler_3; 
+      L     L#67027; 
+      ==D   ; 
+      )     ; 
+      O(    ; 
+      L     #NC_fehler_4; 
+      L     L#67027; 
+      ==D   ; 
+      )     ; 
+      O(    ; 
+      L     #NC_fehler_5; 
+      L     L#67027; 
+      ==D   ; 
+      )     ; 
+      O(    ; 
+      L     #NC_fehler_6; 
+      L     L#67027; 
+      ==D   ; 
+      )     ; 
+      )     ; 
+      S     "m_WZ_entladen_67027"; 
+      U     "M_Ruecksetze_Fehler"; 
+      R     "m_WZ_entladen_67027"; 
+      NOP   0; 
+NETWORK
+TITLE =WZ: Werkzeugbruch erkannt durch Laser
+
+      U(    ; 
+      O(    ; 
+      L     #NC_fehler_1; 
+      L     L#67107; 
+      ==D   ; 
+      )     ; 
+      O(    ; 
+      L     #NC_fehler_2; 
+      L     L#67107; 
+      ==D   ; 
+      )     ; 
+      O(    ; 
+      L     #NC_fehler_3; 
+      L     L#67107; 
+      ==D   ; 
+      )     ; 
+      O(    ; 
+      L     #NC_fehler_4; 
+      L     L#67107; 
+      ==D   ; 
+      )     ; 
+      O(    ; 
+      L     #NC_fehler_5; 
+      L     L#67107; 
+      ==D   ; 
+      )     ; 
+      O(    ; 
+      L     #NC_fehler_6; 
+      L     L#67107; 
+      ==D   ; 
+      )     ; 
+      )     ; 
+      S     "MX_WZ_BRUCH_LASER"; 
+      U     "M_Ruecksetze_Fehler"; 
+      R     "MX_WZ_BRUCH_LASER"; 
+      NOP   0; 
+NETWORK
+TITLE =
+
+      L     0; 
+      T     #NC_fehler_1; 
+      NOP   0; 
+NETWORK
+TITLE =
+
+      L     0; 
+      T     #NC_fehler_2; 
+      NOP   0; 
+NETWORK
+TITLE =
+
+      L     0; 
+      T     #NC_fehler_3; 
+      NOP   0; 
+NETWORK
+TITLE =
+
+      L     0; 
+      T     #NC_fehler_4; 
+      NOP   0; 
+NETWORK
+TITLE =
+
+      L     0; 
+      T     #NC_fehler_5; 
+      NOP   0; 
+NETWORK
+TITLE =
+
+      L     0; 
+      T     #NC_fehler_6; 
+      NOP   0; 
+NETWORK
+TITLE =
+
+      L     0; 
+      T     #NC_fehler_7; 
+      NOP   0; 
+NETWORK
+TITLE =
+
+      L     0; 
+      T     #NC_fehler_8; 
+      NOP   0; 
+END_FUNCTION_BLOCK
+

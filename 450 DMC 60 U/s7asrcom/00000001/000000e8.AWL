@@ -1,0 +1,361 @@
+FUNCTION "FC_DISPLAY_ICONS" : VOID
+TITLE =
+//$Revision: 1.19 $
+//$Date: 2007/10/18 14:14:09CEST $
+//$Author: hgc $
+//
+//erstellt: 8.02.02 JW
+//- Baustein muss NACH FC124 aufgerufen werden, damit die Achsnummer stimmt
+//- in FC124 muss die Achsnummer auf MB80 abgespeichert werden (ganz am Ende von 
+//  NW7)
+//- in Header.ini werden die Icons+Positionen sowie der "Steuer-DB" vereinbart
+//- "Steuer-DB" wird in diesem FC bedient
+//- Einschalten der Iconanzeige mit $MM_SHOW_CHANNEL_SPANNING_STATE = 1
+//- Achsnummericons müssen auf UI_0 .. UI_3 liegen
+{ S7_language := '7(1) Deutsch (Deutschland)  26.03.2008  08:00:15' }
+AUTHOR : SJA
+VERSION : 0.1
+
+BEGIN
+NETWORK
+TITLE =Zyklus Start / Stop
+
+      U     "DB_SIEM_KANAL_1".E_ChanActive; 
+      =     "DB_ICON"._1.UI_28; 
+
+      UN    "DB_SIEM_KANAL_1".E_ChanActive; 
+      =     "DB_ICON"._1.UI_29; 
+NETWORK
+TITLE =Vorschub Start / Stop
+
+      U     "DB_ACHSE1_X".A_FDSpStop; 
+      U     "DB_ACHSE2_Y".A_FDSpStop; 
+      U     "DB_ACHSE3_Z".A_FDSpStop; 
+      =     "DB_ICON"._1.UI_30; 
+
+      UN    "DB_ACHSE1_X".A_FDSpStop; 
+      ON    "DB_ACHSE2_Y".A_FDSpStop; 
+      ON    "DB_ACHSE3_Z".A_FDSpStop; 
+      =     "DB_ICON"._1.UI_31; 
+NETWORK
+TITLE =Spindelstatus
+//    U     "L_SP_HALT"; 
+      U     "DB_ACHSE6_SPINDEL".E_ActRotRight; //M3
+      UN    "DB_ACHSE6_SPINDEL".E_Stat; 
+      =     "DB_ICON"._1.UI_12; 
+
+      UN    "DB_ACHSE6_SPINDEL".E_ActRotRight; // bei Gewindebohren
+      UN    "DB_ACHSE6_SPINDEL".E_Stat; 
+      =     "DB_ICON"._1.UI_11; 
+
+      U     "DB_ACHSE6_SPINDEL".E_Stat; 
+      =     "DB_ICON"._1.UI_13; 
+
+      NOP   0; 
+NETWORK
+TITLE =Betriebsart
+//      U     "M_TRUE"; 
+//-- BA 2
+      U     "M_Einrichtbetrieb"; 
+      UN    "M_VORSCH_FREIG"; 
+      =     "DB_ICON".res_1.UI_32; 
+
+      U     "M_Einrichtbetrieb"; 
+      U     "M_VORSCH_FREIG"; 
+      =     "DB_ICON"._1.UI_19; 
+
+//-- BA 3
+
+      U     "M_3Te_Betriebsart"; 
+      UN    "M_VORSCH_FREIG"; 
+      =     "DB_ICON".res_1.UI_33; 
+
+      U     "M_3Te_Betriebsart"; 
+      U     "M_VORSCH_FREIG"; 
+      =     "DB_ICON"._1.UI_20; 
+//-- BA 4
+
+      U     "M_4Te_Betriebsart"; 
+      U     "M_BA4_aktiv_schalten_"; 
+      U     "M_VORSCH_FREIG"; 
+      =     "DB_ICON"._1.UI_21; 
+
+      U     "M_4Te_Betriebsart"; 
+      UN    "M_BA4_aktiv_schalten_"; 
+      =     "DB_ICON".res_1.UI_34; 
+
+
+
+// M56,M57,M58
+
+      L     "MB_aktiver_Verfahrbereic"; 
+      L     53; 
+      ==I   ; 
+      =     "DB_ICON".res_1.UI_40; 
+
+      L     "MB_aktiver_Verfahrbereic"; 
+      L     56; 
+      ==I   ; 
+      UN(   ; 
+      L     "DB_PLC_MD_DB20".UDInt._007_ANWAHL_FRAESKOPF; 
+      L     1; 
+      ==I   ; 
+      )     ; 
+      =     "DB_ICON".res_1.UI_35; 
+
+
+      L     "MB_aktiver_Verfahrbereic"; 
+      L     57; 
+      ==I   ; 
+      UN(   ; 
+      L     "DB_PLC_MD_DB20".UDInt._007_ANWAHL_FRAESKOPF; 
+      L     1; 
+      ==I   ; 
+      )     ; 
+      =     "DB_ICON".res_1.UI_36; 
+
+      L     "MB_aktiver_Verfahrbereic"; 
+      L     58; 
+      ==I   ; 
+      UN(   ; 
+      L     "DB_PLC_MD_DB20".UDInt._007_ANWAHL_FRAESKOPF; 
+      L     1; 
+      ==I   ; 
+      )     ; 
+      =     "DB_ICON".res_1.UI_37; 
+
+      L     "MB_aktiver_Verfahrbereic"; 
+      L     59; 
+      ==I   ; 
+      UN(   ; 
+      L     "DB_PLC_MD_DB20".UDInt._007_ANWAHL_FRAESKOPF; 
+      L     1; 
+      ==I   ; 
+      )     ; 
+      =     "DB_ICON".res_1.UI_38; 
+
+      L     "MB_aktiver_Verfahrbereic"; 
+      L     54; 
+      ==I   ; 
+      =     "DB_ICON".res_1.UI_39; // m54
+
+
+
+NETWORK
+TITLE =Handrad
+//Die Meldung wird im FC36 geschaltet, wenn das Handrad bereit ist (Ausgang 
+//Alarm_0)
+//      U     "MA".AB0.BM._700051; 
+      U     "DB_FEHLERMELDUNG".Meldung._702003_MBHG_aktiv; 
+      =     "DB_ICON"._1.UI_15; 
+
+NETWORK
+TITLE =Servicefunktion läuft (Sanduhr)
+//derzeit integriert: 
+//- Freifahren WZW
+//- Positionieren Promatec
+//muss ggf. ergänzt werden
+//      O     "M_Grundstellung_Mag"; 
+//      O     "Db95_WZW".Mag_activ; 
+      O     DB101.DBX    6.0; 
+      O     DB101.DBX    6.1; 
+      O     ; 
+      U     "M_Handbetrieb"; // "DB_SIEM_BAG".E_JOG
+      U(    ; 
+      L     "DB_OEM".Bildnummer; 
+      L     0; 
+      <>I   ; 
+      )     ; 
+      =     "DB_ICON"._1.UI_22; 
+NETWORK
+TITLE =FCT-Taste und ToFrame Taste
+//To Frame noch nicht realisiert - wenn vorh., dann so progr., daß beide 
+//abwechselnd blinken, wenn mal beide gleichzeitig aktiv sein sollten
+//      U     "L_FCT_T12"; 
+      O     "DB_SIEM_KANAL_1".E_Transform; 
+      O     "DB_SIEM_KANAL_1".f33_1; 
+      =     "DB_ICON"._1.UI_17; 
+
+NETWORK
+TITLE =Äußere Kühlmittel
+//      U     "M_TRUE"; 
+//      U     "O_Blasluft_M25"
+//      =     "Icon_DB"._1.UI_26
+      U     "O_KM_M8_Ein"; 
+      =     "DB_ICON"._1.UI_9; 
+NETWORK
+TITLE =Innere Kühlmittel
+//      U     "M_TRUE"; 
+//
+//      U     "O_M7_Luftkuehlung"
+//      =     "Icon_DB"._1.UI_26
+      U     "O_KM_M7_Ein"; 
+      UN    "O_PW_Ventil_Tischspuel"; 
+      =     "DB_ICON"._1.UI_10; 
+NETWORK
+TITLE =Arbeitsraumtür
+//Wenn Kabinentüre entriegelt und Kabine zu dann dauernd gelbes Icon
+//Wenn Kabinentüre entriegelt und Kabine offen dann blinkend gelbes Icon
+      UN    "I_AL_Kabine_Verriegelt"; 
+      U(    ; 
+      O     "I_AL_Kabine_zu"; 
+      O     ; 
+      UN    "I_AL_Kabine_zu"; 
+      U     "m_takt_1sec."; 
+      )     ; 
+      =     "DB_ICON"._1.UI_5; 
+
+NETWORK
+TITLE =Zugriffsstufe (Schlüsselschalter)
+//      U     "M_TRUE"; 
+      U     "DB_SIEM_NCK".A_Keyswitch0; 
+      =     "DB_ICON"._1.UI_24; 
+
+      U     "DB_SIEM_NCK".A_Keyswitch1; 
+      =     "DB_ICON"._1.UI_25; 
+
+      U     "DB_SIEM_NCK".A_Keyswitch2; 
+      =     "DB_ICON"._1.UI_26; 
+
+      U     "DB_SIEM_NCK".A_Keyswitch3; 
+      =     "DB_ICON"._1.UI_27; 
+NETWORK
+TITLE =Hand Werkzeugwechsel aktiv
+//      U     "L_Vorwahl_WZ_Spanner"; 
+      U     "M_WZSP_angewaehlt"; 
+      =     "DB_ICON"._1.UI_8; 
+
+NETWORK
+TITLE =Achs-Anzeige
+
+      U(    ; 
+      L     0; 
+      L     "DB_ANWENDER_SOFTKEY".Achsanwahl._Umschalt2; 
+      ==I   ; 
+      )     ; 
+      =     "DB_ICON"._1.UI_0; 
+
+      U(    ; 
+      L     1; 
+      L     "DB_ANWENDER_SOFTKEY".Achsanwahl._Umschalt2; 
+      ==I   ; 
+      )     ; 
+      =     "DB_ICON"._1.UI_1; 
+
+      U(    ; 
+      L     2; 
+      L     "DB_ANWENDER_SOFTKEY".Achsanwahl._Umschalt2; 
+      ==I   ; 
+      )     ; 
+      =     "DB_ICON"._1.UI_2; 
+
+      U(    ; 
+      L     3; 
+      L     "DB_ANWENDER_SOFTKEY".Achsanwahl._Umschalt2; 
+      ==I   ; 
+      )     ; 
+      =     "DB_ICON".res_1.UI_44; 
+NETWORK
+TITLE =Palettenwechsel Freigabe
+//      U     "M_FreigabePW"
+      U     "O_PW_FREIGABE"; 
+      =     "DB_ICON"._1.UI_4; 
+NETWORK
+TITLE =Drehbetrieb angewählt
+
+      U     "DB_ACHSE4".E_SpNA; 
+      UN    "I_SPI_geloest"; 
+      =     "DB_ICON".res_2.UI_89; 
+NETWORK
+TITLE =Rüstplatz
+
+      CLR   ; 
+      =     "DB_ICON"._1.UI_16; 
+      =     "DB_ICON"._1.UI_18; 
+      =     "DB_ICON"._1.UI_23; 
+      =     "DB_ICON"._1.UI_3; 
+
+      L     "DB_PAL_NR".Platz[1].Status; // Palettennnummer Rüstplatz
+      L     0; 
+      <>I   ; // keine Palette vorhanden
+      U(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._041_ANWAHL_PALVERWAL; // oder keine Palettenverwaltung
+      L     1; 
+      ==I   ; 
+      )     ; 
+      U     "MX_Jobbetrieb"; 
+      SPB   n15c; 
+
+      L     "DB_PAL_NR".Platz[4].Status; // Palettennnummer Rüstplatz
+      L     0; 
+      <>I   ; // keine Palette vorhanden
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.Palettenspeicher_aktiv; 
+      U     "MX_Jobbetrieb"; 
+      SPB   n15a; 
+
+      SPA   n15z; 
+
+n15c: L     "DB_PAL_NR".Platz[1].Status; // Palettenwechlsernmaschine
+      SPA   n15b; 
+
+n15a: L     "DB_PAL_NR".Platz[4].Status; // Palette Rüstplatz 1 bearbeitet
+
+n15b: L     4; 
+      ==I   ; 
+      =     "DB_ICON"._1.UI_18; 
+
+      TAK   ; 
+      L     1; 
+      ==I   ; 
+      =     "DB_ICON"._1.UI_14; 
+
+      TAK   ; 
+      L     3; 
+      ==I   ; 
+      =     "DB_ICON"._1.UI_3; 
+
+      TAK   ; 
+      L     2; 
+      ==I   ; 
+      =     "DB_ICON"._1.UI_16; 
+
+      TAK   ; 
+      L     5; 
+      ==I   ; 
+      =     "DB_ICON"._1.UI_23; 
+
+n15z: NOP   0; 
+
+
+NETWORK
+TITLE =ATC-Signale
+
+      U     "DB_NC_PLC".NCanPLC_ATC.ATC_1_1; 
+      =     "DB_ICON".res_1.UI_51; 
+
+      U     "DB_NC_PLC".NCanPLC_ATC.ATC_1_2; 
+      =     "DB_ICON".res_1.UI_52; 
+
+      U     "DB_NC_PLC".NCanPLC_ATC.ATC_1_3; 
+      =     "DB_ICON".res_1.UI_53; 
+
+      U     "DB_NC_PLC".NCanPLC_ATC.ATC_2_1; 
+      =     "DB_ICON".res_1.UI_54; 
+
+      U     "DB_NC_PLC".NCanPLC_ATC.ATC_2_2; 
+      =     "DB_ICON".res_1.UI_55; 
+
+      U     "DB_NC_PLC".NCanPLC_ATC.ATC_2_3; 
+      =     "DB_ICON".res_1.UI_56; 
+
+      U     "DB_NC_PLC".NCanPLC_ATC.ATC_3_1; 
+      =     "DB_ICON".res_1.UI_57; 
+
+      U     "DB_NC_PLC".NCanPLC_ATC.ATC_3_2; 
+      =     "DB_ICON".res_1.UI_58; 
+
+      U     "DB_NC_PLC".NCanPLC_ATC.ATC_3_3; 
+      =     "DB_ICON".res_1.UI_59; 
+
+END_FUNCTION
+

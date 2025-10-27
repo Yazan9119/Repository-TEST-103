@@ -1,0 +1,159 @@
+FUNCTION "FC_WW_SPANNER" : VOID
+TITLE =
+//$Revision: 1.10 $
+//$Date: 2008/05/16 06:29:24CEST $
+//$Author: hgc $
+//
+// Werkzeugwechsler allgemein
+
+AUTHOR : PS
+FAMILY : DMC_H
+NAME : WW_ALLG
+VERSION : 0.0
+
+
+VAR_INPUT
+  AB_Kein_gespannt_mWz : BOOL ;	//Ausbaustufe: Kein Endschalter gespannt mit Werkzeug
+  AB_mit_Entriegeln : BOOL ;	//Ausbaustufe gesteuertes entriegeln im Magazin
+  IB_MagKontr_aus : BOOL ;	//IB-Bit: Belegungskontrolle Magazin ausblenden
+  Bild_MAGEinstellung : BOOL ;	
+END_VAR
+VAR_OUTPUT
+  Anf_ART_oeffnen : BOOL ;	//Anforderung Arbeitsraumtür öffnen
+  Sp_OVR_0 : BOOL ;	//Spindeloverride 0 nach Werkzeug spannen
+END_VAR
+VAR_IN_OUT
+  MFkt_WW_Hand : BOOL ;	//M-Funktion M33 Handwerkzeugwechsel
+END_VAR
+VAR_TEMP
+  gespannt_mWz : BOOL ;	// gespannt mit Werkzeug
+  gespannt_oWz : BOOL ;	// gespannt ohne Werkzeug
+  gespannt : BOOL ;	// gespannt mit oder ohne Werkzeug
+  gespannt_Frg_Sp : BOOL ;	//gespannt Freigabe Spindel
+  PI_WWHand : BOOL ;	
+  O_Spanner_loesen : BOOL ;	
+  R_WW_Hand_S : BOOL ;	//Rücksetzen Anwahl Hand Werkzeugwechsel
+  Sp_drehen : BOOL ;	//Spindeldrehzahl angewählt
+END_VAR
+BEGIN
+NETWORK
+TITLE =Eingang gespannt mit Werkzeug
+// Netzwerk-Übersicht
+// ==================
+// NW 1: Eingang gespannt mit Werkzeug
+// NW 2: Eingang gespannt ohne Werkzeug
+// NW 3: Eingang gespannt mit oder ohne Werkzeug
+// NW 4: Verzögerung Freigabe Spindel drehen nach Werkzeug Spannen 
+// NW 5: Freigabe Spindel drehen nach Werkzeug Spannen
+// NW 6: Schrittgenerierung
+// NW 7: Werkzeugwechsel Tellermagazin
+//
+      U     "I_WZ-Spanner_Gesp_mit_WZ"; 
+      =     #gespannt_mWz; // gespannt mit Werkzeug
+
+NETWORK
+TITLE =Eingang gespannt ohne Werkzeug
+
+      U     "I_WZ_SPA_gespannt"; // gespannt ohne Werkzeug
+      =     #gespannt_oWz; // gespannt ohne Werkzeug
+
+NETWORK
+TITLE =Eingang gespannt mit oder ohne Werkzeug
+
+      O     #gespannt_mWz; // gespannt mit Werkzeug
+      O     #gespannt_oWz; // gespannt ohne Werkzeug
+      =     #gespannt; // gespannt mit oder ohne Werkzeug
+
+NETWORK
+TITLE =Verzögerung Freigabe Spindel drehen nach Werkzeug Spannen 
+
+      U     #gespannt_mWz; // gespannt mit Werkzeug
+      =     "DB_TIMER".Zeit_36.Start; // Verzögerung Spindelfreigabe
+
+NETWORK
+TITLE =Freigabe Spindel drehen nach Werkzeug Spannen
+
+      U     "DB_TIMER".Zeit_36.Ausgang; // Verzögerung Spindelfreigabe
+      =     #gespannt_Frg_Sp; // gespannt Freigabe Spindel
+
+NETWORK
+TITLE =Schrittgenerierung
+
+      U     "M_Reset_Taste"; 
+      =     L      1.0; 
+      BLD   103; 
+      U     "O_Programm_Ende"; 
+      =     L      1.1; 
+      BLD   103; 
+      U     "I_WW_MagTasche_auf"; 
+      =     L      1.2; 
+      BLD   103; 
+      U     "I_WZ_SPA_geloest"; 
+      =     L      1.3; 
+      BLD   103; 
+      U     "M_WW_X_imArbeitsraum"; 
+      =     L      1.4; 
+      BLD   103; 
+      U     "Mx_X_ACHSE_WZW_POS"; 
+      =     L      1.5; 
+      BLD   103; 
+      U     "I_WW_1_ZYL_GST"; 
+      =     L      1.6; 
+      BLD   103; 
+      U     #gespannt; 
+      =     L      1.7; 
+      BLD   103; 
+      U     "M_Not_aus"; 
+      =     L      2.0; 
+      BLD   103; 
+      CALL "FC_WW_SCHRITT_GEN" (
+           E_MSST_Reset             := L      1.0,
+           E_Reset_Prgende          := L      1.1,
+           E_HalterSp_auf           := L      1.2,
+           E_entspannt              := L      1.3,
+           X_nicht_im_WW            := L      1.4,
+           X_WW_Pos                 := L      1.5,
+           Wz_ausgefahren           := L      1.6,
+           gespannt                 := L      1.7,
+           Not_Aus                  := L      2.0);
+      NOP   0; 
+NETWORK
+TITLE =Werkzeugwechsel Tellermagazin
+
+      U     #gespannt; 
+      =     L      1.0; 
+      BLD   103; 
+      U     #gespannt_mWz; 
+      =     L      1.1; 
+      BLD   103; 
+      U     #gespannt_oWz; 
+      =     L      1.2; 
+      BLD   103; 
+      U     #gespannt_Frg_Sp; 
+      =     L      1.3; 
+      BLD   103; 
+      U     #IB_MagKontr_aus; 
+      =     L      1.4; 
+      BLD   103; 
+      U     #AB_mit_Entriegeln; 
+      =     L      1.5; 
+      BLD   103; 
+      U     "M_Handbetrieb"; // "DB_SIEM_BAG".E_JOG
+      U     "DB_PLC_MD_DB20".UDHex._04_BIT4_EINRICHT_BETR; 
+      =     L      1.6; 
+      BLD   103; 
+      U     #Bild_MAGEinstellung; 
+      =     L      1.7; 
+      BLD   103; 
+      CALL "FC_WW_TELLER" (
+           gespannt                 := L      1.0,
+           gespannt_mWz             := L      1.1,
+           gespannt_oWz             := L      1.2,
+           gespannt_Frg_Sp          := L      1.3,
+           IB_MagKontr_aus          := L      1.4,
+           AB_mit_Entriegeln        := L      1.5,
+           Frg_Service              := L      1.6,
+           Bild_MAGEinstellung      := L      1.7);
+      NOP   0; 
+END_FUNCTION
+

@@ -1,0 +1,272 @@
+FUNCTION "FC_SMARTKEY_MAIN" : VOID
+TITLE =
+//$Revision: 1.12 $
+//$Date: 2008/10/20 08:42:06CEST $
+//$Author: wri $
+//
+{ S7_language := '7(1) Deutsch (Deutschland)  13.05.2008  08:31:44' }
+VERSION : 0.1
+
+
+VAR_INPUT
+  EX_Enable : BOOL ;	
+END_VAR
+VAR_TEMP
+  FB2_Error : BOOL ;	
+  FB2_NDR : BOOL ;	
+  FB2_State : WORD ;	
+  Tx_Reset_Error : BOOL ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =
+
+      UN    #EX_Enable; 
+      SAVE  ; 
+      BEB   ; 
+NETWORK
+TITLE =
+
+      U     "DB_FEHLERMELDUNG".NC_Startsperre._700113_SKey_NoAutoricat; 
+      O     "DB_FEHLERMELDUNG".NC_Startsperre._700115_SKey_FaultyOpera; 
+      L     S5T#5S; 
+      SE    "Te_Smartkey_ErrorReset"; 
+
+      U     "M_Ruecksetze_Fehler"; 
+      O     "Te_Smartkey_ErrorReset"; 
+      =     #Tx_Reset_Error; 
+
+NETWORK
+TITLE =Signal von angelegten Tag mindestens 500ms senden
+
+      U     "DB_PLC_MD_DB20".UDHex._53_Bit1_SKEY_Test_Ident; 
+      SPBN  _IBN; 
+
+      U     "MX_SKEY_IDENT_SENDEN"; 
+      L     S5T#500MS; 
+      SV    "Tv_Smartkey_Ident_Senden"; 
+
+
+      U     "MX_SKEY_IDENT_SENDEN"; 
+      SPBN  _TAG; 
+
+      U     "MX_SKEY_TOGGLE_TAG"; 
+      O     ; 
+      UN    "M_TagRemoved"; 
+      U(    ; 
+      L     "MB_SMARTKEY_AUTHOR"; 
+      L     B#16#F; 
+      ==I   ; 
+      )     ; 
+      SPBN  _NEU; 
+
+      L     B#16#4; 
+      T     "IB_GEN_OM_BYTE"; 
+
+      SPA   _ALT; 
+
+_NEU: NOP   0; 
+
+      L     B#16#F; 
+      T     "IB_GEN_OM_BYTE"; 
+
+_ALT: NOP   0; 
+
+      U     "Tv_Smartkey_Ident_Senden"; 
+      SPB   _IBN; 
+
+      U     "MX_SKEY_IDENT_SENDEN"; 
+      R     "MX_SKEY_IDENT_SENDEN"; 
+
+
+      UN    "M_TagRemoved"; 
+      U(    ; 
+      L     "MB_SMARTKEY_AUTHOR"; 
+      L     B#16#F; 
+      ==I   ; 
+      )     ; 
+      SPB   _IBN; 
+
+      UN    "MX_SKEY_TOGGLE_TAG"; 
+      =     "MX_SKEY_TOGGLE_TAG"; 
+
+      SPA   _IBN; 
+
+
+_TAG: NOP   0; 
+
+      L     B#16#8; 
+      T     "IB_GEN_OM_BYTE"; 
+
+_IBN: NOP   0; 
+NETWORK
+TITLE =Smartkey Auswertung
+
+      U     "DB_PLC_MD_DB20".UDHex._31_Bit2_ERGOLINE; 
+      =     L      5.0; 
+      BLD   103; 
+      U     "m_neustart"; 
+      =     L      5.1; 
+      BLD   103; 
+      U     "m_eins"; 
+      =     L      5.2; 
+      BLD   103; 
+      U     #Tx_Reset_Error; 
+      =     L      5.3; 
+      BLD   103; 
+      U     "I_AL_ANWAHL_BA2"; 
+      U     "M_Einrichtbetrieb"; 
+      =     L      5.4; 
+      BLD   103; 
+      U     "I_AL_ANWAHL_BA3/4"; 
+      U     "M_3Te_Betriebsart"; 
+      =     L      5.5; 
+      BLD   103; 
+      U     "I_AL_ANWAHL_BA3/4"; 
+      U     "M_4Te_Betriebsart"; 
+      =     L      5.6; 
+      BLD   103; 
+      U     "I_GEN_OM_SERVICE_ACTIVE"; 
+      =     L      5.7; 
+      BLD   103; 
+      CALL "FB_SMARTKEY" , "DI_SMARTKEY" (
+           EX_Enable                := L      5.0,
+           EX_Init                  := L      5.1,
+           EX_MaschineEin           := L      5.2,
+           EX_ResetError            := L      5.3,
+           EX_BA2_Activ             := L      5.4,
+           EX_BA3_Activ             := L      5.5,
+           EX_BA4_Activ             := L      5.6,
+           EX_GEN_OM_SERVICE_ACTIVE := L      5.7,
+           EB_GEN_OM_BYTE           := "IB_GEN_OM_BYTE",
+           EAB_SmartkeyStatus       := DB270.DBB  123,
+           EAB_SmartkeyBCD          := DB270.DBB  127,
+           EAB_SmartkeyInfAut       := DB270.DBB  131,
+           EAB_SmartkeyInfoKey      := DB270.DBB  135,
+           EAB_InfoOM               := DB270.DBB  139,
+           EAX_TagRemoved           := "M_TagRemoved",
+           EAX_NewTagInside         := "M_NewTagInside",
+           EAX_ErrorNoAuthorization := "DB_FEHLERMELDUNG".NC_Startsperre._700113_SKey_NoAutoricat,
+           EAX_ErrorDeviceFunction  := "DB_FEHLERMELDUNG".NC_Startsperre._700114_SKey_DeviceFunc,
+           EAX_ErrorFaultyOperation := "DB_FEHLERMELDUNG".NC_Startsperre._700115_SKey_FaultyOpera);
+      NOP   0; 
+NETWORK
+TITLE =
+
+      UN    "DB_PLC_MD_DB20".UDHex._53_Bit0_SKEY_No_IdentNr; 
+      =     L      5.0; 
+      BLD   103; 
+      U     "m_neustart"; 
+      =     L      5.1; 
+      BLD   103; 
+      U     "M_Ruecksetze_Fehler"; 
+      =     L      5.2; 
+      BLD   103; 
+      U     "m_eins"; 
+      =     L      5.3; 
+      BLD   103; 
+      U     "M_TagRemoved"; 
+      =     L      5.4; 
+      BLD   103; 
+      U     "I_GEN_OM_ID_SYNC"; 
+      =     L      5.5; 
+      BLD   103; 
+      U     "I_GEN_OM_ID_CLOCK"; 
+      =     L      5.6; 
+      BLD   103; 
+      U     "I_GEN_OM_ID_DATA_0"; 
+      =     L      5.7; 
+      BLD   103; 
+      U     "I_GEN_OM_ID_DATA_1"; 
+      =     L      6.0; 
+      BLD   103; 
+      CALL "FB_SMARTKEY_COM" , "DI_SMARTKEY_COM" (
+           EX_Enable                := L      5.0,
+           EX_Init                  := L      5.1,
+           EX_Reset                 := L      5.2,
+           EX_MaschineEin           := L      5.3,
+           EX_TagRemoved            := L      5.4,
+           EX_GEN_OM_ID_SYNC        := L      5.5,
+           EX_GEN_OM_ID_CLOCK       := L      5.6,
+           EX_GEN_OM_ID_DATA_0      := L      5.7,
+           EX_GEN_OM_ID_DATA_1      := L      6.0,
+           EB_Number_Attempt        := B#16#3,
+           EADW_UnicatNumber        := "DB_UPPERSCREEN_COMM".Smartkey.UnicatNumber,
+           EADW_ConsecutiveNumber   := "DB_UPPERSCREEN_COMM".Smartkey.ConsecutiveNumber,
+           EAB_AuthorizationNumber  := "DB_UPPERSCREEN_COMM".Smartkey.AuthorizationNumber,
+           EAB_OperatingMode        := "DB_UPPERSCREEN_COMM".Smartkey.OperatingMode,
+           EAX_MasterKey            := "DB_UPPERSCREEN_COMM".Smartkey.MasterKey,
+           EAX_ServiceKey           := "DB_UPPERSCREEN_COMM".Smartkey.ServiceKey,
+           EAX_GEN_OM_ID_DATA_0     := "O_GEN_OM_ID_DATA_0",
+           EAX_GEN_OM_ID_DATA_1     := "O_GEN_OM_ID_DATA_1",
+           EAX_ErrorMaxAttempt      := "DB_FEHLERMELDUNG".NC_Startsperre._700112_Max_Attempt_Comm,
+           EAX_CommunicationReady   := "DB_UPPERSCREEN_COMM".Smartkey.CommunicationReady);
+      NOP   0; 
+NETWORK
+TITLE =Zeitverzögertes Starten für AccessLevel lesen
+
+      U     "M_TagRemoved"; 
+      FP    "M_FP_TagRemoved"; 
+      O     "M_NewTagInside"; 
+      O     "m_neustart"; 
+      L     S5T#2S; 
+      SS    "Te_Start_ReadAccessLevel"; 
+
+      U     "Te_Start_ReadAccessLevel"; 
+      S     "M_Read_AccessLevel"; 
+      R     "Te_Start_ReadAccessLevel"; 
+
+NETWORK
+TITLE =Access Level auslesen
+
+      U     "M_Read_AccessLevel"; 
+      =     L      5.0; 
+      BLD   103; 
+      CALL "FB_SIEM_GET" , "DI_FB2_RD_NC" (
+           Req                      := L      5.0,
+           NumVar                   := 1,
+           Addr1                    := "DB_NC_VAR".N_Y_accessLevel_13,
+           Error                    := #FB2_Error,
+           NDR                      := #FB2_NDR,
+           State                    := #FB2_State,
+           RD1                      := "DB_UPPERSCREEN_COMM".Smartkey.AccessLevelSiemens);
+
+      NOP   0; 
+NETWORK
+TITLE =Start des Lesevorgangs zur Ermittlung des AccessLevel aus den NC
+
+      O     #FB2_Error; 
+      O     #FB2_NDR; 
+      R     "M_Read_AccessLevel"; 
+
+      U     #FB2_NDR; 
+      SPBN  Calc; 
+
+      L     8; 
+      L     "DB_UPPERSCREEN_COMM".Smartkey.AccessLevelSiemens; 
+      -D    ; 
+      T     "DB_UPPERSCREEN_COMM".Smartkey.AccessLevelDisplay; 
+
+      U(    ; 
+      L     "DB_UPPERSCREEN_COMM".Smartkey.AccessLevelDisplay; 
+      L     6; 
+      >I    ; 
+      )     ; 
+      SPBN  Calc; 
+
+      L     "DB_UPPERSCREEN_COMM".Smartkey.AccessLevelDisplay; 
+      DEC   1; 
+      T     "DB_UPPERSCREEN_COMM".Smartkey.AccessLevelDisplay; 
+
+Calc: NOP   0; 
+
+
+NETWORK
+TITLE =
+
+      L     DB270.DBB   71; 
+      SRW   1; 
+      T     "MB_ACCESS_LEVEL"; 
+
+END_FUNCTION
+

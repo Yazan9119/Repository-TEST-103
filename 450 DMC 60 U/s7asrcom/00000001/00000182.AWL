@@ -1,0 +1,405 @@
+DATA_BLOCK "DB_ROBOTER_INTERFACE"
+TITLE =
+//$Revision: 1.7 $
+//$Date: 2007/08/17 11:47:56CEST $
+//$Author: schmoelp $
+VERSION : 0.1
+
+
+  STRUCT 	
+   OUT : STRUCT 	//PLC-Ausgänge von DMG ==an==> Roboter
+    LZ : BOOL ;	//Lebenszeichen (1Hz)
+    Automation_ein : BOOL ;	//Maschine auf Betriebsart "Automation mit Roboter"
+    Antriebe_ein : BOOL ;	//Maschine ist eingeschaltet
+    FG_Schutzzaun_oeffnen : BOOL ;	//Freigabe Schutzzaun öffnen
+    MPL_RPL_leer : BOOL ;	//Maschinenplatz und Rüstplatz sind leer
+    ROB_vorbereiten : BOOL ;	//Roboter für Beladung vorbereiten (M365)
+    NOTAUS_ok : BOOL ;	//kein NOTAUS
+    Bedienerschutz_ok : BOOL ;	//Bediener-Schutz ok Schutzzaun/PW-Türen
+    Stelle_1 : STRUCT 	//Spannstelle 1
+     FG_Entladen : BOOL ;	//Freigabe zum Entladen
+     entspannt_OHNE_Fehler : BOOL ;	//Spannstelle entspannt OHNE Fehler
+     entspannt_MIT_Fehler : BOOL ;	//Spannstelle entspannt MIT Fehler
+     Teil_niO : BOOL ;	//Teil nicht in Ordnung
+     Teil_nicht_bearbeitet : BOOL ;	//Teil nicht bearbeitet
+     FG_Beladen : BOOL ;	//Freigabe zum Beladen
+     gepannt_OHNE_Fehler : BOOL ;	//Spannstelle gespannt OHNE Fehler
+     gepannt_MIT_Fehler : BOOL ;	//Spannstelle gespannt MIT Fehler
+    END_STRUCT ;	
+    Stelle_2 : STRUCT 	//Spannstelle 2
+     FG_Entladen : BOOL ;	//Freigabe zum Entladen
+     entspannt_OHNE_Fehler : BOOL ;	//Spannstelle entspannt OHNE Fehler
+     entspannt_MIT_Fehler : BOOL ;	//Spannstelle entspannt MIT Fehler
+     Teil_niO : BOOL ;	//Teil nicht in Ordnung
+     Teil_nicht_bearbeitet : BOOL ;	//Teil nicht bearbeitet
+     FG_Beladen : BOOL ;	//Freigabe zum Beladen
+     gepannt_OHNE_Fehler : BOOL ;	//Spannstelle gespannt OHNE Fehler
+     gepannt_MIT_Fehler : BOOL ;	//Spannstelle gespannt MIT Fehler
+    END_STRUCT ;	
+    PW_aktiv : BOOL ;	//Palettenwechsler aktiv
+    RPL_Tuer_offen : BOOL ;	//Rüstplatz-Türen offen
+    RPL_Tuer_zu : BOOL ;	//Rüstplatz-Türen zu
+    RPL_Wasser_ein : BOOL ;	//Rüstplatz Wasser ist ein
+    RPL_Luft_ein : BOOL ;	//Rüstplatz Luft ist ein
+    RPL_PAL_1 : BOOL ;	//Rüstplatz Palette 1 ist am Ruestplatz
+    RPL_PAL_2 : BOOL ;	//Rüstplatz Palette 2 ist am Ruestplatz
+    frei_13 : BOOL ;	
+    NPSPS_1_FG_Entladen : BOOL ;	//Nullpunkt-Spannsystem 1 Freigabe zum Entladen
+    NPSPS_1_gespannt : BOOL ;	//Nullpunkt-Spannsystem 1 ist gespannt
+    NPSPS_1_entspannt : BOOL ;	//Nullpunkt-Spannsystem 1 ist entspannt
+    frei_20 : BOOL ;	
+    frei_21 : BOOL ;	
+    NPSPS_2_FG_Entladen : BOOL ;	//Nullpunkt-Spannsystem 2 Freigabe zum Entladen
+    NPSPS_2_gespannt : BOOL ;	//Nullpunkt-Spannsystem 2 ist gespannt
+    NPSPS_2_entspannt : BOOL ;	//Nullpunkt-Spannsystem 2 ist entspannt
+    WS_Typ_gespiegelt : WORD ;	//4-stellige Werkstück-Typ-Nr (gespiegelt)
+    WS_Typ : WORD ;	//4-stellige Werkstück-Typ-Nr (Aktualisierung nach PW-Ablauf)
+    RPL_AX_ISTposition : INT ;	//Rüstplatz-Achse IST-Position 
+    Stelle_3 : STRUCT 	//Spannstelle 3
+     FG_Entladen : BOOL ;	//Freigabe zum Entladen
+     entspannt_OHNE_Fehler : BOOL ;	//Spannstelle entspannt OHNE Fehler
+     entspannt_MIT_Fehler : BOOL ;	//Spannstelle entspannt MIT Fehler
+     Teil_niO : BOOL ;	//Teil nicht in Ordnung
+     Teil_nicht_bearbeitet : BOOL ;	//Teil nicht bearbeitet
+     FG_Beladen : BOOL ;	//Freigabe zum Beladen
+     gepannt_OHNE_Fehler : BOOL ;	//Spannstelle gespannt OHNE Fehler
+     gepannt_MIT_Fehler : BOOL ;	//Spannstelle gespannt MIT Fehler
+    END_STRUCT ;	
+    Stelle_4 : STRUCT 	//Spannstelle 4
+     FG_Entladen : BOOL ;	//Freigabe zum Entladen
+     entspannt_OHNE_Fehler : BOOL ;	//Spannstelle entspannt OHNE Fehler
+     entspannt_MIT_Fehler : BOOL ;	//Spannstelle entspannt MIT Fehler
+     Teil_niO : BOOL ;	//Teil nicht in Ordnung
+     Teil_nicht_bearbeitet : BOOL ;	//Teil nicht bearbeitet
+     FG_Beladen : BOOL ;	//Freigabe zum Beladen
+     gepannt_OHNE_Fehler : BOOL ;	//Spannstelle gespannt OHNE Fehler
+     gepannt_MIT_Fehler : BOOL ;	//Spannstelle gespannt MIT Fehler
+    END_STRUCT ;	
+    FRG_Drehbewegung_RP : BOOL ;	//Freigabe Rüstplatzpositionierung
+    MEL_Position_erreicht_RP : BOOL ;	//Meldung Rüstplatzposition erreicht
+    Res_18_2 : BOOL ;	
+    Res_18_3 : BOOL ;	
+    Anf_Bed_Tuere_oeffnen : BOOL ;	//Anforderung für das Öffnen der Arbeitsraumtüre
+    frei : ARRAY  [20 .. 29 ] OF //frei
+    BYTE ;	
+   END_STRUCT ;	
+   IN : STRUCT 	//PLC-Eingänge von Roboter ==an==> DMG
+    LZ : BOOL ;	//Lebenszeichen (1Hz)
+    ROB_BTB : BOOL ;	//Roboter Betriebsbereit
+    ROB_aus_Stoerbereich : BOOL ;	//Roboter ausserhalb Störbereich
+    Anf_Schutzzaun_oeffnen : BOOL ;	//Anforderung Schutzzaun oeffnen
+    BA_Leerfahren : BOOL ;	//Betriebsart Leerfahren ist angewählt
+    frei : BOOL ;	
+    NOTAUS_ok : BOOL ;	//kein NOTAUS
+    Bedienerschutz_ok : BOOL ;	//Bediener-Schutz ok Schutzzaun
+    Stelle_1 : STRUCT 	//Spannstelle 1
+     Meldung_Entladen : BOOL ;	//Meldung Stelle ist entladen
+     Bef_Entspannen : BOOL ;	//Befehl Spannstelle entspannen
+     frei_1 : BOOL ;	
+     Meldung_SICHER_offen : BOOL ;	//Meldung Spannstelle ist SICHER offen
+     frei_2 : BOOL ;	
+     Meldung_Beladen : BOOL ;	//Meldung Spannstelle ist beladen
+     Bef_Spannen_OHNE_CTRL : BOOL ;	//Befehl Spannstelle spannen OHNE Kontrolle
+     Bef_Spannen_MIT_CTRL : BOOL ;	//Befehl Spannstelle spannen MIT Kontrolle
+    END_STRUCT ;	
+    Stelle_2 : STRUCT 	//Spannstelle 2
+     Meldung_Entladen : BOOL ;	//Meldung Stelle ist entladen
+     Bef_Entspannen : BOOL ;	//Befehl Spannstelle entspannen
+     frei_1 : BOOL ;	
+     Meldung_SICHER_offen : BOOL ;	//Meldung Spannstelle ist SICHER offen
+     frei_2 : BOOL ;	
+     Meldung_Beladen : BOOL ;	//Meldung Spannstelle ist beladen
+     Bef_Spannen_OHNE_CTRL : BOOL ;	//Befehl Spannstelle spannen OHNE Kontrolle
+     Bef_Spannen_MIT_CTRL : BOOL ;	//Befehl Spannstelle spannen MIT Kontrolle
+    END_STRUCT ;	
+    Bef_PW_Freigabe : BOOL ;	//Befehl PW-Freigabe
+    Bef_RPL_Tuer_oeffnen : BOOL ;	//Befehl Rüstplatz-Tür öffnen
+    Bef_RPL_Tuer_schliessen : BOOL ;	//Befehl Rüstplatz-Tür schliessen
+    Bef_Vorrichtung_Spuelen : BOOL ;	//Befehl Vorrichtung spülen
+    Bef_Vorrichtung_Abblasen : BOOL ;	//Befehl Vorrichtung abblasen
+    Bef_Bauteil_Reinigung : BOOL ;	//Anforderung Bauteil reinigen
+    frei_2 : BOOL ;	
+    frei_3 : BOOL ;	
+    Bef_NPSPS_1_loesen : BOOL ;	//Befehl Nullpunkt-Spannsystem 1 lösen
+    frei_11 : BOOL ;	
+    frei_12 : BOOL ;	
+    frei_13 : BOOL ;	
+    frei_14 : BOOL ;	
+    Bef_NPSPS_2_loesen : BOOL ;	//Befehl Nullpunkt-Spannsystem 2 lösen
+    frei_16 : BOOL ;	
+    frei_17 : BOOL ;	
+    WZ_Typ : WORD ;	//4-stellige Werkstück-Typ-Nr (aktualisiert bei Befehl PW-Freigabe)
+    WZ_Typ_gespiegelt : WORD ;	//4-stellige Werkstück-Typ-Nr (gespiegelt)
+    RPL_AX_SOLLposition : INT ;	//Rüstplatz-Achse SOLL-Position 
+    Stelle_3 : STRUCT 	//Spannstelle 3
+     Meldung_Entladen : BOOL ;	//Meldung Stelle ist entladen
+     Bef_Entspannen : BOOL ;	//Befehl Spannstelle entspannen
+     frei_1 : BOOL ;	
+     Meldung_SICHER_offen : BOOL ;	//Meldung Spannstelle ist SICHER offen
+     frei_2 : BOOL ;	
+     Meldung_Beladen : BOOL ;	//Meldung Spannstelle ist beladen
+     Bef_Spannen_OHNE_CTRL : BOOL ;	//Befehl Spannstelle spannen OHNE Kontrolle
+     Bef_Spannen_MIT_CTRL : BOOL ;	//Befehl Spannstelle spannen MIT Kontrolle
+    END_STRUCT ;	
+    Stelle_4 : STRUCT 	//Spannstelle 4
+     Meldung_Entladen : BOOL ;	//Meldung Stelle ist entladen
+     Bef_Entspannen : BOOL ;	//Befehl Spannstelle entspannen
+     frei_1 : BOOL ;	
+     Meldung_SICHER_offen : BOOL ;	//Meldung Spannstelle ist SICHER offen
+     frei_2 : BOOL ;	
+     Meldung_Beladen : BOOL ;	//Meldung Spannstelle ist beladen
+     Bef_Spannen_OHNE_CTRL : BOOL ;	//Befehl Spannstelle spannen OHNE Kontrolle
+     Bef_Spannen_MIT_CTRL : BOOL ;	//Befehl Spannstelle spannen MIT Kontrolle
+    END_STRUCT ;	
+    BEF_RPL_positionieren : BOOL ;	//Befehl Rüstplatz positionieren
+    Res_18_1 : BOOL ;	
+    Res_18_2 : BOOL ;	
+    Res_18_3 : BOOL ;	
+    Frg_Bed_Tuere_oeffnen : BOOL ;	//Freigabe für das Öffnen der Arbeitsraumtüre
+    frei1 : ARRAY  [50 .. 59 ] OF //frei
+    BYTE ;	
+   END_STRUCT ;	
+   STAT : STRUCT 	
+    Stelle_1 : STRUCT 	
+     gespannt : BOOL ;	//Meldung von Spannhydraulik Stelle 1 gespannt
+     entspannt : BOOL ;	//Meldung von Spannhydraulik Stelle 1 entspannt
+     aktivieren_spannen : BOOL ;	//Spannstelle 1 aktivieren für spannen
+     aktivieren_entspannen : BOOL ;	//Spannstelle 1 aktivieren für entspannen
+     Teil_nicht_in_Ordnung : BOOL ;	//Spannstelle 1 Teil nicht in Ordnung
+    END_STRUCT ;	
+    Stelle_2 : STRUCT 	
+     gespannt : BOOL ;	//Meldung von Spannhydraulik Stelle 1 gespannt
+     entspannt : BOOL ;	//Meldung von Spannhydraulik Stelle 1 entspannt
+     aktivieren_spannen : BOOL ;	//Spannstelle 2 aktivieren für spannen
+     aktivieren_entspannen : BOOL ;	//Spannstelle 2 aktivieren für entspannen
+     Teil_nicht_in_Ordnung : BOOL ;	//Spannstelle 2 Teil nicht in Ordnung
+    END_STRUCT ;	
+    Stelle_3 : STRUCT 	
+     gespannt : BOOL ;	//Meldung von Spannhydraulik Stelle 1 gespannt
+     entspannt : BOOL ;	//Meldung von Spannhydraulik Stelle 1 entspannt
+     aktivieren_spannen : BOOL ;	//Spannstelle 3 aktivieren für spannen
+     aktivieren_entspannen : BOOL ;	//Spannstelle 3 aktivieren für entspannen
+     Teil_nicht_in_Ordnung : BOOL ;	//Spannstelle 3 Teil nicht in Ordnung
+    END_STRUCT ;	
+    Stelle_4 : STRUCT 	
+     gespannt : BOOL ;	//Meldung von Spannhydraulik Stelle 1 gespannt
+     entspannt : BOOL ;	//Meldung von Spannhydraulik Stelle 1 entspannt
+     aktivieren_spannen : BOOL ;	//Spannstelle 4 aktivieren für spannen
+     aktivieren_entspannen : BOOL ;	//Spannstelle 4 aktivieren für entspannen
+     Teil_nicht_in_Ordnung : BOOL ;	//Spannstelle 4 Teil nicht in Ordnung
+    END_STRUCT ;	
+    Ruestplatz : STRUCT 	
+     SpSt1_CTRL_aktivieren : BOOL ;	//Rüstplatz Spannstelle 1 Auflagenkontrolle aktivieren
+     SpSt2_CTRL_aktivieren : BOOL ;	//Rüstplatz Spannstelle 2 Auflagenkontrolle aktivieren
+     SpSt3_CTRL_aktivieren : BOOL ;	//Rüstplatz Spannstelle 3 Auflagenkontrolle aktivieren
+     SpSt4_CTRL_aktivieren : BOOL ;	//Rüstplatz Spannstelle 4 Auflagenkontrolle aktivieren
+     FP_entspannen_ok : BOOL ;	//Flanke alle aktiven Spannstellen entspannt
+     FP_spannen_ok : BOOL ;	//Flanke alle aktiven Spannstellen gespannt
+     FP_BEF_RPL_positionieren : BOOL ;	//Flanke Befehl Rüstplatz positionieren
+     FP_RPL_hat_positioniert : BOOL ;	//Flanke Rüstplatzachse hat positioniert
+     FN_BEF_RPL_positionieren : BOOL ;	//Negative Flanke Befehl Rüstplatz positionieren
+     FP_Tuere_oeffnen : BOOL ;	//Positive Flanke Befehl Rüstplatztüre öffnen
+     FP_Tuere_schliessen : BOOL ;	//Positive Flanke Befehl Rüstplatztüre schliessen
+    END_STRUCT ;	
+    Palettenwechsler : STRUCT 	
+     FP_PW_Freigabe_von_Rob : BOOL ;	//Flanke Palettenwechslerfreigabe von Roboter
+    END_STRUCT ;	
+    LZ_Roboter : STRUCT 	
+     P_Flanke : BOOL ;	//Positive Flanke Lebenszeichen Roboter
+     N_Flanke : BOOL ;	//Negative Flanke Lebenszeichen Roboter
+     Kein_Fehler : BOOL ;	//Lebenszeichen Roboter ok
+    END_STRUCT ;	
+    Roboter : STRUCT 	
+     Automation_ein : BOOL ;	//Roboter ist eingeschaltet und Automation aktiv
+    END_STRUCT ;	
+    RPL_Sollpos_Realwert : REAL ;	//Umgewandelter Wert für Sollposition
+   END_STRUCT ;	
+  END_STRUCT ;	
+BEGIN
+   OUT.LZ := FALSE; 
+   OUT.Automation_ein := FALSE; 
+   OUT.Antriebe_ein := FALSE; 
+   OUT.FG_Schutzzaun_oeffnen := FALSE; 
+   OUT.MPL_RPL_leer := FALSE; 
+   OUT.ROB_vorbereiten := FALSE; 
+   OUT.NOTAUS_ok := FALSE; 
+   OUT.Bedienerschutz_ok := FALSE; 
+   OUT.Stelle_1.FG_Entladen := FALSE; 
+   OUT.Stelle_1.entspannt_OHNE_Fehler := FALSE; 
+   OUT.Stelle_1.entspannt_MIT_Fehler := FALSE; 
+   OUT.Stelle_1.Teil_niO := FALSE; 
+   OUT.Stelle_1.Teil_nicht_bearbeitet := FALSE; 
+   OUT.Stelle_1.FG_Beladen := FALSE; 
+   OUT.Stelle_1.gepannt_OHNE_Fehler := FALSE; 
+   OUT.Stelle_1.gepannt_MIT_Fehler := FALSE; 
+   OUT.Stelle_2.FG_Entladen := FALSE; 
+   OUT.Stelle_2.entspannt_OHNE_Fehler := FALSE; 
+   OUT.Stelle_2.entspannt_MIT_Fehler := FALSE; 
+   OUT.Stelle_2.Teil_niO := FALSE; 
+   OUT.Stelle_2.Teil_nicht_bearbeitet := FALSE; 
+   OUT.Stelle_2.FG_Beladen := FALSE; 
+   OUT.Stelle_2.gepannt_OHNE_Fehler := FALSE; 
+   OUT.Stelle_2.gepannt_MIT_Fehler := FALSE; 
+   OUT.PW_aktiv := FALSE; 
+   OUT.RPL_Tuer_offen := FALSE; 
+   OUT.RPL_Tuer_zu := FALSE; 
+   OUT.RPL_Wasser_ein := FALSE; 
+   OUT.RPL_Luft_ein := FALSE; 
+   OUT.RPL_PAL_1 := FALSE; 
+   OUT.RPL_PAL_2 := FALSE; 
+   OUT.frei_13 := FALSE; 
+   OUT.NPSPS_1_FG_Entladen := FALSE; 
+   OUT.NPSPS_1_gespannt := FALSE; 
+   OUT.NPSPS_1_entspannt := FALSE; 
+   OUT.frei_20 := FALSE; 
+   OUT.frei_21 := FALSE; 
+   OUT.NPSPS_2_FG_Entladen := FALSE; 
+   OUT.NPSPS_2_gespannt := FALSE; 
+   OUT.NPSPS_2_entspannt := FALSE; 
+   OUT.WS_Typ_gespiegelt := W#16#0; 
+   OUT.WS_Typ := W#16#0; 
+   OUT.RPL_AX_ISTposition := 0; 
+   OUT.Stelle_3.FG_Entladen := FALSE; 
+   OUT.Stelle_3.entspannt_OHNE_Fehler := FALSE; 
+   OUT.Stelle_3.entspannt_MIT_Fehler := FALSE; 
+   OUT.Stelle_3.Teil_niO := FALSE; 
+   OUT.Stelle_3.Teil_nicht_bearbeitet := FALSE; 
+   OUT.Stelle_3.FG_Beladen := FALSE; 
+   OUT.Stelle_3.gepannt_OHNE_Fehler := FALSE; 
+   OUT.Stelle_3.gepannt_MIT_Fehler := FALSE; 
+   OUT.Stelle_4.FG_Entladen := FALSE; 
+   OUT.Stelle_4.entspannt_OHNE_Fehler := FALSE; 
+   OUT.Stelle_4.entspannt_MIT_Fehler := FALSE; 
+   OUT.Stelle_4.Teil_niO := FALSE; 
+   OUT.Stelle_4.Teil_nicht_bearbeitet := FALSE; 
+   OUT.Stelle_4.FG_Beladen := FALSE; 
+   OUT.Stelle_4.gepannt_OHNE_Fehler := FALSE; 
+   OUT.Stelle_4.gepannt_MIT_Fehler := FALSE; 
+   OUT.FRG_Drehbewegung_RP := FALSE; 
+   OUT.MEL_Position_erreicht_RP := FALSE; 
+   OUT.Res_18_2 := FALSE; 
+   OUT.Res_18_3 := FALSE; 
+   OUT.Anf_Bed_Tuere_oeffnen := FALSE; 
+   OUT.frei[20] := B#16#0; 
+   OUT.frei[21] := B#16#0; 
+   OUT.frei[22] := B#16#0; 
+   OUT.frei[23] := B#16#0; 
+   OUT.frei[24] := B#16#0; 
+   OUT.frei[25] := B#16#0; 
+   OUT.frei[26] := B#16#0; 
+   OUT.frei[27] := B#16#0; 
+   OUT.frei[28] := B#16#0; 
+   OUT.frei[29] := B#16#0; 
+   IN.LZ := FALSE; 
+   IN.ROB_BTB := FALSE; 
+   IN.ROB_aus_Stoerbereich := FALSE; 
+   IN.Anf_Schutzzaun_oeffnen := FALSE; 
+   IN.BA_Leerfahren := FALSE; 
+   IN.frei := FALSE; 
+   IN.NOTAUS_ok := FALSE; 
+   IN.Bedienerschutz_ok := FALSE; 
+   IN.Stelle_1.Meldung_Entladen := FALSE; 
+   IN.Stelle_1.Bef_Entspannen := FALSE; 
+   IN.Stelle_1.frei_1 := FALSE; 
+   IN.Stelle_1.Meldung_SICHER_offen := FALSE; 
+   IN.Stelle_1.frei_2 := FALSE; 
+   IN.Stelle_1.Meldung_Beladen := FALSE; 
+   IN.Stelle_1.Bef_Spannen_OHNE_CTRL := FALSE; 
+   IN.Stelle_1.Bef_Spannen_MIT_CTRL := FALSE; 
+   IN.Stelle_2.Meldung_Entladen := FALSE; 
+   IN.Stelle_2.Bef_Entspannen := FALSE; 
+   IN.Stelle_2.frei_1 := FALSE; 
+   IN.Stelle_2.Meldung_SICHER_offen := FALSE; 
+   IN.Stelle_2.frei_2 := FALSE; 
+   IN.Stelle_2.Meldung_Beladen := FALSE; 
+   IN.Stelle_2.Bef_Spannen_OHNE_CTRL := FALSE; 
+   IN.Stelle_2.Bef_Spannen_MIT_CTRL := FALSE; 
+   IN.Bef_PW_Freigabe := FALSE; 
+   IN.Bef_RPL_Tuer_oeffnen := FALSE; 
+   IN.Bef_RPL_Tuer_schliessen := FALSE; 
+   IN.Bef_Vorrichtung_Spuelen := FALSE; 
+   IN.Bef_Vorrichtung_Abblasen := FALSE; 
+   IN.Bef_Bauteil_Reinigung := FALSE; 
+   IN.frei_2 := FALSE; 
+   IN.frei_3 := FALSE; 
+   IN.Bef_NPSPS_1_loesen := FALSE; 
+   IN.frei_11 := FALSE; 
+   IN.frei_12 := FALSE; 
+   IN.frei_13 := FALSE; 
+   IN.frei_14 := FALSE; 
+   IN.Bef_NPSPS_2_loesen := FALSE; 
+   IN.frei_16 := FALSE; 
+   IN.frei_17 := FALSE; 
+   IN.WZ_Typ := W#16#0; 
+   IN.WZ_Typ_gespiegelt := W#16#0; 
+   IN.RPL_AX_SOLLposition := 0; 
+   IN.Stelle_3.Meldung_Entladen := FALSE; 
+   IN.Stelle_3.Bef_Entspannen := FALSE; 
+   IN.Stelle_3.frei_1 := FALSE; 
+   IN.Stelle_3.Meldung_SICHER_offen := FALSE; 
+   IN.Stelle_3.frei_2 := FALSE; 
+   IN.Stelle_3.Meldung_Beladen := FALSE; 
+   IN.Stelle_3.Bef_Spannen_OHNE_CTRL := FALSE; 
+   IN.Stelle_3.Bef_Spannen_MIT_CTRL := FALSE; 
+   IN.Stelle_4.Meldung_Entladen := FALSE; 
+   IN.Stelle_4.Bef_Entspannen := FALSE; 
+   IN.Stelle_4.frei_1 := FALSE; 
+   IN.Stelle_4.Meldung_SICHER_offen := FALSE; 
+   IN.Stelle_4.frei_2 := FALSE; 
+   IN.Stelle_4.Meldung_Beladen := FALSE; 
+   IN.Stelle_4.Bef_Spannen_OHNE_CTRL := FALSE; 
+   IN.Stelle_4.Bef_Spannen_MIT_CTRL := FALSE; 
+   IN.BEF_RPL_positionieren := FALSE; 
+   IN.Res_18_1 := FALSE; 
+   IN.Res_18_2 := FALSE; 
+   IN.Res_18_3 := FALSE; 
+   IN.Frg_Bed_Tuere_oeffnen := FALSE; 
+   IN.frei1[50] := B#16#0; 
+   IN.frei1[51] := B#16#0; 
+   IN.frei1[52] := B#16#0; 
+   IN.frei1[53] := B#16#0; 
+   IN.frei1[54] := B#16#0; 
+   IN.frei1[55] := B#16#0; 
+   IN.frei1[56] := B#16#0; 
+   IN.frei1[57] := B#16#0; 
+   IN.frei1[58] := B#16#0; 
+   IN.frei1[59] := B#16#0; 
+   STAT.Stelle_1.gespannt := FALSE; 
+   STAT.Stelle_1.entspannt := FALSE; 
+   STAT.Stelle_1.aktivieren_spannen := FALSE; 
+   STAT.Stelle_1.aktivieren_entspannen := FALSE; 
+   STAT.Stelle_1.Teil_nicht_in_Ordnung := FALSE; 
+   STAT.Stelle_2.gespannt := FALSE; 
+   STAT.Stelle_2.entspannt := FALSE; 
+   STAT.Stelle_2.aktivieren_spannen := FALSE; 
+   STAT.Stelle_2.aktivieren_entspannen := FALSE; 
+   STAT.Stelle_2.Teil_nicht_in_Ordnung := FALSE; 
+   STAT.Stelle_3.gespannt := FALSE; 
+   STAT.Stelle_3.entspannt := FALSE; 
+   STAT.Stelle_3.aktivieren_spannen := FALSE; 
+   STAT.Stelle_3.aktivieren_entspannen := FALSE; 
+   STAT.Stelle_3.Teil_nicht_in_Ordnung := FALSE; 
+   STAT.Stelle_4.gespannt := FALSE; 
+   STAT.Stelle_4.entspannt := FALSE; 
+   STAT.Stelle_4.aktivieren_spannen := FALSE; 
+   STAT.Stelle_4.aktivieren_entspannen := FALSE; 
+   STAT.Stelle_4.Teil_nicht_in_Ordnung := FALSE; 
+   STAT.Ruestplatz.SpSt1_CTRL_aktivieren := FALSE; 
+   STAT.Ruestplatz.SpSt2_CTRL_aktivieren := FALSE; 
+   STAT.Ruestplatz.SpSt3_CTRL_aktivieren := FALSE; 
+   STAT.Ruestplatz.SpSt4_CTRL_aktivieren := FALSE; 
+   STAT.Ruestplatz.FP_entspannen_ok := FALSE; 
+   STAT.Ruestplatz.FP_spannen_ok := FALSE; 
+   STAT.Ruestplatz.FP_BEF_RPL_positionieren := FALSE; 
+   STAT.Ruestplatz.FP_RPL_hat_positioniert := FALSE; 
+   STAT.Ruestplatz.FN_BEF_RPL_positionieren := FALSE; 
+   STAT.Ruestplatz.FP_Tuere_oeffnen := FALSE; 
+   STAT.Ruestplatz.FP_Tuere_schliessen := FALSE; 
+   STAT.Palettenwechsler.FP_PW_Freigabe_von_Rob := FALSE; 
+   STAT.LZ_Roboter.P_Flanke := FALSE; 
+   STAT.LZ_Roboter.N_Flanke := FALSE; 
+   STAT.LZ_Roboter.Kein_Fehler := FALSE; 
+   STAT.Roboter.Automation_ein := FALSE; 
+   STAT.RPL_Sollpos_Realwert := 0.000000e+000; 
+END_DATA_BLOCK
+

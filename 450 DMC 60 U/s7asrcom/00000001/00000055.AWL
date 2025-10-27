@@ -1,0 +1,405 @@
+FUNCTION "FC_SPL_ZD1_6AX1" : VOID
+TITLE =
+//$Revision: 1.5 $
+//$Date: 2008/05/27 10:09:27CEST $
+//$Author: hgc $
+//
+//Für Solutionline
+//Zwangsdynamisierung der Abschaltpfade (max. 6 Achsen)
+AUTHOR : RuestGeh
+FAMILY : SPL
+VERSION : 3.0
+CODE_VERSION1
+
+
+VAR_INPUT
+  start : BOOL ;	//Start des Teststop	
+  clear : BOOL ;	//Rücksetzen aller Hilfsmerker (aux_dword)
+  num_axis : INT ;	//Anzahl der parametrierten/zu testenden Achsen	
+  test_axis_1 : INT ;	//Achsnummer der als erstes zu testenden Achse
+  test_axis_2 : INT ;	//Nummer beliebig wenn sie nicht im Bereich num_axis liegen
+  test_axis_3 : INT ;	
+  test_axis_4 : INT ;	
+  test_axis_5 : INT ;	
+  test_axis_6 : INT ;	
+END_VAR
+VAR_IN_OUT
+  aux_dword : DWORD ;	//Hilfsdwort (ED,MD,DB.DBDnn,usw.),muß für jeden Aufruf unterschiedlich sein !!!
+  ready : BOOL ;	//Ready Meldung als Flanke 
+  serror : BOOL ;	//Fehler : Startbedingungen nicht gegeben : Impulse bereits gelöscht
+  error : BOOL ;	//Fehler bei Parametrierung, keine Zeitüberwachung (wenn z.B. Rückmeldesignale fe
+END_VAR
+VAR_TEMP
+  db_axis : INT ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =
+//Zwangsdynamisierung der Abschaltpfade (Safety Integrated)
+//max. 6 Achsen parallel
+//
+//Ersterstellung:    09/97
+//Autor:             Karl Rüsthaus A&D MC E51
+//Beschreibung:      10/97 Grundlage
+//                   Karl Rüsthaus A&D MC E51
+//                   08/01 Erweiterung
+//                   Martin Gehringer A&D B14
+//                   09/05 Teststop für Solutionline
+//                   Martin Silgener A&D MC CS
+//Funktion:
+//--------------------------------------------------------------------------------
+//
+//Es können pro Bausteinaufruf sechs Achsen parallel getestet werden.
+//
+//Serielles Testen von mehr als 6 Achsen kann über ein Kaskadieren der 
+//Bausteinaufrufe erreicht werden. => ('ready' des vorhergehenden Bausteines 
+//startet den nächsten)
+//
+//Ablauf:
+//--------------------------------------------------------------------------------
+//
+//STEP 0: Prüfen der Startbedingungen 
+//
+//STEP 1: Teststop-Anwahl (Abschaltpfade des Antrieb) über 
+//        PLC-Nahtstelle <Achs-DB>.DBX23.7 für alle Achsen SETZEN
+//
+//STEP 2: Abfrage der Rückmeldung auf PLC-Nahtstelle
+//        <Achs-DB>.DBX108.2 für alle Achsen = 1
+//
+//STEP 3: Teststop-Anwahl (Abschaltpfade des Antrieb) über 
+//        PLC-Nahtstelle <Achs-DB>.DBX23.7 für alle Achsen RÜCKSETZEN
+//
+//STEP 4: Abfrage der Rückmeldung auf PLC-Nahtstelle
+//        <Achs-DB>.DBX108.2 für alle Achsen = 0
+//        Teststop-Anwahl (Abschaltpfade der NCK) über
+//        Signal an NCK: 'req_test_nck SETZEN
+//
+//STEP 5: Abfrage der Rückmeldung auf PLC-Nahtstelle
+//        <Achs-DB>.DBX108.2 für alle Achsen = 1
+//        Teststop-Anwahl (Abschaltpfade der NCK) über
+//        Signal an NCK: 'req_test_nck' RÜCKSETZEN
+//
+//STEP 6: Abfrage der Rückmeldung auf PLC-Nahtstelle
+//        <Achs-DB>.DBX108.2 für alle Achsen = 0
+//        'ready'-Signal ausgeben
+//
+//Parametrierung:
+//--------------------------------------------------------------------------------
+//
+//Eingangssignale 'start' und 'clear' werden intern als Flanke ausgewertet.
+//Sie können daher statisch oder dynamisch anstehen, wenn sichergestellt ist, daß 
+//es keinen weiteren Flankenwechsel vor der 'ready' Meldung des Bausteines gibt.
+//
+//Es erfolgt eine Überprüfung des Eingangsparameters 'num_axis' auf 
+//   Anzahl > Anzahl im System definierter Achsen
+//   0 < Anzahl <= 6
+//Im Fehlerfall wird das 'error' Bit gesetzt.
+//
+//Im STEP 0 werden die Startbedingungen für die Ausführung der Testroutine
+//geprüft und im Fehlerfall wird das 'serror' Bit gesetzt
+//
+//Nicht überprüft wird der Fall:  num_axis > test_axis_n >< 0.
+//Es dürfen nur die Achsen mit der Achsnummer 0 parametriert werden, die 
+//nicht im Bereich num_axis liegen (sonst PLC Stop !!!).
+//
+//Belegung des aux_dwort:
+//
+//     Bit 0.0 :   Schrittmerker S T E P   0
+//     Bit 0.1 :   Schrittmerker S T E P   1
+//     Bit 0.2 :   Schrittmerker S T E P   2
+//     Bit 0.3 :   Schrittmerker S T E P   3
+//     Bit 0.4 :   Schrittmerker S T E P   4
+//     Bit 0.5 :   Schrittmerker S T E P   5
+//     Bit 0.6 :   Schrittmerker S T E P   6
+//
+//     Bit 1.6 :   Flankenmerker 'clear'
+//     Bit 1.7 :   Flankenmerker 'start'
+//
+//     Byte 2  :   Zwischenmerker "Impulse (nicht) gelöscht"(Abschaltpfad Antrieb)
+//     Byte 3  :   Zwischenmerker "Impulse (nicht) gelöscht"(Abschaltpfad NCK)
+//
+//
+//
+NETWORK
+TITLE =  Ablaufsteuerung
+
+      L     P##test_axis_1; // Lade Zeiger auf Eingangsvariable 1
+      LAR1  ; // -> Sichern nach AR1
+      L     P##aux_dword; // Lade Zeiger auf Hilfswort
+      LAR2  ; // -> Sichern nach AR2
+
+// Überprüfung der Eingangsparameter
+
+      L     "DB_SIEM_STARTUP".MaxAxis; // Achsanzahl im System
+      L     #num_axis; // >max Achs      
+      <I    ; 
+      SPB   err; // Fehler ausgeben : num_axis > Achsanzahl
+
+      L     0; 
+      >I    ; 
+      SPBN  serr; // Fehler ausgeben: num_axis nicht > 0
+
+      TAK   ; 
+      L     6; // Test für 6 Achsen auf NCU          
+      >I    ; 
+      SPB   err; // Fehler ausgeben: num_axis > 6
+
+      U     #ready; // Ready-Signal wird als Impuls (nur 1 Zyklus) ausgegeben
+      R     #ready; 
+
+      U     #clear; // Flankenauswertung CLEAR-Eingang
+      FP     [AR2,P#1.6]; // FM AR2: aux_dword -> Bit 0.6
+      SPB   clr; 
+
+// S T E P   0   e i n l e i t e n
+
+      U     #start; // Flankenauswertung START-Eingang
+      FP     [AR2,P#1.7]; // FM AR2: aux_dword -> Bit 1.7 
+      S      [AR2,P#0.0]; // HM AR2: aux_dword -> Bit 0.0 (S T E P   0) setzen
+
+
+// Schrittsteuerung
+
+      L     P##test_axis_1; // Lade Zeiger auf Eingangsvariable 1
+      LAR1  ; // -> Sichern nach AR1
+
+      L     #num_axis; // Schleifenzaehler (AKKU1) mit num_axis vorbelegen
+
+      U      [AR2,P#0.0]; // S T E P   0   bearbeiten
+      SPB   db00; 
+      U      [AR2,P#0.1]; // S T E P   1   bearbeiten
+      SPB   db01; 
+      U      [AR2,P#0.2]; // S T E P   2   bearbeiten
+      SPB   db02; 
+      U      [AR2,P#0.3]; // S T E P   3   bearbeiten
+      SPB   db03; 
+      U      [AR2,P#0.4]; // S T E P   4   bearbeiten
+      SPB   db04; 
+
+      BEA   ; // Bausteinende wenn kein Schritt aktiv
+NETWORK
+TITLE =S T E P   0
+// *******************************************************************************
+//****
+// *** S T E P   0  : Prüfung der Startbedingungen -> Im Fehlerfall 'serror' = 1  
+// ***
+// *******************************************************************************
+//****
+db00: L     W [AR1,P#0.0]; // AR1: test_axis_n INT-Wert (Achsnummer) (AKKU1alt -> AKKU2)
+      INC   30; // Offset für Achs-DB aufaddieren
+      T     #db_axis; // Nr. Achs-DB ist in Temporärvar. db_axis hinterlegt
+      TAK   ; // Aktueller Stand des Schleifenzählers wieder -> AKKU1
+      AUF   DB [#db_axis]; // Achs-DB der aktuellen Achse öffnen
+
+      UN    DBX  108.2; // Rückmeldung "Impulse nicht gelöscht" abfragen
+      =      [AR2,P#2.0]; // HM AR2: aux_dword Byte 2 (611D) : Impulse nicht gelöscht Bit 0: Achse 1 -> Bit 7: Achse 8 
+      SPBN  serr; // Fehler Startbedingungen
+
+      +AR1  P#2.0; // AR1 [test_axis_n] auf nächstes Wort test_axis(n+1) setzen
+      +AR2  P#0.1; // AR2 [aux_dword]   auf nächstes HM-Bit für nächste Achse setzen 
+      LOOP  db00; // AKKU1-L -> -1 und springe, wenn AKKU1-L <> 0)
+
+
+      L     P##aux_dword; // Lade Zeiger auf Hilfswort
+      LAR2  ; // -> Sichern nach AR2
+
+      L     #num_axis; // Anzahl der Achsen laden
+      DEC   1; // Anpassung an Sprungverteiler (Beginn bei 0)
+      SPL   ck0x; // Default Sprungziel (Fehlerfall)
+      SPA   ck01; // Sprungziel bei Anzahl der zu testenden Achsen = 1
+      SPA   ck02; // Sprungziel bei Anzahl der zu testenden Achsen = 2
+      SPA   ck03; // Sprungziel bei Anzahl der zu testenden Achsen = 3
+      SPA   ck04; // Sprungziel bei Anzahl der zu testenden Achsen = 4
+      SPA   ck05; // Sprungziel bei Anzahl der zu testenden Achsen = 5
+      SPA   ck06; // Sprungziel bei Anzahl der zu testenden Achsen = 6
+ck0x: SPA   end; 
+
+// S T E P   1   e i n l e i t e n
+
+ck06: U      [AR2,P#2.5]; // Statusbits Impulslöschung werden abgefragt Bit5: Achse 6 -> Bit0: Achse 1
+ck05: U      [AR2,P#2.4]; // Statusbits Impulslöschung werden abgefragt Bit4: Achse 5 -> Bit0: Achse 1
+ck04: U      [AR2,P#2.3]; // Statusbits Impulslöschung werden abgefragt Bit3: Achse 4 -> Bit0: Achse 1
+ck03: U      [AR2,P#2.2]; // Statusbits Impulslöschung werden abgefragt Bit2: Achse 3 -> Bit0: Achse 1
+ck02: U      [AR2,P#2.1]; // Statusbits Impulslöschung werden abgefragt Bit1: Achse 2 -> Bit0: Achse 1
+ck01: U      [AR2,P#2.0]; // Statusbits Impulslöschung werden abgefragt Bit0: Achse 1 -> Bit0: Achse 1
+      U      [AR2,P#0.0]; // HM AR2: aux_dword -> Bit 0.0 (S T E P   0) 
+      R      [AR2,P#0.0]; // HM AR2: aux_dword -> Bit 0.0 (S T E P   0) rücksetzen 
+      S      [AR2,P#0.1]; // HM AR2: aux_dword -> Bit 0.1 (S T E P   1) setzen
+      BEA   ; // Bausteinende
+NETWORK
+TITLE =S T E P   1
+// *******************************************************************************
+//*****************
+// *** S T E P   1  : Test der Abschaltpfade des Antriebs über PLC-Nahtstelle 
+//<Achs-DB>.DBX23.7 ***
+// *******************************************************************************
+//*****************
+db01: L     W [AR1,P#0.0]; // AR1: test_axis_n INT-Wert (Achsnummer) (AKKU1alt -> AKKU2)
+      INC   30; // Offset für Achs-DB aufaddieren
+      T     #db_axis; // Nr. Achs-DB ist in Temporärvar. db_axis hinterlegt
+      TAK   ; // Aktueller Stand des Schleifenzählers wieder -> AKKU1
+
+      AUF   DB [#db_axis]; // Achs-DB der aktuellen Achse öffnen
+      U      [AR2,P#0.1]; // HM AR2: aux_dword -> Bit 0.1 (S T E P   1)  
+      S     DBX   23.7; // Teststop-Anwahl (Antrieb) auf Achs-Nahtstelle setzen
+
+      +AR1  P#2.0; // AR1 auf nächstes Wort test_axis(n+1) setzen
+      LOOP  db01; // AKKU1-L -> -1 und springe, wenn AKKU1-L <> 0)
+
+// S T E P   2   e i n l e i t e n
+
+      U      [AR2,P#0.1]; // HM AR2: aux_dword -> Bit 0.1 (S T E P   1)  
+      R      [AR2,P#0.1]; // HM AR2: aux_dword -> Bit 0.1 (S T E P   1) rücksetzen
+      S      [AR2,P#0.2]; // HM AR2: aux_dword -> Bit 0.2 (S T E P   2) setzen   
+      BEA   ; // Bausteinende
+
+NETWORK
+TITLE =S T E P   2
+// *******************************************************************************
+//*****************
+// *** S T E P   2  : Status "Impulse gelöscht" über PLC-Nahtstelle 
+//<Achs-DB>.DBX108.2 abfragen ***
+// *******************************************************************************
+//*****************
+db02: L     W [AR1,P#0.0]; // AR1: test_axis_n INT-Wert (Achsnummer) (AKKU1alt -> AKKU2)
+      INC   30; // Offset für Achs-DB aufaddieren
+      T     #db_axis; // Nr. Achs-DB ist in Temporärvar. db_axis hinterlegt
+      TAK   ; // Aktueller Stand des Schleifenzählers wieder -> AKKU1
+      AUF   DB [#db_axis]; // Achs-DB der aktuellen Achse öffnen
+
+      U     DBX  108.2; // Rückmeldung "Impulse gelöscht" abfragen
+      =      [AR2,P#2.0]; // HM AR2: aux_dword Byte 2 (611D) : Impulse gelöscht Bit 0: Achse 1 -> Bit 7: Achse 8 
+
+      +AR1  P#2.0; // AR1 [test_axis_n] auf nächstes Wort test_axis(n+1) setzen
+      +AR2  P#0.1; // AR2 [aux_dword]   auf nächstes HM-Bit für nächste Achse setzen 
+      LOOP  db02; // AKKU1-L -> -1 und springe, wenn AKKU1-L <> 0)
+
+
+      L     P##aux_dword; // Lade Zeiger auf Hilfswort
+      LAR2  ; // -> Sichern nach AR2
+
+      L     #num_axis; // Anzahl der Achsen laden
+      DEC   1; // Anpassung an Sprungverteiler (Beginn bei 0)
+      SPL   ck2x; // Default Sprungziel (Fehlerfall)
+      SPA   ck21; // Sprungziel bei Anzahl der zu testenden Achsen = 1
+      SPA   ck22; // Sprungziel bei Anzahl der zu testenden Achsen = 2
+      SPA   ck23; // Sprungziel bei Anzahl der zu testenden Achsen = 3
+      SPA   ck24; // Sprungziel bei Anzahl der zu testenden Achsen = 4
+      SPA   ck25; // Sprungziel bei Anzahl der zu testenden Achsen = 5
+      SPA   ck26; // Sprungziel bei Anzahl der zu testenden Achsen = 6
+ck2x: SPA   end; 
+
+// S T E P   3   e i n l e i t e n
+
+ck26: U      [AR2,P#2.5]; // Statusbits Impulslöschung werden abgefragt Bit5: Achse 6 -> Bit0: Achse 1
+ck25: U      [AR2,P#2.4]; // Statusbits Impulslöschung werden abgefragt Bit4: Achse 5 -> Bit0: Achse 1
+ck24: U      [AR2,P#2.3]; // Statusbits Impulslöschung werden abgefragt Bit3: Achse 4 -> Bit0: Achse 1
+ck23: U      [AR2,P#2.2]; // Statusbits Impulslöschung werden abgefragt Bit2: Achse 3 -> Bit0: Achse 1
+ck22: U      [AR2,P#2.1]; // Statusbits Impulslöschung werden abgefragt Bit1: Achse 2 -> Bit0: Achse 1
+ck21: U      [AR2,P#2.0]; // Statusbits Impulslöschung werden abgefragt Bit0: Achse 1 -> Bit0: Achse 1
+      U      [AR2,P#0.2]; // HM AR2: aux_dword -> Bit 0.2 (S T E P   2) 
+      R      [AR2,P#0.2]; // HM AR2: aux_dword -> Bit 0.2 (S T E P   2) rücksetzen 
+      S      [AR2,P#0.3]; // HM AR2: aux_dword -> Bit 0.3 (S T E P   3) setzen
+      BEA   ; // Bausteinende
+
+NETWORK
+TITLE =S T E P   3
+// *******************************************************************************
+//*****************
+// *** S T E P   3  : Teststop-Anwahl über PLC-Nahtstelle <Achs-DB>.DBX23.7 
+//ablöschen           ***
+// *******************************************************************************
+//*****************
+db03: L     W [AR1,P#0.0]; // AR1: test_axis_n INT-Wert (Achsnummer) (AKKU1alt -> AKKU2)
+      INC   30; // Offset für Achs-DB aufaddieren
+      T     #db_axis; // Nr. Achs-DB ist in Temporärvar. db_axis hinterlegt
+      TAK   ; // Aktueller Stand des Schleifenzählers wieder -> AKKU1
+      AUF   DB [#db_axis]; // Achs-DB der aktuellen Achse öffnen
+
+      U      [AR2,P#0.3]; // HM AR2: aux_dword -> Bit 0.3 (S T E P   3)  
+      R     DBX   23.7; // Teststop-Anwahl (Antrieb) auf Achs-Nahtstelle rücksetzen
+
+      +AR1  P#2.0; // AR1 auf nächstes Wort test_axis(n+1) setzen
+      LOOP  db03; // AKKU1-L -> -1 und springe, wenn AKKU1-L <> 0)
+
+// S T E P   4   e i n l e i t e n
+
+      U      [AR2,P#0.3]; // HM AR2: aux_dword -> Bit 0.3 (S T E P   3)  
+      R      [AR2,P#0.3]; // HM AR2: aux_dword -> Bit 0.3 (S T E P   3) rücksetzen
+      S      [AR2,P#0.4]; // HM AR2: aux_dword -> Bit 0.4 (S T E P   4) setzen   
+      BEA   ; // Bausteinende
+
+NETWORK
+TITLE =S T E P   4
+// *******************************************************************************
+//*****************
+// *** S T E P   4  : "Impulse gelöscht" über <Achs-DB>.DBX108.2 abfragen = nicht 
+//mehr aktiv    ***
+// *******************************************************************************
+//*****************
+db04: L     W [AR1,P#0.0]; // AR1: test_axis_n INT-Wert (Achsnummer) (AKKU1alt -> AKKU2)
+      INC   30; // Offset für Achs-DB aufaddieren
+      T     #db_axis; // Nr. Achs-DB ist in Temporärvar. db_axis hinterlegt
+      TAK   ; // Aktueller Stand des Schleifenzählers wieder -> AKKU1
+      AUF   DB [#db_axis]; // Achs-DB der aktuellen Achse öffnen
+
+      UN    DBX  108.2; // Rückmeldung nicht "Impulse gelöscht" abfragen
+      =      [AR2,P#2.0]; // HM AR2: aux_dword Byte 2 (611D) : Impulse wieder da Bit 0: Achse 1 -> Bit 7: Achse 8 
+
+      +AR1  P#2.0; // AR1 [test_axis_n] auf nächstes Wort test_axis(n+1) setzen
+      +AR2  P#0.1; // AR2 [aux_dword]   auf nächstes HM-Bit für nächste Achse setzen 
+      LOOP  db04; // AKKU1-L -> -1 und springe, wenn AKKU1-L <> 0)
+
+
+      L     P##aux_dword; // Lade Zeiger auf Hilfswort
+      LAR2  ; // -> Sichern nach AR2
+
+      L     #num_axis; // Anzahl der Achsen laden
+      DEC   1; // Anpassung an Sprungverteiler (Beginn bei 0)
+      SPL   ck4x; // Default Sprungziel (Fehlerfall)
+      SPA   ck41; // Sprungziel bei Anzahl der zu testenden Achsen = 1
+      SPA   ck42; // Sprungziel bei Anzahl der zu testenden Achsen = 2
+      SPA   ck43; // Sprungziel bei Anzahl der zu testenden Achsen = 3
+      SPA   ck44; // Sprungziel bei Anzahl der zu testenden Achsen = 4
+      SPA   ck45; // Sprungziel bei Anzahl der zu testenden Achsen = 5
+      SPA   ck46; // Sprungziel bei Anzahl der zu testenden Achsen = 6
+ck4x: SPA   end; 
+
+// Fertigsignale ausgegeben
+
+ck46: U      [AR2,P#2.5]; // Statusbits Impulslöschung werden abgefragt Bit5: Achse 6 -> Bit0: Achse 1
+ck45: U      [AR2,P#2.4]; // Statusbits Impulslöschung werden abgefragt Bit4: Achse 5 -> Bit0: Achse 1
+ck44: U      [AR2,P#2.3]; // Statusbits Impulslöschung werden abgefragt Bit3: Achse 4 -> Bit0: Achse 1
+ck43: U      [AR2,P#2.2]; // Statusbits Impulslöschung werden abgefragt Bit2: Achse 3 -> Bit0: Achse 1
+ck42: U      [AR2,P#2.1]; // Statusbits Impulslöschung werden abgefragt Bit1: Achse 2 -> Bit0: Achse 1
+ck41: U      [AR2,P#2.0]; // Statusbits Impulslöschung werden abgefragt Bit0: Achse 1 -> Bit0: Achse 1
+      U      [AR2,P#0.4]; // HM AR2: aux_dword -> Bit 0.4 (S T E P   4) 
+      R      [AR2,P#0.4]; // HM AR2: aux_dword -> Bit 0.4 (S T E P   4) rücksetzen 
+      S     #ready; 
+      SPB   res; 
+      BEA   ; // Bausteinende
+
+
+NETWORK
+TITLE =Fehlerbehandlung / Initialisierung
+
+serr: =     #serror; 
+      SPA   res; 
+
+err:  =     #error; 
+      SPA   res; 
+
+clr:  SET   ; 
+      R     #serror; // Start-Fehler rücksetzen
+      R     #error; // Fehler rücksetzen
+
+res:  L     #aux_dword; 
+
+      L     DW#16#C00000; // AUX-Bits (1.7/1.6) für Flankenerkennung nicht ablöschen
+      UD    ; 
+      T     #aux_dword; 
+
+end:  BE    ; 
+
+END_FUNCTION
+

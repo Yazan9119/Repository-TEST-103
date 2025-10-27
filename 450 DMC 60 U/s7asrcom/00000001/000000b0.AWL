@@ -1,0 +1,704 @@
+FUNCTION "FC_MA_SPI_SCHMIER" : VOID
+TITLE =
+//$Revision: 1.16 $
+//$Date: 2007/10/11 15:07:46CEST $
+//$Author: boa $
+//
+//Spindelschmierung
+//
+//Logbuch:
+///v0.1/SJA  20.12.1999
+{ S7_language := '7(1) Deutsch (Deutschland)  11.10.2007  11:26:46' }
+AUTHOR : SJA
+FAMILY : DM_BASIS
+NAME : SPISCHM
+VERSION : 0.1
+
+
+VAR_INPUT
+  E_Enable : BOOL ;	//Modufreigabe
+END_VAR
+VAR_TEMP
+  T_Enable_Schmierung : BOOL ;	
+  RESET : BOOL ;	
+  T_Rueckmeldung_OEL : BOOL ;	
+  M3_M4 : BOOL ;	
+  t_Zeit_AL_Schmierdruck : BYTE ;	//Verzögerungszeit für ALARM Schmierdruck
+  t_Zeit_WAR_Schmierdruck : BYTE ;	//Verzögerungszeit für WARNUNG Schmierdruck
+END_VAR
+BEGIN
+NETWORK
+TITLE =Modulfreigabe
+//wenn Modul enabled ist , sprung an Bausteinende
+//wenn Spindelschmierung durch Maschinendatum abgewählt ist,
+//dann Rücksetzen der Ausgänge, sowie der Fehler
+//
+      UN    #E_Enable; 
+      SPB   ENDE; 
+
+//      U     M    485.0
+//      R     "I_SFK_Schmier_Oelstnd"
+
+//      U     M    485.1
+//      R     "I_SPI_SCH_LUFTDRUCK_OK"
+
+//      U     M    485.2
+//      R     "I_SFK_Oel_DrkUebWach"
+
+      L     "DB_PLC_MD_DB20".UDInt._018_ANWAHL_SPDL_SCHMIER; 
+      L     1; 
+      ==I   ; 
+      SPB   STRT; 
+
+      L     "DB_PLC_MD_DB20".UDInt._018_ANWAHL_SPDL_SCHMIER; 
+      L     2; 
+      ==I   ; 
+      SPB   GMNS; 
+
+      CLR   ; 
+      =     "O_SPI_SCH_LUFT"; 
+      =     "O_SPI_SCH_OEL"; 
+      =     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700640_Oelstand_SpiSchm; 
+      =     "DB_FEHLERMELDUNG".Warnung._701848_OELSTAND; 
+      =     "DB_FEHLERMELDUNG".Meldung._702001_MBHG_Bedienung; 
+      =     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700641_Luftdruck_Nicht1; 
+      =     "DB_FEHLERMELDUNG".Warnung._701850_LUFTDRUCK_Nicht0; 
+      =     "DB_FEHLERMELDUNG".Warnung._701851_OELDRUCK_Nicht1; 
+      =     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700642_Oeldruck_Nicht1; 
+      =     "DB_FEHLERMELDUNG".Warnung._701852_OELDRUCK_Nicht0; 
+
+      L     0; 
+      T     "B_SKZ_SFKSchmieroel"; 
+
+      SPA   ENDE; 
+
+
+STRT: NOP   0; 
+//Übergabe der Zeit für "ALARM-Drucküberwachung Spindelschmierung"
+//War fest 30 [s]
+      L     "DB_PLC_MD_DB20".UDInt._140_ZEIT_DRUCK_OK; 
+      T     #t_Zeit_AL_Schmierdruck; 
+
+//Übergabe der Zeit für "WARNUNG-Drucküberwachung Spindelschmierung"
+// 1/3 von ALARM-Zeit     ;war fest 10 [s]
+      L     3; 
+      /I    ; 
+      T     #t_Zeit_WAR_Schmierdruck; 
+
+      U     "M_Reset_Taste"; 
+      U(    ; 
+      O     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700640_Oelstand_SpiSchm; 
+      O     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700642_Oeldruck_Nicht1; 
+      O     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700640_Oelstand_SpiSchm; 
+      )     ; 
+      SPBN  STR1; 
+
+      L     0; 
+      T     "B_SKZ_SFKSchmieroel"; 
+      SET   ; 
+      R     "O_SPI_SCH_OEL"; 
+      R     "O_SPI_SCH_LUFT"; 
+
+
+STR1: U     "M_Ruecksetze_Fehler"; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700640_Oelstand_SpiSchm; 
+      R     "DB_FEHLERMELDUNG".Warnung._701848_OELSTAND; 
+      R     "DB_FEHLERMELDUNG".Warnung._701849_LUFTDRUCK_Nicht1; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700641_Luftdruck_Nicht1; 
+      R     "DB_FEHLERMELDUNG".Warnung._701850_LUFTDRUCK_Nicht0; 
+      R     "DB_FEHLERMELDUNG".Warnung._701851_OELDRUCK_Nicht1; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700642_Oeldruck_Nicht1; 
+      R     "DB_FEHLERMELDUNG".Warnung._701852_OELDRUCK_Nicht0; 
+
+NETWORK
+TITLE =Oelstandueberwachung
+//In diesem Netzwerk wird der Oelstands ueberwacht
+//Bei fehlendem Eingang wird 
+//nach 20 Sekunden eine Warnung ausgegeben (T70)
+//nach 300 Minuten ein Fehler ausgegeben (E_OELSTANDSTIMER2)
+      UN    "I_SPI_SCH_FUELLSTAND_OK"; 
+      L     S5T#20S; 
+      SE    "Te_Oelstand_Warnung"; 
+
+      UN    "I_SPI_SCH_FUELLSTAND_OK"; 
+      L     S5T#30M; 
+      SE    "Te_Oelstand_Fehler"; 
+
+      U     "Te_Oelstand_Warnung"; 
+      S     "DB_FEHLERMELDUNG".Warnung._701848_OELSTAND; 
+
+      U     "Te_Oelstand_Fehler"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700640_Oelstand_SpiSchm; 
+
+NETWORK
+TITLE =Schmierluft 1
+//Hier wird das Schmierluftventil ueberwacht.
+//Spindel ein schaltet das Schmierluftventil ein
+//Ist die Spindel laenger als 5 Minuten aus wird auch das Schmierluftventil 
+//ausgeschaltet 
+      O     "MX_Spdl_M3"; 
+      O     "MX_Spdl_M4"; 
+      ON    "M_Hauptspindel_steht"; 
+      U     "M_MA_Maschine_Ein"; 
+      O     "O_SPI_SCH_OEL"; 
+      L     S5T#20S; 
+      SA    "Ta_Schmierluftaus"; 
+
+      O     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700641_Luftdruck_Nicht1; 
+      R     "Ta_Schmierluftaus"; 
+
+      U     "Ta_Schmierluftaus"; 
+      UN    "M_PW_Aktiv"; 
+      =     "O_SPI_SCH_LUFT"; 
+
+
+NETWORK
+TITLE =Schmierluft 2
+//Hier wird der Luftdruckschalter ueberwacht
+//Luftdruck = 0
+//10 sekunden nach einschalten des Schmierluftventils Warnung
+//5 Minuten     -  "   -                              Fehler
+//
+      U     "O_SPI_SCH_LUFT"; 
+      UN    "I_SPI_SCH_LUFTDRUCK_OK"; 
+      L     S5T#10S; 
+      SE    "Te_Luftdruck_Warnung"; 
+
+      U     "I_SPI_SCH_LUFTDRUCK_OK"; 
+      ON    "O_SPI_SCH_LUFT"; 
+      R     "Te_Luftdruck_Warnung"; 
+
+      U     "O_SPI_SCH_LUFT"; 
+      UN    "I_SPI_SCH_LUFTDRUCK_OK"; 
+      L     S5T#2M; 
+      SE    "Te_Luftdruck_Fehler"; 
+      U     "I_SPI_SCH_LUFTDRUCK_OK"; 
+      ON    "O_SPI_SCH_LUFT"; 
+      R     "Te_Luftdruck_Fehler"; 
+
+      U     "Te_Luftdruck_Warnung"; 
+      S     "DB_FEHLERMELDUNG".Warnung._701849_LUFTDRUCK_Nicht1; 
+
+      U     "Te_Luftdruck_Fehler"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700641_Luftdruck_Nicht1; 
+
+NETWORK
+TITLE =Schmierluft 3
+//10 Sekunden nach Schmierluftventil aus sollte der Luftdruckschalter auch aus 
+//sein,ansonsten wird eine Warnung ausgegeben
+//
+      UN    "O_SPI_SCH_LUFT"; 
+      L     S5T#12S; 
+      SE    "Te_Luftdrucknicht0"; 
+
+      U     "Te_Luftdrucknicht0"; 
+      U     "I_SPI_SCH_LUFTDRUCK_OK"; 
+      S     "DB_FEHLERMELDUNG".Warnung._701850_LUFTDRUCK_Nicht0; 
+
+
+NETWORK
+TITLE =Schmieroel Schritt 0
+//wenn Schmierluftventil und Luftdruckschalter ein ist springe in Schritt 1
+//sonst bleibe in Schritt 0
+//
+      L     "B_SKZ_SFKSchmieroel"; 
+      SPL   S099; 
+      SPA   S000; 
+      SPA   S001; 
+      SPA   S002; 
+      SPA   S003; 
+      SPA   S004; 
+
+S099: SPA   ENDE; 
+
+
+S000: CLR   ; 
+      =     "O_SPI_SCH_OEL"; 
+
+      L     0; 
+      T     "MW_SpiSchm_Zaehler"; 
+
+      U     "O_SPI_SCH_LUFT"; 
+      U     "I_SPI_SCH_FUELLSTAND_OK"; 
+      UN    "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700641_Luftdruck_Nicht1; 
+      UN    "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700642_Oeldruck_Nicht1; 
+
+      SPBN  ENDE; 
+
+      L     1; 
+      T     "B_SKZ_SFKSchmieroel"; 
+      SPA   ENDE; 
+
+NETWORK
+TITLE =Schmieroel Schritt 1
+//Hier wird die Schmierpumpe eingeschaltet
+//Auserdem werden beim Einschalten 2 Timer gesetzt
+//Wird nach 10 Sekunden der Eingang Oeldruckschalter immer noch nicht 1 wird eine 
+//Warnung ausgegeben
+//Wird nach 30 Sekunden der Oeldruckschalter immer noch nicht 1 wird ein Fehler 
+//ausgegeben und der OelSKZ auf 0 zurueckgesetzt
+//Kommt der Eingang innerhalb 30 Sekunden erhoeht sich der SKZ-Oel auf 2
+//
+S001: SET   ; 
+      S     "O_SPI_SCH_OEL"; 
+
+      U     "M_Takt_1s"; 
+      SPBN  UO11; 
+
+      L     "MW_SpiSchm_Zaehler"; 
+      L     1; 
+      +I    ; 
+      T     "MW_SpiSchm_Zaehler"; 
+
+UO11: L     "MW_SpiSchm_Zaehler"; 
+      L     #t_Zeit_WAR_Schmierdruck; 
+      >I    ; 
+      SPBN  UO12; 
+
+      SET   ; 
+      =     "DB_FEHLERMELDUNG".Warnung._701851_OELDRUCK_Nicht1; 
+
+      L     "MW_SpiSchm_Zaehler"; 
+      L     #t_Zeit_AL_Schmierdruck; 
+      >I    ; 
+      SPBN  UO12; 
+
+      SET   ; 
+      =     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700642_Oeldruck_Nicht1; 
+      L     0; 
+      T     "B_SKZ_SFKSchmieroel"; 
+      SPA   ENDE; 
+
+UO12: U     "I_SPI_SCH_OELDRUCK_OK_1"; 
+      SPBN  ENDE; 
+      L     2; 
+      T     "B_SKZ_SFKSchmieroel"; 
+      L     0; 
+      T     "MW_SpiSchm_Zaehler"; 
+      SPA   ENDE; 
+
+NETWORK
+TITLE =Schmieroel Schritt 2
+//20 Sekunden nachdem der Oeldrcukschalter 1 wurde muss die Schmierpumpe 
+//abgeschaltet werden, danach in Schritt 3
+//wenn der Oeldruckschalter aber vorher wieder Null wird, wird in Schritt 0
+//zurueckgekehrt
+S002: SET   ; 
+      S     "O_SPI_SCH_OEL"; 
+
+      U     "M_Takt_1s"; 
+      SPBN  UO22; 
+
+      L     "MW_SpiSchm_Zaehler"; 
+      L     1; 
+      +I    ; 
+      T     "MW_SpiSchm_Zaehler"; 
+
+UO22: U     "I_SPI_SCH_OELDRUCK_OK_1"; 
+      SPB   U021; 
+      L     1; 
+      T     "B_SKZ_SFKSchmieroel"; 
+      L     0; 
+      T     "MW_SpiSchm_Zaehler"; 
+      SPA   ENDE; 
+
+U021: L     "MW_SpiSchm_Zaehler"; 
+      L     19; 
+      >I    ; 
+      SPBN  ENDE; 
+
+      CLR   ; 
+      =     "O_SPI_SCH_OEL"; 
+      L     0; 
+      T     "MW_SpiSchm_Zaehler"; 
+      L     3; 
+      T     "B_SKZ_SFKSchmieroel"; 
+      SPA   ENDE; 
+
+NETWORK
+TITLE =Schmieroel Schritt 3
+//spaetestens 10 sec nach Schmierpumpenstop soll der Oeldruckschalter auf 0 gehen.
+//Bei Oeldruckschalter = 0 wird in Schritt 4 verzweigt
+//Nach 10 sec Oeldruckschalter = 1 wird eine Warnung ausgegeben und in Schritt 4
+//verzweigt
+//
+S003: SET   ; 
+      R     "O_SPI_SCH_OEL"; 
+
+      U     "M_Takt_1s"; 
+      SPBN  UO31; 
+
+      L     "MW_SpiSchm_Zaehler"; 
+      L     1; 
+      +I    ; 
+      T     "MW_SpiSchm_Zaehler"; 
+
+UO31: L     "MW_SpiSchm_Zaehler"; 
+      L     10; 
+      >I    ; 
+      SPBN  UO32; 
+      SET   ; 
+      =     "DB_FEHLERMELDUNG".Warnung._701852_OELDRUCK_Nicht0; 
+      SPA   UO33; 
+
+UO32: U     "I_SPI_SCH_OELDRUCK_OK_1"; 
+      SPB   ENDE; 
+
+UO33: L     4; 
+      T     "B_SKZ_SFKSchmieroel"; 
+      L     0; 
+      T     "MW_SpiSchm_Zaehler"; 
+      SPA   ENDE; 
+
+NETWORK
+TITLE =Schmieroel Schritt 4
+//Die Schmierpumpe bleibt mindestens 10 Sekunden mal die Maschinenkonstante aus-
+//geschaltet, erst dann wir in Schritt 0 zurueckgekehrt 
+//
+S004: U     "M_Takt_1s"; 
+      SPBN  UO41; 
+
+      L     "MW_SpiSchm_Zaehler"; 
+      L     1; 
+      +I    ; 
+      T     "MW_SpiSchm_Zaehler"; 
+
+UO41: L     "MW_SpiSchm_Zaehler"; 
+      L     "DB_PLC_MD_DB20".UDInt._141_AUSZEIT_SCHMIERIMP; 
+      >I    ; 
+      SPBN  ENDE; 
+
+      L     0; 
+      T     "B_SKZ_SFKSchmieroel"; 
+      T     "MW_SpiSchm_Zaehler"; 
+
+NETWORK
+TITLE =GMN-Spindelschmierung
+
+GMNS: NOP   0; 
+      L     "DB_PLC_MD_DB20".UDInt._018_ANWAHL_SPDL_SCHMIER; 
+      L     2; 
+      ==I   ; 
+      =     #T_Enable_Schmierung; 
+      SPBN  ENDE; 
+
+      U     "M_Reset_Taste"; 
+      O     "M_Fehler_Quit_Taste"; 
+      O     "M_1_ter_OB1_Zyklus"; 
+      O     "M_Flanke_M208"; 
+      =     #RESET; 
+
+      U     "I_SPI_SCH_OELDRUCK_OK_1"; 
+//      U     "I_SPI_SCH_OELDRUCK_OK_2"
+      =     #T_Rueckmeldung_OEL; 
+
+
+      U     "MX_Spdl_M3"; 
+      O     "MX_Spdl_M4"; 
+      O     "M_NC_Start_Taste"; 
+      ON    "M_Hauptspindel_steht"; 
+      =     #M3_M4; 
+
+      CALL "FB_SP_SCHMIERUNG" , "DB_INST_FB137" (
+           I_Enable                 := #T_Enable_Schmierung,
+           PLC_Runup                := "M_Flanke_M208",
+           Resettaste               := #RESET,
+           Sekundentakt             := "m_takt_1sec.",
+           M3_M4                    := #M3_M4,
+           M5                       := "M_Hauptspindel_steht",
+           Vorschm_aktivieren1      := FALSE,// <-Reserve
+           Vorschm_aktivieren2      := "M_MA_Maschine_Ein",
+           Vorschm_aktivieren3      := #T_Enable_Schmierung,// damit gleich nach dem aktivieren der Spindel die Vorlaufzeit gestartet wird
+           I_Schmierluftdruck_OK    := "I_SPI_SCH_LUFTDRUCK_OK",
+           I_Schmieroeldruck_OK     := #T_Rueckmeldung_OEL,
+           I_Oelfuellstand_OK       := "I_SPI_SCH_FUELLSTAND_OK",
+           T_szv                    := "DB_PLC_MD_DB20".UDInt._141_AUSZEIT_SCHMIERIMP,
+           T_sz                     := "DB_PLC_MD_DB20".UDInt._145_SCHMIER_LAUFZEIT,
+           T_vors                   := "DB_PLC_MD_DB20".UDInt._142_DAUER_VORSCHMIERUNG,
+           T_nachs                  := "DB_PLC_MD_DB20".UDInt._144_NACHLAUFZEIT_SCHM,
+           T_aus                    := "DB_PLC_MD_DB20".UDInt._143_ERNEUTE_VORSCHM,
+           T_de                     := "DB_PLC_MD_DB20".UDInt._140_ZEIT_DRUCK_OK,
+           T_nlz                    := "DB_PLC_MD_DB20".UDInt._146_DAUER_SCHMIERIMP,
+           Timer1                   := "T_SPI_Schmierung1",
+           Timer2                   := "T_SPI_Schmierung2",
+           Timer3                   := "T_SPI_Schmierung3",
+           Timer4                   := "T_SPI_Schmierung4",
+           Timer5                   := "T_SPI_Schmierung5",
+           O_Schmier_LUFT           := "O_SPI_SCH_LUFT",
+           O_Schmier_OEL            := "O_SPI_SCH_OEL",
+           Spindel_Halt             := "DB_FEHLERMELDUNG".MELDUNG3._700523_SS_Stop_Spindel,
+           AL_Oelstand_Schmierung   := "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700640_Oelstand_SpiSchm,
+           AL_Luftdruck_Nicht1      := "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700641_Luftdruck_Nicht1,
+           AL_OELDRUCK_Nicht1       := "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700642_Oeldruck_Nicht1,
+           W_Oelstand_Schmierung    := "DB_FEHLERMELDUNG".Warnung._701848_OELSTAND,
+           W_Luftdruck_Nicht1       := "DB_FEHLERMELDUNG".Warnung._701849_LUFTDRUCK_Nicht1,
+           W_Luftdruck_Nicht0       := "DB_FEHLERMELDUNG".Warnung._701850_LUFTDRUCK_Nicht0,
+           W_OELDRUCK_Nicht1        := "DB_FEHLERMELDUNG".Warnung._701851_OELDRUCK_Nicht1,
+           W_OELDRUCK_Nicht0        := "DB_FEHLERMELDUNG".Warnung._701852_OELDRUCK_Nicht0,
+           Vorschmierung_aktiv      := "M_SP_Vorschm_Req");
+
+
+NETWORK
+TITLE =ENDE
+//ENDE
+//
+ENDE: NOP   0; 
+
+
+NETWORK
+TITLE =Fraesdrehtisch Schmierung
+//ENDE
+//
+// keine Schmierung angewählt
+      U(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._047_ANWAHL_FD_FETTSCHM; 
+      L     0; 
+      ==I   ; 
+      )     ; 
+      R     "DB_FEHLERMELDUNG".WARNUNG3._700429_FD_SCH_FUELLST; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._701031_FD_SCHM_FUELL; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._701032_FD_SCH_HUB; 
+      BEB   ; 
+
+
+      U     "M_Ruecksetze_Fehler"; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._701031_FD_SCHM_FUELL; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._701032_FD_SCH_HUB; 
+
+      U     "M_Fehler_Quit_Taste"; 
+      R     "DB_FEHLERMELDUNG".WARNUNG3._700429_FD_SCH_FUELLST; 
+
+      U     "I_FD_SCH_ZYL_SCHALTER"; 
+      L     S5T#300MS; 
+      SE    "T_SPL_AKTIV"; 
+      U     "T_SPL_AKTIV"; 
+      FP    "M_FP_T_SPL_AKTIV"; 
+      SPBN  ST; 
+      L     "MB_FD_ANZAHL_SCHMIERHUB"; 
+      INC   1; 
+      T     "MB_FD_ANZAHL_SCHMIERHUB"; 
+
+//Zeit der Spindel in Bewegung zählen
+ST:   UN    "DB_ACHSE4".E_Stat; 
+      U     "DB_ACHSE4".E_SpNA; //sja 10.01.07 lt. Vorgabe HAAS / Fritz Kontstruktion nur noch im Drehbetrieb zählen
+      U     "M_Takt_1s"; 
+      SPBN  Spi1; 
+      L     "DB_REMANENT".Zeit_Schmierung_FD_Tisch; 
+      L     1; 
+      +D    ; 
+      T     "DB_REMANENT".Zeit_Schmierung_FD_Tisch; 
+Spi1: NOP   0; 
+
+      U     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._701031_FD_SCHM_FUELL; 
+      O     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._701032_FD_SCH_HUB; 
+      R     "O_FDSchmierung"; 
+      SPBN  nwa; 
+
+      L     0; 
+      T     "MB_FD_SCHM_HUEBE"; 
+      T     "MB_SKZ_FD_SCHMIERUNG"; 
+      T     "DB_REMANENT".Zeit_Schmierung_FD_Tisch; 
+      T     "MB_FD_ANZAHL_SCHMIERHUB"; 
+      SPA   SFDE; 
+
+
+
+
+nwa:  L     "MB_SKZ_FD_SCHMIERUNG"; 
+      SPL   SFxx; 
+      SPA   SFD0; 
+      SPA   SFD1; 
+      SPA   SFD2; 
+
+SFxx: SPA   SFDE; 
+
+
+NETWORK
+TITLE =Wenn Pausenzeit abgelaufen, dann Schmieren starten
+
+SFD0: SET   ; 
+      R     "O_FDSchmierung"; 
+
+      L     "DB_PLC_MD_DB20".UDInt._136_FD_SCHMIERZEIT; 
+      L     60; 
+      *I    ; 
+      L     "DB_REMANENT".Zeit_Schmierung_FD_Tisch; 
+      >D    ; 
+      SPB   SFDE; 
+
+      L     "MB_FD_ANZAHL_SCHMIERHUB"; 
+      L     "DB_PLC_MD_DB20".UDInt._137_FD_SCH_HUB; 
+      >=I   ; 
+      SPBN  X1; 
+      L     0; 
+      T     "DB_REMANENT".Zeit_Schmierung_FD_Tisch; 
+      T     "MB_SKZ_FD_SCHMIERUNG"; 
+
+      L     "MB_FD_ANZAHL_SCHMIERHUB"; 
+      DEC   1; 
+      T     "MB_FD_ANZAHL_SCHMIERHUB"; 
+      SPA   SFDE; 
+
+X1:   SET   ; 
+      S     "O_FDSchmierung"; 
+
+      L     "MB_SKZ_FD_SCHMIERUNG"; 
+      INC   1; 
+      T     "MB_SKZ_FD_SCHMIERUNG"; 
+
+      SPA   SFDE; 
+
+
+// warten auf Schalter
+SFD1: UN    "I_FD_SCH_ZYL_SCHALTER"; 
+      U     "O_FDSchmierung"; 
+      SPB   SFDE; 
+
+
+      UN    "O_FDSchmierung"; 
+      SPB   xxx; 
+
+//    L     "MB_SKZ_FD_SCHMIERUNG"
+//    INC   1
+      L     2; 
+      T     "MB_SKZ_FD_SCHMIERUNG"; 
+
+      SPA   SFDE; 
+
+
+// warten bis Schalter wieder weg
+
+SFD2: L     "MB_FD_ANZAHL_SCHMIERHUB"; 
+      L     "DB_PLC_MD_DB20".UDInt._137_FD_SCH_HUB; 
+      <I    ; 
+      SPB   SFD1; 
+
+xxx:  SET   ; 
+      R     "O_FDSchmierung"; 
+
+      L     0; 
+      T     "MB_FD_ANZAHL_SCHMIERHUB"; 
+      T     "DB_REMANENT".Zeit_Schmierung_FD_Tisch; 
+      T     "MB_SKZ_FD_SCHMIERUNG"; 
+      T     "MB_FD_SCHM_HUEBE"; 
+
+
+
+      SPA   SFDE; 
+
+
+      L     "MB_SKZ_FD_SCHMIERUNG"; 
+      DEC   1; 
+      T     "MB_SKZ_FD_SCHMIERUNG"; 
+
+      SPA   SFDE; 
+
+
+SFDE: NOP   0; 
+
+NETWORK
+TITLE =Schmierstoffpumpe ein Fraes-Drehtisch
+
+      U(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._047_ANWAHL_FD_FETTSCHM; 
+      L     1; 
+      ==I   ; 
+      )     ; 
+      SPBN  n13a; 
+
+      U     "T_FD_SCHMIER_WAR"; 
+      FP    "M_FP_T_FD_SCHMIER_WAR"; 
+      SPBN  XX; 
+      UN    "O_FD_SCH_PUMPE_EIN"; 
+      =     "O_FD_SCH_PUMPE_EIN"; 
+
+XX:   U     "O_FDSchmierung"; 
+      FP    "M_FP_O_FDSchmierung"; 
+      O(    ; 
+      U     "T_FD_SCHMIER_WAR"; 
+      FN    "M_FN_T_FD_SCHMIER_WAR"; 
+      U     "O_FDSchmierung"; 
+      )     ; 
+      L     S5T#3S; 
+      SV    "T_FD_SCHMIER_WAR"; 
+
+      UN    "O_FDSchmierung"; 
+      R     "O_FD_SCH_PUMPE_EIN"; 
+
+      SPA   n13e; 
+
+n13a: U(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._047_ANWAHL_FD_FETTSCHM; 
+      L     2; 
+      ==I   ; 
+      )     ; 
+      SPBN  n13e; 
+
+
+      U     "O_FDSchmierung"; 
+      U     "M_Takt_Speicher_04s"; 
+      =     "O_FD_SCH_PUMPE_EIN"; 
+
+
+
+n13e: NOP   0; 
+NETWORK
+TITLE =Fehlerüberwachung
+// Überwachung HUB Schmierimpuls
+      U(    ; 
+      UN    "I_FD_SCH_ZYL_SCHALTER"; // in Schritt 1 muss nach 2 minuten Hubschalter melden
+      U(    ; 
+      L     "MB_SKZ_FD_SCHMIERUNG"; 
+      L     1; 
+      ==I   ; 
+      )     ; 
+      )     ; 
+      O(    ; 
+      UN    "I_FD_SCH_ZYL_SCHALTER"; // in Schritt 2 muss nach 2 minuten Hubschalter weggehen
+      U(    ; 
+      L     "MB_SKZ_FD_SCHMIERUNG"; 
+      L     2; 
+      ==I   ; 
+      )     ; 
+      )     ; 
+      U     "O_FDSchmierung"; 
+//      UN    "DB_PLC_MD_DB20".UDHex._04_BIT4_EINRICHT_BETR
+      L     S5T#2M; 
+      SE    "T_FD_RUECKM_SCHMIE"; 
+
+      U     "T_FD_RUECKM_SCHMIE"; 
+      UN    "M_G00_aktiv"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._701032_FD_SCH_HUB; 
+
+
+      U     "O_FDSchmierung"; 
+      SPBN  x01; 
+
+
+      U(    ; // Vogel --> Füllstand abfragen
+      L     "DB_PLC_MD_DB20".UDInt._047_ANWAHL_FD_FETTSCHM; 
+      L     2; 
+      ==I   ; 
+      )     ; 
+      UN    "I_FD_SCH_FUELL_OK"; 
+      U     "O_FDSchmierung"; 
+      L     S5T#10S; 
+      SE    "T_FD_SCHMIERSTAND"; 
+
+      U     "T_FD_SCHMIERSTAND"; 
+      S     "DB_FEHLERMELDUNG".WARNUNG3._700429_FD_SCH_FUELLST; 
+
+      U     "DB_FEHLERMELDUNG".WARNUNG3._700429_FD_SCH_FUELLST; 
+      ZV    "Z_Schm_FD_War"; 
+
+      L     3; 
+      L     "Z_Schm_FD_War"; 
+      ==I   ; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._701031_FD_SCHM_FUELL; 
+
+      U     "I_FD_SCH_FUELL_OK"; 
+      R     "Z_Schm_FD_War"; 
+
+x01:  NOP   0; 
+END_FUNCTION
+

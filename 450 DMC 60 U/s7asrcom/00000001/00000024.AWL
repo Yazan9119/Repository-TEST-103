@@ -1,0 +1,292 @@
+FUNCTION "FC_WZVS_VERWALTUNG" : VOID
+TITLE =
+//$Revision: 1.12 $
+//$Date: 2007/11/13 14:29:50CET $
+//$Author: riedlh $
+//
+//Aufrufe Werkzeugverschleisskontrolle
+VERSION : 0.1
+
+
+VAR_INPUT
+  i_MSST_Taste_RESET : BOOL ;	//MSST: Taste NC-Reset
+  i_WMT_verriegelt : BOOL ;	//Werkzeug-Magazin-Tür verriegelt
+END_VAR
+BEGIN
+NETWORK
+TITLE =Werkzeug-Überwachungs-Systeme
+// Netzwerk-Übersicht
+// ==================
+// NW 1: Werkzeug-Überwachungs-Systeme
+// NW 2: FMs ablöschen, wenn weder ARTIS noch MCU
+// NW 3: Werkzeugverschleisskontrolle ARTIS
+// NW 4: Werkzeugüberwachung MCU
+// NW 5: Werkzeug sperren bei Bruch
+// NW 6: Rücksetzen Werkzeug sperren
+// NW 7: Omative ACM für GE-Spezifikation
+// NW 8: Omative ACM für GE-Spezifikation (Sonder Volvo)
+      NOP   0; 
+
+NETWORK
+TITLE =FMs ablöschen, wenn weder ARTIS noch MCU noch OMATIVE
+//"DB_PLC_MD_DB20".UDInt._039_ANWAHL_DREHMOMENT
+//= 2   ARTIS
+//= 3   MCU
+//= 4   Omative ACM
+//= 5   Omative ACM für Volvo
+      L     "DB_PLC_MD_DB20".UDInt._039_ANWAHL_DREHMOMENT; 
+      L     0; 
+      ==I   ; 
+
+      R     "DB_FEHLERMELDUNG".Warnung1._701534; 
+      R     "DB_FEHLERMELDUNG".Warnung1._701535; 
+      R     "DB_FEHLERMELDUNG".Warnung1._701536; 
+      R     "DB_FEHLERMELDUNG".Warnung1._701537; 
+      R     "DB_FEHLERMELDUNG".Warnung1._701538; 
+      R     "DB_FEHLERMELDUNG".Warnung1._701539; 
+      R     "DB_FEHLERMELDUNG".Warnung1._701540; 
+      R     "DB_FEHLERMELDUNG".Warnung1._701541; 
+      R     "DB_FEHLERMELDUNG".Warnung1._701542; 
+      R     "DB_FEHLERMELDUNG".Warnung1._701543; 
+      R     "DB_FEHLERMELDUNG".Warnung1._701544; 
+      R     "DB_FEHLERMELDUNG".Warnung1._701545; 
+      R     "DB_FEHLERMELDUNG".Warnung1._701546; 
+      R     "DB_FEHLERMELDUNG".Meldung4._702423; 
+
+      R     "DB_FEHLERMELDUNG".Meldung4._702429_OMAT_inaktiv; 
+      R     "DB_FEHLERMELDUNG".Einlesesperre._700557_OMAT_Alarm_gelb; 
+      R     "DB_FEHLERMELDUNG".Einlesesperre._700558_OMAT_Alarm_SPI_n; 
+
+      BEB   ; 
+NETWORK
+TITLE =Werkzeugverschleisskontrolle ARTIS
+
+      U(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._039_ANWAHL_DREHMOMENT; 
+      L     2; 
+      ==I   ; 
+      )     ; 
+      SPBNB _001; 
+
+      CALL "FC_WZVS_ARTIS_MAIN" ;
+
+_001: NOP   0; 
+NETWORK
+TITLE =Werkzeugüberwachung MCU
+
+      L     "DB_PLC_MD_DB20".UDInt._039_ANWAHL_DREHMOMENT; 
+      L     3; 
+      ==I   ; 
+      =     L      0.0; 
+      U     #i_MSST_Taste_RESET; 
+      =     L      0.1; 
+      BLD   103; 
+      U     #i_WMT_verriegelt; 
+      =     L      0.2; 
+      BLD   103; 
+      U     L      0.0; 
+      SPBNB _002; 
+      CALL "FC_WZVS_MCU" (
+           i_MSST_Taste_RESET       := L      0.1,
+           i_WMT_verriegelt         := L      0.2);
+_002: NOP   0; 
+      U     L      0.0; 
+      BLD   102; 
+      R     "DB_FEHLERMELDUNG".Warnung1._701541; 
+NETWORK
+TITLE =Werkzeug sperren bei Bruch
+
+      U(    ; 
+      O     "DB_WZVS".Artis.Req_WZ_sperren; 
+      O     "DB_WZVS".MCU.Ablauf.Req_WZ_sperren; 
+      )     ; 
+      =     L      0.0; 
+      BLD   103; 
+      CALL "FB_Wz_sperren" , "DI_Wz_sperren" (
+           E_Zwischensp_Nr          := 1,
+           E_WRITE                  := L      0.0,
+           EA_Error_Write           := "DB_WZVS".Artis.Error_WZ_sperren,
+           EA_DONE_Write            := "DB_WZVS".Artis.Done_WZ_sperren);
+      NOP   0; 
+NETWORK
+TITLE =Rücksetzen Werkzeug sperren
+
+      O     "DB_WZVS".Artis.Error_WZ_sperren; 
+      O     "DB_WZVS".Artis.Done_WZ_sperren; 
+      O     "M_Reset_Taste"; 
+      R     "DB_WZVS".Artis.WZ_sperren; 
+
+      R     "DB_WZVS".MCU.Ablauf.WZ_sperren; 
+NETWORK
+TITLE =General Electric Spezifikation: GE P11TF12 mit Omative ACM
+
+      U     DB70.DBX   92.0; 
+      =     L      0.0; 
+      BLD   103; 
+      U     DB70.DBX   92.1; 
+      =     L      0.1; 
+      BLD   103; 
+      U     DB70.DBX   92.2; 
+      =     L      0.2; 
+      BLD   103; 
+      U     DB70.DBX   92.3; 
+      =     L      0.3; 
+      BLD   103; 
+      U     DB70.DBX   92.4; 
+      =     L      0.4; 
+      BLD   103; 
+      U     DB70.DBX   92.5; 
+      =     L      0.5; 
+      BLD   103; 
+      U     DB70.DBX   92.6; 
+      =     L      0.6; 
+      BLD   103; 
+      U     DB70.DBX   92.7; 
+      =     L      0.7; 
+      BLD   103; 
+      U     DB70.DBX   94.0; 
+      =     L      1.0; 
+      BLD   103; 
+      U     DB70.DBX   94.1; 
+      =     L      1.1; 
+      BLD   103; 
+      U     DB70.DBX   94.2; 
+      =     L      1.2; 
+      BLD   103; 
+      U     DB70.DBX   94.3; 
+      =     L      1.3; 
+      BLD   103; 
+      U     DB70.DBX   94.4; 
+      =     L      1.4; 
+      BLD   103; 
+      U     DB70.DBX   94.5; 
+      =     L      1.5; 
+      BLD   103; 
+      U     DB70.DBX   94.6; 
+      =     L      1.6; 
+      BLD   103; 
+      U     DB70.DBX   94.7; 
+      =     L      1.7; 
+      BLD   103; 
+      U     DB70.DBX   96.0; 
+      =     L      2.0; 
+      BLD   103; 
+      U(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._039_ANWAHL_DREHMOMENT; 
+      L     4; 
+      ==I   ; 
+      )     ; 
+      SPBNB _003; 
+      CALL "FB_GE_SPEZIFIKATION" , "DI_GE_SPEZIFIKATION" (
+           ACM_ONLINE               := L      0.0,
+           ACM_ALARM                := L      0.1,
+           ACM_CONTROL              := L      0.2,
+           ACM_INMATERIAL           := L      0.3,
+           ACM_OVERLOAD             := L      0.4,
+           ACM_TOOLWORN             := L      0.5,
+           ACM_OPERATION            := L      0.6,
+           ACM_SPINDLE_ON           := L      0.7,
+           ACM_RESERVED_1           := DB70.DBB   93,
+           ACM_RESERVED_2_0         := L      1.0,
+           ACM_RESERVED_2_1         := L      1.1,
+           ACM_ALARM_T_OVERLOAD_LBM := L      1.2,
+           ACM_ALARM_T_OVERLOAD_MLM := L      1.3,
+           ACM_ALARM_T_OVERLOAD_FCM := L      1.4,
+           ACM_ALARM_T_BROKEN       := L      1.5,
+           ACM_ALARM_T_WORN         := L      1.6,
+           ACM_ALARM_SPI_T_OVERLOAD := L      1.7,
+           ACM_ALARM_NR             := DB70.DBB   95,
+           ACM_RESET_ACKNOWLEDGE    := L      2.0,
+           ACM_RESERVED_5           := DB70.DBB   97,
+           ACM_RESERVED_6           := "DB_NC_PLC".WZVS.Daten_4);
+
+
+_003: NOP   0; 
+NETWORK
+TITLE =GE P11TF12 mit Omative ACM für Volvo
+
+      U     DB70.DBX  428.0; 
+      =     L      0.0; 
+      BLD   103; 
+      U     DB70.DBX  428.1; 
+      =     L      0.1; 
+      BLD   103; 
+      U     DB70.DBX  428.2; 
+      =     L      0.2; 
+      BLD   103; 
+      U     DB70.DBX  428.3; 
+      =     L      0.3; 
+      BLD   103; 
+      U     DB70.DBX  428.4; 
+      =     L      0.4; 
+      BLD   103; 
+      U     DB70.DBX  428.5; 
+      =     L      0.5; 
+      BLD   103; 
+      U     DB70.DBX  428.6; 
+      =     L      0.6; 
+      BLD   103; 
+      U     DB70.DBX  428.7; 
+      =     L      0.7; 
+      BLD   103; 
+      U     DB70.DBX  430.0; 
+      =     L      1.0; 
+      BLD   103; 
+      U     DB70.DBX  418.1; 
+      =     L      1.1; 
+      BLD   103; 
+      U     DB70.DBX  430.2; 
+      =     L      1.2; 
+      BLD   103; 
+      U     DB70.DBX  430.3; 
+      =     L      1.3; 
+      BLD   103; 
+      U     DB70.DBX  430.4; 
+      =     L      1.4; 
+      BLD   103; 
+      U     DB70.DBX  418.5; 
+      =     L      1.5; 
+      BLD   103; 
+      U     DB70.DBX  430.6; 
+      =     L      1.6; 
+      BLD   103; 
+      U     DB70.DBX  430.7; 
+      =     L      1.7; 
+      BLD   103; 
+
+      U(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._039_ANWAHL_DREHMOMENT; 
+      L     5; 
+      ==I   ; 
+      )     ; 
+      SPBNB _004; 
+      CALL "FB_GE_SPEZIFIKATION" , "DI_GE_SPEZIFIKATION" (
+           ACM_ONLINE               := L      0.0,
+           ACM_ALARM                := L      0.1,
+           ACM_CONTROL              := L      0.2,
+           ACM_INMATERIAL           := L      0.3,
+           ACM_OVERLOAD             := L      0.4,
+           ACM_TOOLWORN             := L      0.5,
+           ACM_OPERATION            := L      0.6,
+           ACM_SPINDLE_ON           := L      0.7,
+           ACM_RESERVED_1           := DB70.DBB  429,
+           ACM_RESERVED_2_0         := L      1.0,
+           ACM_RESERVED_2_1         := L      1.1,
+           ACM_ALARM_T_OVERLOAD_LBM := L      1.2,
+           ACM_ALARM_T_OVERLOAD_MLM := L      1.3,
+           ACM_ALARM_T_OVERLOAD_FCM := L      1.4,
+           ACM_ALARM_T_BROKEN       := L      1.5,
+           ACM_ALARM_T_WORN         := L      1.6,
+           ACM_ALARM_SPI_T_OVERLOAD := L      1.7,
+           ACM_ALARM_NR             := DB70.DBB  431,
+           PLC_ACM_SPINDLE_LOAD     := "DB_NC_PLC".Zusatz.WZVS_DPR.PLC_an_WZVS.Daten_1,
+           PLC_ACM_FLOWSENSOR_VALUE := "DB_NC_PLC".Zusatz.WZVS_DPR.PLC_an_WZVS.Daten_2,
+           PLC_ACM_ACKNOWLEDGE_SIGN := DB70.DBX  420.0,
+           PLC_ACM_ACM_OFF_BIT      := DB70.DBX  420.1,
+           PLC_ACM_EXT_FLOWSEN_FLAG := DB70.DBX  420.2,
+           PLC_ACM_RESERVED_6       := "DB_NC_PLC".Zusatz.WZVS_DPR.PLC_an_WZVS.Daten_4,
+           PLC_ACM_SPINDLE_SPEED    := "DB_NC_PLC".Zusatz.WZVS_DPR.PLC_an_WZVS.Daten_5,
+           PLC_ACM_RESERVED_10      := "DB_NC_PLC".Zusatz.WZVS_DPR.PLC_an_WZVS.Daten_6);
+_004: NOP   0; 
+END_FUNCTION
+

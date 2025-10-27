@@ -1,0 +1,84 @@
+FUNCTION "FC_SERVICE_AGENT" : VOID
+TITLE =
+//$Revision: 1.13 $
+//$Date: 2008/01/24 10:52:28CET $
+//$Author: rieds $
+//
+AUTHOR : FUH
+VERSION : 0.1
+
+
+VAR_TEMP
+  dummy : BOOL ;	
+  tx_spindel_run : BOOL ;	
+  tx_program_run : BOOL ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =
+
+      L     "DB_PLC_MD_DB20".UDInt._096_SER_AG_WARTUNG1; 
+      L     0; 
+      ==I   ; 
+      R     "DI_SERVICE_AGENT".yes; 
+      R     "DI_SERVICE_AGENT".no; 
+      SPB   nw4b; 
+
+      U     "m_neustart"; 
+      R     "DI_SERVICE_AGENT".FP_p_on; 
+
+      UN    "M_Hauptachsen_stehen"; 
+      UN    "M_Hauptspindel_steht"; 
+      O     "DB_SIEM_KANAL_1".E_ProgRunn; 
+      =     #tx_program_run; 
+
+      UN    "M_Hauptspindel_steht"; 
+      =     #tx_spindel_run; 
+
+      CALL "FB_SERVICE_AGENT" , "DI_SERVICE_AGENT" (
+           power_on                 := "M_Leistung_Steht_an",
+           program_run              := #tx_program_run,//"DB_SIEM_KANAL_1".E_ProgRunn
+           spindel_run              := #tx_spindel_run,
+           Serv_agent_sign_of_life  := "DI_SERVICE_AGENT".Sign_of_life,
+           clear_mess_yes           := "DI_SERVICE_AGENT".yes,
+           clear_mess_no            := "DI_SERVICE_AGENT".no,
+           para_spindel             := "DB_PLC_MD_DB20".UDInt._096_SER_AG_WARTUNG1,
+           Para_PLC_take_control    := 10,
+           out_mess_spindel         := "M_out_mess_spindel",
+           out_mess_spindel_2000    := "M_out_mess_spindel_2000");
+
+
+      U(    ; 
+      O     "M_out_mess_spindel"; //out_mess_spindel
+      O     "M_out_mess_spindel_2000"; //out_mess_spindel_2000
+      )     ; 
+      U     "DI_SERVICE_AGENT".new_minute; 
+      S     "HM_PI_out_mess"; 
+
+      U     "HM_PI_out_mess"; 
+      U(    ; 
+      L     "DB_SIEM_MMC".A_Hardkey; 
+      L     0; 
+      ==I   ; 
+      )     ; 
+      R     "HM_PI_out_mess"; 
+      =     "PI_out_mess"; 
+
+//Wizardaufruf unter DIN/ISO
+      U     "PI_out_mess"; 
+      UN    "DB_CMM_PLC".CMM_OUT.cmm_mmc_activ; 
+      SPBN  nw4a; 
+      L     110; 
+      T     "DB_SIEM_MMC".A_Hardkey; //PLC Hardkey starten
+      SPA   nw4b; 
+
+//Wizardaufruf unter Shopmill
+nw4a: U     "PI_out_mess"; 
+      U     "DB_CMM_PLC".CMM_OUT.cmm_mmc_activ; 
+      SPBN  nw4b; 
+      L     120; 
+      T     "DB_SIEM_MMC".A_Hardkey; //PLC Hardkey starten
+nw4b: NOP   0; 
+
+END_FUNCTION
+

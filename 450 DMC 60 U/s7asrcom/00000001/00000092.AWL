@@ -1,0 +1,1406 @@
+FUNCTION "FC_PS_PALVERWALTUNG" : VOID
+TITLE =
+//$Revision: 1.47 $
+//$Date: 2008/09/15 16:10:10CEST $
+//$Author: hgc $
+//
+{ S7_language := '7(1) Deutsch (Deutschland)  20.02.2008  07:14:19' }
+AUTHOR : SJA
+FAMILY : DM_Basis
+NAME : LS6
+VERSION : 0.0
+
+
+VAR_TEMP
+  temp_Holen_bringen_ok : BOOL ;	
+  RP1_belegt : BOOL ;	
+  tx_dummy : BOOL ;	
+  tx_Pal_Uebergplatz_Masch : BOOL ;	//Palette auf einem Uebergabeplatz zur Maschine
+  tx_Pal_UebPl1_bearbeit : BOOL ;	//Palette auf Uebergabeplatz 1 ist bearbeitet
+  tx_Pal_UebPl2_bearbeit : BOOL ;	//Palette auf Uebergabeplatz 2 ist bearbeitet
+  tx_Pal_UebPl1_frei : BOOL ;	//Palette auf Uebergabeplatz 1 ist Leerpalette
+  tx_Pal_UebPl2_frei : BOOL ;	//Palette auf Uebergabeplatz 2 ist Leerpalette
+  tx_Masch_frei : BOOL ;	
+  tx_Ruestplatzauftrag : BOOL ;	
+  tint_dummy : INT ;	
+  tbyte_dummy : BYTE ;	
+  TW_Anzahl_Plaetze : INT ;	//Anzahl Speicherplätze 
+  TW_Anzahl_Jobs : INT ;	//Anzahl der Jobs
+  Job_Zaehler : INT ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =Rundspeicher
+// Netzwerk-Übersicht
+// ==================
+// NW 1: Rundspeicher
+// NW 2: Abfrage Palettenspeichertyp
+// NW 3: Fehler Palettenspeicher ablöschen
+// NW 4: Fehler von Speicher
+// NW 5:  Ruecksetzen Job fertig mit Prioritaet = 0
+// NW 6: Definitionen / Eingänge
+// NW 7: Prüfen ob holen möglich
+// NW 8: Prüfen ob bringen möglich
+// NW 9: Prüfen ob Fahrbefehl möglich
+// NW 10: Losgrösse erreicht
+// NW 11: Transportauftrag Palette von Üb.Pl holen LS/RS
+// NW 12: Transportauftrag Palette zu Üb.PLatz bringen LS/RS
+// NW 13: Freigaben Rüstplatz
+// NW 14: Palettenverwaltung
+// NW 15: H67
+// NW 16: Meldung Übergabeplatz gesperrt
+// NW 17: Palettendaten umsetzen von der OEM-Oberfläche
+// NW 18: Vorgang holen
+// NW 19: Datentausch holen Rüstplatz
+// NW 20: Datentausch holen Übergabeplatz 1
+// NW 21: Datentausch holen Speicherplatz 1
+// NW 22: Datentausch holen Speicherplatz 2
+// NW 23: Datentausch holen Speicherplatz 3
+// NW 24: Datentausch holen Speicherplatz 4
+// NW 25: RS5 oder RS10 vorhanden ? Ansonsten zum Bringen
+// NW 26: Datentausch holen Speicherplatz 5 ( RS5 und RS10 )
+// NW 27: RS10 vorhanden ? Ansonsten zum Bringen
+// NW 28: Datentausch holen Speicherplatz 6 ( RS10 )
+// NW 29: Datentausch holen Speicherplatz 7 ( RS10 )
+// NW 30: Datentausch holen Speicherplatz 8 ( RS10 )
+// NW 31: Datentausch holen Speicherplatz 9 ( RS10 )
+// NW 32: Datentausch holen Speicherplatz 10 ( RS10 )
+// NW 33: Vorgang bringen
+// NW 34: Datentausch bringen Rüstplatz
+// NW 35: Datentausch bringen Übergabeplatz 1
+// NW 36: Datentausch bringen Speicherplatz 1
+// NW 37: Datentausch bringen Speicherplatz 2
+// NW 38: Datentausch bringen Speicherplatz 3
+// NW 39: Datentausch bringen Speicherplatz 4
+// NW 40: RS5 oder RS10 vorhanden ?
+// NW 41: Datentausch bringen Speicherplatz 5 ( RS5 und RS10 )
+// NW 42: RS10 vorhanden ?
+// NW 43: Datentausch bringen Speicherplatz 6 ( RS10 )
+// NW 44: Datentausch bringen Speicherplatz 7 ( RS10 )
+// NW 45: Datentausch bringen Speicherplatz 8 ( RS10 )
+// NW 46: Datentausch bringen Speicherplatz 9 ( RS10 )
+// NW 47: Datentausch bringen Speicherplatz 10 ( RS10 )
+// NW 48: Bausteinende
+//
+      NOP   0; 
+
+NETWORK
+TITLE =Abfrage Palettenspeichertyp
+// 5 = Anwahl RS4 große Ausführung 100,125
+// 6 = Anwahl RS4 kleine Ausführung 80
+// 7 = RS5 (Rundspeicher DMC55/65H DMU 60P2/U2)
+// 8 = RS10 (Rundspeicher DMC55/65H DMU 60P2/U2)
+      U(    ; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.RS4_AKTIV; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.RS5_AKTIV; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.RS10_AKTIV; 
+      )     ; 
+      =     "MX_ABST_Rundspeicher"; 
+      U     "MX_ABST_Rundspeicher"; 
+      SPB   ANF; 
+NETWORK
+TITLE =Fehler Palettenspeicher ablöschen
+// Fehler abloeschen
+      SET   ; 
+      R     "DB_FEHLERMELDUNG".VS_Halt_Async3._701729_LS_Fehler_allg; // Allgemeiner Fehler Linearspeicher
+      R     "DB_FEHLERMELDUNG".VS_Halt_Async3._701730_LS_Fehler_RPL; // RPL Fehler Linearspeicher
+      R     "DB_FEHLERMELDUNG".VS_Halt_Async3._701731_LS_Fehler_Fahrwa; // Fahragen fehler
+      R     "DB_FEHLERMELDUNG".VS_Halt_Async3._701732_LS_Fehler_Endlag; // Endlagen Fehler
+
+      SPA   PV; 
+NETWORK
+TITLE =Fehler von Speicher
+
+ANF:  L     "DB_LSSchnittstelle".O_Allg_error_LS; 
+      L     0; 
+      <>I   ; 
+      =     "DB_FEHLERMELDUNG".VS_Halt_Async3._701729_LS_Fehler_allg; // Allgemeiner Fehler Linearspeicher
+
+      L     "DB_LSSchnittstelle".O_RPL_error_LS; 
+      <>I   ; 
+      =     "DB_FEHLERMELDUNG".VS_Halt_Async3._701730_LS_Fehler_RPL; // RPL Fehler Linearspeicher
+
+
+      L     "DB_LSSchnittstelle".O_FW_Error; 
+      L     0; 
+      <>I   ; 
+      =     "DB_FEHLERMELDUNG".VS_Halt_Async3._701731_LS_Fehler_Fahrwa; // Fahragen fehler
+
+      L     "DB_LSSchnittstelle".O_Endlagen_error_LS; 
+      <>I   ; 
+      =     "DB_FEHLERMELDUNG".VS_Halt_Async3._701732_LS_Fehler_Endlag; // endlagen Fehler
+
+
+// schauen, ob Speicher in Auto
+
+      UN    "DB_LSSchnittstelle".IX_LSP_Auto; 
+      =     "DB_FEHLERMELDUNG".Meldung._702204_LS6_nich_in_Auto; 
+
+      U     "M_Ruecksetze_Fehler"; 
+      =     "DB_LSSchnittstelle".OX_Fehler_loeschen; 
+
+// Fehlerüberwachung LS
+      CALL "FC_PS_FehlUebw" (
+           E_Enabled                := TRUE);
+
+// Allgemeine Vorbelegungen
+
+      SET   ; // Speicher hat keine extra Betriebsarten  
+      =     "DB_LSSchnittstelle".IX_LSP_Auto; 
+      =     #tx_Pal_Uebergplatz_Masch; // Querschlitten in definierter Stellung
+
+      U     "DB_OEMDB2".RS4.Stornier_Trans_Auftrag; 
+      =     "DB_LSSchnittstelle".OX_LS_Auftrag_abbrechen; 
+
+// Anzahl Speicherplätze
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.RS5_AKTIV; 
+      SPBN  X001; 
+      L     5; 
+      SPA   X003; 
+
+X001: U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.RS10_AKTIV; 
+      SPBN  X002; 
+      L     10; 
+      SPA   X003; 
+
+X002: L     4; 
+X003: T     #TW_Anzahl_Plaetze; 
+
+
+// Anzahl Jobs
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.RS5_AKTIV; 
+      SPBN  J001; 
+      L     12; 
+      SPA   J003; 
+
+J001: U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.RS10_AKTIV; 
+      SPBN  J002; 
+      L     12; 
+      SPA   J003; 
+
+J002: L     10; 
+J003: T     #TW_Anzahl_Jobs; 
+
+
+// Palettennummer in Dualportram
+      L     "DB_PAL_NR".Platz[0].Pal_Nr; 
+      T     "DB_NC_PLC".PW_Pal_Nummer; 
+
+NETWORK
+TITLE = Ruecksetzen Job fertig mit Prioritaet = 0
+
+      AUF   "DB_JOB"; 
+
+      L     1; 
+      T     #Job_Zaehler; 
+
+      LAR1  P#75.0; 
+
+SCH1: L     DBB [AR1,P#0.0]; 
+      L     0; 
+      ==I   ; 
+      U(    ; 
+      L     #Job_Zaehler; 
+      L     "DB_JOB".Job_Maschinenplatz; 
+      <>I   ; 
+      )     ; 
+      R     DBX [AR1,P#1.0]; 
+
+      L     #TW_Anzahl_Jobs; 
+      L     #Job_Zaehler; 
+      ==I   ; 
+      SPB   ERJF; 
+
+      TAR1  ; 
+      L     P#92.0; 
+      +D    ; 
+      LAR1  ; 
+
+      L     #Job_Zaehler; 
+      INC   1; 
+      T     #Job_Zaehler; 
+
+      SPA   SCH1; 
+
+ERJF: NOP   0; 
+
+NETWORK
+TITLE = Definitionen / Eingänge
+// temporäre Merker 
+      L     "DB_PAL_NR".Platz[1].Pal_Nr; 
+      L     0; 
+      ==I   ; 
+      UN    "MX_I_Palette_auf_UG"; 
+      =     #tx_Pal_UebPl1_frei; 
+
+      L     "DB_PAL_NR".Platz[0].Pal_Nr; 
+      L     0; 
+      ==I   ; 
+      =     #tx_Masch_frei; 
+
+      L     "DB_PAL_NR".Platz[4].Pal_Nr; 
+      L     0; 
+      >I    ; 
+      UN    "I_PS_RPL_PAL_VORH"; 
+      =     #RP1_belegt; 
+
+      SPA   HOLE; 
+
+NETWORK
+TITLE = Prüfen ob holen möglich
+
+HOLE: CLR   ; 
+      =     #temp_Holen_bringen_ok; 
+      =     #tx_Ruestplatzauftrag; 
+
+      L     "DB_SPEICHERTRANSPORT".holen_von; 
+      L     4; 
+      ==I   ; 
+      =     #tx_Ruestplatzauftrag; 
+
+      L     "DB_SPEICHERTRANSPORT".holen_von; // Transportbefehl holen
+      L     0; // kein Befehl
+      ==I   ; 
+      O     "DB_LSSchnittstelle".OX_Request_holen; 
+      O     "DB_LSSchnittstelle".IX_Holen_laeuft; 
+      O     "M_PW_Aktiv"; 
+      O     "T_SA_GR2ZD_HWTest_laeuft"; 
+      SPB   nw43; 
+
+      CALL "FC_PS_Check_Transport" (
+           PlatzNr                  := "DB_SPEICHERTRANSPORT".holen_von,
+           HolenoBringen            := TRUE,
+           AnzSpPl                  := #TW_Anzahl_Plaetze,
+           retWert                  := #temp_Holen_bringen_ok);
+
+      U     #temp_Holen_bringen_ok; 
+      SPB   nw42; 
+
+      L     "DB_SPEICHERTRANSPORT".holen_von; // Transportbefehl Holen
+      L     0; 
+      ==I   ; 
+      SPB   nw43; 
+
+      L     0; 
+      T     "DB_SPEICHERTRANSPORT".holen_von; // Transportbefehl Holen
+
+      UN    #tx_Ruestplatzauftrag; 
+      SPB   khrp; 
+
+//Rüstplatz kein Zugriff wegen SOKO
+      U     "DB_OUT".AMX_STACKER_LOCK; 
+      U     "DB_HR".ABST.SP_ext_Nullpunktspannsys; 
+      S     "DB_FEHLERMELDUNG".MELDUNG2._701328_Sonder_14; 
+
+//Rüstplatz Türe vorn nicht zu
+      UN    "DB_LSSchnittstelle".IX_Ruestplatz_Tuer_Zu; 
+      O     "DB_LSSchnittstelle".IX_Ruestplatz_Tuer_Auf; 
+      S     "DB_FEHLERMELDUNG".VS_Halt_Async3._701722_RP_Tuer_offen; 
+      SPB   nw43; 
+
+//Rüstplatz nicht in GRD und gelöst
+      UN    "I_PS_RPL_GST"; 
+      S     "DB_FEHLERMELDUNG".Meldung._702056_Ruestpl_Ueberg_0; 
+
+      UN    "I_PW_RP_GELOEST"; 
+      U     "M_RS4_80er"; 
+      UN    "DB_PLC_MD_DB20".UDHex._17_BIT7_RP_HYD_KLEMMEN; 
+      S     "DB_FEHLERMELDUNG".MELDUNG2._701319_RP_nicht_geloest; 
+
+      U     "DB_FEHLERMELDUNG".Meldung._702056_Ruestpl_Ueberg_0; 
+      O     "DB_FEHLERMELDUNG".MELDUNG2._701319_RP_nicht_geloest; 
+      SPB   nw43; 
+
+//Falsche Eingabe
+khrp: SET   ; 
+      S     "DB_FEHLERMELDUNG".Meldung._702038_falsche_Eingabe; // 700307 FM, falsche Eingabe
+      SPA   nw43; 
+
+// holen ok 
+nw42: L     "DB_SPEICHERTRANSPORT".holen_von; 
+      T     "DB_LSSchnittstelle".OB_Transportauftrag_hole; 
+
+      U     "DB_LSSchnittstelle".IX_LSP_Auto; 
+      S     "DB_LSSchnittstelle".OX_Request_holen; 
+
+nw43: U     "DB_LSSchnittstelle".IX_Holen_Ready; 
+      O     "DB_LSSchnittstelle".IX_Holen_abgebrochen; 
+      O     "DB_LSSchnittstelle".IX_Holen_abgelehnt; 
+      R     "DB_LSSchnittstelle".OX_Request_holen; 
+
+      U     "DB_LSSchnittstelle".IX_Holen_abgebrochen; 
+      O     "DB_LSSchnittstelle".IX_Holen_abgelehnt; 
+      SPB   n43a; 
+
+      U     "DB_LSSchnittstelle".IX_Holen_PalTausch; 
+      U(    ; 
+      L     "DB_SPEICHERTRANSPORT".holen_von; 
+      L     0; 
+      >I    ; 
+      )     ; 
+      SPBN  nw44; 
+
+      CLR   ; 
+      =     #tx_dummy; 
+      =     "DB_LSSchnittstelle".IX_Holen_PalTausch; 
+
+n43a: L     0; 
+      T     "DB_SPEICHERTRANSPORT".holen_von; 
+      T     "DB_LSSchnittstelle".OB_Transportauftrag_hole; 
+
+nw44: NOP   0; 
+
+NETWORK
+TITLE = Prüfen ob bringen möglich
+//
+//
+      CLR   ; 
+      =     #temp_Holen_bringen_ok; 
+      =     #tx_Ruestplatzauftrag; 
+
+      L     "DB_SPEICHERTRANSPORT".bringen_zu; 
+      L     4; 
+      ==I   ; 
+      =     #tx_Ruestplatzauftrag; 
+
+      L     "DB_SPEICHERTRANSPORT".bringen_zu; // Transportbefehl bringen
+      L     0; // kein Befehl
+      ==I   ; 
+      O     "DB_LSSchnittstelle".OX_Request_bringen; 
+      O     "DB_LSSchnittstelle".IX_Bringen_laeuft; 
+      O     "M_PW_Aktiv"; 
+      O     "T_SA_GR2ZD_HWTest_laeuft"; 
+      SPB   nw53; 
+
+      CALL "FC_PS_Check_Transport" (
+           PlatzNr                  := "DB_SPEICHERTRANSPORT".bringen_zu,
+           HolenoBringen            := FALSE,
+           AnzSpPl                  := #TW_Anzahl_Plaetze,
+           retWert                  := #temp_Holen_bringen_ok);
+
+      U     #temp_Holen_bringen_ok; 
+      U(    ; 
+      U     "I_PS_DREHST_PAL_GST"; 
+      O     "DB_PLC_MD_DB20".UDHex._09_BIT6_kein_Pal_ueberw; 
+      O(    ; 
+      L     "DB_SPEICHERTRANSPORT".holen_von; // Transportbefehl Holen
+      L     0; 
+      <>I   ; 
+      )     ; 
+      )     ; 
+      SPB   nw52; 
+
+      L     "DB_SPEICHERTRANSPORT".bringen_zu; // Transportbefehl Bringen
+      L     0; 
+      ==I   ; 
+      SPB   nw53; 
+
+      L     0; 
+      T     "DB_SPEICHERTRANSPORT".bringen_zu; // Transportbefehl bringen
+
+      UN    #tx_Ruestplatzauftrag; 
+      SPB   kbrp; 
+
+//Rüstplatz kein Zugriff wegen SOKO
+      U     "DB_OUT".AMX_STACKER_LOCK; 
+      U     "DB_HR".ABST.SP_ext_Nullpunktspannsys; 
+      S     "DB_FEHLERMELDUNG".MELDUNG2._701328_Sonder_14; 
+
+//Rüstplatz Türe vorn nicht zu
+      UN    "DB_LSSchnittstelle".IX_Ruestplatz_Tuer_Zu; 
+      O     "DB_LSSchnittstelle".IX_Ruestplatz_Tuer_Auf; 
+      S     "DB_FEHLERMELDUNG".VS_Halt_Async3._701722_RP_Tuer_offen; 
+      SPB   nw53; 
+
+//Rüstplatz nicht in GRD und gelöst
+      UN    "I_PS_RPL_GST"; 
+      S     "DB_FEHLERMELDUNG".Meldung._702056_Ruestpl_Ueberg_0; 
+
+      UN    "I_PW_RP_GELOEST"; 
+      U     "M_RS4_80er"; 
+      UN    "DB_PLC_MD_DB20".UDHex._17_BIT7_RP_HYD_KLEMMEN; 
+      S     "DB_FEHLERMELDUNG".MELDUNG2._701319_RP_nicht_geloest; 
+
+      U     "DB_FEHLERMELDUNG".Meldung._702056_Ruestpl_Ueberg_0; 
+      O     "DB_FEHLERMELDUNG".MELDUNG2._701319_RP_nicht_geloest; 
+      SPB   nw53; 
+
+//Falsche Eingabe
+kbrp: SET   ; 
+      S     "DB_FEHLERMELDUNG".Meldung._702038_falsche_Eingabe; // 700307 FM, falsche Eingabe
+      SPA   nw53; 
+
+
+// holen ok
+nw52: L     "DB_SPEICHERTRANSPORT".bringen_zu; 
+      T     "DB_LSSchnittstelle".OB_Transportauftrag_brin; 
+
+      U     "DB_LSSchnittstelle".IX_LSP_Auto; 
+      S     "DB_LSSchnittstelle".OX_Request_bringen; 
+
+nw53: U     "DB_LSSchnittstelle".IX_Bringen_Ready; 
+      O     "DB_LSSchnittstelle".IX_Bringen_abgebrochen; 
+      O     "DB_LSSchnittstelle".IX_Bringen_abgelehnt; 
+      R     "DB_LSSchnittstelle".OX_Request_bringen; 
+
+      U     "DB_LSSchnittstelle".IX_Bringen_abgebrochen; 
+      O     "DB_LSSchnittstelle".IX_Bringen_abgelehnt; 
+      SPB   ablo; 
+
+      U     "DB_LSSchnittstelle".IX_Bringen_PalTausch; 
+      U(    ; 
+      L     "DB_LSSchnittstelle".OB_Transportauftrag_brin; 
+      L     0; 
+      >I    ; 
+      )     ; 
+      SPBN  nw54; 
+
+      CLR   ; 
+      =     #tx_dummy; 
+      =     "DB_LSSchnittstelle".IX_Bringen_PalTausch; 
+
+ablo: L     0; 
+      T     "DB_SPEICHERTRANSPORT".bringen_zu; 
+      T     "DB_LSSchnittstelle".OB_Transportauftrag_brin; 
+
+nw54: NOP   0; 
+
+NETWORK
+TITLE = Prüfen ob Fahrbefehl möglich
+//Sollpos. Fahrbefehl:  DB101.DBB197
+//
+      L     0; 
+      L     "DB_SPEICHERTRANSPORT".fahren_zu; // Sollposition Fahrbefehl
+      ==I   ; 
+      SPB   FBOK; 
+
+
+      L     7; 
+      L     "DB_SPEICHERTRANSPORT".fahren_zu; 
+      >=I   ; 
+      SPB   FBOK; 
+
+      S     "DB_FEHLERMELDUNG".Meldung._702038_falsche_Eingabe; // 700307 FM, falsche Eingabe
+
+      L     0; 
+      T     "DB_SPEICHERTRANSPORT".fahren_zu; // Sollposition Fahrbefehl
+
+FBOK: T     "DB_LSSchnittstelle".OB_Positionierauftrag; 
+
+
+NETWORK
+TITLE = Losgrösse erreicht
+// Abfrage ob Losgrösse erreicht ist für Anzeige
+      UN    "DB_LSSchnittstelle".IX_Bringen_laeuft; 
+      L     S5T#5S; 
+      SV    "Tv_JOB_sperr"; 
+      U     "Tv_JOB_sperr"; 
+      =     #tx_dummy; 
+
+
+NETWORK
+TITLE = Transportauftrag Palette von Üb.Pl holen LS/RS
+//Dieses Netzwerk überprüft, ob eine Palette auf einem Übergabeplatz bearbeitet 
+//oder eine Leerpalette ist, und erstellt für diese einen Transportauftrag.
+      U     "M_PW_Aktiv"; // PW in Arbeit
+      O     "DB_LSSchnittstelle".IX_Transportwagen_belegt; // Transportwagen belegt    
+      O     "DB_LSSchnittstelle".OX_Request_holen; 
+      O     "DB_LSSchnittstelle".OX_Request_bringen; 
+      O     "DB_LSSchnittstelle".IX_Holen_laeuft; 
+      O     "DB_LSSchnittstelle".IX_Bringen_laeuft; 
+      O     "DB_LSSchnittstelle".IX_Holen_Ready; 
+      O     "DB_LSSchnittstelle".IX_Bringen_Ready; 
+      O(    ; 
+      U     "M_neue_Pal_anwaehlen"; 
+      U     "DB_STRINGPW".RequestPW; 
+      )     ; 
+      ON    "MX_Jobbetrieb"; 
+      O     #tx_dummy; 
+      ON    "DB_LSSchnittstelle".IX_LSP_Auto; 
+      O     "DB_LSSchnittstelle".OX_PW_Aktiv; 
+      O     "DI_FB_WIKO_ABLAUF".SK_WiKo_ArbPLZ; 
+      O     "DI_FB_WIKO_ABLAUF".SK_WiKo_UebPLZ; 
+      SPB   EAVM; 
+
+// Suchlauf nach Palette für Maschine
+
+      CLR   ; 
+      =     #tx_dummy; 
+
+      CALL "FC_PS_MazuSpeicher" (
+           bRPverfuegbar            := "DB_LSSchnittstelle".IX_RP_LS_verfuegbar,
+           bQuerStellung            := #tx_Pal_Uebergplatz_Masch,
+           bUebpl1frei              := #tx_Pal_UebPl1_frei,
+           iAnzahlSpPlaetze         := #TW_Anzahl_Plaetze,
+           iAnzahlJobs              := #TW_Anzahl_Jobs,
+           TR_holen                 := "DB_SPEICHERTRANSPORT".holen_von,
+           TR_bringen               := "DB_SPEICHERTRANSPORT".bringen_zu,
+           b_Transport              := #tx_dummy);
+
+      U     #tx_dummy; 
+      FP    "M_RS_FP_TRANSPORT"; 
+      SPBN  xx; 
+      L     "DB_SPEICHERTRANSPORT".holen_von; 
+      T     "SpTransp_holen_von"; 
+      L     "DB_SPEICHERTRANSPORT".bringen_zu; 
+      T     "SpTransp_bringen_zu"; 
+xx:   NOP   0; 
+
+
+      U     #tx_dummy; 
+      SPB   EAVM; 
+
+      L     0; 
+      T     "DB_SPEICHERTRANSPORT".holen_von; 
+      T     "DB_SPEICHERTRANSPORT".bringen_zu; 
+
+EAVM: NOP   0; 
+
+NETWORK
+TITLE = Transportauftrag Palette zu Üb.PLatz bringen LS/RS
+//Falls Jobliste aktiv ist und der Rüstplatz Maschine frei ist, wird hier der 
+//Transportauftrag erstellt eine Palette zur Maschine zu bringen.
+      U     "DB_LSSchnittstelle".IX_Transportwagen_belegt; // Transportwagen belegt    
+      O     "M_PW_Aktiv"; // oder PW in Arbeit
+      O     "DB_LSSchnittstelle".OX_Request_holen; 
+      O     "DB_LSSchnittstelle".OX_Request_bringen; 
+      O     "DB_LSSchnittstelle".IX_Holen_laeuft; 
+      O     "DB_LSSchnittstelle".IX_Bringen_laeuft; 
+      ON    "MX_Jobbetrieb"; 
+      O     "DB_LSSchnittstelle".IX_Bringen_Ready; 
+      O     "DB_LSSchnittstelle".IX_Holen_Ready; 
+      O(    ; 
+      U     "M_neue_Pal_anwaehlen"; 
+      U     "DB_STRINGPW".RequestPW; 
+      )     ; 
+      ON    "DB_LSSchnittstelle".IX_LSP_Auto; 
+      O     #tx_dummy; 
+
+// SCH 17.12.03 Verriegeln
+      O(    ; 
+      L     "DB_SPEICHERTRANSPORT".holen_von; // Transportbefehl holen
+      L     0; // kein Befehl
+      >I    ; 
+      )     ; 
+      O(    ; 
+      L     "DB_SPEICHERTRANSPORT".bringen_zu; // Transportbefehl holen
+      L     0; // kein Befehl
+      >I    ; 
+      )     ; 
+      O     "M_WiKo_Wechsel_aktiv"; 
+      O     "DI_FB_WIKO_ABLAUF".SK_WiKo_ArbPLZ; 
+      O     "DI_FB_WIKO_ABLAUF".SK_WiKo_UebPLZ; 
+      SPB   EAZM; 
+
+// Suchlauf nach Palette für Maschine
+      CLR   ; 
+      =     #tx_dummy; 
+
+      CALL "FC_PS_SpeicherzuMa" (
+           bUebpl1frei              := #tx_Pal_UebPl1_frei,
+           bUebpl2frei              := #tx_Pal_UebPl1_frei,
+           bMaschinefrei            := #tx_Masch_frei,
+           RPverfuegbar             := "DB_LSSchnittstelle".IX_RP_LS_verfuegbar,
+           bQuerStellung            := #tx_Pal_Uebergplatz_Masch,
+           iAnzahlSpPlaetze         := #TW_Anzahl_Plaetze,
+           iAnzahlJobs              := #TW_Anzahl_Jobs,
+           TR_holen                 := "DB_SPEICHERTRANSPORT".holen_von,
+           TR_bringen               := "DB_SPEICHERTRANSPORT".bringen_zu,
+           b_Transport              := #tx_dummy);
+
+      U     #tx_dummy; 
+      SPB   EAZM; 
+
+      L     0; 
+      T     "DB_SPEICHERTRANSPORT".holen_von; 
+      T     "DB_SPEICHERTRANSPORT".bringen_zu; 
+
+EAZM: NOP   0; 
+
+
+
+NETWORK
+TITLE = Freigaben Rüstplatz
+// Status RP an Speicher
+      L     "DB_PLC_MD_DB20".UDInt._041_ANWAHL_PALVERWAL; 
+      L     1; 
+      ==I   ; 
+      SPB   PV; 
+
+      L     "DB_PAL_NR".Platz[4].Pal_Nr; 
+      L     0; 
+      ==I   ; 
+      SPB   kpal; 
+
+      L     "DB_PAL_NR".Platz[4].Status; 
+kpal: T     "DB_LSSchnittstelle".OB_Status_RP; 
+
+// mit Freigabe Taste PW bestaetigen, dass neue Palette geruestet
+      U     "MX_Jobbetrieb"; 
+      UN    "DB_LSSchnittstelle".IX_Ruestplatz_UebergabeP; 
+      =     "DB_FEHLERMELDUNG".Meldung4._702430_PS_RPL_0Grad; 
+
+      U     "MX_Jobbetrieb"; 
+      UN    "I_PW_RP_GELOEST"; 
+      UN    "DB_PLC_MD_DB20".UDHex._17_BIT7_RP_HYD_KLEMMEN; 
+      U(    ; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.RS4_AKTIV_DURCH_ANWAHL_6; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.RS5_AKTIV; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.RS10_AKTIV; 
+      )     ; 
+      =     "DB_FEHLERMELDUNG".WARNUNG3._700402_PW_RP_Pal_klemmt; 
+
+      U     "DB_LSSchnittstelle".IX_Taste_Rohteil; 
+      U     "MX_Jobbetrieb"; 
+      U(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._026_ANWAHL_SPANNVORR; //Spannhydraulik angewaehlt
+      L     1; 
+      ==I   ; 
+      )     ; // Maschine mit Spannhydraulik   
+      U     "DB_PAL_NR".Platz[4].Spannhydraulik; // und Palette mit Spannhydraulik
+      UN    "I_PW_RPL_Gespannt"; 
+      =     "DB_FEHLERMELDUNG".Warnung._701905_SpannVor_Druck0; 
+
+      U     "MX_Jobbetrieb"; 
+      U(    ; 
+      L     2; 
+      L     "DB_PAL_NR".Platz[4].Status; // Palette Rüstplatz 1 Rohteil
+      ==I   ; 
+      )     ; 
+      UN    "DB_LSSchnittstelle".IX_Ruestplatz_Tuer_Zu; 
+      =     "DB_FEHLERMELDUNG".Meldung._702055_PW_RPL_Tuer_Zu0; 
+
+// Status Änderung
+      U     "DB_PAL_NR".Platz[1].Spannhydraulik; // und Palette mit Spannhydraulik
+      U     "I_PW_RPL_Gespannt"; 
+      O(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._026_ANWAHL_SPANNVORR; //Spannhydraulik angewaehlt
+      L     1; 
+      <>I   ; 
+      )     ; 
+      U(    ; 
+      U     "DB_LSSchnittstelle".IX_Taste_Rohteil; 
+      O     "DB_PLC_MD_DB20".UDHex._09_BIT4_Folgebearbeitun; 
+      )     ; 
+      U(    ; 
+      U     "DB_LSSchnittstelle".IX_Ruestplatz_Tuer_Zu; // RP Tuere nicht offen --> keine Statusänderung RP möglich
+      U     "DB_LSSchnittstelle".IX_Ruestplatz_UebergabeP; 
+      O     "DB_PLC_MD_DB20".UDHex._33_Bit5_Pal_SP_Rohteils; 
+      )     ; 
+      U(    ; 
+      O     "I_PW_RP_GELOEST"; 
+      O     "DB_PLC_MD_DB20".UDHex._17_BIT7_RP_HYD_KLEMMEN; 
+      ON    "M_RS4_80er"; 
+      )     ; 
+      SPBN  sto1; 
+
+      L     2; 
+      T     "DB_PAL_NR".Platz[4].Status; // Palette Ruestplatz Rohteil 
+      SET   ; 
+      R     "DB_PRG_LISTE".Platz[4].Seite[1].bearbeitet; 
+      R     "DB_PRG_LISTE".Platz[4].Seite[2].bearbeitet; 
+      R     "DB_PRG_LISTE".Platz[4].Seite[3].bearbeitet; 
+      R     "DB_PRG_LISTE".Platz[4].Seite[4].bearbeitet; 
+
+      SPA   sto1; 
+
+      U     "DB_LSSchnittstelle".IX_Taste_Leerpalette; 
+      SPBN  stab; 
+
+      L     4; 
+      T     "DB_PAL_NR".Platz[4].Status; // Palette Ruestplatz Rohteil 
+      SPA   sto1; 
+
+stab: U     "DB_LSSchnittstelle".IX_Taste_bearbeitet; 
+      SPBN  sto1; 
+
+      L     1; 
+      T     "DB_PAL_NR".Platz[4].Status; // Palette Ruestplatz Rohteil 
+
+sto1: NOP   0; 
+
+      U     "DB_LSSchnittstelle".IX_Ruestplatz_Tuer_Auf; 
+      O     "DB_PLC_MD_DB20".UDHex._33_Bit5_Pal_SP_Rohteils; 
+      =     "DB_OEMDB2".RS4.Eingaenge.RP_editierbar; 
+
+      SPA   n8e; 
+NETWORK
+TITLE =Palettenverwaltung
+
+PV:   L     "DB_PLC_MD_DB20".UDInt._041_ANWAHL_PALVERWAL; 
+      L     1; 
+      >=I   ; 
+      SPBN  n8e; 
+
+// Palettennummer in Dualportram
+      L     "DB_PAL_NR".Platz[0].Pal_Nr; 
+      T     "DB_NC_PLC".PW_Pal_Nummer; 
+
+      U     "I_RP_Rohteil_setzen"; // E      7.7
+      UN    "DB_LSSchnittstelle".IX_Ruestplatz_Tuer_Zu; 
+      UN    "DB_LSSchnittstelle".IX_Ruestplatz_Tuer_Auf; 
+      U     "DB_LSSchnittstelle".IX_Ruestplatz_UebergabeP; 
+      U     "MX_Jobbetrieb"; 
+      SPBN  n8z; 
+
+      L     "DB_PLC_MD_DB20".UDInt._026_ANWAHL_SPANNVORR; //Spannhydraulik angewaehlt
+      L     1; 
+      ==I   ; 
+      U     "DB_PAL_NR".Platz[1].Spannhydraulik; // und Palette mit Spannhydraulik
+      UN    "I_PW_RPL_Gespannt"; 
+      SPB   n8z; 
+
+      L     2; 
+      T     "DB_PAL_NR".Platz[1].Status; // Palette Rüstplatz 1 Rohteil
+
+n8z:  U     "I_RP_Rohteil_setzen"; 
+      U     "MX_Jobbetrieb"; 
+      O(    ; 
+      L     2; 
+      L     "DB_PAL_NR".Platz[1].Status; // Palette Rüstplatz 1 Rohteil
+      ==I   ; 
+      )     ; 
+      U(    ; 
+      UN    "DB_LSSchnittstelle".IX_Ruestplatz_UebergabeP; // "I_PW_Ruestpl_UeberG"
+      U     "MX_ABST_Rundspeicher"; 
+      O(    ; 
+      UN    "MX_ABST_Rundspeicher"; 
+      UN    "I_PW_Ruestpl_Uebergabe"; 
+      UN    "DB_HR".FASTEMS.ABST_FASTEMS; 
+      )     ; 
+      )     ; 
+      =     "DB_FEHLERMELDUNG".Warnung._701904_Ruestpl_Ueberg_0; 
+
+      U     "I_RP_Rohteil_setzen"; 
+      U     "MX_Jobbetrieb"; 
+      U(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._026_ANWAHL_SPANNVORR; //Spannhydraulik angewaehlt
+      L     1; 
+      ==I   ; 
+      )     ; // Maschine mit Spannhydraulik   
+      U     "DB_PAL_NR".Platz[1].Spannhydraulik; // und Palette mit Spannhydraulik
+      UN    "I_PW_RPL_Gespannt"; 
+      =     "DB_FEHLERMELDUNG".Warnung._701905_SpannVor_Druck0; 
+      SPB   n8e; 
+
+      U     "MX_Jobbetrieb"; 
+      U(    ; 
+      L     2; 
+      L     "DB_PAL_NR".Platz[1].Status; // Palette Rüstplatz 1 Rohteil
+      ==I   ; 
+      )     ; 
+      UN    "I_PW_Tueren_zu"; 
+      UN    "DB_ROB_IF".STAT.Roboter.Automation_ein; 
+      =     "DB_FEHLERMELDUNG".Meldung._702055_PW_RPL_Tuer_Zu0; 
+
+n8e:  NOP   0; 
+
+NETWORK
+TITLE =H67
+//H67"H-Parameter für Leitrechner Applikationen/PW_Verwaltung
+//
+//H67=1 Palette auf Fertigteil
+//H67=2 Palette auf Defekt
+//H67=40 PW Übergabeplatz sperren für 
+//Palettentransporter
+//H67=41 PW Übergabeplatz freigeben für Palettentransporter
+//
+//
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.HASYS_FASREMS_V3X; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.HASYS_FASTEMS_V3X_RPC; 
+      SPB   fms; 
+
+      SET   ; 
+      =     "DB_H_FUNKTION".HX_QuitPflicht[67]; 
+
+      U     "DB_H_FUNKTION".HX_M[67]; 
+      SPBN  H67; 
+
+
+      U(    ; 
+      L     "DB_H_FUNKTION".HX_Real_Wert[67]; 
+      L     1.000000e+000; 
+      ==R   ; 
+      )     ; 
+      S     "Mx_Pal_Fertigteil_H67"; 
+
+      U(    ; 
+      L     "DB_H_FUNKTION".HX_Real_Wert[67]; 
+      L     2.000000e+000; 
+      ==R   ; 
+      )     ; 
+      S     "Mx_Pal_Defekt_H67"; 
+
+      U(    ; 
+      L     "DB_H_FUNKTION".HX_Real_Wert[67]; 
+      L     4.000000e+001; 
+      ==R   ; 
+      )     ; 
+      U     "DB_LSSchnittstelle".IX_FreigabePWvonLS; 
+      S     "Mx_APC_Disable_H67"; 
+
+      U(    ; 
+      L     "DB_H_FUNKTION".HX_Real_Wert[67]; 
+      L     4.100000e+001; 
+      ==R   ; 
+      )     ; 
+      O     "M_Reset_Taste"; 
+      R     "Mx_APC_Disable_H67"; 
+
+
+      U     "Mx_Pal_Fertigteil_H67"; 
+      U(    ; 
+      L     "DB_PAL_NR".Platz[0].Status; 
+      L     4; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      U     "Mx_Pal_Defekt_H67"; 
+      U(    ; 
+      L     "DB_PAL_NR".Platz[0].Status; 
+      L     5; 
+      ==I   ; 
+      )     ; 
+      )     ; 
+      O(    ; 
+      U(    ; 
+      L     "DB_H_FUNKTION".HX_Real_Wert[67]; 
+      L     4.000000e+001; 
+      ==R   ; 
+      )     ; 
+      U     "DB_LSSchnittstelle".IX_FreigabePWvonLS; 
+      )     ; 
+      O(    ; 
+      U(    ; 
+      L     "DB_H_FUNKTION".HX_Real_Wert[67]; 
+      L     4.100000e+001; 
+      ==R   ; 
+      )     ; 
+      )     ; 
+      U     "DB_H_FUNKTION".HX_M[67]; 
+      =     "DB_H_FUNKTION".HX_Quitt[67]; 
+      R     "DB_H_FUNKTION".HX_M[67]; 
+      R     "Mx_Pal_Fertigteil_H67"; 
+      R     "Mx_Pal_Defekt_H67"; 
+
+H67:  NOP   0; 
+
+      O     "M_Reset_Taste"; 
+      O     "DB_SIEM_KANAL_1".E_ChanReset; 
+      R     "Mx_APC_Disable_H67"; 
+
+fms:  NOP   0; 
+
+NETWORK
+TITLE =Meldung Übergabeplatz gesperrt
+
+      U     "Mx_APC_Disable_H67"; 
+      =     "DB_FEHLERMELDUNG".SAFE_MELD._701524; 
+NETWORK
+TITLE =Palettendaten umsetzen von der OEM-Oberfläche
+
+      U     "DB_LSSchnittstelle".IX_Umsetzen_Daten_Start; 
+      SPBN  USET; 
+      U(    ; 
+      O(    ; 
+      L     "DB_LSSchnittstelle".II_Umsetzen_Daten_Von; 
+      L     1; 
+      <I    ; 
+      )     ; 
+      O(    ; 
+      L     "DB_LSSchnittstelle".II_Umsetzen_Daten_Von; 
+      L     8; 
+      >I    ; 
+      )     ; 
+      U(    ; 
+      L     "DB_LSSchnittstelle".II_Umsetzen_Daten_Von; 
+      L     0; 
+      <>I   ; 
+      )     ; 
+      )     ; 
+      O     ; 
+      U(    ; 
+      O(    ; 
+      L     "DB_LSSchnittstelle".II_Umsetzen_Daten_Nach; 
+      L     1; 
+      <I    ; 
+      )     ; 
+      O(    ; 
+      L     "DB_LSSchnittstelle".II_Umsetzen_Daten_Nach; 
+      L     8; 
+      >I    ; 
+      )     ; 
+      )     ; 
+      U(    ; 
+      L     "DB_LSSchnittstelle".II_Umsetzen_Daten_Nach; 
+      L     0; 
+      <>I   ; 
+      )     ; 
+      SPBN  DERR; 
+      SET   ; 
+      S     "DB_FEHLERMELDUNG".Meldung._702038_falsche_Eingabe; // 700307 FM, falsche Eingabe
+      SPA   DNAC; 
+DERR: NOP   0; 
+      U(    ; 
+      L     "DB_LSSchnittstelle".II_Umsetzen_Daten_Von; 
+      L     0; 
+      <>I   ; 
+      )     ; 
+      SPBN  DVON; 
+
+      CALL "FC_RANGIER_PW_DATA1" (
+           PlatzNr                  := "DB_LSSchnittstelle".II_Umsetzen_Daten_Von,
+           bTransport               := 1,
+           retWert                  := #tx_dummy);
+
+      UN    #tx_dummy; 
+      SPB   USET; 
+      L     0; 
+      T     "DB_LSSchnittstelle".II_Umsetzen_Daten_Von; 
+DVON: NOP   0; 
+      U(    ; 
+      L     "DB_LSSchnittstelle".II_Umsetzen_Daten_Nach; 
+      L     0; 
+      <>I   ; 
+      )     ; 
+      SPBN  DNAC; 
+
+      CALL "FC_RANGIER_PW_DATA1" (
+           PlatzNr                  := "DB_LSSchnittstelle".II_Umsetzen_Daten_Nach,
+           bTransport               := 2,
+           retWert                  := #tx_dummy);
+
+      UN    #tx_dummy; 
+      SPB   USET; 
+      L     0; 
+      T     "DB_LSSchnittstelle".II_Umsetzen_Daten_Nach; 
+DNAC: NOP   0; 
+      SET   ; 
+      R     "DB_LSSchnittstelle".IX_Umsetzen_Daten_Start; 
+USET: NOP   0; 
+
+NETWORK
+TITLE =Vorgang holen
+
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.RS10_AKTIV; 
+      SPBN  RH45; 
+// *** Vorgang holen bei RS10 ***
+      U(    ; 
+      U     "M_RS_HUBACHSE_E0_OBEN"; 
+      O     "M_RS_HUBACHSE_E1_OBEN"; 
+      )     ; 
+      U     "DB_ACHSE10".E_TCMinus; 
+      O     ; 
+      U(    ; 
+      U     "M_RS_HUBACHSE_BER_EBENE0"; 
+      O     "M_RS_HUBACHSE_BER_EBENE1"; 
+      )     ; 
+      U     "DB_ACHSE16".E_TCPlus; 
+      U     "MX_Transport_Ausgef"; 
+      SPBN  EHSA; 
+      SPA   DTH; 
+
+// *** Vorgang holen bei RS4 RS5 ***
+RH45: U     "I_PS_DREHST_HUB_OBEN"; 
+      U     "DB_ACHSE10".E_TCMinus; 
+      O     ; 
+      U     "O_PS_DREHST_HUB_AUF"; 
+      U     "MX_Transport_Ausgef"; 
+      SPBN  EHSA; 
+DTH:  NOP   0; 
+NETWORK
+TITLE =Datentausch holen Rüstplatz
+
+      L     "DB_PAL_NR".Platz[4].Pal_Nr; 
+      L     0; 
+      >I    ; 
+      U     "M_DS_Pos_2"; 
+      U     "MX_Transport_Ausgef"; 
+      SPBN  EHRP; 
+      CALL "FC_RANGIER_PW_DATA1" (
+           PlatzNr                  := 4,
+           bTransport               := 1,
+           retWert                  := #tx_dummy);
+EHRP: NOP   0; 
+
+NETWORK
+TITLE =Datentausch holen Übergabeplatz 1
+
+      L     "DB_PAL_NR".Platz[1].Pal_Nr; 
+      L     0; 
+      >I    ; 
+      U     "M_DS_Pos_3"; 
+      SPBN  EHU1; 
+      CALL "FC_RANGIER_PW_DATA1" (
+           PlatzNr                  := 1,
+           bTransport               := 1,
+           retWert                  := #tx_dummy);
+EHU1: NOP   0; 
+
+NETWORK
+TITLE =Datentausch holen Speicherplatz 1
+
+      L     "DB_PAL_NR".Platz[5].Pal_Nr; 
+      L     0; 
+      >I    ; 
+      U     "M_DS_Pos_4"; 
+      SPBN  EHS1; 
+      CALL "FC_RANGIER_PW_DATA1" (
+           PlatzNr                  := 5,
+           bTransport               := 1,
+           retWert                  := #tx_dummy);
+EHS1: NOP   0; 
+
+NETWORK
+TITLE =Datentausch holen Speicherplatz 2
+
+      L     "DB_PAL_NR".Platz[6].Pal_Nr; 
+      L     0; 
+      >I    ; 
+      U     "M_DS_Pos_5"; 
+      SPBN  EHS2; 
+      CALL "FC_RANGIER_PW_DATA1" (
+           PlatzNr                  := 6,
+           bTransport               := 1,
+           retWert                  := #tx_dummy);
+EHS2: NOP   0; 
+
+NETWORK
+TITLE =Datentausch holen Speicherplatz 3
+
+      L     "DB_PAL_NR".Platz[7].Pal_Nr; 
+      L     0; 
+      >I    ; 
+      U     "M_DS_Pos_6"; 
+      SPBN  EHS3; 
+      CALL "FC_RANGIER_PW_DATA1" (
+           PlatzNr                  := 7,
+           bTransport               := 1,
+           retWert                  := #tx_dummy);
+EHS3: NOP   0; 
+
+NETWORK
+TITLE =Datentausch holen Speicherplatz 4
+
+      L     "DB_PAL_NR".Platz[8].Pal_Nr; 
+      L     0; 
+      >I    ; 
+      U     "M_DS_Pos_7"; 
+      SPBN  EHS4; 
+      CALL "FC_RANGIER_PW_DATA1" (
+           PlatzNr                  := 8,
+           bTransport               := 1,
+           retWert                  := #tx_dummy);
+EHS4: NOP   0; 
+
+NETWORK
+TITLE =RS5 oder RS10 vorhanden ? Ansonsten zum Bringen
+
+      UN    "DB_CONFIG".ANWAHL_DURCH_USER_DATA.RS5_AKTIV; 
+      UN    "DB_CONFIG".ANWAHL_DURCH_USER_DATA.RS10_AKTIV; 
+      SPB   VB; 
+NETWORK
+TITLE =Datentausch holen Speicherplatz 5 ( RS5 und RS10 )
+
+      L     "DB_PAL_NR".Platz[9].Pal_Nr; 
+      L     0; 
+      >I    ; 
+      U     "M_DS_Pos_8"; 
+      SPBN  EHS5; 
+      CALL "FC_RANGIER_PW_DATA1" (
+           PlatzNr                  := 9,
+           bTransport               := 1,
+           retWert                  := #tx_dummy);
+EHS5: NOP   0; 
+
+NETWORK
+TITLE =RS10 vorhanden ? Ansonsten zum Bringen
+
+      UN    "DB_CONFIG".ANWAHL_DURCH_USER_DATA.RS10_AKTIV; 
+      SPB   VB; 
+NETWORK
+TITLE =Datentausch holen Speicherplatz 6 ( RS10 )
+
+      L     "DB_PAL_NR".Platz[10].Pal_Nr; 
+      L     0; 
+      >I    ; 
+      U     "M_DS_Pos_9"; 
+      SPBN  EHS6; 
+      CALL "FC_RANGIER_PW_DATA1" (
+           PlatzNr                  := 10,
+           bTransport               := 1,
+           retWert                  := #tx_dummy);
+EHS6: NOP   0; 
+
+NETWORK
+TITLE =Datentausch holen Speicherplatz 7 ( RS10 )
+
+      L     "DB_PAL_NR".Platz[11].Pal_Nr; 
+      L     0; 
+      >I    ; 
+      U     "M_DS_Pos_10"; 
+      SPBN  EHS7; 
+      CALL "FC_RANGIER_PW_DATA1" (
+           PlatzNr                  := 11,
+           bTransport               := 1,
+           retWert                  := #tx_dummy);
+EHS7: NOP   0; 
+
+NETWORK
+TITLE =Datentausch holen Speicherplatz 8 ( RS10 )
+
+      L     "DB_PAL_NR".Platz[12].Pal_Nr; 
+      L     0; 
+      >I    ; 
+      U     "M_DS_Pos_11"; 
+      SPBN  EHS8; 
+      CALL "FC_RANGIER_PW_DATA1" (
+           PlatzNr                  := 12,
+           bTransport               := 1,
+           retWert                  := #tx_dummy);
+EHS8: NOP   0; 
+
+NETWORK
+TITLE =Datentausch holen Speicherplatz 9 ( RS10 )
+
+      L     "DB_PAL_NR".Platz[13].Pal_Nr; 
+      L     0; 
+      >I    ; 
+      U     "M_DS_Pos_12"; 
+      SPBN  EHS9; 
+      CALL "FC_RANGIER_PW_DATA1" (
+           PlatzNr                  := 13,
+           bTransport               := 1,
+           retWert                  := #tx_dummy);
+EHS9: NOP   0; 
+
+NETWORK
+TITLE =Datentausch holen Speicherplatz 10 ( RS10 )
+
+      L     "DB_PAL_NR".Platz[14].Pal_Nr; 
+      L     0; 
+      >I    ; 
+      U     "M_DS_Pos_13"; 
+      SPBN  EHSA; 
+      CALL "FC_RANGIER_PW_DATA1" (
+           PlatzNr                  := 14,
+           bTransport               := 1,
+           retWert                  := #tx_dummy);
+EHSA: NOP   0; 
+
+NETWORK
+TITLE =Vorgang bringen
+
+VB:   U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.RS10_AKTIV; 
+      SPBN  RB45; 
+
+// *** Vorgang bringen bei RS10 ***
+      U(    ; 
+      U     "M_RS_HUBACHSE_E0_UNTEN"; 
+      O     "M_RS_HUBACHSE_E1_UNTEN"; 
+      )     ; 
+      U     "DB_ACHSE10".E_TCMinus; 
+      O     ; 
+      U(    ; 
+      U     "M_RS_HUBACHSE_BER_EBENE0"; 
+      O     "M_RS_HUBACHSE_BER_EBENE1"; 
+      )     ; 
+      U     "DB_ACHSE16".E_TCMinus; 
+      U     "MX_Transport_Ausgef"; 
+      SPBN  EBSA; 
+      SPA   DTB; 
+
+// *** Vorgang bringen bei RS4 RS5 ***
+RB45: U     "I_PS_DREHST_HUB_UNTEN"; 
+      U     "DB_ACHSE10".E_TCMinus; 
+      O     ; 
+      U     "O_PS_DREHST_HUB_AB"; 
+      U     "MX_Transport_Ausgef"; 
+      SPBN  EBSA; 
+DTB:  NOP   0; 
+NETWORK
+TITLE =Datentausch bringen Rüstplatz
+
+      L     "DB_PAL_NR".Platz[3].Pal_Nr; 
+      L     0; 
+      >I    ; 
+      U     "M_DS_Pos_2"; 
+      SPBN  EBRP; 
+      CALL "FC_RANGIER_PW_DATA1" (
+           PlatzNr                  := 4,
+           bTransport               := 2,
+           retWert                  := #tx_dummy);
+EBRP: NOP   0; 
+
+NETWORK
+TITLE =Datentausch bringen Übergabeplatz 1
+
+      L     "DB_PAL_NR".Platz[3].Pal_Nr; 
+      L     0; 
+      >I    ; 
+      U     "M_DS_Pos_3"; 
+      SPBN  EBU1; 
+      CALL "FC_RANGIER_PW_DATA1" (
+           PlatzNr                  := 1,
+           bTransport               := 2,
+           retWert                  := #tx_dummy);
+EBU1: NOP   0; 
+
+NETWORK
+TITLE =Datentausch bringen Speicherplatz 1
+
+      L     "DB_PAL_NR".Platz[3].Pal_Nr; 
+      L     0; 
+      >I    ; 
+      U     "M_DS_Pos_4"; 
+      SPBN  EBS1; 
+      CALL "FC_RANGIER_PW_DATA1" (
+           PlatzNr                  := 5,
+           bTransport               := 2,
+           retWert                  := #tx_dummy);
+EBS1: NOP   0; 
+
+NETWORK
+TITLE =Datentausch bringen Speicherplatz 2
+
+      L     "DB_PAL_NR".Platz[3].Pal_Nr; 
+      L     0; 
+      >I    ; 
+      U     "M_DS_Pos_5"; 
+      SPBN  EBS2; 
+      CALL "FC_RANGIER_PW_DATA1" (
+           PlatzNr                  := 6,
+           bTransport               := 2,
+           retWert                  := #tx_dummy);
+EBS2: NOP   0; 
+
+NETWORK
+TITLE =Datentausch bringen Speicherplatz 3
+
+      L     "DB_PAL_NR".Platz[3].Pal_Nr; 
+      L     0; 
+      >I    ; 
+      U     "M_DS_Pos_6"; 
+      SPBN  EBS3; 
+      CALL "FC_RANGIER_PW_DATA1" (
+           PlatzNr                  := 7,
+           bTransport               := 2,
+           retWert                  := #tx_dummy);
+EBS3: NOP   0; 
+
+NETWORK
+TITLE =Datentausch bringen Speicherplatz 4
+
+      L     "DB_PAL_NR".Platz[3].Pal_Nr; 
+      L     0; 
+      >I    ; 
+      U     "M_DS_Pos_7"; 
+      SPBN  EBS4; 
+      CALL "FC_RANGIER_PW_DATA1" (
+           PlatzNr                  := 8,
+           bTransport               := 2,
+           retWert                  := #tx_dummy);
+EBS4: NOP   0; 
+
+NETWORK
+TITLE =RS5 oder RS10 vorhanden ?
+
+      UN    "DB_CONFIG".ANWAHL_DURCH_USER_DATA.RS5_AKTIV; 
+      UN    "DB_CONFIG".ANWAHL_DURCH_USER_DATA.RS10_AKTIV; 
+      SPB   ENDE; 
+NETWORK
+TITLE =Datentausch bringen Speicherplatz 5 ( RS5 und RS10 )
+
+      L     "DB_PAL_NR".Platz[3].Pal_Nr; 
+      L     0; 
+      >I    ; 
+      U     "M_DS_Pos_8"; 
+      SPBN  EBS5; 
+      CALL "FC_RANGIER_PW_DATA1" (
+           PlatzNr                  := 9,
+           bTransport               := 2,
+           retWert                  := #tx_dummy);
+EBS5: NOP   0; 
+
+NETWORK
+TITLE =RS10 vorhanden ?
+
+      UN    "DB_CONFIG".ANWAHL_DURCH_USER_DATA.RS10_AKTIV; 
+      SPB   ENDE; 
+NETWORK
+TITLE =Datentausch bringen Speicherplatz 6 ( RS10 )
+
+      L     "DB_PAL_NR".Platz[3].Pal_Nr; 
+      L     0; 
+      >I    ; 
+      U     "M_DS_Pos_9"; 
+      SPBN  EBS6; 
+      CALL "FC_RANGIER_PW_DATA1" (
+           PlatzNr                  := 10,
+           bTransport               := 2,
+           retWert                  := #tx_dummy);
+EBS6: NOP   0; 
+
+NETWORK
+TITLE =Datentausch bringen Speicherplatz 7 ( RS10 )
+
+      L     "DB_PAL_NR".Platz[3].Pal_Nr; 
+      L     0; 
+      >I    ; 
+      U     "M_DS_Pos_10"; 
+      SPBN  EBS7; 
+      CALL "FC_RANGIER_PW_DATA1" (
+           PlatzNr                  := 11,
+           bTransport               := 2,
+           retWert                  := #tx_dummy);
+EBS7: NOP   0; 
+
+NETWORK
+TITLE =Datentausch bringen Speicherplatz 8 ( RS10 )
+
+      L     "DB_PAL_NR".Platz[3].Pal_Nr; 
+      L     0; 
+      >I    ; 
+      U     "M_DS_Pos_11"; 
+      SPBN  EBS8; 
+      CALL "FC_RANGIER_PW_DATA1" (
+           PlatzNr                  := 12,
+           bTransport               := 2,
+           retWert                  := #tx_dummy);
+EBS8: NOP   0; 
+
+NETWORK
+TITLE =Datentausch bringen Speicherplatz 9 ( RS10 )
+
+      L     "DB_PAL_NR".Platz[3].Pal_Nr; 
+      L     0; 
+      >I    ; 
+      U     "M_DS_Pos_12"; 
+      SPBN  EBS9; 
+      CALL "FC_RANGIER_PW_DATA1" (
+           PlatzNr                  := 13,
+           bTransport               := 2,
+           retWert                  := #tx_dummy);
+EBS9: NOP   0; 
+
+NETWORK
+TITLE =Datentausch bringen Speicherplatz 10 ( RS10 )
+
+      L     "DB_PAL_NR".Platz[3].Pal_Nr; 
+      L     0; 
+      >I    ; 
+      U     "M_DS_Pos_13"; 
+      SPBN  EBSA; 
+      CALL "FC_RANGIER_PW_DATA1" (
+           PlatzNr                  := 14,
+           bTransport               := 2,
+           retWert                  := #tx_dummy);
+EBSA: NOP   0; 
+
+NETWORK
+TITLE =Bausteinende
+
+ENDE: NOP   0; 
+
+END_FUNCTION
+

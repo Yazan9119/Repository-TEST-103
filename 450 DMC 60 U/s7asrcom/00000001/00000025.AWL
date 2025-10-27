@@ -1,0 +1,681 @@
+FUNCTION "FC_WZVS_MCU" : VOID
+TITLE =
+//$Revision: 1.17 $
+//$Date: 2008/04/04 07:56:51CEST $
+//$Author: riedlh $
+VERSION : 0.1
+
+
+VAR_INPUT
+  i_MSST_Taste_RESET : BOOL ;	//MSST: Taste NC-Reset E3.7
+  i_WMT_verriegelt : BOOL ;	//Werkzeug-Magazin-Tür verriegelt
+END_VAR
+VAR_TEMP
+  t_int : INT ;	
+  dummy : BOOL ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =MCU-Modul-Übersicht
+// Netzwerk-Übersicht
+// ==================
+// NW 1: MCU-Modul-Übersicht
+// NW 2: <<<MCU: Von MCU Eingänge lesen
+// NW 3: 701535 "WAR, Artis Bruch-Alarm"
+// NW 4: 700322 "SPI-Verz-H, Drehmoment Grenzwert 2 ueberschritten"
+// NW 5: 701537 "WAR, WZVS Fehlt-Alarm"
+// NW 6: 701534 "WAR, WZVS Systemfehler - nicht BTB"
+// NW 7: 702422 "MEL, WZVS Voralarm Verschleiss"
+// NW 8: 701536 "WAR, WZVS Stumpf-Alarm"
+// NW 9: 702423 "MEL, WZVS alle Grenzen NICHT angenaehert"
+// NW 10: Werkzeug sperren
+// NW 11: Start Werkzeug sperren
+// NW 12: >>>MCU: Schnittsignal
+// NW 13: >>>MCU: Bruch auf Wert von P4 setzen
+// NW 14: Impuls WZ-Magazin-Tür wurde geschlossen
+// NW 15: >>>MCU: Bruch auf Wert von P4 setzen
+// NW 16: an MCU: Grenze 1 auf Wert von P4 setzen  
+// NW 17: >>>MCU: M130+M133 Zeitachse aktivieren/deaktivieren
+// NW 18: Impuls M131 Programm Anfang
+// NW 19: >>>MCU: M131 Programm Anfang
+// NW 20: Vorschub-Override steht auf 100%
+// NW 21: >>>MCU: Nacharbeit
+// NW 22: >>>MCU: Alarm quittieren
+// NW 23: >>>MCU: Konstant "0" bzw. "1" Vorgaben
+// NW 24: an MCU: Autolernen deaktivieren
+// NW 25: >>>MCU: Programmnummer mit H25=xxxx
+// NW 26: H25 nicht Quittierung-Pflichtig
+// NW 27: >>>MCU: Bei WW-Ablauf Werkzeugnummer an MCU ablöschen
+// NW 28: >>>MCU: Werkzeugnummer mit H26=xxxx
+// NW 29: H25 nicht Quittierung-Pflichtig
+// NW 30: Werkzeugnummer kommt aus NC Programm mit H 26
+// NW 31: >>>MCU: Werkzeugnummer
+// NW 32: >>>MCU: Werkzeugnummer
+// NW 33: >>>MCU: Bearbeitungsnummer
+// NW 34: >>>MCU: Offset
+// NW 35: M134: Merker Toolinspect Testbetrieb
+// NW 36: >>>MCU: neues Werkzeug (ohne untere Schnittgrenze)
+// NW 37: Merker Toolinspect EIN
+// NW 38: >>>MCU: mit M135/M136: Grenze 1/2/3 Überwachung aktivieren
+// NW 39: >>>MCU: mit M136&WZW: Grenze 1/2/3 Überwachung deaktivieren
+// NW 40: QUIT M136 + reset MX_M136
+// NW 41: >>>MCU: Adaptive Regelung ein-/ausschalten mit M137 / M138
+// NW 42: M137 - quittieren
+// NW 43: M138 - quittieren
+// NW 44: M136+M137 nicht Quittierungs-Pflichtig
+// NW 45: HMI: Anwenderdatum MCU ausschalten
+// NW 46: >>>MCU: Anwahl MCU Lernschnitt
+// NW 47: HMI: Anwenderdatum MCU Lernschnitt
+// NW 48: MCU: RESET Grenzen aktivieren / deaktivieren
+// NW 49: >>>MCU: Anwahl MCU Grenzen ERHÖHEN
+// NW 50: >>>MCU: Erhöhte Grenzen rücksetzen
+// NW 51: HMI: Anwenderdatum MCU Grenzen erhöhen / Grenzen Rücksetzen
+// NW 52: >>>MCU: An MCU Ausgänge schreiben
+// NW 53: >>>MCU: Schnittstelle an MCU übergeben
+
+      NOP   0; 
+
+NETWORK
+TITLE =<<<MCU: Von MCU Eingänge lesen
+//ProfiBus-Adresse: 56
+//HW-Konfiguration:
+//a) PROFIBUS-DP / weitere FELDGERÄTE / Allgemein
+//b) Modul "Toolinspect" auf ProfiBus ziehen
+//c) 1 Kanal 32Byte OUT 4Byte IN Modul eintragen
+//ProfiBus-Eingänge:  1040   - Startadresse
+//ProfiBus-Ausgänge:  1040   - Startadresse
+      U     "m_eins"; 
+      =     L      3.0; 
+      BLD   103; 
+      U     "m_null"; 
+      =     L      3.1; 
+      BLD   103; 
+      CALL "FC_UT_IO_PROFIBUS" (
+           read                     := L      3.0,
+           write                    := L      3.1,
+           Datenbereich             := "DB_WZVS".MCU.PLC_IN,
+           Profibus_ADR             := "DB_WZVS".STARTADRESSE);
+      NOP   0; 
+NETWORK
+TITLE =701535 "WAR, Artis Bruch-Alarm"
+//1) Sofort-Stopp
+//2) WZ in Verwaltung sperren
+//
+//"DB_WZVS".MCU.PLC_IN.Alarm_Bruch word nur "0" wenn
+//- OVR=0 und 
+//- Taste "FM-löschen" oder Taste "Reset"
+      U     "DB_WZVS".MCU.PLC_IN.Alarm_Bruch; 
+      =     "DB_FEHLERMELDUNG".Warnung1._701535; 
+NETWORK
+TITLE =700322 "SPI-Verz-H, Drehmoment Grenzwert 2 ueberschritten"
+//Meldung abändern auf: SPI-Verz-H, Werkzeug-Bruch
+//RESET bei:
+//
+      U(    ; 
+      O     "DB_FEHLERMELDUNG".Warnung1._701535; 
+      O     "DB_FEHLERMELDUNG".Warnung1._701537; 
+      )     ; 
+      S     "DB_FEHLERMELDUNG".VS_SpiVerz_Halt._700322; 
+      UN    "DB_FEHLERMELDUNG".Warnung1._701535; 
+      UN    "DB_FEHLERMELDUNG".Warnung1._701537; 
+      R     "DB_FEHLERMELDUNG".VS_SpiVerz_Halt._700322; 
+      NOP   0; 
+NETWORK
+TITLE =701537 "WAR, WZVS Fehlt-Alarm"
+//1) Mit M6_aktiv Vorschub_Halt setzen
+//2) OVR=0 und "FM-löschen" --> RESET Vorschub-Halt
+      O     "DB_WZVS".MCU.PLC_IN.Alarm_G1_unterschritten; 
+      O     "DB_WZVS".MCU.PLC_IN.Alarm_G2_unterschritten; 
+      O     "DB_WZVS".MCU.PLC_IN.Alarm_G3_unterschritten; 
+      =     "DB_FEHLERMELDUNG".Warnung1._701537; 
+NETWORK
+TITLE =701534 "WAR, WZVS Systemfehler - nicht BTB"
+//Anzeige: Toolinspect betriebsbereit BTB
+//FM: ABST_Toolinspect= 1 und kein BTB-Signal
+      UN    "DB_WZVS".MCU.PLC_IN.Ready; 
+      =     "DB_FEHLERMELDUNG".Warnung1._701534; 
+NETWORK
+TITLE =702422 "MEL, WZVS Voralarm Verschleiss"
+//Betriebsmeldung - Anzeige Voralarm Verschleiß
+//keine weitere Reaktion
+      U     "DB_WZVS".MCU.PLC_IN.Voralarm_Verschleiss; 
+      =     "DB_FEHLERMELDUNG".Meldung4._702422; 
+NETWORK
+TITLE =701536 "WAR, WZVS Stumpf-Alarm"
+//Betriebsmeldung - Anzeige Alarm Verschleiß
+//Am Werkstückende anhalten
+      U     "DB_WZVS".MCU.PLC_IN.Alarm_Verschleiss; 
+      =     "DB_FEHLERMELDUNG".Warnung1._701536; 
+NETWORK
+TITLE =702423 "MEL, WZVS alle Grenzen NICHT angenaehert"
+
+      UN    "DB_WZVS".MCU.PLC_IN.Grenzen_angenaehert; 
+      =     "DB_FEHLERMELDUNG".Meldung4._702423; 
+NETWORK
+TITLE =Werkzeug sperren
+//RESET FC259 nw6 "FC_WZVS_VERWALTUNG"
+      U(    ; 
+      O     "DB_FEHLERMELDUNG".Warnung1._701536; 
+      O     "DB_FEHLERMELDUNG".Warnung1._701535; 
+      )     ; 
+      FP    "DB_WZVS".MCU.Ablauf.FP_WZ_sperren; 
+      S     "DB_WZVS".MCU.Ablauf.WZ_sperren; 
+NETWORK
+TITLE =Start Werkzeug sperren
+
+      U(    ; 
+      U     "TMSpindleIF".IFNo[1]; 
+      U     "TMSpindleIF".IF[1].Perform; 
+      UN    "TMSpindleIF".IF[1].Prepare; 
+      ON    "DB_SIEM_KANAL_1".E_ProgRunn; 
+      )     ; 
+      U     "DB_WZVS".MCU.Ablauf.WZ_sperren; 
+      S     "DB_WZVS".MCU.Ablauf.Req_WZ_sperren; 
+      UN    "DB_WZVS".MCU.Ablauf.WZ_sperren; 
+      R     "DB_WZVS".MCU.Ablauf.Req_WZ_sperren; 
+      NOP   0; 
+NETWORK
+TITLE =>>>MCU: Schnittsignal
+
+      U(    ; 
+      O     "M_G01_aktiv"; 
+      O     "M_G02_G03_aktiv"; 
+      O     "M_Gewindeschneiden_aktiv"; 
+      )     ; 
+      U     "DB_SIEM_KANAL_1".E_ProgRunn; 
+      U     "DB_WZVS".MCU.Ablauf.Toolinspect_Ein; 
+      U(    ; 
+      UN    "DB_WZVS".MCU.PLC_IN.Alarm_Bruch; 
+      UN    "DB_WZVS".MCU.PLC_IN.Alarm_G1_unterschritten; 
+      UN    "DB_WZVS".MCU.PLC_IN.Alarm_G2_unterschritten; 
+      UN    "DB_WZVS".MCU.PLC_IN.Alarm_G3_unterschritten; 
+      O     "DB_WZVS".MCU.Ablauf.Toolinspect_Testbetrieb; 
+      )     ; 
+      =     "DB_WZVS".MCU.PLC_OUT.Schnittsignal; 
+NETWORK
+TITLE =>>>MCU: Bruch auf Wert von P4 setzen
+//SET: 
+//wenn Z-Achse länger als 20Minuten nicht bewegt wird, muss 
+//- G1_Ausgangswert_setzen auf "1" bis zum 1ten M30
+//- G2_Ausgangswert_setzen auf "1" bis zum 1ten M30
+//- G3_Ausgangswert_setzen auf "1" bis zum 1ten M30
+//- Bruch_Ausgangswert_set auf "1" bis zum 1ten M30
+//
+//RESET: mit Start_PW-Ablauf in AUTO-Mode RESET von
+//      R     "DB_WZVS".MCU.PLC_OUT.Bruch_auf_Wert_P4_setzen
+//      R     "DB_WZVS".MCU.PLC_OUT.G1_auf_Wert_P4_setzen
+//      R     "DB_WZVS".MCU.PLC_OUT.G2_auf_Wert_P4_setzen
+//      R     "DB_WZVS".MCU.PLC_OUT.G3_auf_Wert_P4_setzen
+//
+//03.04.2008: Hr.Dowe
+//      U     "DB_ACHSE3_Z".E_ExactCoarse
+//      U     "M_MA_Maschine_Ein"
+//      L     S5T#20M
+//      SE    "Te_Z_Achse_inPos"
+//
+//      U     "Te_Z_Achse_inPos"
+//      =     "DB_WZVS".MCU.PLC_OUT.Bruch_auf_Wert_P4_setzen
+//      =     "DB_WZVS".MCU.PLC_OUT.G1_auf_Wert_P4_setzen
+//      =     "DB_WZVS".MCU.PLC_OUT.G2_auf_Wert_P4_setzen
+//      =     "DB_WZVS".MCU.PLC_OUT.G3_auf_Wert_P4_setzen
+//
+      CLR   ; 
+      =     "DB_WZVS".MCU.PLC_OUT.Bruch_auf_Wert_P4_setzen; 
+      =     "DB_WZVS".MCU.PLC_OUT.G1_auf_Wert_P4_setzen; 
+      =     "DB_WZVS".MCU.PLC_OUT.G2_auf_Wert_P4_setzen; 
+      =     "DB_WZVS".MCU.PLC_OUT.G3_auf_Wert_P4_setzen; 
+NETWORK
+TITLE =Impuls WZ-Magazin-Tür wurde geschlossen
+
+      U     #i_WMT_verriegelt; 
+      FP    "DB_WZVS".MCU.Ablauf.MH_PI_WMT_zu; 
+      L     S5T#200MS; 
+      SV    "Tv_WMT_zu"; 
+NETWORK
+TITLE =>>>MCU: Bruch auf Wert von P4 setzen
+
+      U     "Tv_WMT_zu"; 
+      S     "DB_WZVS".MCU.PLC_OUT.G1_auf_Wert_P4_setzen; 
+      S     "DB_WZVS".MCU.PLC_OUT.G2_auf_Wert_P4_setzen; 
+      S     "DB_WZVS".MCU.PLC_OUT.G3_auf_Wert_P4_setzen; 
+NETWORK
+TITLE =an MCU: Grenze 1 auf Wert von P4 setzen  
+
+      UN    "DB_HR".RPT.PWinGRSTundNICHTaktiv; 
+      U     "M_Automatik_Betrieb"; 
+      R     "DB_WZVS".MCU.PLC_OUT.G1_auf_Wert_P4_setzen; 
+      R     "DB_WZVS".MCU.PLC_OUT.G2_auf_Wert_P4_setzen; 
+      R     "DB_WZVS".MCU.PLC_OUT.G3_auf_Wert_P4_setzen; 
+NETWORK
+TITLE =>>>MCU: M130+M133 Zeitachse aktivieren/deaktivieren
+//Mit M-Funktion einschalten
+//Mit WZW ausschalten
+      U     "DB_DM_M_FUNKTION".MX_IM[130]; 
+      S     "DB_WZVS".MCU.PLC_OUT.Zeitachse_aktivieren; 
+      U(    ; 
+      O     "M_M6_aktiv"; 
+      O     #i_MSST_Taste_RESET; 
+      O     "DB_DM_M_FUNKTION".MX_IM[133]; 
+      )     ; 
+      R     "DB_WZVS".MCU.PLC_OUT.Zeitachse_aktivieren; 
+      NOP   0; 
+NETWORK
+TITLE =Impuls M131 Programm Anfang
+//Mit M-Funktion Impuls von min. 100ms
+      U     "DB_DM_M_FUNKTION".MX_IM[131]; 
+      L     S5T#100MS; 
+      SV    "Tv_MCU_Prg_Start"; 
+NETWORK
+TITLE =>>>MCU: M131 Programm Anfang
+//Mit M-Funktion Impuls von min. 100ms
+      U     "Tv_MCU_Prg_Start"; 
+      =     "DB_WZVS".MCU.PLC_OUT.Programm_Anfang; 
+NETWORK
+TITLE =Vorschub-Override steht auf 100%
+//Werte-Bereich von Schalterstellung: >1
+//Sporadisch kommt aber "0"
+      U(    ; 
+      L     "DB_SIEM_KANAL_1".A_FD_OR; 
+      T     #t_int; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+      U     BIE; 
+      )     ; 
+      U(    ; 
+      L     #t_int; 
+      L     21; 
+      ==I   ; 
+      )     ; 
+      O     "MX_MsSt_Vorschub_0"; 
+      =     "DB_WZVS".MCU.Ablauf.VS_Override_100Prozent; 
+NETWORK
+TITLE =>>>MCU: Nacharbeit
+//"M_WZW_Prozess_Aktiv" nicht ganz richtig: Auch aktiv beim WZ ablegen
+      O     #i_MSST_Taste_RESET; 
+      O     ; 
+      UN    "DB_WZVS".MCU.Ablauf.VS_Override_100Prozent; 
+      UN    "M_WZW_Prozess_Aktiv"; 
+      =     "DB_WZVS".MCU.PLC_OUT.Nacharbeit; 
+NETWORK
+TITLE =>>>MCU: Alarm quittieren
+
+      U     #i_MSST_Taste_RESET; 
+      =     "DB_WZVS".MCU.PLC_OUT.Alarm_quit; 
+NETWORK
+TITLE =>>>MCU: Konstant "0" bzw. "1" Vorgaben
+
+      U     "m_null"; 
+      =     "DB_WZVS".MCU.PLC_OUT.Zaehlen; 
+      =     "DB_WZVS".MCU.PLC_OUT.Lernschnitt_ueberwachen; 
+      =     "DB_WZVS".MCU.PLC_OUT.Neu_lernen_LP; 
+      =     "DB_WZVS".MCU.PLC_OUT.Akt_Max_Wert_uebern_LP; 
+      =     "DB_WZVS".MCU.PLC_OUT.Werkzeug_neu_asynchron; 
+      =     "DB_WZVS".MCU.PLC_OUT.Dynamik_Bruch_aus; 
+      =     "DB_WZVS".MCU.PLC_OUT.Grenzen_Temp_erhoehen; 
+      =     "DB_WZVS".MCU.PLC_OUT.Lernschnitte_speichern; 
+      =     "DB_WZVS".MCU.PLC_OUT.Sperre_Bedienung; 
+      =     "DB_WZVS".MCU.PLC_OUT.Reserve8; 
+NETWORK
+TITLE =an MCU: Autolernen deaktivieren
+
+      U     "m_null"; 
+      =     "DB_WZVS".MCU.PLC_OUT.Autolernen_deaktivieren; 
+NETWORK
+TITLE =>>>MCU: Programmnummer mit H25=xxxx
+//H25-Funktion:
+//- NICHT Quittierungs-pflichtig
+//- Wird sofort quittiert
+      U     "DB_H_FUNKTION".HX_M[25]; 
+      SPBNB _010; 
+      L     "DB_H_FUNKTION".HX_Real_Wert[25]; 
+      RND   ; 
+      T     "DB_WZVS".MCU.PLC_OUT.Programmnummer; 
+      UN    OV; 
+      SAVE  ; 
+      CLR   ; 
+_010: U     BIE; 
+      =     "DB_H_FUNKTION".HX_Quitt[25]; 
+NETWORK
+TITLE =H25 nicht Quittierung-Pflichtig
+//H25-Funktion:
+//- NICHT Quittierungs-pflichtig
+//- Wird sofort quittiert
+//
+//Synchronisierung zwischen NC-Programm und Toolinspect-Überwachungs-Programm
+//zulässig: 1...2000000
+      U     "m_null"; 
+      =     "DB_H_FUNKTION".HX_QuitPflicht[25]; 
+NETWORK
+TITLE =>>>MCU: Bei WW-Ablauf Werkzeugnummer an MCU ablöschen
+
+      U     "M_WZW_Prozess_Aktiv"; 
+      SPBNB _011; 
+      L     0; 
+      T     "DB_WZVS".MCU.WZ_Nummer_aus_NC_PRG; 
+_011: NOP   0; 
+NETWORK
+TITLE =>>>MCU: Werkzeugnummer mit H26=xxxx
+//Mit H26 kann die Werkzeugnummer aus dem NC Programm übergeben werden.
+//Dadurch kann den Log Files von Toolinspect die reale T Nummer zugeordnet 
+//werden.
+      U     "DB_H_FUNKTION".HX_M[26]; 
+      SPBNB _012; 
+      L     "DB_H_FUNKTION".HX_Real_Wert[26]; 
+      RND   ; 
+      T     "DB_WZVS".MCU.WZ_Nummer_aus_NC_PRG; 
+      UN    OV; 
+      SAVE  ; 
+      CLR   ; 
+_012: U     BIE; 
+      =     "DB_H_FUNKTION".HX_Quitt[26]; 
+NETWORK
+TITLE =H25 nicht Quittierung-Pflichtig
+//H26-Funktion:
+//- NICHT Quittierungs-pflichtig
+//- Wird sofort quittiert
+//
+//Synchronisierung zwischen NC-Programm und Toolinspect-Überwachungs-Programm
+//zulässig: 1...2000000
+      U     "m_null"; 
+      =     "DB_H_FUNKTION".HX_QuitPflicht[26]; 
+NETWORK
+TITLE =Werkzeugnummer kommt aus NC Programm mit H 26
+
+      L     "DB_WZVS".MCU.WZ_Nummer_aus_NC_PRG; 
+      L     L#0; 
+      <>D   ; 
+      =     "M_TI_WZ_BEZEICHNER"; 
+NETWORK
+TITLE =>>>MCU: Werkzeugnummer
+
+      UN    "M_TI_WZ_BEZEICHNER"; 
+      SPBNB _013; 
+      L     "DB_GREIFER_DATEN".TNR_Spindel; 
+      T     "DB_WZVS".MCU.PLC_OUT.Werkzeugnummer; 
+_013: NOP   0; 
+NETWORK
+TITLE =>>>MCU: Werkzeugnummer
+
+      U     "M_TI_WZ_BEZEICHNER"; 
+      SPBNB _017; 
+      L     "DB_WZVS".MCU.WZ_Nummer_aus_NC_PRG; 
+      T     "DB_WZVS".MCU.PLC_OUT.Werkzeugnummer; 
+_017: NOP   0; 
+NETWORK
+TITLE =>>>MCU: Bearbeitungsnummer
+
+      L     0; 
+      T     "DB_WZVS".MCU.PLC_OUT.Bearbeitungsnummer; 
+      NOP   0; 
+NETWORK
+TITLE =>>>MCU: Offset
+
+      L     1; 
+      T     "DB_WZVS".MCU.PLC_OUT.Offset; 
+      NOP   0; 
+NETWORK
+TITLE =M134: Merker Toolinspect Testbetrieb
+
+      U     "DB_DM_M_FUNKTION".MX_IM[134]; 
+      S     "DB_WZVS".MCU.Ablauf.Toolinspect_Testbetrieb; 
+      UN    "DB_PW_DATA".bPW_GRDST; 
+      R     "DB_WZVS".MCU.Ablauf.Toolinspect_Testbetrieb; 
+      NOP   0; 
+NETWORK
+TITLE =>>>MCU: neues Werkzeug (ohne untere Schnittgrenze)
+//Beim BELADEN wird dem WZ in der WZVerwaltung ein BIT mitgegeben.
+//Diese BITinformation wird für jedes WZ in der Spindel an MCU übergeben.
+//RESET:
+//Wenn von MCU das Signal "xxx" kommt muss diese Information für das WZ in der
+//Spindel zurückgesetzt werden.
+//
+//Schnelle Lösung:
+//Wirkt auf alle WZs und wird durch Schließen der WZM-Tür aktiviert (Dauer 
+//200ms).
+//      U     "Tv_WMT_zu"
+//      =     "DB_WZVS".MCU.PLC_OUT.Werkzeug_neu_asynchron
+//
+//
+//06.10.2006:
+//An Magazintür "Taster-WZ-neu"
+//Bei offener WZM-Tür & Taster_aktiv wird:
+//In WZ-Verwaltung Info "WZ war in Spindel" auf "0" setzen
+//
+//wenn "WZ war in Spindel" auf "0" ist:
+//"DB_WZVS".MCU.PLC_OUT.Werkzeug_neu = 1 für 100ms
+
+
+NETWORK
+TITLE =Merker Toolinspect EIN
+
+      U(    ; 
+      O     "DB_DM_M_FUNKTION".MX_IM[132]; 
+      O     "DB_EINRICHTFUNKTION".Bewegung_148_Plus; 
+      )     ; 
+      S     "DB_WZVS".MCU.Ablauf.Toolinspect_Ein; 
+      U(    ; 
+      O     "DB_DM_M_FUNKTION".MX_IM[133]; 
+      O     "DB_EINRICHTFUNKTION".Bewegung_148_Minus; 
+      )     ; 
+      R     "DB_WZVS".MCU.Ablauf.Toolinspect_Ein; 
+      NOP   0; 
+NETWORK
+TITLE =>>>MCU: mit M135/M136: Grenze 1/2/3 Überwachung aktivieren
+
+      O     "DB_DM_M_FUNKTION".MX_M[135]; 
+      O     ; 
+      U     "DB_DM_M_FUNKTION".MX_M[136]; 
+      U     "M_WZW_Prozess_Aktiv"; 
+      S     "DB_WZVS".MCU.PLC_OUT.G1_Ueberwachung_aktiv; 
+      S     "DB_WZVS".MCU.PLC_OUT.G2_Ueberwachung_aktiv; 
+      S     "DB_WZVS".MCU.PLC_OUT.G3_Ueberwachung_aktiv; 
+      =     "DB_DM_M_FUNKTION".MX_Quitt[135]; 
+      R     "DB_DM_M_FUNKTION".MX_M[135]; 
+NETWORK
+TITLE =>>>MCU: mit M136&WZW: Grenze 1/2/3 Überwachung deaktivieren
+
+      U     "DB_DM_M_FUNKTION".MX_M[136]; 
+      UN    "M_WZW_Prozess_Aktiv"; 
+      R     "DB_WZVS".MCU.PLC_OUT.G1_Ueberwachung_aktiv; 
+      R     "DB_WZVS".MCU.PLC_OUT.G2_Ueberwachung_aktiv; 
+      R     "DB_WZVS".MCU.PLC_OUT.G3_Ueberwachung_aktiv; 
+NETWORK
+TITLE =QUIT M136 + reset MX_M136
+
+      U     "DB_DM_M_FUNKTION".MX_M[136]; 
+      U     "M_WZW_Prozess_Aktiv"; 
+      =     "DB_DM_M_FUNKTION".MX_Quitt[136]; 
+      R     "DB_DM_M_FUNKTION".MX_M[136]; 
+NETWORK
+TITLE =>>>MCU: Adaptive Regelung ein-/ausschalten mit M137 / M138
+
+      U     "DB_DM_M_FUNKTION".MX_M[137]; 
+      S     "DB_WZVS".MCU.PLC_OUT.AC_Regelung_ein; 
+      U(    ; 
+      O     "DB_DM_M_FUNKTION".MX_M[138]; 
+      O     "M_Reset_Taste"; 
+      )     ; 
+      R     "DB_WZVS".MCU.PLC_OUT.AC_Regelung_ein; 
+      NOP   0; 
+NETWORK
+TITLE =M137 - quittieren
+
+      U     "DB_DM_M_FUNKTION".MX_M[137]; 
+      U     "DB_WZVS".MCU.PLC_OUT.AC_Regelung_ein; 
+      =     "DB_DM_M_FUNKTION".MX_Quitt[137]; 
+      R     "DB_DM_M_FUNKTION".MX_M[137]; 
+NETWORK
+TITLE =M138 - quittieren
+
+      U     "DB_DM_M_FUNKTION".MX_M[138]; 
+      UN    "DB_WZVS".MCU.PLC_OUT.AC_Regelung_ein; 
+      =     "DB_DM_M_FUNKTION".MX_Quitt[138]; 
+      R     "DB_DM_M_FUNKTION".MX_M[138]; 
+NETWORK
+TITLE =M136+M137 nicht Quittierungs-Pflichtig
+
+      U     "m_null"; 
+      =     "DB_DM_M_FUNKTION".MX_QuitPflicht[135]; 
+      =     "DB_DM_M_FUNKTION".MX_QuitPflicht[136]; 
+      =     "DB_DM_M_FUNKTION".MX_QuitPflicht[137]; 
+      =     "DB_DM_M_FUNKTION".MX_QuitPflicht[138]; 
+NETWORK
+TITLE =HMI: Anwenderdatum MCU ausschalten
+
+      U     "m_eins"; 
+      =     L      3.0; 
+      BLD   103; 
+      U     "m_eins"; 
+      =     L      3.1; 
+      BLD   103; 
+      UN    "DB_WZVS".MCU.Ablauf.Toolinspect_Ein; 
+      =     L      3.2; 
+      BLD   103; 
+      U     "DB_WZVS".MCU.Ablauf.Toolinspect_Ein; 
+      =     L      3.3; 
+      BLD   103; 
+      UN    "DB_WZVS".MCU.Ablauf.Toolinspect_Ein; 
+      =     L      3.4; 
+      BLD   103; 
+      U     "DB_WZVS".MCU.Ablauf.Toolinspect_Ein; 
+      =     L      3.5; 
+      BLD   103; 
+      CALL "FC_HMI_IO_TO_TLINE" (
+           Freigabe_AST_Hand        := L      3.0,
+           Freigabe_GST_Hand        := L      3.1,
+           Endlage_AST              := L      3.2,
+           Endlage_GST              := L      3.3,
+           Ventil_AST               := L      3.4,
+           Ventil_GST               := L      3.5,
+           Bewegungsnummer          := 148);
+      NOP   0; 
+NETWORK
+TITLE =>>>MCU: Anwahl MCU Lernschnitt
+
+      U     "DB_EINRICHTFUNKTION".Bewegung_147_Minus; 
+      S     "DB_WZVS".MCU.PLC_OUT.Lernen; 
+      U(    ; 
+      O     "DB_EINRICHTFUNKTION".Bewegung_147_Plus; 
+      O     "DB_DM_M_FUNKTION".MX_IM[30]; 
+      )     ; 
+      R     "DB_WZVS".MCU.PLC_OUT.Lernen; 
+      NOP   0; 
+NETWORK
+TITLE =HMI: Anwenderdatum MCU Lernschnitt
+
+      U     "m_eins"; 
+      =     L      3.0; 
+      BLD   103; 
+      U     "m_eins"; 
+      =     L      3.1; 
+      BLD   103; 
+      U     "DB_WZVS".MCU.PLC_OUT.Lernen; 
+      =     L      3.2; 
+      BLD   103; 
+      UN    "DB_WZVS".MCU.PLC_OUT.Lernen; 
+      =     L      3.3; 
+      BLD   103; 
+      U     "DB_WZVS".MCU.PLC_OUT.Lernen; 
+      =     L      3.4; 
+      BLD   103; 
+      UN    "DB_WZVS".MCU.PLC_OUT.Lernen; 
+      =     L      3.5; 
+      BLD   103; 
+      CALL "FC_HMI_IO_TO_TLINE" (
+           Freigabe_AST_Hand        := L      3.0,
+           Freigabe_GST_Hand        := L      3.1,
+           Endlage_AST              := L      3.2,
+           Endlage_GST              := L      3.3,
+           Ventil_AST               := L      3.4,
+           Ventil_GST               := L      3.5,
+           Bewegungsnummer          := 147);
+      NOP   0; 
+NETWORK
+TITLE =MCU: RESET Grenzen aktivieren / deaktivieren
+
+      O     "DB_WZVS".MCU.PLC_OUT.Grenzen_erhoehen; 
+      O     "DB_WZVS".MCU.PLC_OUT.Erhoehte_Grenzen_RESET; 
+      L     S5T#1S; 
+      SE    "Te_MCU_Grenzen_RESET"; 
+NETWORK
+TITLE =>>>MCU: Anwahl MCU Grenzen ERHÖHEN
+
+      U     "DB_EINRICHTFUNKTION".Bewegung_146_Minus; 
+      S     "DB_WZVS".MCU.PLC_OUT.Grenzen_erhoehen; 
+      U     "Te_MCU_Grenzen_RESET"; 
+      R     "DB_WZVS".MCU.PLC_OUT.Grenzen_erhoehen; 
+      NOP   0; 
+NETWORK
+TITLE =>>>MCU: Erhöhte Grenzen rücksetzen
+
+      U     "DB_EINRICHTFUNKTION".Bewegung_146_Plus; 
+      S     "DB_WZVS".MCU.PLC_OUT.Erhoehte_Grenzen_RESET; 
+      U     "Te_MCU_Grenzen_RESET"; 
+      R     "DB_WZVS".MCU.PLC_OUT.Erhoehte_Grenzen_RESET; 
+      NOP   0; 
+NETWORK
+TITLE =HMI: Anwenderdatum MCU Grenzen erhöhen / Grenzen Rücksetzen
+
+      U     "m_eins"; 
+      =     L      3.0; 
+      BLD   103; 
+      U     "m_eins"; 
+      =     L      3.1; 
+      BLD   103; 
+      U     "DB_WZVS".MCU.PLC_OUT.Grenzen_erhoehen; 
+      =     L      3.2; 
+      BLD   103; 
+      U     "DB_WZVS".MCU.PLC_OUT.Erhoehte_Grenzen_RESET; 
+      =     L      3.3; 
+      BLD   103; 
+      U     "DB_WZVS".MCU.PLC_OUT.Grenzen_erhoehen; 
+      =     L      3.4; 
+      BLD   103; 
+      U     "DB_WZVS".MCU.PLC_OUT.Erhoehte_Grenzen_RESET; 
+      =     L      3.5; 
+      BLD   103; 
+      CALL "FC_HMI_IO_TO_TLINE" (
+           Freigabe_AST_Hand        := L      3.0,
+           Freigabe_GST_Hand        := L      3.1,
+           Endlage_AST              := L      3.2,
+           Endlage_GST              := L      3.3,
+           Ventil_AST               := L      3.4,
+           Ventil_GST               := L      3.5,
+           Bewegungsnummer          := 146);
+      NOP   0; 
+NETWORK
+TITLE =>>>MCU: An MCU Ausgänge schreiben
+//PLC-Startadresse: Ausgänge ist zu Eingänge um 16 verschoben
+//
+//In PLC-Software:
+//================
+//ProfiBus-Eingang: STARTADRESSE
+//ProfiBus-Ausgang: STARTADRESSE + 32
+//
+//In HW-Konfiguration:
+//====================
+//ProfiBus-Eingang: STARTADRESSE
+//ProfiBus-Ausgang: STARTADRESSE
+      L     "DB_WZVS".STARTADRESSE; 
+      L     32; 
+      +I    ; 
+      T     #t_int; 
+      NOP   0; 
+NETWORK
+TITLE =>>>MCU: Schnittstelle an MCU übergeben
+
+      U     "m_null"; 
+      =     L      3.0; 
+      BLD   103; 
+      U     "m_eins"; 
+      =     L      3.1; 
+      BLD   103; 
+      CALL "FC_UT_IO_PROFIBUS" (
+           read                     := L      3.0,
+           write                    := L      3.1,
+           Datenbereich             := "DB_WZVS".MCU.PLC_OUT,
+           Profibus_ADR             := #t_int);
+      NOP   0; 
+END_FUNCTION
+

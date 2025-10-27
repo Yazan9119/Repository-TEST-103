@@ -1,0 +1,295 @@
+FUNCTION_BLOCK "FB_TM_WZBRUCH_W"
+TITLE =
+//$Revision: 1.9 $
+//$Date: 2008/08/28 16:37:58CEST $
+//$Author: schmoelp $
+//
+//28.02.2008 gs
+//Feste Anzahl der Magazinplatzdaten(7) geäandert.
+//Daten werden mit "M_numMagPlaceParam" berechnet.
+//zZ ist der Wert 8
+AUTHOR : AB
+VERSION : 0.1
+
+
+VAR_INPUT
+  E_Write_strobe : BOOL ;	
+  E_WRITE_length : BOOL ;	
+  E_WRITE_broken : BOOL ;	
+  E_WRITE_ok : BOOL ;	
+  E_MagNo : INT ;	
+  E_LocNo : INT ;	
+  ER_act_length : REAL ;	
+END_VAR
+VAR_IN_OUT
+  EA_Error_Write : BOOL ;	
+  EA_DONE_Write : BOOL ;	
+END_VAR
+VAR
+  Req_Get_Read : BOOL ;	
+  NDR_GET_Read : BOOL ;	
+  Error_Get_Read : BOOL ;	
+  Req_Get_Write : BOOL ;	
+  NDR_Get_Write : BOOL ;	
+  Error_Get_Write : BOOL ;	
+  Req_Put_Write : BOOL ;	
+  NDR_Put_Write : BOOL ;	
+  Error_Put_Write : BOOL ;	
+  Req_Get_TNR : BOOL ;	
+  NDR_Get_TNR : BOOL ;	
+  Error_Get_TNR : BOOL ;	
+  S_Write : BOOL ;	
+  TNR_Write : INT ;	
+  SW_Toolstate : WORD ;	
+  SW_Toolstate_Write : WORD ;	
+  SW_Status_REAL : REAL ;	
+  SW_Status_length : REAL ;	
+  T1_TO_edgeData25_1 : STRUCT 	//SM Optionsbits $TC_DPC25
+   SYNTAX_ID : BYTE  := B#16#82;	
+   bereich_u_einheit : BYTE  := B#16#81;	
+   spalte : WORD  := W#16#1;	
+   zeile : WORD  := W#16#19;	
+   bausteintyp : BYTE ;	
+   ZEILENANZAHL : BYTE  := B#16#1;	
+   typ : BYTE  := B#16#F;	
+   laenge : BYTE  := B#16#8;	
+  END_STRUCT ;	
+  T1_TU_data_0_0 : STRUCT 	//$TC_TCP1 Anwender Schneidendaten
+   SYNTAX_ID : BYTE  := B#16#82;	
+   bereich_u_einheit : BYTE  := B#16#81;	
+   spalte : WORD ;	
+   zeile : WORD ;	
+   bausteintyp : BYTE  := B#16#24;	
+   ZEILENANZAHL : BYTE  := B#16#1;	
+   typ : BYTE  := B#16#F;	
+   laenge : BYTE  := B#16#8;	
+  END_STRUCT ;	
+  toolState_1T1TD8GET6 : STRUCT 	
+   SYNTAX_ID : BYTE  := B#16#82;	
+   bereich_u_einheit : BYTE  := B#16#81;	
+   spalte : WORD ;	
+   zeile : WORD ;	
+   bausteintyp : BYTE  := B#16#21;	
+   ZEILENANZAHL : BYTE  := B#16#1;	
+   typ : BYTE  := B#16#4;	
+   laenge : BYTE  := B#16#2;	
+  END_STRUCT ;	
+  T1_TUE_edgedata0_0 : STRUCT 	
+   SYNTAX_ID : BYTE  := B#16#82;	
+   bereich_u_einheit : BYTE  := B#16#81;	
+   spalte : WORD ;	
+   zeile : WORD ;	
+   bausteintyp : BYTE  := B#16#25;	
+   ZEILENANZAHL : BYTE  := B#16#1;	
+   typ : BYTE  := B#16#F;	
+   laenge : BYTE  := B#16#8;	
+  END_STRUCT ;	
+  T1TP1_TNrGET : STRUCT 	
+   SYNTAX_ID : BYTE  := B#16#82;	
+   bereich_u_einheit : BYTE  := B#16#81;	
+   spalte : WORD ;	
+   zeile : WORD ;	
+   bausteintyp : BYTE  := B#16#28;	
+   ZEILENANZAHL : BYTE  := B#16#1;	
+   typ : BYTE  := B#16#4;	
+   laenge : BYTE  := B#16#2;	
+  END_STRUCT ;	
+  PUT_FB3 : "FB_SIEM_PUT";	
+  GET_TNR : "FB_SIEM_GET";	
+  GET_Toolstate : "FB_SIEM_GET";	
+END_VAR
+VAR_TEMP
+  locline1 : WORD ;	
+  locspalte : WORD ;	
+  WZLine_WZ : WORD ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =
+
+      L     "DB_PLC_MD_DB20".UDInt._010_ANWAHL_WERZEUGBRUCH; 
+      L     0; 
+      >I    ; 
+      O(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._010_ANWAHL_WERZEUGBRUCH; 
+      L     2; 
+      <=I   ; 
+      )     ; 
+      SPB   STRT; 
+      CLR   ; 
+      =     #EA_DONE_Write; 
+      =     #EA_Error_Write; 
+      BE    ; 
+
+STRT: NOP   0; 
+
+NETWORK
+TITLE =Wz Toolstate lesen, sperren und schreiben
+//1. Lesen T-Nummer des Wz im Zwischenspeicher
+//2. Lesen von Toolstate
+//3. Wz sperre und Toolstate schreiben
+//
+//
+//
+//Werkzeugstatus toolState $TC_TP8
+//
+//0: nicht freigegeben
+//1: aktives Werkzeug (A)
+//2: freigegeben (F)
+//4: gesperrt (G)
+//8: vermessen (M)
+//16: Vorwarngrenze erreicht (V)
+//32: WZ ist im Wechsel (W)
+//64: festplatzcodiert (P)
+//128: WZ war im Einsatz (E)
+      U     #E_Write_strobe; 
+
+      FP    #S_Write; 
+      R     #EA_DONE_Write; 
+      R     #EA_Error_Write; 
+      S     #Req_Get_TNR; 
+
+//--------- T-Nr lesen des Wz im Zwischenspeicher
+
+      L     #E_MagNo; 
+      T     #locspalte; // Zwischenspeicher
+
+      L     #E_LocNo; 
+      DEC   1; 
+      L     "MW_numMagPlaceParam"; 
+      *I    ; 
+      L     3; // Platz 1 --> (PlatzNr.-1) * numMagPlaceParam + Parameter-Nr.
+      +I    ; 
+      T     #locline1; // Zeile Addr1  = T-Nr. Zeilenindex 3
+
+
+      CALL #GET_TNR (
+           Req                      := #Req_Get_TNR,
+           NumVar                   := 1,
+           Addr1                    := #T1TP1_TNrGET,
+           Column1                  := #locspalte,
+           Line1                    := #locline1,
+           Error                    := #Error_Get_TNR,
+           NDR                      := #NDR_Get_TNR,
+           RD1                      := #TNR_Write);
+
+
+      U     #Error_Get_TNR; 
+      S     #EA_Error_Write; 
+
+      O     #NDR_Get_TNR; // Lesen beendet 
+      O     #Error_Get_TNR; // Lesen beendet mit Fehler
+      R     #Req_Get_TNR; // Anstoß lesen löschen
+
+
+//---- Toolstate lesen
+
+
+      U     #NDR_Get_TNR; // Lesen beendet 
+      S     #Req_Get_Write; 
+
+      L     #TNR_Write; // logische T-Nr. = Zeilenadresse
+      T     #WZLine_WZ; 
+
+      CALL #GET_Toolstate (
+           Req                      := #Req_Get_Write,
+           NumVar                   := 3,
+           Addr1                    := #toolState_1T1TD8GET6,
+           Column1                  := W#16#8,
+           Line1                    := #WZLine_WZ,
+           Addr2                    := #T1_TU_data_0_0,
+           Column2                  := W#16#8,
+           Line2                    := #WZLine_WZ,
+           Addr3                    := #T1_TUE_edgedata0_0,
+           Column3                  := #WZLine_WZ,
+           Line3                    := W#16#5,
+           Error                    := #Error_Get_Write,
+           NDR                      := #NDR_Get_Write,
+           RD1                      := #SW_Toolstate,
+           RD2                      := #SW_Status_REAL,
+           RD3                      := #SW_Status_length);
+
+      U     #Error_Get_Write; 
+      S     #EA_Error_Write; 
+
+      O     #NDR_Get_Write; // Lesen beendet 
+      O     #Error_Get_Write; // Lesen beendet mit Fehler
+      R     #Req_Get_Write; // Anstoß lesen löschen
+
+
+// Toolstate schreiben
+
+      U     #NDR_Get_Write; // Lesen beendet 
+      S     #Req_Put_Write; 
+
+//***************************
+      L     #SW_Toolstate; 
+      T     #SW_Toolstate_Write; 
+
+      U     #E_WRITE_broken; 
+      SPBN  _OK; 
+      L     #SW_Toolstate_Write; 
+      L     4; 
+      OW    ; 
+      T     #SW_Toolstate_Write; 
+
+      L     3.000000e+000; 
+      OW    ; 
+      T     #SW_Status_REAL; 
+
+      L     0.000000e+000; 
+      T     #SW_Status_length; 
+
+//***************************
+_OK:  U     #E_WRITE_ok; 
+      SPBN  leng; 
+
+      L     1.000000e+000; 
+      OW    ; 
+      T     #SW_Status_REAL; 
+
+//***************************
+leng: U     #E_WRITE_length; 
+      SPBN  END; 
+      L     #ER_act_length; 
+      T     #SW_Status_length; 
+
+END:  NOP   0; 
+
+
+
+
+      CALL #PUT_FB3 (
+           Req                      := #Req_Put_Write,
+           NumVar                   := 3,
+           Addr1                    := #toolState_1T1TD8GET6,
+           Column1                  := W#16#8,
+           Line1                    := #WZLine_WZ,
+           Addr2                    := #T1_TU_data_0_0,
+           Column2                  := W#16#8,
+           Line2                    := #WZLine_WZ,
+           Addr3                    := #T1_TUE_edgedata0_0,
+           Column3                  := #WZLine_WZ,
+           Line3                    := W#16#5,
+           Error                    := #Error_Put_Write,
+           Done                     := #NDR_Put_Write,
+           SD1                      := #SW_Toolstate_Write,
+           SD2                      := #SW_Status_REAL,
+           SD3                      := #SW_Status_length);
+
+      U     #Error_Put_Write; 
+      S     #EA_Error_Write; 
+
+      O     #NDR_Put_Write; // Lesen beendet 
+      O     #Error_Put_Write; // Lesen beendet mit Fehler
+      R     #Req_Put_Write; // Anstoß lesen löschen
+
+//---- Fertig Werkzeug sperren    
+
+      U     #NDR_Get_Write; // Lesen beendet 
+      S     #EA_DONE_Write; 
+      S     "DB_CMM_PLC".CMM_IN.get_tool_data; 
+
+
+END_FUNCTION_BLOCK
+

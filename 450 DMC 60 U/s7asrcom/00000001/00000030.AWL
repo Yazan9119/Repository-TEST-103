@@ -1,0 +1,1004 @@
+FUNCTION "FC_WMT_POSITIONIEREN" : VOID
+TITLE =
+//$Revision: 1.34 $
+//$Date: 2008/09/09 13:55:51CEST $
+//$Author: schmoelp $
+VERSION : 0.1
+
+
+VAR_INPUT
+  WW_Pos_aus_SPI : INT ;	
+  WW_Pos_in_SPI : REAL ;	
+  HUB_Velo : REAL ;	
+  MAG_Velo : REAL ;	
+  mit_Hubachse : BOOL ;	
+  Rad_einfahren : BOOL ;	
+  Bild_MAGEinstellung : BOOL ;	
+END_VAR
+VAR_TEMP
+  MAG_Soll_gleich_Ist : BOOL ;	
+  Pos_Ende : BOOL ;	
+  PI_MAG_ausgefahren : BOOL ;	
+  PI_MAG_eingefahren : BOOL ;	
+  PI_Pos_WST_beendet : BOOL ;	
+  PI_Pos_LST_beendet : BOOL ;	
+  PI_Pos_KR_beendet : BOOL ;	
+  PI_inPos_WST_LST_KR : BOOL ;	
+  PI_inPos_Taste : BOOL ;	
+  VSP_BBK : BOOL ;	
+  VSP_MAG_aus_n : BOOL ;	
+  Sollposition_erreicht : BOOL ;	
+  R_ausfahren : BOOL ;	
+  R_einfahren : BOOL ;	
+  R_positionieren : BOOL ;	
+  Frg_MAG_Hub_drehen_Hand : BOOL ;	//Freigabe Magazin drehen von Hand
+  DINT_Temp : DINT ;	
+  MAG_in_Pos : BOOL ;	
+  HUB_in_Pos : BOOL ;	
+  FB_MAG_minus : BOOL ;	
+  FB_MAG_plus : BOOL ;	
+  Frg_Mag_drehen : BOOL ;	
+  Taste_Mag_links : BOOL ;	
+  Taste_Mag_rechts : BOOL ;	
+  Soll_gleich_Istposition : BOOL ;	
+  R_MAG_Hub_drehen_Hand : BOOL ;	
+  AB_WZB : BOOL ;	
+  PI_Vorschubsperre : BOOL ;	
+  Teilung_REAL : REAL ;	
+  Teilung_INT : INT ;	
+  Teilung_DINT : DINT ;	
+  Tasche_REAL : REAL ;	
+  Tasche_DINT : DINT ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =Geschwindigkeit Magazin drehen
+// Netzwerk-Übersicht
+// ==================
+// NW 1: Geschwindigkeit Magazin drehen
+// NW 2: Geschwindigkeit Magazinhub
+// NW 3: Ausbaustufe mechanische Werkzeugbruchkontrolle
+// NW 4: Magazinhub hat positioniert
+// NW 5: Berechnung Teilung
+// NW 6: Berechnung der Taschenposition an der Wechselstelle
+// NW 7: Korrektur, wenn Ergebnis groesser Magazinlaenge ist
+// NW 8: Soll gleich Istposition
+// NW 9: Verzögerte Abfrage in Position Magazin
+// NW 10: Rückmeldung: Achse hat positioniert
+// NW 11: Magazin hat positioniert
+// NW 12: Werkzeugwechselposition X-Achse
+// NW 13: Werkzeugwechselwarteposition X-Achse
+// NW 14: X-Achse nicht im Werkzeugwechsler
+// NW 15: Werkzeugwechselposition Y-Achse
+// NW 16: =========== nur mit Hubachse
+// NW 17: Werkzeug eingefahren
+// NW 18: Werkzeug ausgefahren
+// NW 19: ============== Ende Hubzylinder
+// NW 20: Bohrerbruchkontrolle in Grundstellung
+// NW 21: Freigabe Magazin drehen
+// NW 22: Magazin drehen rechts über Bild Magazin einrichten
+// NW 23: Magazin drehen links über Bild Magazin einrichten
+// NW 24: HMI-Bild 35: Teller-Drehbewegung LINKS/RECHTS Aktivierung
+// NW 25: Taste Magazin drehen links
+// NW 26: Taste Magazin drehen rechts
+// NW 27: Freigabe Magazin drehen von Hand
+// NW 28: Rücksetzen Handbewegungen
+// NW 29: Anforderung drehen über Taste
+// NW 30: Magazin drehen von Hand
+// NW 31: Befehl Magazinhub in Grundstellung
+// NW 32: Magazin links drehen über Taste oder Bild Magazin einrichten
+// NW 33: Magazin rechts drehen über Taste oder Bild Magazin einrichten
+// NW 34: PI: Magazin wurde positioniert
+// NW 35: PI: Magazin ausgefahren
+// NW 36: PI: Magazin eingefahren
+// NW 37: Rücksetzen Magazin Positionieren ( nicht drehen über Taste )
+// NW 38: Rücksetzen der gespeicherten Positionen für LST und WST
+// NW 39: Magazin für Spindel positioniert
+// NW 40: Abspeichern, des zuletzt an die Wechselstation gefahrenen WZs
+// NW 41: Abspeichern, des über L6 zuletzt angefahrenen Platzes
+// NW 42: Magazin für Ladestation positioniert
+// NW 43: Abspeichern, des zuletzt an die Ladestation gefahrenen WZs
+// NW 44: Magazin für Kegelreinigung / Bruchkontrolle positioniert
+// NW 45: Start Kegelreinigung
+// NW 46: Start Bruchkontrolle 
+// NW 47: WZB: Override auf 0
+// NW 48: WZB: Werkzeugbruch G0 Sperre
+// NW 49: Abspeichern, des zuletzt gereinigten Werkzeugs
+// NW 50: Rücksetzen Positionieren Wechselstelle
+// NW 51: Rücksetzen Positionieren Ladestelle
+// NW 52: Rücksetzen Werkzeug nach dem Ablegen messen (2te Messung)
+// NW 53: Rücksetzen Positionieren Magazin 1 zur Kegelreinigung / WZBK
+// NW 54: Rücksetzen Magazinhub ausfahren
+// NW 55: Rücksetzen Magazin positionieren
+// NW 56: Rücksetzen Magazinhub einfahren
+// NW 57: WW-Achse aus Spindel fahren
+// NW 58: Übernahme der Sollposition für Magazinhub ausfahren
+// NW 59: Magazin drehen Anforderung Werkzeugverwaltung
+// NW 60: Übernahme Sollposition Werkzeugmagazin
+// NW 61: WW-Achse in Spindel fahren
+// NW 62: Übernahme der Sollposition in Spindel fahren
+// NW 63: Anforderung Magazinhub an Achsbaustein
+// NW 64: Anforderung Magazin positionieren an Achsbaustein
+// NW 65: Abbruch Achsbewegung Magazinhub
+// NW 66: PLC checks axis
+// NW 67: Anzeige Magazintür nicht verriegelt
+// NW 68: Vorschubsperre WW-Achse Werkzeugwechsler
+//
+      L     #MAG_Velo; 
+      T     "DB_WW".MAG_velo; 
+      NOP   0; 
+
+NETWORK
+TITLE =Geschwindigkeit Magazinhub
+
+      L     #HUB_Velo; 
+      T     "DB_WW".WW_velo; 
+      NOP   0; 
+
+NETWORK
+TITLE =Ausbaustufe mechanische Werkzeugbruchkontrolle
+
+      L     "DB_PLC_MD_DB20".UDInt._010_ANWAHL_WERZEUGBRUCH; 
+      L     0; 
+      <>I   ; 
+      =     #AB_WZB; 
+NETWORK
+TITLE =Magazinhub hat positioniert
+
+      U(    ; 
+      U     "DB_WZV".MAG_Hub_ausfahren; 
+      U     "I_WW_1_ZYL_GST"; 
+      O     ; 
+      U     "DB_WZV".MAG_Hub_einfahren; 
+      U     "I_WW_1_ZYL_SPI"; 
+      )     ; 
+      UN    "DB_Achs8".MX_Achse_Faehrt; 
+      U     "DB_Achs8".MX_Rueck_Positionieren; 
+      =     #HUB_in_Pos; 
+
+NETWORK
+TITLE =Berechnung Teilung
+
+      U(    ; 
+      U(    ; 
+      L     360; 
+      L     "DB_PLC_MD_DB20".UDInt._120_ANZAHL_MAG_PLAETZE; 
+      /I    ; 
+      T     #Teilung_INT; 
+      UN    OV; 
+      SAVE  ; 
+      CLR   ; 
+      U     BIE; 
+      )     ; 
+      SPBNB _014; 
+      L     #Teilung_INT; 
+      T     #Teilung_DINT; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+_014: U     BIE; 
+      )     ; 
+      SPBNB _015; 
+      L     #Teilung_DINT; 
+      DTR   ; 
+      T     #Teilung_REAL; 
+_015: NOP   0; 
+NETWORK
+TITLE =Berechnung der Taschenposition an der Wechselstelle
+
+      U(    ; 
+      U(    ; 
+      U(    ; 
+      L     "DB_ACHS7_WZM".MR_IstPosition; 
+      L     #Teilung_REAL; 
+      /R    ; 
+      T     #Tasche_REAL; 
+      UN    OV; 
+      SAVE  ; 
+      CLR   ; 
+      U     BIE; 
+      )     ; 
+      SPBNB _016; 
+      L     #Tasche_REAL; 
+      RND   ; 
+      T     #Tasche_DINT; 
+      UN    OV; 
+      SAVE  ; 
+      CLR   ; 
+_016: U     BIE; 
+      )     ; 
+      SPBNB _017; 
+      L     #Tasche_DINT; 
+      L     L#1; 
+      +D    ; 
+      T     #Tasche_DINT; 
+      UN    OV; 
+      SAVE  ; 
+      CLR   ; 
+_017: U     BIE; 
+      )     ; 
+      SPBNB _01b; 
+      L     #Tasche_DINT; 
+      T     "DB_WZV".M1_Istposition; 
+_01b: NOP   0; 
+NETWORK
+TITLE =Korrektur, wenn Ergebnis groesser Magazinlaenge ist
+
+      U(    ; 
+      L     "DB_WZV".M1_Istposition; 
+      L     "DB_PLC_MD_DB20".UDInt._120_ANZAHL_MAG_PLAETZE; 
+      >I    ; 
+      )     ; 
+      SPBNB _020; 
+      L     "DB_WZV".M1_Istposition; 
+      L     "DB_PLC_MD_DB20".UDInt._120_ANZAHL_MAG_PLAETZE; 
+      -I    ; 
+      T     "DB_WZV".M1_Istposition; 
+_020: NOP   0; 
+NETWORK
+TITLE =Soll gleich Istposition
+
+      U(    ; 
+      O     "DB_WZV".Pos_M1_WST_HUBein; 
+      O     "DB_WZV".Pos_M1_WST_HUBaus; 
+      )     ; 
+      U(    ; 
+      L     "DB_WZV".M1_Istposition; 
+      L     "DB_WZV".Mag1_Pos_Loc; 
+      ==I   ; 
+      )     ; 
+
+      O     ; 
+      U     "DB_WZV".Pos_M1_LST; 
+      U(    ; 
+      L     "DB_WZV".M1_Istposition; 
+      L     "DB_WZV".Mag1_Pos_Loc; 
+      ==I   ; 
+      )     ; 
+
+      O     ; 
+      U     "DB_WZV".Pos_M1_KR; 
+      U(    ; 
+      L     "DB_WZV".M1_Istposition; 
+      L     "DB_WZV".Mag1_Pos_Loc; 
+      ==I   ; 
+      )     ; 
+      =     #Soll_gleich_Istposition; 
+
+NETWORK
+TITLE =Verzögerte Abfrage in Position Magazin
+
+      U     "DB_WZV".MAG_positionieren; 
+      U     #Soll_gleich_Istposition; 
+      L     S5T#200MS; 
+      SE    "Verz_Abfrage_inPos"; 
+
+NETWORK
+TITLE =Rückmeldung: Achse hat positioniert
+
+      U     "DB_ACHS7_WZM".MX_Rueck_Positionieren; 
+      S     "DB_WZV".M1_Rueckmeldung_Pos; 
+
+NETWORK
+TITLE =Magazin hat positioniert
+
+      U     "Verz_Abfrage_inPos"; 
+      UN    "DB_ACHS7_WZM".MX_Achse_Faehrt; 
+      U     "DB_ACHSE7".E_IndexAxisPos; 
+      U     "DB_WZV".M1_Rueckmeldung_Pos; 
+      =     #MAG_in_Pos; 
+      R     "DB_WZV".M1_Rueckmeldung_Pos; 
+
+NETWORK
+TITLE =Werkzeugwechselposition X-Achse
+
+      U     "DB_SIEM_NCK".E_SWCamMinus[0]; // Minus-Nocken WW-Wechselposition X-Achse
+      U     "DB_SIEM_NCK".E_SWCamPlus[0]; // Plus-Nocken WW-Wechselposition X-Achse
+      =     "Mx_X_ACHSE_WZW_POS"; 
+
+NETWORK
+TITLE =Werkzeugwechselwarteposition X-Achse
+
+      U     "DB_SIEM_NCK".E_SWCamMinus[1]; // Minus-Nocken WZW-Warteposition X-Achse
+      U     "DB_SIEM_NCK".E_SWCamPlus[1]; // Plus-Nocken WZW-Warteposition X-Achse
+      =     "I_WW_X_inWartePos"; 
+
+NETWORK
+TITLE =X-Achse nicht im Werkzeugwechsler
+
+      U     "DB_SIEM_NCK".E_SWCamMinus[1]; // Minus-Nocken WZW-Warteposition X-Achse
+      =     "M_WW_X_imArbeitsraum"; 
+
+NETWORK
+TITLE =Werkzeugwechselposition Y-Achse
+
+      U     "DB_SIEM_NCK".E_SWCamMinus[2]; // Minus-Nocken WW-Wechselposition Y-Achse
+      U     "DB_SIEM_NCK".E_SWCamPlus[2]; // Plus-Nocken WW-Wechselposition Y-Achse
+      =     "I_WW_Y_inWWPos"; 
+
+NETWORK
+TITLE ============ nur mit Hubachse
+
+      U     #mit_Hubachse; 
+      SPBN  eHUB; 
+NETWORK
+TITLE =Werkzeug eingefahren
+
+      U     "DB_SIEM_NCK".E_SWCamMinus[3]; // Minus-Nocken Werkzeug in Spindel eingefahren
+      U     "DB_SIEM_NCK".E_SWCamPlus[3]; // Plus-Nocken Werkzeug in Spindel eingefahren
+      =     "I_WW_1_ZYL_SPI"; 
+
+NETWORK
+TITLE =Werkzeug ausgefahren
+
+      U     "DB_SIEM_NCK".E_SWCamMinus[4]; // Minus-Nocken Werkzeug aus Spindel ausgefahren
+      U     "DB_SIEM_NCK".E_SWCamPlus[4]; // Plus-Nocken Werkzeug aus Spindel ausgefahren
+      =     "I_WW_1_ZYL_GST"; 
+
+NETWORK
+TITLE =============== Ende Hubzylinder
+
+eHUB: NOP   0; 
+
+NETWORK
+TITLE =Bohrerbruchkontrolle in Grundstellung
+
+      U     "DB_PLC_MD_DB20".UDHex._14_BIT2_BBK_Teller; 
+      U     "DB_SIEM_NCK".E_SWCamMinus[5]; // Minus-Nocken Bohrerbruchkontrolle in Grundstellung
+      U     "DB_SIEM_NCK".E_SWCamPlus[5]; // Plus-Nocken Bohrerbruchkontrolle in Grundstellung
+      O     ; 
+      U     #AB_WZB; 
+      U     "I_WZB_Parkstellung"; 
+      O     ; 
+      UN    "DB_PLC_MD_DB20".UDHex._14_BIT2_BBK_Teller; 
+      UN    #AB_WZB; 
+      =     "I_WZB_Parkstellung"; 
+
+NETWORK
+TITLE =Freigabe Magazin drehen
+
+      U(    ; 
+      O     "I_WW_Rein_in_GST"; 
+      ON    "DB_WZV".AB_HSK; // ABST: Werkzeugwaschen
+      )     ; 
+      U     "I_WW_1_ZYL_GST"; 
+      U     "DB_WW".WZ_richtig_eingelegt; 
+      =     #Frg_Mag_drehen; 
+NETWORK
+TITLE =Magazin drehen rechts über Bild Magazin einrichten
+
+      U     #Bild_MAGEinstellung; 
+      U     "DB_EINRICHTFUNKTION".Bewegung_206_Plus; 
+      =     #FB_MAG_plus; 
+
+NETWORK
+TITLE =Magazin drehen links über Bild Magazin einrichten
+
+      U     #Bild_MAGEinstellung; 
+      U     "DB_EINRICHTFUNKTION".Bewegung_206_Minus; 
+      =     #FB_MAG_minus; 
+
+NETWORK
+TITLE =HMI-Bild 35: Teller-Drehbewegung LINKS/RECHTS Aktivierung
+//HMI: Manuell / [SK7] WZW7 Magazineinstellung   Bild-Nr: 35
+//                                               Bewegungs-Nr: 206
+      U     #Bild_MAGEinstellung; 
+      =     L     26.0; 
+      BLD   103; 
+      U     #Bild_MAGEinstellung; 
+      =     L     26.1; 
+      BLD   103; 
+      U     "m_null"; 
+      =     L     26.2; 
+      BLD   103; 
+      U     "m_null"; 
+      =     L     26.3; 
+      BLD   103; 
+      U     "DB_ACHS7_WZM".MX_FahrAnf_Minus; 
+      =     L     26.4; 
+      BLD   103; 
+      U     "DB_ACHS7_WZM".MX_FahrAnf_Plus; 
+      =     L     26.5; 
+      BLD   103; 
+      CALL "FC_HMI_IO_TO_TLINE" (
+           Freigabe_AST_Hand        := L     26.0,
+           Freigabe_GST_Hand        := L     26.1,
+           Endlage_AST              := L     26.2,
+           Endlage_GST              := L     26.3,
+           Ventil_AST               := L     26.4,
+           Ventil_GST               := L     26.5,
+           Bewegungsnummer          := 206);
+      NOP   0; 
+NETWORK
+TITLE =Taste Magazin drehen links
+
+      U(    ; 
+      O     "I_MSST_WM_Taste_links"; 
+      O     "M_BHG_Mag_links"; 
+      )     ; 
+      U     "I_WM_Energiefreigabe"; 
+      O     "I_WM_Taste_links"; 
+      =     #Taste_Mag_links; 
+NETWORK
+TITLE =Taste Magazin drehen rechts
+
+      U(    ; 
+      O     "I_MSST_WM_Taste_Rechts"; 
+      O     "M_BHG_Mag_rechts"; 
+      )     ; 
+      U     "I_WM_Energiefreigabe"; 
+      O     "I_WM_Taste_rechts"; 
+      =     #Taste_Mag_rechts; 
+NETWORK
+TITLE =Freigabe Magazin drehen von Hand
+
+      UN    "DB_NC_PLC".WZW_NC_Aktiv; 
+      UN    "TMSpindleIF".IFNo[1]; 
+      U     "M_WW_X_imArbeitsraum"; 
+      U(    ; 
+      ON    "M_Programm_Aktiv_Kanal_1"; 
+      O     "DB_WZV".Mag1_Laden_aktiv; // Be- Entladen Magazin 1 oder Spindel aktiv
+      )     ; 
+      =     #Frg_MAG_Hub_drehen_Hand; 
+
+NETWORK
+TITLE =Rücksetzen Handbewegungen
+
+      ON    "M_MA_Maschine_Ein"; 
+      O     "DB_WZV".Pos_M1_WST_HUBein; 
+      O     "DB_WZV".Pos_M1_WST_HUBaus; 
+      O     "DB_WZV".Pos_M1_LST; 
+      O     "DB_WZV".Pos_M1_KR; 
+      O     "M_Reset_Taste"; 
+      O     "DB_ACHS7_WZM".MX_Ax_FahrAnf; 
+      O     "DB_ACHS7_WZM".MX_Anf_Positionieren; 
+      O     "DB_WW".MFkt_06; 
+      =     #R_MAG_Hub_drehen_Hand; 
+NETWORK
+TITLE =Anforderung drehen über Taste
+
+      U(    ; 
+      O     #Taste_Mag_links; 
+      O     #Taste_Mag_rechts; 
+      )     ; 
+      U     #Frg_MAG_Hub_drehen_Hand; 
+      =     "M_MAG_Teller_Taste_dreh"; 
+NETWORK
+TITLE =Magazin drehen von Hand
+
+      U     "M_MAG_Teller_Taste_dreh"; 
+      S     "DB_WZV".T_MAG_drehen; 
+
+      U(    ; 
+      UN    "M_MAG_Teller_Taste_dreh"; 
+      U     "DB_ACHSE7".E_IndexAxisPos; 
+      O     #R_MAG_Hub_drehen_Hand; 
+      )     ; 
+      R     "DB_WZV".T_MAG_drehen; 
+      NOP   0; 
+NETWORK
+TITLE =Befehl Magazinhub in Grundstellung
+
+      U     "I_WM_ZUSTIMMTASTE"; 
+      U     #Frg_MAG_Hub_drehen_Hand; 
+      S     "DB_WZV".Hub_in_Grundstellung; 
+
+      U(    ; 
+      O     "I_WW_1_ZYL_GST"; 
+      O     #R_MAG_Hub_drehen_Hand; 
+      ON    "I_WM_ZUSTIMMTASTE"; 
+      )     ; 
+      R     "DB_WZV".Hub_in_Grundstellung; 
+      NOP   0; 
+
+NETWORK
+TITLE =Magazin links drehen über Taste oder Bild Magazin einrichten
+
+      U(    ; 
+      U     "DB_WZV".T_MAG_drehen; 
+      U     #Taste_Mag_links; 
+      UN    #Taste_Mag_rechts; 
+      UN    "DB_WZV".MAG_Hub_ausfahren; 
+      UN    "DB_WZV".MAG_Hub_einfahren; 
+
+      O     #FB_MAG_minus; 
+      )     ; 
+      U     "M_Handbetrieb"; // "DB_SIEM_BAG".E_JOG
+      U     "I_WM_Beladung_zu"; 
+      U     #Frg_Mag_drehen; 
+
+      =     "DB_ACHS7_WZM".MX_FahrAnf_Minus; 
+NETWORK
+TITLE =Magazin rechts drehen über Taste oder Bild Magazin einrichten
+
+      U(    ; 
+      U     "DB_WZV".T_MAG_drehen; 
+      UN    #Taste_Mag_links; 
+      U     #Taste_Mag_rechts; 
+      UN    "DB_WZV".MAG_Hub_ausfahren; 
+      UN    "DB_WZV".MAG_Hub_einfahren; 
+
+      O     #FB_MAG_plus; 
+      )     ; 
+      U     "M_Handbetrieb"; // "DB_SIEM_BAG".E_JOG
+      U     "I_WM_Beladung_zu"; 
+      U     #Frg_Mag_drehen; 
+
+      =     "DB_ACHS7_WZM".MX_FahrAnf_Plus; 
+NETWORK
+TITLE =PI: Magazin wurde positioniert
+
+      U     "DB_ACHSE7".E_IndexAxisPos; 
+      U     #MAG_in_Pos; 
+      FP    "DB_WZV".PF_MAG_positioniert; 
+      =     #PI_inPos_WST_LST_KR; 
+
+NETWORK
+TITLE =PI: Magazin ausgefahren
+
+      U     "I_WW_1_ZYL_GST"; 
+      FP    "DB_WZV".PF_MAG_ausgefahren; 
+      =     #PI_MAG_ausgefahren; 
+
+NETWORK
+TITLE =PI: Magazin eingefahren
+
+      U     "I_WW_1_ZYL_SPI"; 
+      FP    "DB_WZV".PF_MAG_eingefahren; 
+      =     #PI_MAG_eingefahren; 
+
+NETWORK
+TITLE =Rücksetzen Magazin Positionieren ( nicht drehen über Taste )
+
+      UN    "DB_WZV".Pos_M1_WST_HUBein; 
+      UN    "DB_WZV".Pos_M1_WST_HUBaus; 
+      UN    "DB_WZV".Pos_M1_LST; 
+      UN    "DB_WZV".Pos_M1_KR; 
+      O     #PI_inPos_WST_LST_KR; 
+      O     "M_Reset_Taste"; // RESET Taste    
+      R     "DB_ACHS7_WZM".MX_Anf_Positionieren; 
+
+NETWORK
+TITLE =Rücksetzen der gespeicherten Positionen für LST und WST
+
+      U(    ; 
+      U(    ; 
+      O     #PI_MAG_ausgefahren; 
+      O     "DB_WZV".del_letzte_Pos; 
+      )     ; 
+      SPBNB _021; 
+      L     0; 
+      T     "DB_WZV".M1_letzte_Pos_WST; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+_021: U     BIE; 
+      )     ; 
+      SPBNB _022; 
+      L     0; 
+      T     "DB_WZV".M1_letzte_Pos_LST; 
+_022: NOP   0; 
+NETWORK
+TITLE =Magazin für Spindel positioniert
+
+      U     #MAG_in_Pos; 
+      U(    ; 
+      U     "DB_WZV".Pos_M1_WST_HUBein; 
+      UN    #Rad_einfahren; 
+      O     "DB_WZV".Pos_M1_WST_HUBaus; 
+      )     ; 
+      UN    "DB_WZV".Pos_M1_LST; 
+      UN    "DB_WZV".Pos_M1_KR; 
+      O     ; 
+      U     #PI_MAG_eingefahren; 
+      U     "DB_WZV".Pos_M1_WST_HUBein; 
+      UN    "DB_WZV".Pos_M1_LST; 
+      UN    "DB_WZV".Pos_M1_KR; 
+      S     "DB_WZV".Mag1_inPos_WST; 
+      =     #PI_Pos_WST_beendet; 
+
+NETWORK
+TITLE =Abspeichern, des zuletzt an die Wechselstation gefahrenen WZs
+
+      U     #PI_Pos_WST_beendet; 
+      SPBNB _023; 
+      L     "DB_WZV".Mag1_Pos_Loc; 
+      T     "DB_WZV".M1_letzte_Pos_WST; 
+_023: NOP   0; 
+NETWORK
+TITLE =Abspeichern, des über L6 zuletzt angefahrenen Platzes
+
+      U     #PI_MAG_eingefahren; 
+      U     "M_H5000_H5004_WW_Start"; 
+      SPBNB _024; 
+      L     "DB_WZV".M1_Istposition; 
+      T     "DB_WZV".M1_letzte_Pos_WST; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+_024: U     BIE; 
+      S     "DB_WZV".Mag1_inPos_WST; 
+NETWORK
+TITLE =Magazin für Ladestation positioniert
+
+      U(    ; 
+      U(    ; 
+      O     #PI_MAG_eingefahren; 
+      ON    #Rad_einfahren; 
+      )     ; 
+      U     #mit_Hubachse; 
+      O     ; 
+      UN    #mit_Hubachse; 
+      U     #MAG_in_Pos; 
+      )     ; 
+      U     "DB_WZV".Pos_M1_LST; 
+      UN    "DB_WZV".Pos_M1_WST_HUBein; 
+      UN    "DB_WZV".Pos_M1_WST_HUBaus; 
+
+      UN    "DB_WZV".Pos_M1_KR; 
+      S     "DB_WZV".Mag1_inPos_LST; 
+      =     #PI_Pos_LST_beendet; 
+NETWORK
+TITLE =Abspeichern, des zuletzt an die Ladestation gefahrenen WZs
+
+      U     #PI_Pos_LST_beendet; 
+      SPBNB _025; 
+      L     "DB_WZV".Mag1_Pos_Loc; 
+      T     "DB_WZV".M1_letzte_Pos_LST; 
+_025: NOP   0; 
+NETWORK
+TITLE =Magazin für Kegelreinigung / Bruchkontrolle positioniert
+
+      U     #MAG_in_Pos; 
+      U     "DB_WZV".Pos_M1_KR; 
+      UN    "DB_WZV".Pos_M1_WST_HUBein; 
+      UN    "DB_WZV".Pos_M1_WST_HUBaus; 
+      UN    "DB_WZV".Pos_M1_LST; 
+      UN    "DB_WZV".Mag1_inPos_KR; 
+      =     #PI_Pos_KR_beendet; 
+
+      S     "DB_WZV".Mag1_inPos_KR; 
+NETWORK
+TITLE =Start Kegelreinigung
+//
+//
+      U     #PI_Pos_KR_beendet; 
+      UN    "DB_WZV".WZB.WZ_messen; 
+      S     "DB_WW".Wz_reinigen_T; 
+NETWORK
+TITLE =Start Bruchkontrolle 
+
+      U     #PI_Pos_KR_beendet; 
+      =     L     26.0; 
+      U     L     26.0; 
+      U(    ; 
+      U(    ; 
+      L     "DI_TM_WZBRUCH_R".TC_DPC5; 
+      L     0.000000e+000; 
+      ==R   ; // erste Messung wurde bereits durchgefuehrt
+      )     ; 
+      U     "DB_WZV".WZB.WZB_aktiviert; 
+      O     "DB_WZV".WZB.WZ_messen; 
+      )     ; 
+      S     "M_WZB_Anforderung"; // WZ-Teller Waschen starten
+      R     "M_WZB_Ready"; 
+
+      U     L     26.0; 
+      U     "DB_WZV".WZB.WZ_messen; 
+      S     "M_WZB_Messung"; 
+NETWORK
+TITLE =Impuls Vorschubsperre
+
+      U     "DB_WZV".Pos_M1_KR; 
+      FP    "DB_WZV".WZB.FP_Vorschubsperre; 
+      =     #PI_Vorschubsperre; 
+
+NETWORK
+TITLE =WZB: Override auf 0
+
+      U     #PI_Vorschubsperre; 
+      U(    ; 
+      L     "DB_REMANENT".WZB_GREIFER; 
+      L     2; 
+      <>I   ; 
+      )     ; 
+      U     "DI_WZ_BRUCH".SX_GRF_ANF; 
+      U     "DB_WZV".WZB.WZ_messen; 
+      S     "MX_WZB_Ov_0"; 
+
+NETWORK
+TITLE =WZB: Werkzeugbruch G0 Sperre
+
+      U     #PI_Vorschubsperre; 
+      U(    ; 
+      L     "DB_REMANENT".WZB_GREIFER; 
+      L     3; 
+      ==I   ; 
+      )     ; 
+      U     "DI_WZ_BRUCH".SX_GRF_ANF; 
+      U     "DB_WZV".WZB.WZ_messen; 
+      S     "MX_WZB_G0_Sperre"; 
+
+NETWORK
+TITLE =Abspeichern, des zuletzt gereinigten Werkzeugs
+
+      U(    ; 
+      U     #PI_Pos_KR_beendet; 
+      SPBNB _026; 
+      L     "DB_WZV".Mag1_Pos_Loc; 
+      T     "DB_WZV".M1_letzte_Pos_KR; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+_026: U     BIE; 
+      )     ; 
+      U     "DB_WZV".WZB.WZ_messen; 
+      SPBNB _027; 
+      L     0; 
+      T     "DB_WZV".M1_letzte_Pos_KR; 
+_027: NOP   0; 
+NETWORK
+TITLE =Rücksetzen Positionieren Wechselstelle
+
+      U(    ; 
+      O     "DB_WZV".Pos_M1_WST_HUBein; 
+      O     "DB_WZV".Pos_M1_WST_HUBaus; 
+      )     ; 
+      U(    ; 
+      O     "DB_WZV".Mag1_inPos_WST; 
+      O     "M_Reset_Taste"; // RESET Taste    
+      )     ; 
+      R     "DB_WZV".Pos_M1_WST_HUBein; 
+      R     "DB_WZV".Pos_M1_WST_HUBaus; 
+
+NETWORK
+TITLE =Rücksetzen Positionieren Ladestelle
+
+      U     "DB_WZV".Pos_M1_LST; 
+      U(    ; 
+      O     "DB_WZV".Mag1_inPos_LST; 
+      O     "M_Reset_Taste"; // RESET Taste    
+      )     ; 
+      R     "DB_WZV".Pos_M1_LST; 
+
+NETWORK
+TITLE =Rücksetzen Werkzeug nach dem Ablegen messen (2te Messung)
+
+      U     "DB_WZV".Mag1_inPos_KR; 
+      U     "M_WZB_Messung"; 
+      U     "M_WZB_Ready"; 
+      U     "I_WZB_Parkstellung"; 
+      UN    "M_WZB_Anforderung"; 
+      R     "DB_WZV".WZB.WZ_messen; 
+      R     "M_WZB_Messung"; 
+      R     "DB_WZV".Mag1_inPos_KR; 
+      R     "DB_WZV".Pos_M1_KR; 
+      R     "M_WZB_Ready"; 
+
+NETWORK
+TITLE =Rücksetzen Positionieren Magazin 1 zur Kegelreinigung / WZBK 1te
+
+      U     "DB_WZV".Mag1_inPos_KR; 
+      UN    "DB_WW".Wz_reinigen_T; 
+      U(    ; 
+      UN    "M_WZB_Messung"; 
+      U     "M_WZB_Ready"; 
+      ON    "M_WZB_Anforderung"; 
+      )     ; 
+      UN    "O_WZB_Messung_Start"; 
+      U     "I_WZB_Parkstellung"; 
+      O     "M_Reset_Taste"; 
+      R     "DB_WZV".Pos_M1_KR; 
+      R     "M_WZB_Ready"; 
+
+NETWORK
+TITLE =Rücksetzen Magazinhub ausfahren
+
+      U     "DB_WZV".MAG_Hub_ausfahren; 
+      U(    ; 
+      UN    "DB_WZV".Pos_M1_WST_HUBein; 
+      UN    "DB_WZV".Pos_M1_WST_HUBaus; 
+      UN    "DB_WZV".Pos_M1_LST; 
+      UN    "DB_WZV".Pos_M1_KR; 
+      UN    "DB_WZV".T_MAG_drehen; 
+      UN    "DB_WZV".Hub_in_Grundstellung; 
+      O     ; 
+      U     #HUB_in_Pos; 
+      U     #mit_Hubachse; 
+      O     ; 
+      U     "I_WW_1_ZYL_GST"; 
+      UN    #mit_Hubachse; 
+      O     "M_Reset_Taste"; // RESET Taste    
+      )     ; 
+      =     #R_ausfahren; 
+      R     "DB_WZV".MAG_Hub_ausfahren; 
+
+NETWORK
+TITLE =Rücksetzen Magazin positionieren
+
+      U     "DB_WZV".MAG_positionieren; 
+      U(    ; 
+      UN    "DB_WZV".Pos_M1_WST_HUBein; 
+      UN    "DB_WZV".Pos_M1_WST_HUBaus; 
+      UN    "DB_WZV".Pos_M1_LST; 
+      UN    "DB_WZV".Pos_M1_KR; 
+      UN    "DB_WZV".T_MAG_drehen; 
+      UN    "DB_WZV".Hub_in_Grundstellung; 
+      O     #MAG_in_Pos; 
+      O     "M_Reset_Taste"; // RESET Taste    
+      )     ; 
+      =     #R_positionieren; 
+      R     "DB_WZV".MAG_positionieren; 
+
+NETWORK
+TITLE =Rücksetzen Magazinhub einfahren
+
+      U     "DB_WZV".MAG_Hub_einfahren; 
+      U(    ; 
+      UN    "DB_WZV".Pos_M1_WST_HUBein; 
+      UN    "DB_WZV".Pos_M1_WST_HUBaus; 
+      UN    "DB_WZV".Pos_M1_LST; 
+      UN    "DB_WZV".Pos_M1_KR; 
+      UN    "DB_WZV".T_MAG_drehen; 
+      UN    "DB_WZV".Hub_in_Grundstellung; 
+      O     ; 
+      U     #HUB_in_Pos; 
+      U     #mit_Hubachse; 
+      O     ; 
+      U     "I_WW_1_ZYL_SPI"; 
+      UN    #mit_Hubachse; 
+      O     "M_Reset_Taste"; // RESET Taste    
+      )     ; 
+      =     #R_einfahren; 
+      R     "DB_WZV".MAG_Hub_einfahren; 
+
+NETWORK
+TITLE =WW-Achse aus Spindel fahren
+
+      U(    ; 
+      O     "DB_WZV".Pos_M1_WST_HUBein; 
+      O     "DB_WZV".Pos_M1_WST_HUBaus; 
+      O     "DB_WZV".Pos_M1_LST; 
+      O     "DB_WZV".Pos_M1_KR; 
+      O     "DB_WZV".T_MAG_drehen; 
+      O     "DB_WZV".Hub_in_Grundstellung; 
+      )     ; 
+      U(    ; 
+      UN    "I_WW_1_ZYL_GST"; 
+      UN    #mit_Hubachse; 
+      O     ; 
+      UN    #HUB_in_Pos; 
+      U     #mit_Hubachse; 
+      )     ; 
+      UN    "DB_WZV".MAG_Hub_einfahren; 
+      S     "DB_WZV".MAG_Hub_ausfahren; 
+
+NETWORK
+TITLE =Übernahme der Sollposition für Magazinhub ausfahren
+
+      U(    ; 
+      U     "DB_WZV".MAG_Hub_ausfahren; 
+      SPBNB _02b; 
+      L     #WW_Pos_aus_SPI; 
+      T     #DINT_Temp; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+_02b: U     BIE; 
+      )     ; 
+      SPBNB _034; 
+      L     #DINT_Temp; 
+      DTR   ; 
+      T     "DB_Achs8".MR_SollPosition; 
+_034: NOP   0; 
+NETWORK
+TITLE =Magazin drehen Anforderung Werkzeugverwaltung
+
+      U(    ; 
+      U     "DB_WZV".Pos_M1_WST_HUBein; 
+      UN    "DB_WZV".Mag1_inPos_WST; 
+      O     ; 
+      U     "DB_WZV".Pos_M1_WST_HUBaus; 
+      UN    "DB_WZV".Mag1_inPos_WST; 
+      O     ; 
+      U     "DB_WZV".Pos_M1_LST; 
+      UN    "DB_WZV".Mag1_inPos_LST; 
+      O     ; 
+      U     "DB_WZV".Pos_M1_KR; 
+      UN    "DB_WZV".Mag1_inPos_KR; 
+      )     ; 
+      UN    "DB_WZV".Hub_in_Grundstellung; 
+      UN    "DB_WZV".T_MAG_drehen; 
+      UN    #MAG_in_Pos; 
+      UN    "DB_WZV".MAG_Hub_ausfahren; 
+      UN    "DB_WZV".MAG_Hub_einfahren; 
+      UN    "DB_WW".KR_ausfahren; 
+      U     #Frg_Mag_drehen; 
+      S     "DB_WZV".MAG_positionieren; 
+
+NETWORK
+TITLE =Übernahme Sollposition Werkzeugmagazin
+
+      U     "DB_WZV".MAG_positionieren; 
+      SPBNB _035; 
+      L     "DB_WZV".Mag1_Pos; 
+      T     "DB_ACHS7_WZM".MR_SollPosition; 
+_035: NOP   0; 
+NETWORK
+TITLE =WW-Achse in Spindel fahren
+
+      U(    ; 
+      U     "DB_WZV".Pos_M1_WST_HUBein; 
+      UN    "DB_WZV".Pos_M1_WST_HUBaus; 
+      UN    "DB_WZV".Pos_M1_KR; 
+      O     ; 
+      U     "DB_WZV".Pos_M1_LST; 
+      UN    "DB_WZV".Pos_M1_WST_HUBaus; 
+      UN    "DB_WZV".Pos_M1_KR; 
+      )     ; 
+      U     #MAG_in_Pos; 
+      U     "DB_ACHSE7".E_IndexAxisPos; 
+      UN    "I_WW_1_ZYL_SPI"; 
+      UN    #HUB_in_Pos; 
+      UN    "DB_WZV".MAG_positionieren; 
+      UN    "DB_WZV".MAG_Hub_ausfahren; 
+      U     #Rad_einfahren; 
+      S     "DB_WZV".MAG_Hub_einfahren; 
+
+NETWORK
+TITLE =Übernahme der Sollposition in Spindel fahren
+
+      U     "DB_WZV".MAG_Hub_einfahren; 
+      U     #mit_Hubachse; 
+      SPBNB _036; 
+      L     #WW_Pos_in_SPI; 
+      T     "DB_Achs8".MR_SollPosition; 
+_036: NOP   0; 
+NETWORK
+TITLE =Anforderung Magazinhub an Achsbaustein
+
+      U(    ; 
+      O     "DB_WZV".MAG_Hub_ausfahren; 
+      O     "DB_WZV".MAG_Hub_einfahren; 
+      )     ; 
+      U     #mit_Hubachse; 
+      =     "DB_Achs8".MX_Anf_Positionieren; 
+
+NETWORK
+TITLE =Anforderung Magazin positionieren an Achsbaustein
+
+      U     "DB_WZV".MAG_positionieren; 
+      FP    "DB_WZV".PF_MAG_positionieren; 
+      S     "DB_ACHS7_WZM".MX_Anf_Positionieren; 
+
+NETWORK
+TITLE =Abbruch Achsbewegung Magazinhub
+
+      U     "M_Reset_Taste"; // RESET Taste    
+      S     "DB_ACHS7_WZM".MX_Abbruch_Positionieren; 
+
+
+NETWORK
+TITLE =PLC checks axis
+
+      U     #R_positionieren; 
+      R     "DB_ACHSE7".A_PLCAxis; 
+
+NETWORK
+TITLE =Anzeige Magazintür nicht verriegelt
+// Netzerk noch einfügen
+//    U     "DB_WW".MFkt_06; 
+//    U     "m_takt_1,6sec."; 
+//    O     ; 
+//    UN    "DB_WW".MFkt_06; 
+//    UN    "I_WM_Energiefreigabe"; 
+//    =     "O_WMT_LT_FRG_oeffnen";  
+
+
+NETWORK
+TITLE =Vorschubsperre WW-Achse Werkzeugwechsler
+
+      U     "DB_WZV".MAG_positionieren; 
+      =     "DB_WW".VSP_WW_Wechsler; 
+END_FUNCTION
+

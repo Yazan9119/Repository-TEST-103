@@ -1,0 +1,84 @@
+DATA_BLOCK "DI_TM_WZBRUCH_R"
+TITLE =
+{ S7_language := '7(1) Deutsch (Deutschland)  14.12.2007  09:31:41' }
+VERSION : 0.0
+
+"FB_TM_WZBRUCH_R"
+BEGIN
+   E_TNR_READ := 0; 
+   E_READ := FALSE; 
+   EA_WZBRUCH := FALSE; 
+   EA_Error_Read := FALSE; 
+   EA_DONE_Read := FALSE; 
+   Req_Get_Read := FALSE; 
+   NDR_GET_Read := FALSE; 
+   Error_Get_Read := FALSE; 
+   S_READ := FALSE; 
+   TC_DP25 := DW#16#0; 
+   TC_TPC1 := 0.000000e+000; 
+   TC_DPC5 := 0.000000e+000; 
+   T1_TO_edgeData25_1.SYNTAX_ID := B#16#82; 
+   T1_TO_edgeData25_1.bereich_u_einheit := B#16#81; 
+   T1_TO_edgeData25_1.spalte := W#16#1; 
+   T1_TO_edgeData25_1.zeile := W#16#19; 
+   T1_TO_edgeData25_1.bausteintyp := B#16#14; 
+   T1_TO_edgeData25_1.ZEILENANZAHL := B#16#1; 
+   T1_TO_edgeData25_1.typ := B#16#F; 
+   T1_TO_edgeData25_1.laenge := B#16#8; 
+   T1_TU_data1_1.SYNTAX_ID := B#16#82; 
+   T1_TU_data1_1.bereich_u_einheit := B#16#81; 
+   T1_TU_data1_1.spalte := W#16#1; 
+   T1_TU_data1_1.zeile := W#16#1; 
+   T1_TU_data1_1.bausteintyp := B#16#24; 
+   T1_TU_data1_1.ZEILENANZAHL := B#16#1; 
+   T1_TU_data1_1.typ := B#16#F; 
+   T1_TU_data1_1.laenge := B#16#8; 
+   T1_TUE_edgedata0_0.SYNTAX_ID := B#16#82; 
+   T1_TUE_edgedata0_0.bereich_u_einheit := B#16#81; 
+   T1_TUE_edgedata0_0.spalte := W#16#0; 
+   T1_TUE_edgedata0_0.zeile := W#16#0; 
+   T1_TUE_edgedata0_0.bausteintyp := B#16#25; 
+   T1_TUE_edgedata0_0.ZEILENANZAHL := B#16#1; 
+   T1_TUE_edgedata0_0.typ := B#16#F; 
+   T1_TUE_edgedata0_0.laenge := B#16#8; 
+   GET_FB2.Req := FALSE; 
+   GET_FB2.NumVar := 0; 
+   GET_FB2.Unit1 := B#16#0; 
+   GET_FB2.Column1 := W#16#0; 
+   GET_FB2.Line1 := W#16#0; 
+   GET_FB2.Unit2 := B#16#0; 
+   GET_FB2.Column2 := W#16#0; 
+   GET_FB2.Line2 := W#16#0; 
+   GET_FB2.Unit3 := B#16#0; 
+   GET_FB2.Column3 := W#16#0; 
+   GET_FB2.Line3 := W#16#0; 
+   GET_FB2.Unit4 := B#16#0; 
+   GET_FB2.Column4 := W#16#0; 
+   GET_FB2.Line4 := W#16#0; 
+   GET_FB2.Unit5 := B#16#0; 
+   GET_FB2.Column5 := W#16#0; 
+   GET_FB2.Line5 := W#16#0; 
+   GET_FB2.Unit6 := B#16#0; 
+   GET_FB2.Column6 := W#16#0; 
+   GET_FB2.Line6 := W#16#0; 
+   GET_FB2.Unit7 := B#16#0; 
+   GET_FB2.Column7 := W#16#0; 
+   GET_FB2.Line7 := W#16#0; 
+   GET_FB2.Unit8 := B#16#0; 
+   GET_FB2.Column8 := W#16#0; 
+   GET_FB2.Line8 := W#16#0; 
+   GET_FB2.Error := FALSE; 
+   GET_FB2.NDR := FALSE; 
+   GET_FB2.State := W#16#0; 
+   GET_FB2.ident := B#16#0; 
+   GET_FB2.regist := FALSE; 
+   GET_FB2.flanke := FALSE; 
+   GET_FB2.run := FALSE; 
+   GET_FB2.progtest := FALSE; 
+   GET_FB2.err_cls_cod := W#16#0; 
+   GET_FB2.err_stat := W#16#0; 
+   GET_FB2.PError := DW#16#0; 
+   GET_FB2.PRD1 := DW#16#0; 
+   GET_FB2.Pident := DW#16#0; 
+END_DATA_BLOCK
+

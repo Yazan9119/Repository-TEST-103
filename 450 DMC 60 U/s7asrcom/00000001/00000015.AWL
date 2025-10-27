@@ -1,0 +1,495 @@
+ORGANIZATION_BLOCK "OB_PROZESSALARM1"
+TITLE =
+//$Revision: 1.9 $
+//$Date: 2008/05/15 13:15:38CEST $
+//$Author: hgc $
+VERSION : 3.2
+
+
+VAR_TEMP
+  OB40_EV_CLASS : BYTE ;	
+  OB40_STRT_INF : BYTE ;	
+  OB40_PRIORITY : BYTE ;	
+  OB40_OB_NUMBR : BYTE ;	
+  OB40_RESERVED_1 : BYTE ;	
+  OB40_MDL_ID : BYTE ;	
+  OB40_MDL_ADDR : INT ;	
+  OB40_POINT_ADDR : DWORD ;	
+  OB40_DATE_TIME : DATE_AND_TIME ;	//Belegung durch das Grundprogramm
+//data for the Basicprogram
+  GP_IRFromNCK : BOOL ;	//Interrupt from NCK
+  GP_TM : BOOL ;	//Toolmanagment
+  GP_InPosition : ARRAY  [1 .. 31 ] OF BOOL ;	//InPos Signal from FC15,16,18
+  GP_AuxFunction : ARRAY  [1 .. 10 ] OF BOOL ;	//Auxilary functions
+  GP_FMBlock : ARRAY  [1 .. 10 ] OF BOOL ;	//not used
+//HIER ANWENDER-Lokaldaten EINFUEGEN
+//Insert User-data from here
+  loop_c : BYTE ;	
+  temp : BOOL ;	//HIER ANWENDER-Lokaldaten EINFUEGEN
+//Insert User-data from here
+  Klappe_nicht_oeffnen_HW : BOOL ;	
+  H_Fkt : DINT ;	
+  B_SKZ : BYTE ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =CALL "FC_SIEM_GP_PRAL"
+// Netzwerk-Übersicht
+// ==================
+// NW 1: CALL "FC_SIEM_GP_PRAL"
+// NW 2: Aufruf: H-Decoder-Baustein
+// NW 3: 
+// NW 4: Kein Öffnen der Magazinklappe bei Handwerkzeug
+// NW 5: 
+// NW 6: Merker für H-Kommando
+// NW 7: WW-Ablauf über H5000er-Funktionen
+// NW 8: WWT: H 5000 - Start Werkzeugwechsel eingefahren
+// NW 9: WWT: H 5001 - Werkzeugwechsel beendet
+// NW 10: WWT: H 5002 - Werkzeugspanner in Spindel öffnen
+// NW 11: WWT: H 5003 - Werkzeugspanner in Spindel schliessen
+// NW 12: WWT: H 5004 - Start bei Spindel leer
+// NW 13: WWT: H 5005 - Zange öffnen
+// NW 14: WWT: H 5006 - Zange schliessen
+// NW 15: WWT: H5007 - Datentausch Magazin > Spindel
+// NW 16: WWT: H 5008 - Datentausch Spindel > Magazin
+// NW 17: WWT: H 5009 - Datentausch Magazin > Spindel / Spanner zu
+// NW 18: Magazin in Spindelstellung
+// NW 19: Magazin in Grundstellung
+// NW 20: WWT: Aktualisierung der Ausgänge
+// NW 21: Kette oder Regal: Werkzeugwechslerklappe öffnen
+// NW 22: Kette oder Regal: Werkzeugwechslerklappe schliessen
+// NW 23: Sprungleiste
+// NW 24: WWLW: H5000 Magazinklappe öffnen
+// NW 25: WWLW: H5001 Magazinklappe schliessen
+// NW 26: WWLW: H5002 Werkzeugmagazin lange Werkzeuge ausfahren
+// NW 27: WWLW: H5003 Werkzeugmagazin lange Werkzeuge einfahren
+// NW 28: WWLW: H5004 Kegelreinigung zurückfahren
+// NW 29: WWLW: H5005 Kegelreinigung vorfahren
+// NW 30: WWLW: H5006 Anstoß Kegelreinigung
+// NW 31: WWLW: H5007 Spanner lösen
+// NW 32: WWLW: H5008 Spanner schliessen
+// NW 33: WWLW: H5009 
+// NW 34: WWLW: H5010 
+// NW 35: WWLW: H5011..19 Datentausch Spindel > Magazin 2 Platz x
+// NW 36: WWLW: H5021..29 Datentausch Magazin 2 Platz x > Spindel
+// NW 37:  Rücksprung für Auswertung weiterer H-Funktionen
+      L     #OB40_EV_CLASS; 
+
+
+      CALL "FC_SIEM_GP_PRAL" ;
+
+//HIER ANWENDERPROGRAMM EINFUEGEN
+//Insert Userprogram from here
+
+
+NETWORK
+TITLE =Aufruf: H-Decoder-Baustein
+// CALL fb120 , "DI_FB_CI_H_DEKODER" (
+//      H_Change_Gr1             := "DB_SIEM_KANAL_1".H1Change,
+//      E_H_Function1            := "DB_SIEM_KANAL_1".ExtH1,
+//      E_H_Wert                 := "DB_SIEM_KANAL_1".H1,
+//      O_einlesesperre          := 
+//"DB_FEHLERMELDUNG".Meldung._702122_Ware_Quitt_H_Fkt,
+//      Fehler                   := 
+//"DB_FEHLERMELDUNG".Spi_VS_Halt._700212_Err_H_Dekoder);
+      U     "DB_SIEM_KANAL_1".H1Change; 
+      S     "mx_kanal_1_h1_change"; 
+
+      U     "DB_SIEM_KANAL_1".H2Change; 
+      S     "mx_kanal1_h2_change"; 
+
+      U     "DB_SIEM_KANAL_1".H3Change; 
+      S     "mx_kanal1_h3_change"; 
+
+NETWORK
+TITLE =
+
+      UN    #GP_AuxFunction[1]; //Hilfsfunktion Kanal 1
+// BEB   ; 
+
+      LAR1  P#0.0; //Pointer Init
+      LAR2  P#0.0; 
+
+NETWORK
+TITLE =Kein Öffnen der Magazinklappe bei Handwerkzeug
+
+      U(    ; 
+      L     "TMSpindleIF".IF[1].SMag; // NEUES WERKZEUG
+      L     9999; 
+      ==I   ; 
+      )     ; 
+      U(    ; 
+      L     "TMSpindleIF".IF[1].TMag; // ALTES WERKZEUG
+      L     0; 
+      ==I   ; 
+      )     ; 
+      O     ; 
+      U(    ; 
+      L     "TMSpindleIF".IF[1].SMag; // NEUES WERKZEUG
+      L     9999; 
+      ==I   ; 
+      )     ; 
+      U(    ; 
+      L     "TMSpindleIF".IF[1].TMag; // ALTES WERKZEUG
+      L     9999; 
+      ==I   ; 
+      )     ; 
+      =     #Klappe_nicht_oeffnen_HW; 
+
+NETWORK
+TITLE =Merker für H-Kommando
+
+      L     3; //3 Hifu H
+y002: T     #loop_c; 
+
+      AUF   "DB_SIEM_KANAL_1"; //Kanal-DB wird geöffnet 
+
+      UN    DBX [AR1,P#64.0]; //Aenderungssignal
+      SPB   y003; 
+
+      L     DBW [AR2,P#140.0]; //Extension
+      OW    W#16#0; 
+      SPN   y001; 
+
+      CLR   ; 
+      =     #temp; 
+
+      L     DBD [AR2,P#142.0]; //H-Wert
+      RND   ; //Integer umwandeln
+      T     #H_Fkt; 
+      T     "MD_H_Funktion_Wert"; 
+
+
+NETWORK
+TITLE =WW-Ablauf über H5000er-Funktionen
+
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.WZW_RAD_MIT_ZYLINDER; 
+      SPBN  EWWT; 
+NETWORK
+TITLE =WWT: H 5000 - Start Werkzeugwechsel eingefahren
+
+      L     #H_Fkt; 
+      L     5000; // H-Wert 5000 Zyklus Start
+      ==D   ; 
+      UN    "DB_SIEM_KANAL_1".E_ProgTest; // NST NCK-->PLC: Programmtest aktiv
+      S     "M_H5000_H5004_WW_Start"; 
+      S     "DB_ACHSE1_X".A_SWLimit2Plus; // 2.SOFTWAREENDSCHALTER X PLUS AKTIV
+      S     #temp; 
+
+      U     #temp; 
+      U     "DB_WW".MagPlatz_ok; // Magazinplatz Belegung kontrolliert und i.O.
+      UN    "DB_WZV".Mag1_Laden_aktiv; // Be- Entladen Magazin 1 oder Spindel aktiv
+      UN    #Klappe_nicht_oeffnen_HW; 
+      S     "O_WW_1_Klappe_auf"; 
+      R     "O_WW_1_Klappe_zu"; 
+NETWORK
+TITLE =WWT: H 5001 - Werkzeugwechsel beendet
+
+      L     #H_Fkt; 
+      L     5001; // H-Wert 5001 Zyklus Ende
+      ==D   ; 
+      UN    "DB_SIEM_KANAL_1".E_ProgTest; // NST NCK-->PLC: Programmtest aktiv
+      S     "M_H5001_WW_Ende"; 
+      S     #temp; 
+
+NETWORK
+TITLE =WWT: H 5002 - Werkzeugspanner in Spindel öffnen
+
+      L     #H_Fkt; 
+      L     5002; 
+      ==D   ; 
+      UN    "DB_SIEM_KANAL_1".E_ProgTest; // NST NCK-->PLC: Programmtest aktiv
+      S     "M_H5002_Wz_loesen"; 
+      R     "M_H5003_Wz_spannen"; 
+      R     "DB_WW".WW_Wz_spannen; // BEFEHL WZ-SPANNER SPANNEN
+      S     "DB_WW".WW_Wz_loesen; // BEFEHL Spindelspanner oeffnen
+      S     "O_AL_WZ_Spanner_Loesen"; 
+      S     "M_Auto_WZSP_Auf"; 
+      S     #temp; 
+NETWORK
+TITLE =WWT: H 5003 - Werkzeugspanner in Spindel schliessen
+
+      L     #H_Fkt; 
+      L     5003; // Spanner schliessen
+      ==D   ; 
+      UN    "DB_SIEM_KANAL_1".E_ProgTest; // NST NCK-->PLC: Programmtest aktiv
+      S     "M_H5003_Wz_spannen"; 
+      R     "M_H5002_Wz_loesen"; 
+      S     "DB_WW".WW_Wz_spannen; // BEFEHL WZ-SPANNER SPANNEN
+      R     "DB_WW".WW_Wz_loesen; // BEFEHL Spindelspanner oeffnen
+      R     "O_AL_WZ_Spanner_Loesen"; 
+      R     "M_Auto_WZSP_Auf"; 
+      S     #temp; 
+NETWORK
+TITLE =WWT: H 5004 - Start bei Spindel leer
+
+      L     #H_Fkt; 
+      L     5004; // Start Werkzeugwechsel ausgefahren
+      ==D   ; 
+      UN    "DB_SIEM_KANAL_1".E_ProgTest; // NST NCK-->PLC: Programmtest aktiv
+      S     "M_H5000_H5004_WW_Start"; 
+      S     "DB_ACHSE1_X".A_SWLimit2Plus; // 2.SOFTWAREENDSCHALTER X PLUS AKTIV
+      S     #temp; 
+
+      U     #temp; 
+      U     "DB_WW".MagPlatz_ok; // Magazinplatz Belegung kontrolliert und i.O.
+      UN    "DB_WZV".Mag1_Laden_aktiv; // Be- Entladen Magazin 1 oder Spindel aktiv
+      UN    #Klappe_nicht_oeffnen_HW; 
+      S     "O_WW_1_Klappe_auf"; 
+      R     "O_WW_1_Klappe_zu"; 
+NETWORK
+TITLE =WWT: H 5005 - Zange öffnen
+
+      L     #H_Fkt; 
+      L     5005; // Zange öffnen
+      ==D   ; 
+      S     #temp; 
+
+NETWORK
+TITLE =WWT: H 5006 - Zange schliessen
+
+      L     #H_Fkt; 
+      L     5006; // Zange schliessen 
+      ==D   ; 
+      S     #temp; 
+
+NETWORK
+TITLE =WWT: H5007 - Datentausch Magazin > Spindel
+
+      L     #H_Fkt; 
+      L     5007; // Datentausch Magazin in Spindel
+      ==D   ; 
+      UN    "DB_SIEM_KANAL_1".E_ProgTest; // NST NCK-->PLC: Programmtest aktiv
+      S     "DB_WW".WW_DT_aufnehmen; // Datentausch 2 Magazin -> Spindel
+      S     "M_H5007_H5009_DT_Mag_Sp"; 
+      S     #temp; 
+
+NETWORK
+TITLE =WWT: H 5008 - Datentausch Spindel > Magazin
+
+      L     #H_Fkt; 
+      L     5008; // Datentausch Spindel -> Magazin
+      ==D   ; 
+      UN    "DB_SIEM_KANAL_1".E_ProgTest; // NST NCK-->PLC: Programmtest aktiv
+      S     "DB_WW".WW_DT_ablegen; // Datentausch 1 Spindel -> Magazin
+      S     "M_H5008_DT_Sp_Mag"; 
+      S     #temp; 
+
+
+NETWORK
+TITLE =WWT: H 5009 - Datentausch Magazin > Spindel / Spanner zu
+
+      L     #H_Fkt; 
+      L     5009; // Datentausch Magazin in Spindel
+      ==D   ; 
+      UN    "DB_SIEM_KANAL_1".E_ProgTest; // NST NCK-->PLC: Programmtest aktiv
+      S     "DB_WW".WW_DT_aufnehmen; // Datentausch 2 Magazin -> Spindel
+      S     "M_H5007_H5009_DT_Mag_Sp"; 
+
+      S     "M_H5003_Wz_spannen"; 
+      R     "M_H5002_Wz_loesen"; 
+      S     "DB_WW".WW_Wz_spannen; // BEFEHL WZ-SPANNER SPANNEN
+      R     "DB_WW".WW_Wz_loesen; // BEFEHL Spindelspanner oeffnen
+      R     "O_AL_WZ_Spanner_Loesen"; 
+      R     "M_Auto_WZSP_Auf"; 
+      S     #temp; 
+
+NETWORK
+TITLE =Magazin in Spindelstellung
+
+      L     #H_Fkt; 
+      L     5010; // Start Werkzeugwechsel ausgefahren
+      ==D   ; 
+      UN    "DB_SIEM_KANAL_1".E_ProgTest; // NST NCK-->PLC: Programmtest aktiv
+      S     "Mx_H5010"; 
+      R     "Mx_H5011"; 
+      S     "DB_ACHS7_WZM".MX_Ax_Position_Lesen; 
+      S     #temp; 
+
+
+NETWORK
+TITLE =Magazin in Grundstellung
+
+      L     #H_Fkt; 
+      L     5011; // Start Werkzeugwechsel ausgefahren
+      ==D   ; 
+      UN    "DB_SIEM_KANAL_1".E_ProgTest; // NST NCK-->PLC: Programmtest aktiv
+      R     "Mx_H5010"; 
+      S     "Mx_H5011"; 
+      S     #temp; 
+
+
+NETWORK
+TITLE =WWT: Aktualisierung der Ausgänge
+
+      UN    #temp; 
+      SPB   y001; 
+
+      L     AD    42; 
+      T     PAD   42; // Periepherie load
+
+      SPA   y001; 
+
+EWWT: NOP   0; 
+NETWORK
+TITLE =Kette oder Regal: Werkzeugwechslerklappe öffnen
+
+      L     #H_Fkt; 
+      L     5020; // Start Werkzeugwechslerklappe öffnen
+      ==D   ; 
+      UN    "DB_SIEM_KANAL_1".E_ProgTest; // NST NCK-->PLC: Programmtest aktiv
+      S     "MX_H5020"; 
+      R     "MX_H5021"; 
+NETWORK
+TITLE =Kette oder Regal: Werkzeugwechslerklappe schliessen
+
+      L     #H_Fkt; 
+      L     5021; // Start Werkzeugwechslerklappe schliessen
+      ==D   ; 
+      UN    "DB_SIEM_KANAL_1".E_ProgTest; // NST NCK-->PLC: Programmtest aktiv
+      S     "MX_H5021"; 
+      R     "MX_H5020"; 
+NETWORK
+TITLE =Sprungleiste
+
+      L     #H_Fkt; 
+      L     5000; 
+      >D    ; 
+      SPBN  KHWW; 
+      -D    ; 
+      SPA   HWW; 
+KHWW: L     0; 
+HWW:  T     #B_SKZ; 
+
+      L     #B_SKZ; 
+      SPL   H99; 
+      SPA   H00; 
+      SPA   H01; 
+      SPA   H02; 
+      SPA   H03; 
+      SPA   H04; 
+      SPA   H05; 
+      SPA   H06; 
+      SPA   H07; 
+      SPA   H08; 
+      SPA   H09; 
+      SPA   H10; 
+      SPA   H11; 
+      SPA   H11; 
+      SPA   H11; 
+      SPA   H11; 
+      SPA   H11; 
+      SPA   H11; 
+      SPA   H11; 
+      SPA   H11; 
+      SPA   H11; 
+      SPA   H11; 
+      SPA   H21; 
+      SPA   H21; 
+      SPA   H21; 
+      SPA   H21; 
+      SPA   H21; 
+      SPA   H21; 
+      SPA   H21; 
+      SPA   H21; 
+      SPA   H21; 
+      SPA   H21; 
+H99:  SPA   y001; 
+
+NETWORK
+TITLE =WWLW: H5000 Magazinklappe öffnen
+
+H00:  NOP   0; 
+      SPA   y001; 
+
+NETWORK
+TITLE =WWLW: H5001 Magazinklappe schliessen
+
+H01:  NOP   0; 
+      SPA   y001; 
+
+NETWORK
+TITLE =WWLW: H5002 Werkzeugmagazin lange Werkzeuge ausfahren
+
+H02:  NOP   0; 
+      SPA   y001; 
+
+NETWORK
+TITLE =WWLW: H5003 Werkzeugmagazin lange Werkzeuge einfahren
+
+H03:  NOP   0; 
+      SPA   y001; 
+
+NETWORK
+TITLE =WWLW: H5004 Kegelreinigung zurückfahren
+
+H04:  NOP   0; 
+      SPA   y001; 
+
+NETWORK
+TITLE =WWLW: H5005 Kegelreinigung vorfahren
+
+H05:  S     #temp; 
+// S     "M_KR_vor"; 
+// R     "M_KR_zurueck"; 
+      SPA   y001; 
+
+NETWORK
+TITLE =WWLW: H5006 Anstoß Kegelreinigung
+//S     "M_KR_Anstoss_Blasluft"; 
+H06:  S     #temp; 
+      SPA   y001; 
+
+NETWORK
+TITLE =WWLW: H5007 Spanner lösen
+
+H07:  S     #temp; 
+      S     "O_AL_WZ_Spanner_Loesen"; // setze Ausgang Spanner auf
+      SPA   y001; 
+
+NETWORK
+TITLE =WWLW: H5008 Spanner schliessen
+
+H08:  S     #temp; 
+      R     "O_AL_WZ_Spanner_Loesen"; // setze Ausgang Spanner auf
+      SPA   y001; 
+
+NETWORK
+TITLE =WWLW: H5009 
+
+H09:  S     #temp; 
+      SPA   y001; 
+
+NETWORK
+TITLE =WWLW: H5010 
+
+H10:  S     #temp; 
+      SPA   y001; 
+
+NETWORK
+TITLE =WWLW: H5011..19 Datentausch Spindel > Magazin 2 Platz x
+
+H11:  NOP   0; 
+      SPA   y001; 
+
+NETWORK
+TITLE =WWLW: H5021..29 Datentausch Magazin 2 Platz x > Spindel
+
+H21:  NOP   0; 
+      SPA   y001; 
+
+NETWORK
+TITLE = Rücksprung für Auswertung weiterer H-Funktionen
+
+y001: NOP   0; 
+
+      +AR1  P#0.1; 
+      +AR2  P#6.0; //nextes H
+
+      L     #loop_c; 
+      LOOP  y002; 
+
+y003: NOP   0; 
+
+END_ORGANIZATION_BLOCK
+

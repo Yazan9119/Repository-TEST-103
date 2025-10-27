@@ -1,0 +1,816 @@
+FUNCTION "FC_SP_UEBERW" : VOID
+TITLE =
+//$Revision: 1.58 $
+//$Date: 2008/09/27 07:18:37CEST $
+//$Author: hgc $
+//
+//3-08-2000 SJA
+//
+//o Drehzahlüberwachung für die Betriebsarten
+//BA's
+//2-800 (DB20.dbw118)
+//3-4000 (DB20.DBW120)
+//4-4000 (DB20.DBW122)
+//
+//o Überwachung auf Drehzahleinbruch
+//
+//o Drehzahlüberwachung abhängig vom Radius
+//
+//o Leitungstemperaturüberwachung 
+AUTHOR : SJA
+FAMILY : DM_Basis
+NAME : Sp_Fkt
+VERSION : 0.1
+
+
+VAR_INPUT
+  E_enabled : BOOL ;	
+  E_Drehzahl_ist : REAL ;	
+  E_WZ_Radius : REAL ;	
+  E_D_nummer : WORD ;	
+  E_T_nummer : WORD ;	
+  E_Spindel_angewaehlt : BOOL ;	//DB20.dbx400.5
+  E_MSST_Taste_RESET : BOOL ;	//MSST: Taste Reset
+END_VAR
+VAR_TEMP
+  temp_n_erlaubt : REAL ;	
+  temp_WZ_Radius : REAL ;	
+  temp_Fahrbefehl : BOOL ;	
+  sensor_ausserhalb : BOOL ;	
+  temp_diff_zu_gross : BOOL ;	
+  TEMP1 : BOOL ;	
+  m41_aktiv : BOOL ;	
+  m42_aktiv : BOOL ;	
+  m43_aktiv : BOOL ;	
+  m44_aktiv : BOOL ;	
+  temp_Spin_Anforder : BYTE ;	
+  temp_n_ist_betrag : REAL ;	
+  temp_leitung_1 : REAL ;	
+  temp_leitung_1_ist : REAL ;	
+  temp_leitung_2 : REAL ;	
+  temp_leitung_2_ist : REAL ;	
+  temp_diff_1_zu_2 : REAL ;	
+  temp_untere_grenze : REAL ;	
+  temp_obere_grenze : REAL ;	
+  Getrieb_2stufig : BOOL ;	
+  SternDreieck : BOOL ;	
+  Getr2stufig_SternDreieck : BOOL ;	
+  mm_inch_faktor : REAL ;	
+  temp_keine_ueberwachung : BOOL ;	
+  Spi_Lag_Temp_hinten : INT ;	
+  Spi_Lag_Temp_vorne : INT ;	
+  Grenz_temp : REAL ;	
+  mwert : REAL ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =Abloeschen der Fehler
+// Netzwerk-Übersicht
+// ==================
+// NW 1: Abloeschen der Fehler
+// NW 2: Te: kein WZ in Spindel
+// NW 3: 701005 "SPVS-HA-HPT, Spindelsperre da kein WZ in Spindel"
+// NW 4: SPI: Spindeleingang entprellt überwacht
+// NW 5: Überwachung Übertemperatur bei SIEMENS Synchronspindel
+// NW 6: SpindelTemperatur
+// NW 7: Leitungsueberwachung:Temperatursensor Spindel vohanden ?
+// NW 8: Leitungsueberwachung:Temperatursensor 1/2 Ausserhalb Messbereich
+// NW 9: Leitungsueberwachung:Temperatursensor 1+2 Hauptantrieb
+// NW 10: Leitungsueberwachung:Temperatur Leitung 1+2
+// NW 11: Leitungsueberwachung: Temperaturunterschied > 10°
+// NW 12: Leitungsueberwachung: Warnung Temperatur zu groß (untere Grenze)
+// NW 13: Leitungsueberwachung: Alarm Temperatur zu groß (obere Grenze)
+// NW 14: Spindelreglerfreigabe durch Wizard
+// NW 15: Spindeldrehzahl fuer die verschiedenen BA's 
+// NW 16: Vorschubsperre Spindel nicht im Sollbereich
+// NW 17: Anwahl INT006=1: 2-stufiges Getriebe
+// NW 18: Anwahl INT006=2: Stern-Dreieck-Umschaltung
+// NW 19: Anwahl INT006=3: 2-stufiges Getriebe + Stern-Dreieck-Umschaltung
+// NW 20: Auswertung Getriebstellung: M41 aktiv
+// NW 21: Auswertung Getriebstellung: M42 aktiv
+// NW 22: Auswertung Getriebstellung: M43 aktiv
+// NW 23: Auswertung Getriebstellung: M44 aktiv
+// NW 24: keine Überwachung
+// NW 25: Überwachung Getriebeschaltung
+// NW 26: Vorschub-Halt Überwachung Getriebeumschaltung aktiv
+// NW 27: Spindeldrehzahlueberwachung abh. vom Werkzeugradius
+// NW 28: Drehzahlüberwachung OEM-Parameter S max.
+// NW 29: Ende
+      L     "DB_PLC_MD_DB20".UDInt._004_ANWAHL_SPINDEL; 
+      L     0; 
+      ==I   ; 
+      SPBN  nw1a; 
+
+//   bei Abwahl von Spindel alle Fehler ablöschen 
+      SET   ; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt._700154_Spi_Dz_BA_zuhoch; // prog. Drehzahl für BA nicht zulässig
+      R     "DB_FEHLERMELDUNG".VS_Halt._700432_Spi_n_einbruch; 
+      R     "DB_FEHLERMELDUNG".VS_SpiVerz_Halt._700316_Drehzahleinbruch; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700728_SPI_istn_zuhoch; 
+      R     "DB_FEHLERMELDUNG".Meldung._702032_SRFG_WIZARD; 
+      R     "DB_FEHLERMELDUNG".NotAus._700013_SP_NICHT_BEREIT; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700742_Spindel_Soll_0S; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._701003_S_groesser_Smax; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._701043_S_nicht_erlaubt; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._701005_KEIN_WZ_IN_SPI; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700736_Ein_Spi_VS_Halt; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt._700207_Spindel_Temp; 
+      R     "DB_FEHLERMELDUNG".WARNUNG4._702350_SP_Leit_temp_vor; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt1._510103_SP_Leit_temp_err; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt1._510102_SP_Leit_temp_dif; 
+      R     "DB_FEHLERMELDUNG".NotAus._700033_SPINDELTEMP; 
+      BEA   ; 
+
+
+nw1a: U     "M_Ruecksetze_Fehler"; 
+      SPBN  nw1b; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt._700154_Spi_Dz_BA_zuhoch; // prog. Drehzahl für BA nicht zulässig
+      R     "DB_FEHLERMELDUNG".VS_Halt._700432_Spi_n_einbruch; 
+      R     "DB_FEHLERMELDUNG".VS_SpiVerz_Halt._700316_Drehzahleinbruch; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700728_SPI_istn_zuhoch; 
+      R     "DB_FEHLERMELDUNG".Meldung._702032_SRFG_WIZARD; 
+      R     "DB_FEHLERMELDUNG".NotAus._700013_SP_NICHT_BEREIT; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._701003_S_groesser_Smax; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._701043_S_nicht_erlaubt; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._701005_KEIN_WZ_IN_SPI; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700736_Ein_Spi_VS_Halt; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt._700207_Spindel_Temp; 
+      R     "DB_FEHLERMELDUNG".WARNUNG4._702350_SP_Leit_temp_vor; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt1._510103_SP_Leit_temp_err; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt1._510102_SP_Leit_temp_dif; 
+      R     "DB_FEHLERMELDUNG".NotAus._700033_SPINDELTEMP; 
+nw1b: NOP   0; 
+NETWORK
+TITLE =M3 oder M4 ist aktiv, für Überwachung Werkzeug in Spindel
+
+      O(    ; 
+      L     "DB_ACHSE6_SPINDEL".E_MFunct; 
+      L     3; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     "DB_ACHSE6_SPINDEL".E_MFunct; 
+      L     4; 
+      ==I   ; 
+      )     ; 
+      =     "m_M3_M4_aktiv"; 
+NETWORK
+TITLE =Te: kein WZ in Spindel
+
+      UN    "I_WZ-Spanner_Gesp_mit_WZ"; 
+      UN    "M_WZW_Aktiv"; 
+      UN    "DB_ACHSE6_SPINDEL".E_PosMode; 
+      U(    ; 
+      UN    "DB_ACHSE6_SPINDEL".E_SetRange; 
+      U     "m_M3_M4_aktiv"; 
+      O     "MX_Spdl_M3"; 
+      O     "MX_Spdl_M4"; 
+      )     ; 
+      L     S5T#500MS; 
+      SE    "Te_Kein_WZ_IN_SPI"; 
+NETWORK
+TITLE =VSH sofort Kein Werkzeug in Spindel
+
+      UN    "I_WZ-Spanner_Gesp_mit_WZ"; 
+      UN    "M_WZW_Aktiv"; 
+      UN    "DB_ACHSE6_SPINDEL".E_PosMode; 
+      =     "m_VSH_SP_WZ_NIO"; 
+NETWORK
+TITLE =701005 "SPVS-HA-HPT, Spindelsperre da kein WZ in Spindel"
+
+      U     #E_MSST_Taste_RESET; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._701005_KEIN_WZ_IN_SPI; 
+      U     "Te_Kein_WZ_IN_SPI"; 
+      U     "DB_PLC_MD_DB20".UDHex._15_BIT0_Stange_Getri; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._701005_KEIN_WZ_IN_SPI; 
+      NOP   0; 
+NETWORK
+TITLE =SPI: Spindeleingang entprellt überwacht
+//entprelltes Überwachen des Spindeleingangs
+      UN    "I_AL_NEG_SPI_VS_Halt"; 
+      L     S5T#200MS; 
+      SE    "Te_Spi_Eingang"; 
+      NOP   0; 
+      NOP   0; 
+      NOP   0; 
+      U     "Te_Spi_Eingang"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700736_Ein_Spi_VS_Halt; 
+
+NETWORK
+TITLE =Überwachung Übertemperatur bei SIEMENS Synchronspindel
+
+      U     "DB_PLC_MD_DB20".UDHex._35_SYNCH_SPI_UEBTMP; 
+      UN    "I_SPI_TEMP_RDY"; 
+      S     "DB_FEHLERMELDUNG".NotAus._700033_SPINDELTEMP; 
+NETWORK
+TITLE =SpindelTemperatur
+//eingebaut : 05.12.01 AB
+//
+//
+      L     "DB_PLC_MD_DB20".UDInt._025_ANWAHL_TEMP_KOMP; 
+      L     1; 
+      ==I   ; 
+      SPBN  x1; 
+
+      L     "DB_PLC_MD_DB20".UDInt._100_SPDL_MAX_TEMP1; 
+      L     0; 
+      ==I   ; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt._700207_Spindel_Temp; 
+      SPB   x1; 
+
+      L     "DI_TEMP_TRANSMITTER".mwert; 
+      L     1.000000e+001; 
+      *R    ; 
+      L     "DB_PLC_MD_DB20".UDInt._100_SPDL_MAX_TEMP1; 
+      ITD   ; 
+      DTR   ; 
+      >R    ; 
+      L     S5T#1M; 
+      SE    "Te_Spi_Temp_1"; 
+      U     "Te_Spi_Temp_1"; 
+      =     "DB_FEHLERMELDUNG".Spi_VS_Halt._700207_Spindel_Temp; 
+x1:   NOP   0; 
+NETWORK
+TITLE =Leitungsueberwachung:Temperatursensor Spindel vohanden ?
+//Berechnung der Temperaturgrenzwerte aus der Real-Konstante x.y:
+//x = oberer Grenzwert 
+//y = unterer Grenzwert
+//z.B.  0.0 = keiner Überwachung
+//    80.70 = obere Grenze 80° und untere Grenze 70°
+      L     "DB_PLC_MD_DB20".UDReal._17_SPI_LEITUNG_TEMP; 
+      L     0.000000e+000; 
+      ==I   ; 
+      SPB   oTPL; 
+
+      L     "DB_PLC_MD_DB20".UDReal._17_SPI_LEITUNG_TEMP; 
+      TRUNC ; 
+      DTR   ; 
+      T     #temp_obere_grenze; 
+
+      L     "DB_PLC_MD_DB20".UDReal._17_SPI_LEITUNG_TEMP; 
+      L     #temp_obere_grenze; 
+      -R    ; 
+      L     1.000100e+002; 
+      *R    ; 
+      T     #temp_untere_grenze; 
+
+      L     #temp_untere_grenze; 
+      TRUNC ; 
+      DTR   ; 
+      T     #temp_untere_grenze; 
+
+
+NETWORK
+TITLE =Leitungsueberwachung:Temperatursensor 1/2 Ausserhalb Messbereich
+
+      U     "M_MA_Maschine_Ein"; 
+      U(    ; 
+      O(    ; 
+      L     "I_SPI_KABEL_PT100_1"; 
+
+      L     8500; 
+      >I    ; 
+      )     ; 
+      O(    ; 
+
+      L     "I_SPI_KABEL_PT100_1"; 
+      L     -2000; 
+      <I    ; 
+      )     ; 
+      O(    ; 
+      L     "I_SPI_KABEL_PT100_2"; 
+
+      L     8500; 
+      >I    ; 
+      )     ; 
+      O(    ; 
+
+
+      L     "I_SPI_KABEL_PT100_2"; 
+      L     -2000; 
+      <I    ; 
+      )     ; 
+      )     ; 
+      =     #sensor_ausserhalb; 
+NETWORK
+TITLE =Leitungsueberwachung:Temperatursensor 1+2 Hauptantrieb
+
+      U     "m_eins"; 
+      =     #TEMP1; 
+      U     #TEMP1; 
+      SPBNB _001; 
+      L     "I_SPI_KABEL_PT100_1"; 
+      DTR   ; 
+      T     #temp_leitung_1; 
+_001: NOP   0; 
+      U     #TEMP1; 
+      SPBNB _002; 
+      L     "I_SPI_KABEL_PT100_2"; 
+      DTR   ; 
+      T     #temp_leitung_2; 
+_002: NOP   0; 
+NETWORK
+TITLE =Leitungsueberwachung:Temperatur Leitung 1+2
+
+      L     #temp_leitung_1; 
+      L     1.000000e+001; 
+      /R    ; 
+      T     #temp_leitung_1_ist; 
+
+      L     #temp_leitung_2; 
+      L     1.000000e+001; 
+      /R    ; 
+      T     #temp_leitung_2_ist; 
+
+NETWORK
+TITLE =Leitungsueberwachung: Temperaturunterschied > 10°
+
+      L     #temp_leitung_1_ist; 
+      L     #temp_leitung_2_ist; 
+      -R    ; 
+      ABS   ; 
+      T     #temp_diff_1_zu_2; 
+
+      L     #temp_diff_1_zu_2; 
+      L     1.000000e+001; 
+      >=R   ; 
+      =     #temp_diff_zu_gross; 
+      =     "DB_FEHLERMELDUNG".Spi_VS_Halt1._510102_SP_Leit_temp_dif; 
+NETWORK
+TITLE =Leitungsueberwachung: Warnung Temperatur zu groß (untere Grenze)
+
+      U     "m_eins"; 
+      U(    ; 
+      O(    ; 
+      L     #temp_leitung_1_ist; 
+      L     #temp_untere_grenze; 
+
+      >R    ; 
+      )     ; 
+      O(    ; 
+      L     #temp_leitung_2_ist; 
+      L     #temp_untere_grenze; 
+      >R    ; 
+      )     ; 
+      )     ; 
+      =     "DB_FEHLERMELDUNG".WARNUNG4._702350_SP_Leit_temp_vor; 
+NETWORK
+TITLE =Leitungsueberwachung: Alarm Temperatur zu groß (obere Grenze)
+
+      U     "m_eins"; 
+      U(    ; 
+      O(    ; 
+      L     #temp_leitung_1_ist; 
+      L     #temp_obere_grenze; 
+      >R    ; 
+      )     ; 
+      O(    ; 
+      L     #temp_leitung_2_ist; 
+      L     #temp_obere_grenze; 
+      >R    ; 
+      )     ; 
+      O     #sensor_ausserhalb; 
+      )     ; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt1._510103_SP_Leit_temp_err; 
+
+NETWORK
+TITLE =Leitungsueberwachung: Spindelreglerfreigabe
+
+      U     "M_Hauptspindel_steht"; 
+      U     "DB_FEHLERMELDUNG".WARNUNG4._702350_SP_Leit_temp_vor; 
+      U     "DB_FEHLERMELDUNG".Spi_VS_Halt1._510103_SP_Leit_temp_err; 
+      S     "M_SPI_LEITUNG_TEMP_RFG"; 
+      U     "M_Hauptspindel_steht"; 
+      UN    "DB_FEHLERMELDUNG".WARNUNG4._702350_SP_Leit_temp_vor; 
+      UN    "DB_FEHLERMELDUNG".Spi_VS_Halt1._510103_SP_Leit_temp_err; 
+      R     "M_SPI_LEITUNG_TEMP_RFG"; 
+      NOP   0; 
+NETWORK
+TITLE =Lagertemperaturüberwachung Spindel
+//Bisher nur bei GMN Spindeln
+oTPL: L     "I_SPI_TEMP_LAG_HINTEN"; 
+      T     #Spi_Lag_Temp_hinten; 
+
+      L     "DB_PLC_MD_DB20".UDInt._100_SPDL_MAX_TEMP1; 
+      ITD   ; 
+      DTR   ; 
+      L     1.000000e+001; 
+      /R    ; 
+      T     #Grenz_temp; 
+
+      CALL "FC_TEMP_PT100" (
+           enable                   := TRUE,
+           in_addr                  := #Spi_Lag_Temp_hinten,
+           grenzwert                := #Grenz_temp,
+           Messimpuls               := TRUE,
+           fehler_Nennwert          := "DB_FEHLERMELDUNG".Spi_VS_Halt._700207_Spindel_Temp,
+           fehler_Grenzwert         := "DB_FEHLERMELDUNG".Spi_VS_Halt._700207_Spindel_Temp,
+           messwert_akt             := #mwert);
+
+
+      U     "DB_FEHLERMELDUNG".Spi_VS_Halt._700207_Spindel_Temp; 
+      SPB   a01; 
+      L     "I_SPI_TEMP_LAG_VORNE"; 
+      T     #Spi_Lag_Temp_vorne; 
+
+
+      L     "DB_PLC_MD_DB20".UDInt._099_SPDL_MAX_TEMP2; 
+      ITD   ; 
+      DTR   ; 
+      L     1.000000e+001; 
+      /R    ; 
+      T     #Grenz_temp; 
+
+      CALL "FC_TEMP_PT100" (
+           enable                   := TRUE,
+           in_addr                  := #Spi_Lag_Temp_vorne,
+           grenzwert                := #Grenz_temp,
+           Messimpuls               := TRUE,
+           fehler_Nennwert          := "DB_FEHLERMELDUNG".Spi_VS_Halt._700207_Spindel_Temp,
+           fehler_Grenzwert         := "DB_FEHLERMELDUNG".Spi_VS_Halt._700207_Spindel_Temp,
+           messwert_akt             := #mwert);
+a01:  NOP   0; 
+
+NETWORK
+TITLE =Spindelreglerfreigabe durch Wizard
+
+      U     "M_RFG_Spindel_Wizard"; 
+      =     "DB_FEHLERMELDUNG".Meldung._702032_SRFG_WIZARD; 
+NETWORK
+TITLE =Spindeldrehzahl fuer die verschiedenen BA's 
+//- hier werden die zulässigen Spindeldrehzahlen bei den BA2,3 und 4 überwacht
+//
+//- Wird diese übertroffen, so wird ein Fehler NC-Stop,Feed-Stop ausgegeben
+//
+      U     "M_Spritz_Tuer_Zu"; // wenn Tür geschlossen
+      SPB   baen; // keine n-Ueberwachung der Betriebsarten 
+
+// --- Einrichtbetrieb  2te Betriebsart
+
+      U     "M_Einrichtbetrieb"; 
+      SPBN  ba3; 
+
+      L     "MW_SFunct"; 
+      L     "DB_PLC_MD_DB20".UDInt._071_DREHZ_BEG_SP_EINRIC; 
+      >D    ; 
+      U     "MX_Spdl_M3_M4"; 
+      U(    ; 
+      U     "M_Handbetrieb"; 
+      UN    "DB_FEHLERMELDUNG".Meldung._702029_VSSPH_Taste_Auto; 
+      ON    "M_Handbetrieb"; 
+      )     ; 
+      SPBN  baen; 
+
+      SPA   fehl; 
+
+// --- 3te Betriebsart
+
+ba3:  U     "M_3Te_Betriebsart"; 
+      SPBN  ba4; 
+
+      L     "MW_SFunct"; 
+      L     "DB_PLC_MD_DB20".UDInt._072_DREHZ_BEG_SPI_BA3; 
+      >D    ; 
+      U     "MX_Spdl_M3_M4"; 
+      U(    ; 
+      U     "M_Handbetrieb"; 
+      UN    "DB_FEHLERMELDUNG".Meldung._702029_VSSPH_Taste_Auto; 
+      ON    "M_Handbetrieb"; 
+      )     ; 
+      SPBN  baen; 
+      SPA   fehl; 
+
+// --- 4te Betriebsart
+
+ba4:  U     "M_4Te_Betriebsart"; 
+      SPBN  ba5; 
+
+      L     "MW_SFunct"; 
+      L     "DB_PLC_MD_DB20".UDInt._073_DREHZ_BEG_SPI_BA4; 
+      >D    ; 
+      U     "MX_Spdl_M3_M4"; 
+      U(    ; 
+      U     "M_Handbetrieb"; 
+      UN    "DB_FEHLERMELDUNG".Meldung._702029_VSSPH_Taste_Auto; 
+      ON    "M_Handbetrieb"; 
+      )     ; 
+      SPBN  ba5; 
+      SPA   fehl; 
+
+ba5:  L     "MW_SFunct"; 
+      L     "DB_PLC_MD_DB20".UDInt._066_MAX_SPINDELDREHZAHL; 
+      >D    ; 
+      SPBN  baen; 
+
+// --- ist die angewählte Spindledrehzahl grösser als erlaubt, so wird Fehler gesetzt.   
+
+fehl: UN    "M_MTaster_in_Spi"; 
+      =     "DB_FEHLERMELDUNG".Spi_VS_Halt._700154_Spi_Dz_BA_zuhoch; 
+
+baen: NOP   0; 
+
+NETWORK
+TITLE =Spindel Hochlauf nach Vorschub Halt
+
+      U(    ; 
+      U     "MX_Spdl_E_RUCompl_94x2_"; 
+      UN    "M_Hauptspindel_steht"; 
+      O     "M_Reset_Taste"; 
+      )     ; // Kein Spindel Vorschub Halt
+      R     "MX_Spdl_Hochlauf"; // Kein Vorschub Halt
+      U(    ; // Start von der Spindel
+      O     "M_Spindel_Halt_Kanal"; // oder nach Spindel Orientieren
+      O     "M_Vorschub_Halt_Haupt"; 
+      O     "MX_Spdl_IMP_M3_M4"; 
+      O     "MX_Spdl_PosBetr_84x5"; 
+      O     "M_Gewindeschneid_aktiv"; 
+      )     ; 
+      S     "MX_Spdl_Hochlauf"; 
+      NOP   0; 
+NETWORK
+TITLE =Alarm: Drehmomentgrenze überschritten
+//geändert 10.12.01 AB/SCH
+//
+//anstatt auf den Drehzahleinbruch wird auf den Momenteneinbruch geschaut
+//Vorgabe Schwellmoment in MD 1428 in % von MD1230 --> 90 %
+//        Verzogerungszeit bis nach Hochlaufvorgang die Meldung kommen kann 
+//        (0-Signal) in MD 1429 --> 800 ms
+//
+//
+//
+      UN    "DB_ACHSE6_SPINDEL".E_MdMdx; //"MX_Spdl_Message_94x7"
+      UN    "MX_Spdl_PosBetr_84x5"; // "Spindel".E_PosBetr
+      UN    "MX_Spdl_GetrUmsch_82x3"; // "Spindel".E_GetrUmschalt 
+      UN    "MX_Spdl_PendBetr_84x5"; // "Spindel".E_PendBetr
+      UN    "DB_FAMILIEN_MODUL".Aktive_Funktionen; // Keine Aktiven M-Funktionen
+      UN    "M_Spindel_Halt_Kanal"; // Kein Vorschub Halt
+      UN    "M_Vorschub_Halt_Haupt"; 
+      UN    "DB_REMANENT".Achse_6_virtuell; 
+      =     "DB_FEHLERMELDUNG".Meldung._702039_SPDL_Soll_0Sig; 
+NETWORK
+TITLE =Timer zum Freischneiden
+
+      U     "DB_FEHLERMELDUNG".Meldung._702039_SPDL_Soll_0Sig; 
+      UN    "MX_Spdl_Hochlauf"; 
+      L     S5T#200MS; //Freischneiden Spindel
+      SE    "TA_Spindel_Freischn"; 
+
+
+NETWORK
+TITLE =Alarm: Spindel nicht im Sollbereich
+
+      U     "TA_Spindel_Freischn"; 
+      UN    "M_Simulation_Aktiv"; // Simulation aktiv
+      UN    "DB_SIEM_KANAL_1".E_MMC_ProgTest; // und kein Programm Test
+      UN    "DB_SIEM_KANAL_1".E_BlockSearch; // Satzsuchlauf aktiv
+      UN    "MX_Spdl_KorrWirksam"; // DZ Begrenzung
+      UN    "MX_Spdl_Hochlauf"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700742_Spindel_Soll_0S; 
+      U     "M_Ruecksetze_Fehler"; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700742_Spindel_Soll_0S; 
+      NOP   0; 
+NETWORK
+TITLE =Anwahl INT006=1: 2-stufiges Getriebe
+
+      L     "DB_PLC_MD_DB20".UDInt._006_ANWAHL_GETRIEBE; 
+      L     1; 
+      ==I   ; 
+      =     #Getrieb_2stufig; 
+
+NETWORK
+TITLE =Anwahl INT006=2: Stern-Dreieck-Umschaltung
+
+      L     "DB_PLC_MD_DB20".UDInt._006_ANWAHL_GETRIEBE; 
+      L     2; 
+      ==I   ; 
+      =     #SternDreieck; 
+NETWORK
+TITLE =Anwahl INT006=3: 2-stufiges Getriebe + Stern-Dreieck-Umschaltung
+
+      L     "DB_PLC_MD_DB20".UDInt._006_ANWAHL_GETRIEBE; 
+      L     3; 
+      ==I   ; 
+      =     #Getr2stufig_SternDreieck; 
+NETWORK
+TITLE =Auswertung Getriebstellung: M41 aktiv
+//M 41 aktiv
+      U     #Getr2stufig_SternDreieck; 
+      UN    "I_AL_Dreieckschaltung"; 
+      U     "I_AL_Sternschaltung"; 
+      U     "I_AL_1_Stufe_Getriebe"; 
+      UN    "I_AL_2_Stufe_Getriebe"; 
+      O     ; 
+      U     #SternDreieck; 
+      UN    "I_AL_Dreieckschaltung"; 
+      U     "I_AL_Sternschaltung"; 
+      O     ; 
+      U     #Getrieb_2stufig; 
+      U     "I_AL_1_Stufe_Getriebe"; 
+      UN    "I_AL_2_Stufe_Getriebe"; 
+      =     #m41_aktiv; 
+NETWORK
+TITLE =Auswertung Getriebstellung: M42 aktiv
+//M 42 aktiv
+      U     #Getr2stufig_SternDreieck; 
+      U     "I_AL_Dreieckschaltung"; 
+      UN    "I_AL_Sternschaltung"; 
+      U     "I_AL_1_Stufe_Getriebe"; 
+      UN    "I_AL_2_Stufe_Getriebe"; 
+      O     ; 
+      U     #SternDreieck; 
+      U     "I_AL_Dreieckschaltung"; 
+      UN    "I_AL_Sternschaltung"; 
+      O     ; 
+      U     #Getrieb_2stufig; 
+      UN    "I_AL_1_Stufe_Getriebe"; 
+      U     "I_AL_2_Stufe_Getriebe"; 
+      =     #m42_aktiv; 
+NETWORK
+TITLE =Auswertung Getriebstellung: M43 aktiv
+//M 43 aktiv
+      U     #Getr2stufig_SternDreieck; 
+      UN    "I_AL_Dreieckschaltung"; 
+      U     "I_AL_Sternschaltung"; 
+      UN    "I_AL_1_Stufe_Getriebe"; 
+      U     "I_AL_2_Stufe_Getriebe"; 
+      =     #m43_aktiv; 
+NETWORK
+TITLE =Auswertung Getriebstellung: M44 aktiv
+//M 44 aktiv
+      U     #Getr2stufig_SternDreieck; 
+      U     "I_AL_Dreieckschaltung"; 
+      UN    "I_AL_Sternschaltung"; 
+      UN    "I_AL_1_Stufe_Getriebe"; 
+      U     "I_AL_2_Stufe_Getriebe"; 
+      =     #m44_aktiv; 
+NETWORK
+TITLE =keine Überwachung
+
+      O     "M_RFG_Spindel_Wizard"; 
+      ON    "DB_ACHSE6_SPINDEL".A_PulseEnable; 
+      ON    "DB_ACHSE6_SPINDEL".A_ContrEnable; 
+      O     "M_Ruecksetze_Fehler"; 
+      O     "M_Handbetrieb"; 
+      O     "M_Gewindeschneiden_aktiv"; 
+      =     #temp_keine_ueberwachung; 
+NETWORK
+TITLE =Überwachung Getriebeschaltung
+
+      U     #m41_aktiv; 
+      =     L     62.0; 
+      BLD   103; 
+      U     #m42_aktiv; 
+      =     L     62.1; 
+      BLD   103; 
+      U     #m43_aktiv; 
+      =     L     62.2; 
+      BLD   103; 
+      U     #m44_aktiv; 
+      =     L     62.3; 
+      BLD   103; 
+      U     "DB_ACHSE6_SPINDEL".E_Stat; 
+      =     L     62.4; 
+      BLD   103; 
+      CALL "FC_SP_UEBERW_DREHZ" (
+           E_Drehzahl_ist           := "DB_TOOL_DATA".Spindel_Ist_Drehzahl,
+           E_max_Drehzahl           := "DB_PLC_MD_DB20".UDInt._066_MAX_SPINDELDREHZAHL,
+           E_Stufe1_aktiv           := L     62.0,
+           E_Stufe2_aktiv           := L     62.1,
+           E_Stufe3_aktiv           := L     62.2,
+           E_Stufe4_aktiv           := L     62.3,
+           E_SFunc                  := "DB_ACHSE6_SPINDEL".E_SFunct,
+           E_Spindel_Stat           := L     62.4,
+           vhs_ueberwachung         := "m_VSH_SP_GETRIEBE",
+           prog_speed_zu_gross      := "DB_FEHLERMELDUNG".VS_Halt._700441_SP_n_groess_erla,
+           speed_zu_klein           := "DB_FEHLERMELDUNG".VS_Halt._700439_SP_n_zu_klein,
+           speed_zu_gross           := "DB_FEHLERMELDUNG".VS_Halt._700440_SP_n_zu_gross,
+           ueberwachung_gesperrt    := #temp_keine_ueberwachung,
+           getriebeschalten_aktiv   := "DB_ACHSE6_SPINDEL".E_GearChange);
+      NOP   0; 
+NETWORK
+TITLE =Vorschub-Halt Überwachung Getriebeumschaltung aktiv
+
+      U     "m_VSH_SP_GETRIEBE"; 
+      UN    "M_Gewindeschneiden_aktiv"; 
+      S     "M_VSH_GetrUeberw_aktiv"; 
+      U     "M_Ruecksetze_Fehler"; 
+      R     "M_VSH_GetrUeberw_aktiv"; 
+      NOP   0; 
+NETWORK
+TITLE =Spindeldrehzahlueberwachung abh. vom Werkzeugradius
+//Drehzahlbegrenzung durch Werkzeugradius
+//bei keinem angewaehlkem Werkzeug keine Überwachung 
+//
+//bei angewaehltem Werkzeug und D<>0 un d Radius <> 0
+//- erlaubte n = (1/aktueller WZ.Radius) * SQR(GrenzwertMD * 1823,7)
+// ist GrenzwertMD == 0 dann Überwachung aus
+//akt.WZr in mm
+//bei angewaehltem Werkzeug und D==0 ode Radius == 0
+//- erlaubte n = DB20.DBW136
+//
+//wenn tool-nr = 0 -> keine Radiusueberwachung
+//L     "DB_TOOL_DATA".T_NR
+      L     #E_T_nummer; 
+      L     0; 
+      ==I   ; 
+      SPB   RAEN; 
+
+
+      U     "DB_SIEM_NCK".E_SystemInchDim; 
+      SPBN  ki; 
+
+      L     2.540000e+001; 
+      SPA   ke; 
+
+ki:   L     1.000000e+000; 
+ke:   T     #mm_inch_faktor; 
+
+// wenn keine D-Nr oder Radius gleich null, dann 
+
+      L     #E_WZ_Radius; 
+      L     0.000000e+000; 
+      <=R   ; // Radius gleich null
+      O(    ; // oder 
+      L     #E_D_nummer; // D-Nr gleich null
+      L     0; 
+      ==I   ; 
+      )     ; 
+      SPB   tera; // dann Drehzahlbegrenzung 
+
+      L     #E_WZ_Radius; // sonst lese Radius aus 
+      L     #mm_inch_faktor; // mm/Inch
+      *R    ; 
+      L     1.000000e+003; 
+      /R    ; 
+      T     #temp_WZ_Radius; 
+      SPA   RAST; 
+
+//-- bei Radius=0 oder D=0 Drehzahlbegrenzung durch Konstante 
+tera: L     "DB_PLC_MD_DB20".UDInt._075_DREHZ_BEG_RADIUS_0; 
+      DTR   ; 
+      T     #temp_n_erlaubt; 
+
+
+      L     #E_Drehzahl_ist; // Istdrehzahl
+      ABS   ; 
+      T     #temp_n_ist_betrag; 
+      L     #temp_n_erlaubt; 
+      SPA   rad0; 
+
+RAST: L     "DB_PLC_MD_DB20".UDInt._074_DREHZ_BEG_KONST; 
+      L     0; 
+      ==I   ; 
+      SPB   RAEN; 
+
+
+      L     #E_Drehzahl_ist; // Istdrehzahl
+      ABS   ; 
+      T     #temp_n_ist_betrag; 
+
+      L     1.823700e+003; 
+      L     "DB_PLC_MD_DB20".UDInt._074_DREHZ_BEG_KONST; 
+      DTR   ; 
+      *R    ; 
+      SQRT  ; // schreibe Wurzel in Akku1
+      L     #temp_WZ_Radius; 
+      /R    ; 
+      T     #temp_n_erlaubt; // erlaubte Drehzahl
+
+rad0: L     #temp_n_ist_betrag; 
+      <R    ; // erlaubte Drehzahl < Istdrehzahl
+
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700728_SPI_istn_zuhoch; 
+
+NETWORK
+TITLE =Drehzahlüberwachung OEM-Parameter S max.
+
+RAEN: L     "DB_TOOL_DATA".Spindeldrehzahl_max; 
+      L     0.000000e+000; //Überwachung abgeschaltet
+      ==R   ; 
+      SPB   ENDE; 
+
+      L     "DB_TOOL_DATA".Spindeldrehzahl_max; 
+      L     -1.000000e+000; //Keine Drehzahl erlaubt
+      ==R   ; 
+      UN    "DB_ACHSE6_SPINDEL".E_PosMode; 
+      =     "M_Drehzahl_Sperre"; 
+
+      U     "MX_Spdl_M3_M4"; 
+      U     "M_Drehzahl_Sperre"; 
+      =     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._701043_S_nicht_erlaubt; 
+      SPB   ENDE; 
+
+      L     "DB_ACHSE6_SPINDEL".E_SFunct; 
+      L     "DB_TOOL_DATA".Spindeldrehzahl_max; 
+      >R    ; 
+      U     "MX_Spdl_M3_M4"; 
+      UN    "DB_ACHSE6_SPINDEL".E_PosMode; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._701003_S_groesser_Smax; 
+
+NETWORK
+TITLE =Ende
+
+ENDE: NOP   0; 
+
+END_FUNCTION
+

@@ -1,0 +1,441 @@
+FUNCTION "FC_PS_FehlUebw" : VOID
+TITLE =
+//$Revision: 1.17 $
+//$Date: 2008/06/27 12:06:54CEST $
+//$Author: hgc $
+//
+//Logbuch:
+//
+//V0.1 / 21.11.00 / SCH
+//
+//- Modul Erstellt
+//
+//
+{ S7_language := '7(1) Deutsch (Deutschland)  26.03.2008  08:00:15' }
+AUTHOR : SCH
+FAMILY : DM_WP
+NAME : FB_PST
+VERSION : 0.1
+
+
+VAR_INPUT
+  E_Enabled : BOOL ;	//Modul Freigabe
+END_VAR
+VAR_TEMP
+  T_Hub_Beide_1Sig : BOOL ;	
+  T_RS_HUB_Ab_0Sig : BOOL ;	
+  T_RS_Hub_AUF_0Sig : BOOL ;	
+  T_LS_Tuere_zu_0Sig : BOOL ;	
+  T_LS_Tel_Undef : BOOL ;	
+  T_LS_Ablauf_ni_erlaubt : BOOL ;	
+  T_Dummy : BOOL ;	
+  T_D_PAL_AUF_ABLAGE_VORH : BOOL ;	
+  T_D_PS_RPL_PAL_VORH : BOOL ;	
+  T_Klemmung_Beide_1 : BOOL ;	
+  T_Klemmung_Auf_0 : BOOL ;	
+  T_Klemmung_Zu_0 : BOOL ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =Clear Lokalvariablen
+
+      CLR   ; 
+      =     #T_RS_HUB_Ab_0Sig; 
+      =     #T_RS_Hub_AUF_0Sig; 
+      =     #T_LS_Tel_Undef; 
+      =     #T_LS_Tuere_zu_0Sig; 
+      =     #T_Hub_Beide_1Sig; 
+      =     #T_D_PAL_AUF_ABLAGE_VORH; 
+      =     #T_D_PS_RPL_PAL_VORH; 
+      =     #T_LS_Ablauf_ni_erlaubt; 
+      =     #T_Dummy; 
+
+      U     #E_Enabled; // Freigabe Modul
+      SPBN  MEND; // nicht vorhanden => Ende
+NETWORK
+TITLE =Plausibilitätskontrolle Transportschlitten
+
+      UN    "m_inbetrieb_logisch_1"; 
+      UN    "DB_PLC_MD_DB20".UDHex._09_BIT6_kein_Pal_ueberw; 
+      UN    "DB_PLC_MD_DB20".UDHex._04_BIT4_EINRICHT_BETR; 
+      UN    "DB_LSSchnittstelle".OX_Request_bringen; 
+      UN    "DB_LSSchnittstelle".IX_Bringen_laeuft; 
+      UN    "M_Handbetrieb"; 
+      U(    ; 
+      UN    "I_PS_DREHST_PAL_GST"; 
+      U(    ; 
+      L     "DB_PAL_NR".Platz[3].Pal_Nr; 
+      L     0; 
+      <>I   ; 
+      )     ; 
+      O     ; 
+      U     "I_PS_DREHST_PAL_GST"; 
+      U(    ; 
+      L     "DB_PAL_NR".Platz[3].Pal_Nr; 
+      L     0; 
+      ==I   ; 
+      )     ; 
+      )     ; 
+      S     "DB_FEHLERMELDUNG".VS_Halt_Async3._701720_TP_belegt_nichbe; 
+      U     "M_Ruecksetze_Fehler"; 
+      R     "DB_FEHLERMELDUNG".VS_Halt_Async3._701720_TP_belegt_nichbe; 
+      NOP   0; 
+NETWORK
+TITLE =Hub Ueberwachung Endlagen beide 1-Signal   
+
+      UN    "DB_CONFIG".ANWAHL_DURCH_USER_DATA.RS10_AKTIV; 
+      U     "I_PS_DREHST_HUB_UNTEN"; // Hub beide
+      U     "I_PS_DREHST_HUB_OBEN"; // Endlagen 1-Signal
+      =     #T_Hub_Beide_1Sig; 
+NETWORK
+TITLE =Überwachung EES Palette auf Ablageplatz vorhanden (Ambivalent)
+
+      U(    ; 
+      L     "MB_SKZ_Drehstation"; 
+      L     0; 
+      ==I   ; // Drehsteller steht
+      )     ; 
+      U(    ; 
+      UN    "DB_CONFIG".ANWAHL_DURCH_USER_DATA.RS10_AKTIV; 
+      U     "I_PS_DREHST_HUB_UNTEN"; // Diagnose Palette vorhanden
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.RS10_AKTIV; 
+      )     ; 
+      U(    ; // Diagnose Palette vorhanden
+      UN    "I_D_PS_DREHST_PAL_VORH"; 
+      UN    "I_PS_DREHST_PAL_VORH"; 
+      O     ; 
+      U     "I_D_PS_DREHST_PAL_VORH"; 
+      U     "I_PS_DREHST_PAL_VORH"; 
+      )     ; 
+      =     #T_D_PAL_AUF_ABLAGE_VORH; 
+NETWORK
+TITLE =Überwachung Palette Rüstplatz vorhanden
+
+      UN    "I_D_PS_RPL_PAL_VORH"; // Diagnose Rüstplatz Palette vorhanden
+      UN    "I_PS_RPL_PAL_VORH"; 
+      O     ; 
+      U     "I_D_PS_RPL_PAL_VORH"; // Diagnose Rüstplatz Palette vorhanden
+      U     "I_PS_RPL_PAL_VORH"; 
+      CLR   ; 
+      =     #T_D_PS_RPL_PAL_VORH; 
+NETWORK
+TITLE =Klemmung Palette RPL Ueberwachung Endlagen beide 1-Signal   
+
+      U     "I_PW_RPL_PAL_GELOEST"; 
+      U     "I_PW_RPL_PAL_GEKLEMMT"; 
+      =     #T_Klemmung_Beide_1; 
+NETWORK
+TITLE =Einrichten aktiv
+
+      U     "M_RS_RETTUNG_AKTIV"; 
+      SPB   E031; 
+NETWORK
+TITLE =Holen / Bringen läuft
+
+      O     "DB_LSSchnittstelle".IX_Holen_laeuft; //LS-Ablauf Platz entladen  
+      O     "DB_LSSchnittstelle".IX_Bringen_laeuft; //oder beladen aktiv
+      O     "DB_LSSchnittstelle".OX_Request_holen; 
+      O     "DB_LSSchnittstelle".OX_Request_bringen; 
+      SPB   ENDL; 
+NETWORK
+TITLE =Maschine ein ?
+
+      U     "M_MA_Maschine_Ein"; 
+      SPBN  SK00; 
+NETWORK
+TITLE =Grundstellungsueberwachung Hub
+
+      UN    "DB_CONFIG".ANWAHL_DURCH_USER_DATA.RS10_AKTIV; 
+      UN    "DB_CONFIG".ANWAHL_DURCH_USER_DATA.RS5_AKTIV; 
+      UN    "I_PS_DREHST_HUB_UNTEN"; // Hub Unten
+      =     #T_RS_HUB_Ab_0Sig; 
+NETWORK
+TITLE =Grundstellungsueberwachung Transport
+
+      UN    "DB_SIEM_BAG".E_REF; 
+      UN    "MX_Transport_Gst"; 
+      =     #T_LS_Tel_Undef; 
+NETWORK
+TITLE =Klemmung zu 0Signal
+//
+// 
+// 
+      UN    #T_Klemmung_Zu_0; 
+      U     "DB_HR".RPT.extSpannsystem_vorhanden; 
+      =     #T_Klemmung_Zu_0; 
+
+      SPA   SK00; 
+
+NETWORK
+TITLE =Ueberwachung der Endlagen während des Werkzeugwechsels(Statisch)
+
+ENDL: U     "MX_RS_HUB_BEWEGUNG"; // Tuer Bewegt sich
+      SPB   ST01; 
+
+      U     "O_PS_DREHST_HUB_AB"; 
+      UN    "I_PS_DREHST_HUB_UNTEN"; 
+      =     #T_RS_HUB_Ab_0Sig; 
+
+      U     "O_PS_DREHST_HUB_AUF"; 
+      UN    "I_PS_DREHST_HUB_OBEN"; 
+      =     #T_RS_Hub_AUF_0Sig; 
+
+ST01: U     "MX_RS_KLM_BEWEGUNG"; 
+      SPB   E003; 
+      U     "O_PW_RPL_PAL_LOESEN"; 
+      UN    "I_PW_RPL_PAL_GELOEST"; 
+      =     #T_Klemmung_Auf_0; 
+
+      U     "O_PW_RPL_PAL_KLEMMEN"; 
+      UN    "I_PW_RPL_PAL_GEKLEMMT"; 
+      =     #T_Klemmung_Zu_0; 
+
+NETWORK
+TITLE =RS: Timer Fehlerüberwachung
+//Zeitueberwachung Abhaengig von angestossener Bewegung (Dynamisch)
+E003: NOP   0; 
+
+      CALL "FC_UT_Bit_auf_Byte" (
+           E_Bit0                   := "O_PS_DREHST_HUB_AB",
+           E_Bit1                   := "O_PS_DREHST_HUB_AUF",
+           E_Bit2                   := "O_PW_RPL_PAL_LOESEN",
+           E_Bit3                   := "O_PW_RPL_PAL_KLEMMEN",
+           E_Bit4                   := FALSE,
+           E_Bit5                   := FALSE,
+           E_Bit6                   := FALSE,
+           E_Bit7                   := FALSE,
+           EA_result                := "B_LS_Pos_Speicher");
+
+// Zeit starten abhängig ob eine Bewegung gestartet wird
+// (Anwahl WZW=2 dann ist die Überwachungszeit 30s)
+
+      L     "B_LS_Pos_Speicher"; 
+      L     "B_LS_Pos_Speicher_Alt"; 
+      ==I   ; 
+      SPB   Z001; 
+
+      L     S5T#20S; 
+      SET   ; 
+      SV    "T_LS_FehlerUebw"; 
+      CLR   ; 
+      SV    "T_LS_FehlerUebw"; 
+
+      L     "B_LS_Pos_Speicher"; 
+      T     "B_LS_Pos_Speicher_Alt"; 
+      SPA   SK00; 
+
+Z001: U     "M_LS_Fehl"; 
+      SPB   SK00; 
+
+      U     "MX_RS_HUB_BEWEGUNG"; // Tuer Bewegt sich
+      SPBN  BW00; 
+
+      U     "O_PS_DREHST_HUB_AB"; 
+      UN    "I_PS_DREHST_HUB_UNTEN"; 
+      UN    "T_LS_FehlerUebw"; 
+      =     #T_RS_HUB_Ab_0Sig; 
+      SPB   B010; 
+
+      U     "O_PS_DREHST_HUB_AUF"; 
+      UN    "I_PS_DREHST_HUB_OBEN"; 
+      UN    "T_LS_FehlerUebw"; 
+      =     #T_RS_Hub_AUF_0Sig; 
+      SPB   B010; 
+
+
+BW00: U     "MX_RS_KLM_BEWEGUNG"; 
+      SPBN  BW01; 
+
+      U     "O_PW_RPL_PAL_LOESEN"; 
+      UN    "I_PW_RPL_PAL_GELOEST"; 
+      UN    "T_LS_FehlerUebw"; 
+      =     #T_Klemmung_Auf_0; 
+      SPB   B010; 
+
+      U     "O_PW_RPL_PAL_KLEMMEN"; 
+      UN    "I_PW_RPL_PAL_GEKLEMMT"; 
+      UN    "T_LS_FehlerUebw"; 
+      =     #T_Klemmung_Zu_0; 
+      SPB   B010; 
+
+BW01: U     "M_RS4_80er"; 
+      SPBN  RS4; 
+
+      UN    "I_PS_FRG_AR_PSACHS"; 
+      U     "Te_RS_Uebw_RP"; 
+      =     #T_LS_Tuere_zu_0Sig; 
+      SPA   SK00; 
+
+RS4:  UN    "I_PS_RPL_TUER_VORN_VERR"; 
+      UN    "I_PS_RPL_TUER_HINT_VERR"; 
+      U     "Te_RS_Uebw_RP"; 
+      =     #T_LS_Tuere_zu_0Sig; 
+      SPA   SK00; 
+
+B010: L     2; 
+      T     "B_SKZ_LS_Werr"; 
+      SPA   SK00; 
+
+NETWORK
+TITLE =Schritt 0
+//RS: Timer Entprellen
+SK00: L     "B_SKZ_LS_Werr"; // Schritt 0 ?
+      L     0; 
+      ==I   ; 
+      SPBN  SK01; // Nein => Schrtitt 1
+
+// -----------------------------------------------------------------------------
+
+
+// -----------------------------------------------------------------------------
+
+      O     #T_RS_HUB_Ab_0Sig; 
+      O     #T_RS_Hub_AUF_0Sig; 
+      O     #T_LS_Tel_Undef; 
+      O     #T_LS_Tuere_zu_0Sig; 
+      O     #T_Hub_Beide_1Sig; 
+      O     #T_D_PAL_AUF_ABLAGE_VORH; 
+      O     #T_D_PS_RPL_PAL_VORH; 
+      O     #T_Klemmung_Beide_1; 
+      O     #T_Klemmung_Auf_0; 
+      O     #T_Klemmung_Zu_0; 
+      UN    "M_LS_Fehl"; 
+      UN    "M_RS_RETTUNG_AKTIV"; 
+      SPBN  SE01; 
+
+      L     S5T#500MS; 
+      SET   ; 
+      SV    "Te_LS_Entprellzeit"; 
+      CLR   ; 
+      SV    "Te_LS_Entprellzeit"; 
+
+      L     1; 
+      T     "B_SKZ_LS_Werr"; 
+      SPA   MEND; 
+
+SE01: U     "M_Reset_Taste"; 
+      SPBN  MEND; 
+
+      L     3; 
+      T     "B_SKZ_LS_Werr"; 
+      SPA   SK03; 
+NETWORK
+TITLE =Schritt 1
+//Ablauf Entprellzeit
+SK01: L     "B_SKZ_LS_Werr"; // Schritt 1 ?
+      L     1; 
+      ==I   ; 
+      SPBN  SK02; // Nein => Schrtitt 2
+
+// -----------------------------------------------------------------------------
+
+
+// -----------------------------------------------------------------------------
+
+      O     #T_RS_HUB_Ab_0Sig; 
+      O     #T_RS_Hub_AUF_0Sig; 
+      O     #T_LS_Tel_Undef; 
+      O     #T_LS_Tuere_zu_0Sig; 
+      O     #T_Hub_Beide_1Sig; 
+      O     #T_D_PAL_AUF_ABLAGE_VORH; 
+      O     #T_D_PS_RPL_PAL_VORH; 
+      O     #T_Klemmung_Beide_1; 
+      O     #T_Klemmung_Auf_0; 
+      O     #T_Klemmung_Zu_0; 
+      UN    "M_RS_RETTUNG_AKTIV"; 
+      SPB   E101; 
+      L     0; 
+      T     "B_SKZ_LS_Werr"; 
+      BEA   ; 
+
+
+E101: UN    "Te_LS_Entprellzeit"; 
+      SPB   MEND; 
+      L     2; 
+      T     "B_SKZ_LS_Werr"; 
+
+
+NETWORK
+TITLE =Schritt 2
+//Fehler bilden
+SK02: L     "B_SKZ_LS_Werr"; // Schritt 2 ?
+      L     2; 
+      ==I   ; 
+      SPBN  SK03; // Nein => Schrtitt 3
+
+// -----------------------------------------------------------------------------
+//    
+      U     #T_Hub_Beide_1Sig; 
+      S     "DB_FEHLERMELDUNG".VS_Halt_Async3._701741_LS_Hub_beide_1S; 
+
+      U     #T_RS_HUB_Ab_0Sig; 
+      S     "DB_FEHLERMELDUNG".VS_Halt_Async3._701750_SP_Hub_Unten_0; 
+
+      U     #T_RS_Hub_AUF_0Sig; 
+      S     "DB_FEHLERMELDUNG".VS_Halt_Async3._701751_SP_Hub_Oben_0; 
+
+      U     #T_LS_Tel_Undef; 
+      S     "DB_FEHLERMELDUNG".VS_Halt_Async3._701733_LS_Tel_ni_Grdst; 
+
+      U     #T_D_PAL_AUF_ABLAGE_VORH; 
+      S     "DB_FEHLERMELDUNG".VS_Halt_Async3._701752_D_PS_DREHST_PAL; 
+
+      U     #T_D_PS_RPL_PAL_VORH; 
+      S     "DB_FEHLERMELDUNG".VS_Halt_Async3._701753_D_PS_RPL_PAL_VOR; 
+
+      U     #T_LS_Tuere_zu_0Sig; 
+      S     "DB_FEHLERMELDUNG".VS_Halt_Async3._701755_SP_Ver_Ruepl_0; 
+
+      U     #T_Klemmung_Beide_1; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700943_RP_Klemm_Beide_1; 
+
+      U     #T_Klemmung_Auf_0; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700941_RP_KlemmungAuf_0; 
+
+      U     #T_Klemmung_Zu_0; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700942_RP_KlemmungZu_0; 
+
+      SET   ; 
+      S     "M_LS_Fehl"; 
+
+// -----------------------------------------------------------------------------
+
+      L     3; 
+      T     "B_SKZ_LS_Werr"; 
+
+NETWORK
+TITLE =Schritt 3
+//Warten bis Fehler Quittierung oder Reset 
+SK03: L     "B_SKZ_LS_Werr"; // Schritt 3 ?
+      L     3; 
+      ==I   ; 
+      SPBN  MEND; 
+// -----------------------------------------------------------------------------
+
+E031: O     "M_Ruecksetze_Fehler"; 
+      O     "M_RS_RETTUNG_AKTIV"; 
+      SPBN  MEND; 
+
+      L     0; 
+      T     "B_SKZ_LS_Werr"; 
+
+      SET   ; 
+      R     "M_LS_Fehl"; 
+
+      R     "DB_FEHLERMELDUNG".VS_Halt_Async3._701741_LS_Hub_beide_1S; 
+      R     "DB_FEHLERMELDUNG".VS_Halt_Async3._701750_SP_Hub_Unten_0; 
+      R     "DB_FEHLERMELDUNG".VS_Halt_Async3._701751_SP_Hub_Oben_0; 
+      R     "DB_FEHLERMELDUNG".VS_Halt_Async3._701733_LS_Tel_ni_Grdst; 
+      R     "DB_FEHLERMELDUNG".VS_Halt_Async3._701752_D_PS_DREHST_PAL; 
+      R     "DB_FEHLERMELDUNG".VS_Halt_Async3._701753_D_PS_RPL_PAL_VOR; 
+      R     "DB_FEHLERMELDUNG".VS_Halt_Async3._701755_SP_Ver_Ruepl_0; 
+      R     "DB_FEHLERMELDUNG".VS_Halt_Async3._701757_FRG_AR3_0; 
+
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700941_RP_KlemmungAuf_0; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700942_RP_KlemmungZu_0; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700943_RP_Klemm_Beide_1; 
+
+MEND: NOP   0; 
+
+END_FUNCTION
+

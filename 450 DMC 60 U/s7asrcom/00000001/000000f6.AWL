@@ -1,0 +1,433 @@
+FUNCTION "FC_CI_MAIN" : VOID
+TITLE =
+//$Revision: 1.51 $
+//$Date: 2008/10/10 13:21:03CEST $
+//$Author: sth $
+//
+//
+//Funktionsbeschreibung:
+//
+//  hier werden Funktionskomponenten eingebunden,
+//  die am Anfang vom Zyklus aufgerufen werden:
+//        
+AUTHOR : BAG
+FAMILY : DM_Basis
+NAME : Com_In
+VERSION : 0.1
+
+
+VAR_INPUT
+  E_EN : BOOL ;	
+END_VAR
+VAR_TEMP
+  T_M_Decod_Error : BOOL ;	
+  T_Error_FB2_2 : BOOL ;	
+  T_Done_FB2_2 : BOOL ;	
+  TW_Anz_WZDat_RD : INT ;	
+  tw_anz_restweg_rd : INT ;	
+  tnr_greifer : WORD ;	
+  wz_zeit : INT ;	
+  T_Done_FB2 : BOOL ;	
+  T_Error_FB2 : BOOL ;	
+  Anz_Var : INT ;	
+  TNR_0_in_Spindel : BOOL ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =Bausteinfreigabe ?
+
+      UN    #E_EN; // Keine Freigabe ?
+      BEB   ; 
+NETWORK
+TITLE =Diagnoseeingänge mit 1 vorbesetzen
+
+      U     "m_eins"; 
+      =     "I_AL_Sicherung_24V_OK"; 
+      =     "I_AL_SICHERUNG_230V_OK"; 
+      =     "I_GEN_HYD_PRESSURE_OK_D"; 
+      =     "I_GEN_CAIR_PRE_OK_D"; 
+      =     "I_PC_MPL_OCCUPIED_D"; 
+      =     "I_PC_MPL_PALLET_RELD_D"; 
+      =     "I_PC_MPL_PALLET_CLPED_D"; 
+NETWORK
+TITLE =PLC-Rangierungen Eingänge lesen
+
+      U     "m_eins"; 
+      =     L     15.0; 
+      BLD   103; 
+      U     "m_null"; 
+      =     L     15.1; 
+      BLD   103; 
+      U     "m_null"; 
+      =     L     15.2; 
+      BLD   103; 
+      U     "m_null"; 
+      =     L     15.3; 
+      BLD   103; 
+      CALL "FC_CIO_IO_RANGIER" (
+           IN0                      := L     15.0,
+           IN1                      := L     15.1,
+           IN2                      := L     15.2,
+           IN3                      := L     15.3);
+      NOP   0; 
+NETWORK
+TITLE =Datenaustausch NCK -> PLC Dual Port Ram
+
+      U     "m_eins"; 
+      =     L     15.0; 
+      BLD   103; 
+      U     "m_eins"; 
+      =     L     15.1; 
+      BLD   103; 
+      CALL "FC_CI_NCK_PLC" (
+           E_Enable                 := L     15.0,
+           E_EN_ReadNCK             := L     15.1);
+      NOP   0; 
+NETWORK
+TITLE =Dekoder M-Funktionen
+
+      U     "DB_SIEM_KANAL_1".M1Change; 
+      =     L     15.0; 
+      BLD   103; 
+      U     "DB_SIEM_KANAL_1".M2Change; 
+      =     L     15.1; 
+      BLD   103; 
+      U     "DB_SIEM_KANAL_1".M3Change; 
+      =     L     15.2; 
+      BLD   103; 
+      U     "DB_SIEM_KANAL_1".M4Change; 
+      =     L     15.3; 
+      BLD   103; 
+      U     "DB_SIEM_KANAL_1".M5Change; 
+      =     L     15.4; 
+      BLD   103; 
+      CALL "FB_CI_M_DEKODER" , "DI_M_DEKODER" (
+           M_Change_Gr1             := L     15.0,
+           M_Change_Gr2             := L     15.1,
+           M_Change_Gr3             := L     15.2,
+           M_Change_Gr4             := L     15.3,
+           M_Change_Gr5             := L     15.4,
+           E_M_Function1            := "DB_SIEM_KANAL_1".M1,
+           E_M_Function2            := "DB_SIEM_KANAL_1".M2,
+           E_M_Function3            := "DB_SIEM_KANAL_1".M3,
+           E_M_Function4            := "DB_SIEM_KANAL_1".M4,
+           E_M_Function5            := "DB_SIEM_KANAL_1".M5,
+           O_einlesesperre          := "DB_FEHLERMELDUNG".Meldung._702116_ESP_M_Decoder,
+           Fehler                   := "DB_FEHLERMELDUNG".Spi_VS_Halt._700153_Fehler_MDecoder);
+      NOP   0; 
+NETWORK
+TITLE =M-Funktion aktiv, warten auf Quittierung
+
+      U     "DB_FEHLERMELDUNG".Meldung._702116_ESP_M_Decoder; 
+      =     "DB_NC_PLC".M_Funktion_aktiv; 
+NETWORK
+TITLE =Reset M-Funktion aktiv, warten auf Quittierung
+
+      U     "DB_SIEM_KANAL_1".E_ChanReset; 
+      R     "DB_FEHLERMELDUNG".Meldung._702116_ESP_M_Decoder; 
+      R     "DI_M_DEKODER".quittung_request; 
+NETWORK
+TITLE =OEM Aktivierung der Masken und Softkeys
+
+      CALL "FC_CO_OEM_Anwahl" ;
+      NOP   0; 
+NETWORK
+TITLE =OEM Anzeige der Teilenummern
+
+      CALL "FC_CIO_OEM" ;
+      NOP   0; 
+NETWORK
+TITLE =Achspositionen lesen
+
+      CALL "FC_UT_AXIS_READ" ;
+      NOP   0; 
+NETWORK
+TITLE =Daten vom Spindelwerkzeug lesen
+// T-Nr, D-Nr,Spi_Drehzahl lesen    
+      U     "M_WZDaten_lesen_ready_S"; 
+      UN    "DI_WZV_ABL_REGAL".Req_FB192; 
+      UN    "DI_WZV_ABL_REGAL".Req_FB92; 
+      UN    "Mx_Werkzeugdaten_lesen"; 
+      O     "M_5_ter_OB1_Zyklus"; 
+      S     "Mx_Werkzeugdaten_lesen"; 
+      R     "M_WZDaten_lesen_ready_S"; 
+
+      U     "Mx_WZdaten_lesen_ready"; //done
+      O     "Mx_Wzdaten_lesen_error"; 
+      FP    "HM_PI_WZD_lesen_ready"; 
+      S     "M_WZDaten_lesen_ready_S"; 
+      R     "Mx_Werkzeugdaten_lesen"; //req
+
+// Radmagazin, es werden nur die Daten in der Spindel ausgelesen
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.WZW_RAD_MIT_ZYLINDER; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.WZW_RAD_MIT_ACHSE; 
+      SPBN  Kett; 
+      L     4; 
+      T     #TW_Anz_WZDat_RD; 
+      SPA   kver; 
+
+// Kettenmagazin, es werden die Daten in der Spindel + Greifer 1+2 ausgelesen
+Kett: L     6; 
+      T     #TW_Anz_WZDat_RD; 
+
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.WZW_VKETTE_MIT_TPU; 
+      SPBN  kver; 
+
+//Vertikalmagazin, es werden die Daten in der Spindel + Greifer 1+2 + TPU ausgelesen
+      L     7; 
+      T     #TW_Anz_WZDat_RD; 
+
+kver: CALL "FB_SIEM_GET" , "DI_GREIFER_DAT_LESEN" (
+           Req                      := "Mx_Werkzeugdaten_lesen",//"M_NCVar_lesen_Request" 
+           NumVar                   := #TW_Anz_WZDat_RD,
+           Addr1                    := "DB_TOOL_DATA".C1_S_actTNumber_23,
+           Addr2                    := "DB_TOOL_DATA".C1_S_actDNumber_24,
+           Addr3                    := "DB_TOOL_DATA".C1_SSP_actSpeed1_2,
+           Addr4                    := "DB_GREIFER_DATEN".T1_TP_placeData3_9998,
+           Addr5                    := "DB_GREIFER_DATEN".T1_TP_placeData19_9998,
+           Addr6                    := "DB_GREIFER_DATEN".T1_TP_placeData11_9998,
+           Addr7                    := "DB_GREIFER_DATEN".T1_TP_placeData4_9998,
+           Error                    := "Mx_Wzdaten_lesen_error",
+           NDR                      := "Mx_WZdaten_lesen_ready",
+           RD1                      := "DB_TOOL_DATA".T_NR,
+           RD2                      := "DB_TOOL_DATA".D_NR,
+           RD3                      := "DB_TOOL_DATA".Spindel_Ist_Drehzahl,
+           RD4                      := "DB_GREIFER_DATEN".TNR_Spindel,
+           RD5                      := "DB_GREIFER_DATEN".TNR_Gr2,
+           RD6                      := "DB_GREIFER_DATEN".TNR_Gr1,
+           RD7                      := "DB_GREIFER_DATEN".TNR_TPU);
+
+      U(    ; 
+      L     "DB_GREIFER_DATEN".TNR_Spindel; 
+      L     0; 
+      ==I   ; 
+      )     ; 
+      =     #TNR_0_in_Spindel; 
+
+      U     #TNR_0_in_Spindel; 
+      U(    ; 
+      L     "DB_TOOL_DATA".WZ_TYP; 
+      RND   ; 
+      L     710; 
+      ==I   ; 
+      )     ; 
+      SPBN  kMTT; 
+      L     0; 
+      T     "DB_TOOL_DATA".WZ_TYP; 
+
+kMTT: U     "Mx_Werkzeugdaten_lesen"; 
+      UN    "Req_FB_SIEM_GET_WZDat"; 
+      S     "Req_FB_SIEM_GET_WZDat"; 
+
+      U     #TNR_0_in_Spindel; 
+      UN    "DB_CONFIG".ANWAHL_DURCH_USER_DATA.WZW_RAD_MIT_ZYLINDER; 
+      UN    "DB_CONFIG".ANWAHL_DURCH_USER_DATA.WZW_RAD_MIT_ACHSE; 
+      O     "NDR_FB_SIEM_GET_WZDat"; 
+      O     "Error_FB_SIEM_GET_WZDat"; 
+      R     "Req_FB_SIEM_GET_WZDat"; 
+
+      L     "DB_TOOL_DATA".T_NR; 
+      T     "DB_TOOL_DATA".T1_TO_cuttEdgeParam1_1.spalte; 
+      L     1; 
+      T     "DB_TOOL_DATA".T1_TO_cuttEdgeParam1_1.zeile; 
+
+      L     3; 
+// Radmagazin nur eineVariable lesen
+      UN    "DB_CONFIG".ANWAHL_DURCH_USER_DATA.WZW_RAD_MIT_ZYLINDER; 
+      UN    "DB_CONFIG".ANWAHL_DURCH_USER_DATA.WZW_RAD_MIT_ACHSE; 
+      SPB   a04; 
+
+      L     1; 
+a04:  T     #Anz_Var; 
+
+      CALL "FB_SIEM_GET" , "DI_SPI_DATA2" (
+           Req                      := "Req_FB_SIEM_GET_WZDat",//"Mx_Werkzeugdaten_lesen"
+           NumVar                   := #Anz_Var,
+           Addr1                    := "DB_TOOL_DATA".T1_TO_cuttEdgeParam1_1,
+           Addr2                    := "DB_TOOL_DATA".ToolOEMDATA,
+           Column2                  := W#16#7,
+           Line2                    := "DB_GREIFER_DATEN".TNR_Spindel,
+           Addr3                    := "DB_TOOL_DATA".ToolOEMDATA,
+           Column3                  := W#16#2,
+           Line3                    := "DB_GREIFER_DATEN".TNR_Spindel,
+           Error                    := "Error_FB_SIEM_GET_WZDat",
+           NDR                      := "NDR_FB_SIEM_GET_WZDat",
+           RD1                      := "DB_TOOL_DATA".WZ_TYP,
+           RD2                      := "DB_TOOL_DATA".SpWZ_Option,
+           RD3                      := "DB_TOOL_DATA".Spindeldrehzahl_max);
+
+
+NETWORK
+TITLE =Werkzeuglänge / Werkzeugradius des WZ in Spindel lesen
+
+      U     "M_Tool_Nr_geaendert"; // Impuls von Spindel 
+      S     "M_Tool_Req"; 
+
+      U     "M_Tool_Req"; 
+      U(    ; 
+      L     "DB_TOOL_DATA".D_NR; 
+      L     0; 
+      <>I   ; 
+      )     ; 
+      S     "M_WZV_REQ_Data"; 
+      R     "M_Tool_Req"; 
+
+      CALL "FB_SIEM_GET" , "DB_INST_TOOL_DAT" (
+           Req                      := "M_WZV_REQ_Data",
+           NumVar                   := 4,
+           Addr1                    := "DB_TOOL_DATA".C1_S_actToolLength1_28,
+           Addr2                    := "DB_TOOL_DATA".C1_S_actToolLength2_29,
+           Addr3                    := "DB_TOOL_DATA".C1_S_actToolLength3_30,
+           Addr4                    := "DB_TOOL_DATA".C1_S_actToolRadius_27,
+           Error                    := #T_Error_FB2_2,
+           NDR                      := #T_Done_FB2_2,
+           RD1                      := "DB_TOOL_DATA".Laenge1,
+           RD2                      := "DB_TOOL_DATA".Laenge2,
+           RD3                      := "DB_TOOL_DATA".Laenge3,
+           RD4                      := "DB_TOOL_DATA".Radius);
+
+      U     #T_Done_FB2_2; 
+      O     #T_Error_FB2_2; 
+      R     "M_WZV_REQ_Data"; 
+NETWORK
+TITLE =Restweg lesen wegen Zwangsdynamisierung
+
+      UN    "M_Req_Restweg_lesen"; 
+      S     "M_Req_Restweg_lesen"; 
+
+      U     "M_NDR_Restweg_lesen"; 
+      O     "M_Error_Restweg_lesen"; 
+      O     "M_1_ter_OB1_Zyklus"; 
+      R     "M_Req_Restweg_lesen"; 
+
+      L     1; 
+      T     #tw_anz_restweg_rd; 
+
+      L     "DB_PLC_MD_DB20".UDInt._007_ANWAHL_FRAESKOPF; 
+      L     2; 
+      ==I   ; 
+      O(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._007_ANWAHL_FRAESKOPF; 
+      L     4; 
+      ==I   ; 
+      )     ; 
+      SPBN  _re1; 
+      L     2; 
+      T     #tw_anz_restweg_rd; 
+
+_re1: CALL "FB_SIEM_GET" , "DI_GET_RESTWEG" (
+           Req                      := "M_Req_Restweg_lesen",
+           NumVar                   := #tw_anz_restweg_rd,
+           Addr1                    := "DB_Restweg".C1_SGA_progDistToGo,
+           Line1                    := W#16#3,
+           Addr2                    := "DB_Restweg".C1_SGA_progDistToGo,
+           Line2                    := W#16#5,
+           Error                    := "M_Error_Restweg_lesen",
+           NDR                      := "M_NDR_Restweg_lesen",
+           RD1                      := "DB_Restweg".Restweg_Ax3,
+           RD2                      := "DB_Restweg".Restweg_Ax5);
+
+      L     "DB_Restweg".Restweg_Ax3; 
+      L     0.000000e+000; 
+      <>R   ; 
+      O(    ; 
+      L     "DB_Restweg".Restweg_Ax5; 
+      L     0.000000e+000; 
+      <>R   ; 
+      U(    ; 
+      L     #tw_anz_restweg_rd; 
+      L     1; 
+      >I    ; 
+      )     ; 
+      )     ; 
+      =     "M_Restweg_aktiv"; 
+NETWORK
+TITLE =Auswertung WZ-Waschzeit
+
+      L     "DB_PLC_MD_DB20".UDInt._014_ANWAHL_MAGAZIN; 
+      L     2; 
+      <=I   ; 
+      SPB   kett; 
+
+      L     0; 
+      L     "DB_GREIFER_DATEN".TNR_Gr1; 
+      <>I   ; 
+      SPB   lese; 
+
+      L     0; 
+      L     "DB_GREIFER_DATEN".TNR_Gr2; 
+      <>I   ; 
+      SPB   lese; 
+
+      SPA   wasc; 
+lese: NOP   0; 
+
+      T     #tnr_greifer; 
+
+      UN    "M_WZW_Hub_Magazin"; 
+      FP    "m_FLM_request_read"; 
+      S     "m_request_qeifer_WZ_Gr"; 
+
+
+      CALL "FB_SIEM_GET" , "DI_OEM_DATEN_GREIFERWZ" (
+           Req                      := "m_request_qeifer_WZ_Gr",
+           NumVar                   := 1,
+           Addr1                    := "DB_TOOL_DATA".ToolOEMDATA,
+           Column1                  := W#16#6,
+           Line1                    := #tnr_greifer,
+           Error                    := #T_Error_FB2,
+           NDR                      := #T_Done_FB2,
+           RD1                      := "DB_TOOL_DATA".waschzeit_greiferWZ);
+
+      O     #T_Done_FB2; 
+      O     #T_Error_FB2; 
+      R     "m_request_qeifer_WZ_Gr"; 
+      SPBN  wasc; 
+
+      L     "DB_TOOL_DATA".waschzeit_greiferWZ; 
+      RND   ; 
+      T     #wz_zeit; 
+      L     1; 
+      ==I   ; 
+      S     "M_WZ_Wasch_schnell"; 
+      R     "M_WZ_Wasch_abgewaehlt"; 
+
+      L     #wz_zeit; 
+      L     2; 
+      ==I   ; 
+      S     "M_WZ_Wasch_abgewaehlt"; 
+      R     "M_WZ_Wasch_schnell"; 
+
+      L     #wz_zeit; 
+      L     0; 
+      ==I   ; 
+      R     "M_WZ_Wasch_abgewaehlt"; 
+      R     "M_WZ_Wasch_schnell"; 
+
+      SPA   wasc; 
+
+kett: NOP   0; 
+      L     "DI_TM_WZTYP_RD".NewTool_KEGELR; 
+      RND   ; 
+      T     #wz_zeit; 
+      L     1; 
+      ==I   ; 
+      S     "M_WZ_Wasch_schnell"; 
+      R     "M_WZ_Wasch_abgewaehlt"; 
+
+      L     #wz_zeit; 
+      L     2; 
+      ==I   ; 
+      S     "M_WZ_Wasch_abgewaehlt"; 
+      R     "M_WZ_Wasch_schnell"; 
+
+      L     #wz_zeit; 
+      L     0; 
+      ==I   ; 
+      R     "M_WZ_Wasch_abgewaehlt"; 
+      R     "M_WZ_Wasch_schnell"; 
+
+wasc: NOP   0; 
+
+END_FUNCTION
+

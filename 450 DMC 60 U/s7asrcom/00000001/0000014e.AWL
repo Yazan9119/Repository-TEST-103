@@ -1,0 +1,262 @@
+FUNCTION_BLOCK "FB_SPH_FD_H_FKT"
+TITLE =
+//$Revision: 1.6 $
+//$Date: 2008/03/04 17:00:35CET $
+//$Author: riedlh $
+{ S7_language := '7(1) Deutsch (Deutschland)  04.03.2008  09:44:05' }
+VERSION : 0.1
+
+
+VAR_INPUT
+  i_HFKT_REALwert : REAL ;	//H-Wert als REAL
+  i_HAWE_Druck_erreicht : BOOL ;	//Meldung von HAWE "Druck erreicht"
+  i_Spannstelle_aktiv : BOOL ;	
+END_VAR
+VAR_OUTPUT
+  o_HFKT_quitpflichtig : BOOL ;	//H-Funktion ist quittierungspflichtig
+  o_FM_falscher_Wert : BOOL ;	//FM: unzulässiger Wert bei H-Parameter
+END_VAR
+VAR_IN_OUT
+  io_akt_Druckvorgabe : BYTE ;	//aktuelle Druck-Vorgabe
+  io_M_H_FKT : BOOL ;	//Merker H-Funktion
+  io_HFKT_Quittung : BOOL ;	//H-Funktion Quittung
+  io_MFKT_Quittung : BOOL ;	//M-Funktion für Druckänderung
+END_VAR
+VAR
+  s_FKT3_Wert_zu_klein : BOOL ;	
+  s_FKT4_Wert_zu_gross : BOOL ;	
+  s_FKT5_neu_gleich_alt : BOOL ;	
+  s_FKT6_neu_ungleich_alt : BOOL ;	
+  s_FKT7_inaktiv : BOOL ;	
+  s_HM_Druck_erreicht : BOOL ;	//HM PI Druck erreicht
+  s_keine_Aenderung : BOOL ;	//keine Änderung H-Wert/alter SOLLwert
+  s_PI_Druck_erreicht : BOOL ;	//PI Hawe-Meldung Druck erreicht
+  s_HM_io_M_H_FKT : BOOL ;	
+END_VAR
+VAR_TEMP
+  t_INT_H_wert : INT ;	//H-Wert als INTEGER
+END_VAR
+BEGIN
+NETWORK
+TITLE =H-Funktion ist quittierungspflichtig
+// Netzwerk-Übersicht
+// ==================
+// NW 1: H-Funktion ist quittierungspflichtig
+// NW 2: Baustein-Funktions-Beschreibung
+// NW 3: Quittung: H-Funktion + RESET Status-Zellen
+// NW 4: RESET Status-Zellen mit "M_Ruecksetze_Fehler"
+// NW 5: H-Wert von REAL>>INTEGER
+// NW 6: FKT1: Negative Druckvorgabe
+// NW 7: FKT 2: Druckvorgabe = 0
+// NW 8: FKT 3: Falscher H-Wert: zu klein
+// NW 9: FKT4: Falscher H-Wert: zu groß
+// NW 10: FKT5: neuer H-Wert ist gleich alter SOLL-Wert
+// NW 11: FKT6: neuer H-Wert ungleich alter SOLL-Wert
+// NW 12: FKT7: Spannstelle ist inaktiv
+// NW 13: >> FKT 1: negative Wertvorgabe
+// NW 14: >> FKT 2: Wertvorgabe = 0
+// NW 15: >> FKT 3: zu kleiner Wert bei H-Parameter
+// NW 16: >> FKT 4: zu großer Wert bei H-Parameter
+// NW 17: >> FKT 5: Neuer H-Parameter-Wert gleich alter Wert
+// NW 18: >> FKT 6: Neuer H-Parameter-Wert ungleich alter Wert
+// NW 19: >> FKT 7: Spannstelle ist inaktiv
+// NW 20: PI HAWE-Meldung "Druck erreicht"
+// NW 21: RESET: #o_FM_falscher_Wert
+      SET   ; 
+      =     #o_HFKT_quitpflichtig; 
+NETWORK
+TITLE =Baustein-Funktions-Beschreibung
+//Auswertung der H-Funktionen für SpannHydraulik in Maschine
+//
+//zulässiger Bereich: 10...50 [bar]
+//
+//H31 = x :Spannstelle 1
+//H32 = x :Spannstelle 2
+//H33 = x :Spannstelle 3
+//H34 = x :Spannstelle 4
+//
+//x < 0      : nicht zulässig
+//x = 0      : nicht zulässig
+//0 < x < 10 : Fehlermeldung "falscher H-Wert"; keine H-Quittung
+//x > 50     : Fehlermeldung "falscher H-Wert"; keine H-Quittung
+
+
+NETWORK
+TITLE =Quittung: H-Funktion + RESET Status-Zellen
+
+      U(    ; 
+      U     #s_PI_Druck_erreicht; 
+      U     #s_FKT6_neu_ungleich_alt; 
+      O     #s_FKT5_neu_gleich_alt; 
+      O     #s_FKT7_inaktiv; 
+      )     ; 
+      =     #io_HFKT_Quittung; 
+      =     #io_MFKT_Quittung; 
+      R     #s_FKT5_neu_gleich_alt; 
+      R     #s_FKT6_neu_ungleich_alt; 
+      R     #s_FKT7_inaktiv; 
+NETWORK
+TITLE =RESET Status-Zellen mit "M_Ruecksetze_Fehler"
+
+      U     "M_Ruecksetze_Fehler"; 
+      R     #s_FKT5_neu_gleich_alt; 
+      R     #s_FKT6_neu_ungleich_alt; 
+      R     #s_FKT7_inaktiv; 
+      R     #io_M_H_FKT; 
+NETWORK
+TITLE =H-Wert von REAL>>INTEGER
+
+      L     #i_HFKT_REALwert; 
+      RND   ; 
+      T     #t_INT_H_wert; 
+
+      U(    ; 
+      U     #io_M_H_FKT; 
+      UN    #s_FKT5_neu_gleich_alt; 
+      UN    #s_FKT6_neu_ungleich_alt; 
+      UN    #s_FKT7_inaktiv; 
+      )     ; 
+      FP    #s_HM_io_M_H_FKT; 
+      O     ; 
+      U     #io_M_H_FKT; 
+      U(    ; 
+      L     #t_INT_H_wert; 
+      L     #io_akt_Druckvorgabe; 
+      <>D   ; 
+      )     ; 
+      SPBN  END; 
+NETWORK
+TITLE =FKT1: Negative Druckvorgabe
+//Reaktion: Fehlermeldung
+      L     #i_HFKT_REALwert; 
+      RND   ; 
+      L     0; 
+      <D    ; 
+      U     #i_Spannstelle_aktiv; 
+      SPB   FKT1; 
+NETWORK
+TITLE =FKT 2: Druckvorgabe = 0
+
+      L     #t_INT_H_wert; 
+      L     0; 
+      ==D   ; 
+      U     #i_Spannstelle_aktiv; 
+      SPB   FKT2; 
+NETWORK
+TITLE =FKT 3: Falscher H-Wert: zu klein
+//zulässige Werte: 15 <= x <= 60
+      L     #t_INT_H_wert; 
+      L     15; 
+      <D    ; 
+      U     #i_Spannstelle_aktiv; 
+      SPB   FKT3; 
+NETWORK
+TITLE =FKT4: Falscher H-Wert: zu groß
+//zulässige Werte: 15 <= x <= 50    bei HEX_26.2 = 0
+//zulässige Werte: 15 <= x <= 60    bei HEX_26.2 = 1
+      U(    ; 
+      U(    ; 
+      L     #t_INT_H_wert; 
+      L     50; 
+      >D    ; 
+      )     ; 
+      UN    "DB_PLC_MD_DB20".UDHex._26_Bit2_FDmaxDruck_60; 
+      O     ; 
+      U(    ; 
+      L     #t_INT_H_wert; 
+      L     60; 
+      >D    ; 
+      )     ; 
+      U     "DB_PLC_MD_DB20".UDHex._26_Bit2_FDmaxDruck_60; 
+      )     ; 
+      U     #i_Spannstelle_aktiv; 
+      SPB   FKT4; 
+NETWORK
+TITLE =FKT5: neuer H-Wert ist gleich alter SOLL-Wert
+
+      L     #t_INT_H_wert; 
+      L     #io_akt_Druckvorgabe; 
+      ==D   ; 
+      U     #i_Spannstelle_aktiv; 
+      SPB   FKT5; 
+NETWORK
+TITLE =FKT6: neuer H-Wert ungleich alter SOLL-Wert
+
+      L     #t_INT_H_wert; 
+      L     #io_akt_Druckvorgabe; 
+      <>D   ; 
+      U     #i_Spannstelle_aktiv; 
+      SPB   FKT6; 
+NETWORK
+TITLE =FKT7: Spannstelle ist inaktiv
+
+      UN    #i_Spannstelle_aktiv; 
+      SPB   FKT7; 
+      SPA   END; 
+NETWORK
+TITLE =>> FKT 1: negative Wertvorgabe
+
+FKT1: U     #io_M_H_FKT; 
+      S     #s_FKT3_Wert_zu_klein; 
+      SPA   END; 
+NETWORK
+TITLE =>> FKT 2: Wertvorgabe = 0
+
+FKT2: U     #io_M_H_FKT; 
+      S     #s_FKT3_Wert_zu_klein; 
+      SPA   END; 
+NETWORK
+TITLE =>> FKT 3: zu kleiner Wert bei H-Parameter
+
+FKT3: U     #io_M_H_FKT; 
+      S     #s_FKT3_Wert_zu_klein; 
+      SPA   END; 
+NETWORK
+TITLE =>> FKT 4: zu großer Wert bei H-Parameter
+
+FKT4: U     #io_M_H_FKT; 
+      S     #s_FKT4_Wert_zu_gross; 
+      SPA   END; 
+NETWORK
+TITLE =>> FKT 5: Neuer H-Parameter-Wert gleich alter Wert
+
+FKT5: U     #io_M_H_FKT; 
+      S     #s_FKT5_neu_gleich_alt; 
+
+      L     #t_INT_H_wert; 
+      T     #io_akt_Druckvorgabe; 
+      SPA   END; 
+NETWORK
+TITLE =>> FKT 6: Neuer H-Parameter-Wert ungleich alter Wert
+
+FKT6: U     #io_M_H_FKT; 
+      S     #s_FKT6_neu_ungleich_alt; 
+
+      L     #t_INT_H_wert; 
+      T     #io_akt_Druckvorgabe; 
+      SPA   END; 
+NETWORK
+TITLE =>> FKT 7: Spannstelle ist inaktiv
+
+FKT7: U     #io_M_H_FKT; 
+      S     #s_FKT7_inaktiv; 
+      SPA   END; 
+NETWORK
+TITLE =PI HAWE-Meldung "Druck erreicht"
+
+END:  U     #i_HAWE_Druck_erreicht; 
+      FP    #s_HM_Druck_erreicht; 
+      =     #s_PI_Druck_erreicht; 
+NETWORK
+TITLE =RESET: #o_FM_falscher_Wert
+
+      U     "M_Ruecksetze_Fehler"; 
+      R     #o_FM_falscher_Wert; 
+      R     #s_FKT3_Wert_zu_klein; 
+      R     #s_FKT4_Wert_zu_gross; 
+
+      O     #s_FKT3_Wert_zu_klein; 
+      O     #s_FKT4_Wert_zu_gross; 
+      S     #o_FM_falscher_Wert; 
+END_FUNCTION_BLOCK
+

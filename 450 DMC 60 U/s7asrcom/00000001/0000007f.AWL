@@ -1,0 +1,1439 @@
+FUNCTION "FC_PW_AUTOMATIK" : VOID
+TITLE =
+//$Revision: 1.46 $
+//$Date: 2008/08/27 15:05:16CEST $
+//$Author: riedlh $
+VERSION : 0.1
+
+
+VAR_TEMP
+  bPWGesamtKlemmLoesen : BOOL ;	
+  bPWGesamtKlemmSpannen : BOOL ;	
+  tx_Spuelung : BOOL ;	
+  tw_BCD_Zeit : WORD ;	
+  tw_Spuelzeit : WORD ;	
+  ts5t_Spuelzeit : S5TIME ;	
+  tx_ReWert : BOOL ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =Single Step Forward
+// Netzwerk-Übersicht
+// ==================
+// NW 1: Single Step Forward
+// NW 2: Single Step Backward
+// NW 3: RESET: "DB_Achs8".MX_Anf_Positionieren
+// NW 4: Next Step
+// NW 5: Auswertung schwere Palette
+// NW 6: _____Schrittketten-Verteiler________________
+// NW 7: SK00:Startbedingung für Schrittkette
+// NW 8: ____Schrittkette-Ablauf überspringen
+// NW 9: ____Schrittkette Starten
+// NW 10: ____Springe an das Schrittketten-Ende
+// NW 11: SK01: Abkuppeln am RPL+MPL
+// NW 12: ____Anstoß-Automatik-Ablauf: Rüstplatz abkuppeln
+// NW 13: ____Anstoß-Automatik-Ablauf: Maschinenplatz abkuppeln
+// NW 14: ____Warten bis Abkuppeln fertig
+// NW 15: ____Weiterschaltung, Rüstplatz Klemmung lösen
+// NW 16: ____Auf nächsten PLC-Zyklus warten
+// NW 17: SK02: Rüstplatz Klemmung lösen
+// NW 18: ____Option: Hydraulische Klemmung am Rüstplatz
+// NW 19: ____Warten bis RPL-Klemmung fertig
+// NW 20: ____Weiterschaltung, "HUB Mittelstellung." bzw. FD ankuppeln
+// NW 21: ____Auf nächsten PLC-Zyklus warten
+// NW 22: SK03: Option "HUB Mittelstellung." bzw. FD ankuppeln
+// NW 23: ____Automatikbetrieb für PW-Hub Mitte bei Aufwärtsbewegung
+// NW 24: ____FD-Maschine: Medienkupplung ankuppeln
+// NW 25: ____Warten bis HUB-Mittelstellung und Medienkupplung angekuppelt
+// NW 26: ___Weiterschaltung, Paletten-Klemmung am NC-Tisch lösen
+// NW 27: ____Auf nächsten PLC-Zyklus warten
+// NW 28: SK04: Paletten-Klemmung am NC-Tisch lösen
+// NW 29: ____Warten bis Paletten-Klemmung am NC-Tisch lösen fertig
+// NW 30: ____Weiterschaltung, PW-Hub heben
+// NW 31: ____Auf nächsten PLC-Zyklus warten
+// NW 32: SK05: PW-Hub heben
+// NW 33: ____Warten, bis PW-Hub heben fertig
+// NW 34: ____Weiterschaltung, Option Schwenkrundtisch Drehposition
+// NW 35: ____Auf nächsten PLC-Zyklus warten
+// NW 36: SK06: Option Schwenkrundtisch Drehposition
+// NW 37: ____Anstoß PW-Tisch-Drehposition
+// NW 38: ____Warten bis PW-Tisch-Bewegung fertig
+// NW 39: ____Weiterschaltung, RESET PW-Tisch-Drehposition
+// NW 40: ____Auf nächsten PLC-Zyklus warten
+// NW 41: SK07: RESET PW-Tisch-Drehposition
+// NW 42: ____Warten bis PW-Tisch-Drehposition fertig
+// NW 43: ____Weiterschaltung, Drehen 0-Grad / Drehen 180-Grad
+// NW 44: ____Auf nächsten PLC-Zyklus warten
+// NW 45: SK08: Drehen 0-Grad / Drehen 180-Grad
+// NW 46: ____Auf nächsten PLC-Zyklus warten
+// NW 47: SK09: PW-Wechsler auf 0 oder 180 Grad drehen
+// NW 48: ____M-Ausgang: PW Umschaltung Hydraulik schnell
+// NW 49: ____Warten auf Drehbewegung fertig
+// NW 50: ____PW: PW-Tisch-Wechselposition anfahren
+// NW 51: :____Auf nächsten PLC-Zyklus warten
+// NW 52: SK10: PW-Tisch-Wechselposition anfahren
+// NW 53: ____PLC>>>NC: Fahre auf PW-Tisch-Wechselposition
+// NW 54: ____Warten auf fahre auf PW-Tisch-Wechselposition fertig
+// NW 55: ____Weiterschaltung: RESET PW-Tisch-Wechselposition anfahren
+// NW 56: ____Auf nächsten PLC-Zyklus warten
+// NW 57: SK11: RESET PW-Tisch-Wechselposition anfahren
+// NW 58: ____Warten auf RESET Fahre auf PW-Tisch-Wechselpos
+// NW 59: ____Weiterschaltung: PW-Hub senken
+// NW 60: ____Auf nächsten PLC-Zyklus warten
+// NW 61: SK12: PW-Hub senken
+// NW 62: ____Warten auf Absenken fertig
+// NW 63: ____Weiterschaltung, Anwesendheitkontrolle Palette
+// NW 64: ____Auf nächsten PLC-Zyklus warten
+// NW 65: SK13: Anwesendheitkontrolle Palette
+// NW 66: ____Weiterschaltung, PW-Klemmung am NC-Tisch spannen
+// NW 67: ____Auf nächsten PLC-Zyklus warten
+// NW 68: SK14: PW-Klemmung am NC-Tisch spannen
+// NW 69: ____Warten bis PW-Klemmung fertig
+// NW 70: ____Weiterschaltung, Palette vorhanden
+// NW 71: ____Auf nächsten PLC-Zyklus warten
+// NW 72: SK15: Anwesendheitkontrolle Palette
+// NW 73: ____Weiterschaltung, Fräs-Drehtisch Medienkupplung abkuppeln
+// NW 74: ____Auf nächsten PLC-Zyklus warten
+// NW 75: SK16: Fräs-Drehtisch Medienkupplung abkuppeln
+// NW 76: ____Anstoß Medienkupplung senken
+// NW 77: ____Warten auf Medienkupplung senken fertig
+// NW 78: ____Weiterschaltung, RRüstplatz Paletten-Klemmung einschalten
+// NW 79: ____Auf nächsten PLC-Zyklus warten
+// NW 80: SK17: Rüstplatz Paletten-Klemmung einschalten
+// NW 81: ____Paletten-Klemmung am Rüstplatz spannen
+// NW 82: ____Warten auf Paletten-Klemmung am Rüstplatz spannen fertig
+// NW 83: ____Weiterschaltung, Kupplung RPL+MPL ankuppeln
+// NW 84: ____Auf nächsten PLC-Zyklus warten
+// NW 85: SK18: Kupplung RPL+MPL ankuppeln
+// NW 86: ____Anstoß-Automatik-Ablauf: Rüstplatz ankuppeln
+// NW 87: ____Anstoß-Automatik-Ablauf: Maschinenplatz ankuppeln
+// NW 88: ____Warten bis Ankuppeln fertig
+// NW 89: ____Weiterschaltung, PW-Ablauf beendet
+// NW 90: ____Auf nächsten PLC-Zyklus warten
+// NW 91: SK19: PW-Ablauf beenden
+// NW 92: ____Auf nächsten PLC-Zyklus warten
+// NW 93: SK20: PW-Ablauf beendet
+// NW 94: ____Auf nächsten PLC-Zyklus warten
+// NW 95: SK99-Label ==================================
+// NW 96: Zurücksetzen Timer Spuelung
+// NW 97: Spülung verhindern, wenn M31
+// NW 98: Dachspülung verhindern, bei M31(1)
+// NW 99: RESET: Trockenbearbeitung / Dachspülung aus
+// NW 100: Freigabe Spülung
+// NW 101: Spülzeit Vorposition MD INTEGER_132 aufbereiten für S5Timer
+// NW 102: Start der Spülung und des Timers für Spülung
+// NW 103: Stop der Spülung bei abgelaufener Zeit
+// NW 104: Spülung starten
+// NW 105: PLC>>>NC: Trockenbearbeitung
+      U     "DB_PW_DATA".bEinzelschritt_Aktiv; 
+      U     "DB_EINRICHTFUNKTION".Bewegung_7_Plus; 
+      U     "I_DM_Ta_SKR_blau"; 
+      FP    "M_FP_PW_Step_Forward"; 
+      =     "DB_PW_DATA".Single_Step_Forward; 
+NETWORK
+TITLE =Single Step Backward
+
+      U     "DB_PW_DATA".bEinzelschritt_Aktiv; 
+      U     "DB_EINRICHTFUNKTION".Bewegung_7_Minus; 
+      FP    "M_FP_PW_Step_Backward"; 
+      =     "DB_PW_DATA".Single_Step_Backward; 
+NETWORK
+TITLE =RESET: "DB_Achs8".MX_Anf_Positionieren
+
+      U     "DB_PW_DATA".bEinzelschritt_Aktiv; 
+      U(    ; 
+      U     "DB_EINRICHTFUNKTION".Bewegung_7_Plus; 
+      FN    "M_FN_PW_Step_Forward"; 
+      O     ; 
+      U     "DB_EINRICHTFUNKTION".Bewegung_7_Minus; 
+      FP    "M_FN_PW_Step_Backward"; 
+      )     ; 
+      R     "DB_Achs8".MX_Anf_Positionieren; 
+NETWORK
+TITLE =Next Step
+
+      ON    "DB_PW_DATA".bEinzelschritt_Aktiv; 
+      O     "DB_PW_DATA".Single_Step_Forward; 
+      =     "DB_PW_DATA".Next_Step; 
+NETWORK
+TITLE =Auswertung schwere Palette
+
+      O     "DB_PAL_NR".Platz[0].Pal_schwer; 
+      O     "DB_PAL_NR".Platz[1].Pal_schwer; 
+      =     "DB_PW_DATA".bPaletteSchwerAktiv; 
+
+NETWORK
+TITLE =_____Schrittketten-Verteiler________________
+//SPA   SK00  //SKZ=00:
+//SPA   SK01  //SKZ=01: Abkuppeln am RPL+MPL
+//SPA   SK02  //SKZ=02: Rüstplatz Klemmung lösen
+//SPA   SK03  //SKZ=03: Option "HUB Mittelstellung." bzw. FD ankuppeln
+//SPA   SK04  //SKZ=04: Paletten-Klemmung am NC-Tisch lösen
+//SPA   SK05  //SKZ=05: PW-Hub heben
+//SPA   SK06  //SKZ=06: Option Schwenkrundtisch Drehposition
+//SPA   SK07  //SKZ=07: RESET PW-Tisch-Drehposition
+//SPA   SK08  //SKZ=08: Drehen 0-Grad  -  Drehen 180-Grad
+//SPA   SK09  //SKZ=09: PW-Wechsler auf 0 oder 180 Grad drehen
+//SPA   SK10  //SKZ=10: PW-Tisch-Wechselposition anfahren
+//SPA   SK11  //SKZ=11: RESET PW-Tisch-Wechselposition anfahren
+//SPA   SK12  //SKZ=12: PW-Hub senken
+//SPA   SK13  //SKZ=13: Anwesendheitkontrolle Palette
+//SPA   SK14  //SKZ=14: PW-Klemmung am NC-Tisch spannen
+//SPA   SK15  //SKZ=15: Anwesendheitkontrolle Palette
+//SPA   SK16  //SKZ=16: Fräs-Drehtisch Medienkupplung abkuppeln
+//SPA   SK17  //SKZ=17: Rüstplatz Paletten-Klemmung einschalten
+//SPA   SK18  //SKZ=18: Kupplung RPL+MPL ankuppeln
+//SPA   SK19  //SKZ=19: PW-Ablauf beenden
+//SPA   SK20  //SKZ=20: PW-Ablauf beendet
+//
+SSRT: SET   ; 
+      R     "DB_PW_DATA".bContinueSKZ; 
+
+      L     "DB_PW_DATA".iSKZ_PWAblauf; 
+      SPL   SDFT; 
+
+      SPA   SK00; //SKZ=00:
+      SPA   SK01; //SKZ=01: Abkuppeln am RPL+MPL
+      SPA   SK02; //SKZ=02: Rüstplatz Klemmung lösen
+      SPA   SK03; //SKZ=03: Option "HUB Mittelstellung." bzw. FD ankuppeln
+      SPA   SK04; //SKZ=04: Paletten-Klemmung am NC-Tisch lösen
+      SPA   SK05; //SKZ=05: PW-Hub heben
+      SPA   SK06; //SKZ=06: Option Schwenkrundtisch Drehposition
+      SPA   SK07; //SKZ=07: RESET PW-Tisch-Drehposition
+      SPA   SK08; //SKZ=08: Drehen 0-Grad  -  Drehen 180-Grad
+      SPA   SK09; //SKZ=09: PW-Wechsler auf 0 oder 180 Grad drehen
+      SPA   SK10; //SKZ=10: PW-Tisch-Wechselposition anfahren
+      SPA   SK11; //SKZ=11: RESET PW-Tisch-Wechselposition anfahren
+      SPA   SK12; //SKZ=12: PW-Hub senken
+      SPA   SK13; //SKZ=13: Anwesendheitkontrolle Palette
+      SPA   SK14; //SKZ=14: PW-Klemmung am NC-Tisch spannen
+      SPA   SK15; //SKZ=15: Anwesendheitkontrolle Palette
+      SPA   SK16; //SKZ=16: Fräs-Drehtisch Medienkupplung abkuppeln
+      SPA   SK17; //SKZ=17: Rüstplatz Paletten-Klemmung einschalten
+      SPA   SK18; //SKZ=18: Kupplung RPL+MPL ankuppeln
+      SPA   SK19; //SKZ=19: PW-Ablauf beenden
+      SPA   SK20; //SKZ=20: PW-Ablauf beendet
+
+SDFT: SPA   SEND; 
+
+NETWORK
+TITLE =SK00:Startbedingung für Schrittkette
+
+SK00: U     "M_FreigabePW"; 
+      U     "M_PW_Aktiv"; 
+      U     "DB_DM_M_FUNKTION".MX_M[250]; 
+//      UN    "IX_D_PW_HUB_IN_MITTE"
+      U     "DB_PW_DATA".bPW_GRDST; 
+      U     "DB_PW_DATA".bRP_GRDST; 
+      U(    ; 
+      O     "DB_PW_DATA".bAllAxisInWechselpos; 
+      O     "DI_FB_WIKO_ABLAUF".angedockt; 
+      )     ; 
+      =     L      9.0; 
+      U     L      9.0; 
+      BLD   102; 
+      S     "M_Start_PW_Schrittkette"; 
+      U     L      9.0; 
+      BLD   102; 
+      S     "DB_PW_DATA".Out.OX_PW_Hydraulik_schnell; 
+      U     L      9.0; 
+      BLD   102; 
+      R     "DB_NC_PLC".PW_Beendet; 
+      U     L      9.0; 
+      BLD   102; 
+      R     "DB_NC_PLC".PW_Hub_oben; 
+      U     L      9.0; 
+      BLD   102; 
+      R     "DB_NC_PLC".PW_Tisch_Drehposition; 
+      U     L      9.0; 
+      BLD   102; 
+      R     "DB_NC_PLC".PW_Tisch_Wechselposition; 
+      U     L      9.0; 
+      BLD   102; 
+      R     "M_PW_Pal_Vorhanden"; 
+      U     L      9.0; 
+      UN    "DB_PW_DATA".bTrockenbearbeitung; 
+      S     "O_PW_Ventil_Tischspuel"; 
+      U     L      9.0; 
+      U     "DB_HR".ABST.SP_SA_MTU; 
+      S     "O_PW_SPANNDRUCK_HYD_AUS"; 
+      U     L      9.0; 
+      U     "DB_HR".ABST.SP_FD; 
+      S     "O_PW_SPANNDRUCK_HYD_AUS"; 
+      U     L      9.0; 
+      U     "DB_PW_DATA".Option.bPW_Konen_Spuelung; 
+      S     "O_PW_Ventil_Abfrage"; 
+NETWORK
+TITLE =____Schrittkette-Ablauf überspringen
+
+      ON    "M_Start_PW_Schrittkette"; 
+      ON    "I_PW_PNOZ_FREIGABE"; 
+      SPB   SEND; 
+NETWORK
+TITLE =____Schrittkette Starten
+
+      U     "M_Start_PW_Schrittkette"; 
+      U     "I_PW_PNOZ_FREIGABE"; 
+      =     L      9.0; 
+      U     L      9.0; 
+      U     "DB_PW_DATA".Next_Step; 
+      =     L      9.1; 
+      U     L      9.1; 
+      SPBNB _001; 
+      L     "DB_PW_DATA".iSKZ_PWAblauf; 
+      L     1; 
+      +I    ; 
+      T     "DB_PW_DATA".iSKZ_PWAblauf; 
+      UN    OV; 
+      SAVE  ; 
+      CLR   ; 
+_001: U     BIE; 
+      R     "M_Start_PW_Schrittkette"; 
+      U     L      9.1; 
+      BLD   102; 
+      S     "DB_PW_DATA".bContinueSKZ; 
+      U     L      9.0; 
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.Palettenspeicher_aktiv; 
+      UN    "I_PW_UPL_PAL_VORH"; 
+      S     "M_PW_Pal_Vorhanden"; 
+NETWORK
+TITLE =____Springe an das Schrittketten-Ende
+
+      SPA   SK99; 
+
+NETWORK
+TITLE =SK01: Abkuppeln am RPL+MPL
+
+SK01: U(    ; 
+      ON    "DB_PLC_MD_DB20".UDHex._27_Bit3_RPLmitKupplung; 
+      O     "MX_ABST_Rundspeicher"; 
+      )     ; 
+      UN    "DB_PLC_MD_DB20".UDHex._27_Bit4_MPLmitKupplung; 
+      SPBNB _002; 
+      L     "DB_PW_DATA".iSKZ_PWAblauf; 
+      L     1; 
+      +I    ; 
+      T     "DB_PW_DATA".iSKZ_PWAblauf; 
+      UN    OV; 
+      SAVE  ; 
+      CLR   ; 
+_002: U     BIE; 
+      SPB   SK99; 
+NETWORK
+TITLE =____Anstoß-Automatik-Ablauf: Rüstplatz abkuppeln
+
+      U     "DB_PLC_MD_DB20".UDHex._27_Bit3_RPLmitKupplung; 
+      UN    "MX_ABST_Rundspeicher"; 
+      =     "DB_PW_DATA".Automatik2.bRPL_Kupplung_abkuppeln; 
+NETWORK
+TITLE =____Anstoß-Automatik-Ablauf: Maschinenplatz abkuppeln
+
+      U     "DB_PLC_MD_DB20".UDHex._27_Bit4_MPLmitKupplung; 
+      =     "DB_PW_DATA".Automatik2.bMPL_Kupplung_abkuppeln; 
+NETWORK
+TITLE =____Warten bis Abkuppeln fertig
+
+      UN    "DB_PW_DATA".BewegReady.bRPL_SP_Kupplung; 
+      U     "DB_PLC_MD_DB20".UDHex._27_Bit3_RPLmitKupplung; 
+      UN    "MX_ABST_Rundspeicher"; 
+      O     ; 
+      UN    "DB_PW_DATA".BewegReady.bMPL_SP_Kupplung; 
+      U     "DB_PLC_MD_DB20".UDHex._27_Bit4_MPLmitKupplung; 
+      SPB   SEND; 
+NETWORK
+TITLE =____Weiterschaltung, Rüstplatz Klemmung lösen
+
+      U(    ; 
+      O     "DB_PW_DATA".BewegReady.bRPL_SP_Kupplung; 
+      ON    "DB_PLC_MD_DB20".UDHex._27_Bit3_RPLmitKupplung; 
+      O     "MX_ABST_Rundspeicher"; 
+      )     ; 
+      U(    ; 
+      O     "DB_PW_DATA".BewegReady.bMPL_SP_Kupplung; 
+      ON    "DB_PLC_MD_DB20".UDHex._27_Bit4_MPLmitKupplung; 
+      )     ; 
+      U     "DB_PW_DATA".Next_Step; 
+      SPBNB _003; 
+      L     "DB_PW_DATA".iSKZ_PWAblauf; 
+      L     1; 
+      +I    ; 
+      T     "DB_PW_DATA".iSKZ_PWAblauf; 
+      UN    OV; 
+      SAVE  ; 
+      CLR   ; 
+_003: U     BIE; 
+      =     L      9.0; 
+      U     L      9.0; 
+      UN    "MX_ABST_Rundspeicher"; 
+      R     "DB_PW_DATA".Automatik2.bRPL_Kupplung_abkuppeln; 
+      U     L      9.0; 
+      BLD   102; 
+      R     "DB_PW_DATA".Automatik2.bMPL_Kupplung_abkuppeln; 
+NETWORK
+TITLE =____Auf nächsten PLC-Zyklus warten
+
+      SPA   SK99; 
+
+NETWORK
+TITLE =SK02: Rüstplatz Klemmung lösen
+
+SK02: UN    "DB_PW_DATA".Option.bRP_Hydr_Klemmung; 
+      SPBNB _004; 
+      L     "DB_PW_DATA".iSKZ_PWAblauf; 
+      L     1; 
+      +I    ; 
+      T     "DB_PW_DATA".iSKZ_PWAblauf; 
+      UN    OV; 
+      SAVE  ; 
+      CLR   ; 
+_004: U     BIE; 
+      SPB   SK99; 
+NETWORK
+TITLE =____Option: Hydraulische Klemmung am Rüstplatz
+
+      U     "DB_PW_DATA".Option.bRP_Hydr_Klemmung; 
+      =     "DB_PW_DATA".Automatik.bRP_Klemmung_loesen; 
+NETWORK
+TITLE =____Warten bis RPL-Klemmung fertig
+
+      UN    "DB_PW_DATA".AblaufReady.bRP_Klemmung; 
+      SPB   SEND; 
+NETWORK
+TITLE =____Weiterschaltung, "HUB Mittelstellung." bzw. FD ankuppeln
+
+      U     "DB_PW_DATA".AblaufReady.bRP_Klemmung; 
+      U     "DB_PW_DATA".Next_Step; 
+      SPBNB _005; 
+      L     "DB_PW_DATA".iSKZ_PWAblauf; 
+      L     1; 
+      +I    ; 
+      T     "DB_PW_DATA".iSKZ_PWAblauf; 
+      UN    OV; 
+      SAVE  ; 
+      CLR   ; 
+_005: U     BIE; 
+      R     "DB_PW_DATA".Automatik.bRP_Klemmung_loesen; 
+NETWORK
+TITLE =____Auf nächsten PLC-Zyklus warten
+
+      SPA   SK99; 
+
+NETWORK
+TITLE =SK03: Option "HUB Mittelstellung." bzw. FD ankuppeln
+
+SK03: UN    "DB_PW_DATA".Option.bPW_Hub_Mittelstellung; 
+      UN    "DB_PW_DATA".Option2.bMaschineTypFD_70_80; 
+      SPBNB _006; 
+      L     "DB_PW_DATA".iSKZ_PWAblauf; 
+      L     1; 
+      +I    ; 
+      T     "DB_PW_DATA".iSKZ_PWAblauf; 
+      UN    OV; 
+      SAVE  ; 
+      CLR   ; 
+_006: U     BIE; 
+      SPB   SK99; 
+NETWORK
+TITLE =____Automatikbetrieb für PW-Hub Mitte bei Aufwärtsbewegung
+
+      U     "DB_PW_DATA".Option.bPW_Hub_Mittelstellung; 
+      =     L      9.0; 
+      U     L      9.0; 
+      BLD   102; 
+      =     "DB_PW_DATA".Automatik.bPW_Hub_mitte; 
+      U     L      9.0; 
+      U     "DB_PW_DATA".Option.bSchwenkrundtisch; 
+      =     L      9.1; 
+      U     L      9.1; 
+      U     "MX_PW_HUB_VOR_UNTEN_HEBE"; 
+      S     "O_PW_HUB_2_HEBEN"; 
+      U     L      9.1; 
+      U     "MX_PW_HUB_VOR_MITTE_HEBE"; 
+      R     "O_PW_HUB_2_HEBEN"; 
+NETWORK
+TITLE =____FD-Maschine: Medienkupplung ankuppeln
+
+      U     "DB_PW_DATA".Option2.bMaschineTypFD_70_80; 
+      =     "DB_PW_DATA".Automatik.bFD_Medienkupp_heben; 
+NETWORK
+TITLE =____Warten bis HUB-Mittelstellung und Medienkupplung angekuppelt
+
+      U     "DB_PW_DATA".Option.bPW_Hub_Mittelstellung; 
+      UN    "DB_PW_DATA".AblaufReady.bPW_Hub; 
+      O     ; 
+      U     "DB_PW_DATA".Option2.bMaschineTypFD_70_80; 
+      UN    "DB_PW_DATA".AblaufReady.bFD_Medienkupplung; 
+      SPB   SEND; 
+NETWORK
+TITLE =___Weiterschaltung, Paletten-Klemmung am NC-Tisch lösen
+
+      U(    ; 
+      O     "DB_PW_DATA".AblaufReady.bPW_Hub; 
+      ON    "DB_PW_DATA".Option.bPW_Hub_Mittelstellung; 
+      )     ; 
+      U(    ; 
+      O     "DB_PW_DATA".AblaufReady.bFD_Medienkupplung; 
+      ON    "DB_PW_DATA".Option2.bMaschineTypFD_70_80; 
+      )     ; 
+      U     "DB_PW_DATA".Next_Step; 
+      SPBNB _007; 
+      L     "DB_PW_DATA".iSKZ_PWAblauf; 
+      L     1; 
+      +I    ; 
+      T     "DB_PW_DATA".iSKZ_PWAblauf; 
+      UN    OV; 
+      SAVE  ; 
+      CLR   ; 
+_007: U     BIE; 
+      =     L      9.0; 
+      U     L      9.0; 
+      BLD   102; 
+      R     "DB_PW_DATA".Automatik.bPW_Hub_mitte; 
+      U     L      9.0; 
+      BLD   102; 
+      R     "DB_PW_DATA".Automatik.bFD_Medienkupp_heben; 
+      U     L      9.0; 
+      U     "DB_PW_DATA".Option.bSchwenkrundtisch; 
+      R     "O_PW_HUB_2_HEBEN"; 
+NETWORK
+TITLE =____Auf nächsten PLC-Zyklus warten
+
+      SPA   SK99; 
+
+NETWORK
+TITLE =SK04: Paletten-Klemmung am NC-Tisch lösen
+
+SK04: U     "m_eins"; 
+      =     L      9.0; 
+      U     L      9.0; 
+      BLD   102; 
+      =     "DB_PW_DATA".Automatik.bPW_Klemmung_loesen; 
+      U     L      9.0; 
+      U     "M_KM_Anlage_angewaehlt"; 
+      UN    "DB_PW_DATA".bTrockenbearbeitung; 
+      S     "M_PW_Pumpe_Tischspuel"; 
+NETWORK
+TITLE =____Warten bis Paletten-Klemmung am NC-Tisch lösen fertig
+
+      UN    "DB_PW_DATA".AblaufReady.bPW_Klemmung; 
+      SPB   SEND; 
+NETWORK
+TITLE =____Weiterschaltung, PW-Hub heben
+
+      U     "DB_PW_DATA".AblaufReady.bPW_Klemmung; 
+      U     "DB_PW_DATA".Next_Step; 
+      SPBNB _008; 
+      L     "DB_PW_DATA".iSKZ_PWAblauf; 
+      L     1; 
+      +I    ; 
+      T     "DB_PW_DATA".iSKZ_PWAblauf; 
+      UN    OV; 
+      SAVE  ; 
+      CLR   ; 
+_008: U     BIE; 
+      =     L      9.0; 
+      U     L      9.0; 
+      BLD   102; 
+      R     "DB_PW_DATA".Automatik.bPW_Klemmung_loesen; 
+      U     L      9.0; 
+      U     "DB_PW_DATA".Option.bPW_Tisch_Spuelung; 
+      U     "DB_PW_DATA".Option.bPW_Palette_vorhanden; 
+      S     "O_PW_Ventil_Abfrage"; 
+      U     L      9.0; 
+      U     "DB_PW_DATA".Option.bPW_Konen_Spuelung; 
+      R     "O_PW_Ventil_Abfrage"; 
+NETWORK
+TITLE =____Auf nächsten PLC-Zyklus warten
+
+      SPA   SK99; 
+
+NETWORK
+TITLE =SK05: PW-Hub heben
+
+SK05: O     "DB_PW_DATA".bPW_0Grad; 
+      O     "DB_PW_DATA".bPW_180Grad; 
+      =     L      9.0; 
+      U     L      9.0; 
+      U(    ; 
+      O     "I_PW_MPL_MDK_GEKUPPELT"; 
+      ON    "DB_PW_DATA".Option2.bMaschineTypFD_70_80; 
+      )     ; 
+      =     L      9.1; 
+      U     L      9.1; 
+      BLD   102; 
+      =     "DB_PW_DATA".Automatik.bPW_Hub_heben; 
+      U     L      9.1; 
+      U     "DB_PW_DATA".Option.bSchwenkrundtisch; 
+      =     L      9.2; 
+      U     L      9.2; 
+      U     "MX_PW_HUB_VOR_UNTEN_HEBE"; 
+      S     "O_PW_HUB_2_HEBEN"; 
+      U     L      9.2; 
+      U     "MX_PW_HUB_VOR_MITTE_HEBE"; 
+      R     "O_PW_HUB_2_HEBEN"; 
+      U     L      9.2; 
+      U     "DB_PW_DATA".In.IX_PW_Hub_mitte; 
+      R     "O_PW_HUB_2_HEBEN"; 
+      U     L      9.0; 
+      U     "DB_PW_DATA".Option2.bMaschineTypFD_70_80; 
+      UN    "I_PW_MPL_MDK_GEKUPPELT"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700944_FD_MDK_Ankupp_0S; 
+NETWORK
+TITLE =____Warten, bis PW-Hub heben fertig
+
+      UN    "DB_PW_DATA".AblaufReady.bPW_Hub; 
+      SPB   SEND; 
+NETWORK
+TITLE =____Weiterschaltung, Option Schwenkrundtisch Drehposition
+
+      U     "DB_PW_DATA".AblaufReady.bPW_Hub; 
+      U     "DB_PW_DATA".Next_Step; 
+      SPBNB _009; 
+      L     "DB_PW_DATA".iSKZ_PWAblauf; 
+      L     1; 
+      +I    ; 
+      T     "DB_PW_DATA".iSKZ_PWAblauf; 
+      UN    OV; 
+      SAVE  ; 
+      CLR   ; 
+_009: U     BIE; 
+      =     L      9.0; 
+      U     L      9.0; 
+      BLD   102; 
+      R     "DB_PW_DATA".Automatik.bPW_Hub_heben; 
+      U     L      9.0; 
+      U     "DB_PW_DATA".Option.bSchwenkrundtisch; 
+      R     "O_PW_HUB_2_HEBEN"; 
+NETWORK
+TITLE =____Auf nächsten PLC-Zyklus warten
+
+      SPA   SK99; 
+
+NETWORK
+TITLE =SK06: Option Schwenkrundtisch Drehposition
+
+SK06: UN    "DB_PW_DATA".Option.bSchwenkrundtisch; 
+      SPBNB _00a; 
+      L     "DB_PW_DATA".iSKZ_PWAblauf; 
+      L     2; 
+      +I    ; 
+      T     "DB_PW_DATA".iSKZ_PWAblauf; 
+      UN    OV; 
+      SAVE  ; 
+      CLR   ; 
+_00a: U     BIE; 
+      SPB   SK99; 
+NETWORK
+TITLE =____Anstoß PW-Tisch-Drehposition
+
+      U     "DB_PW_DATA".Option.bSchwenkrundtisch; 
+      U     "DB_PW_DATA".In.IX_PW_Hub_oben; 
+      S     "DB_NC_PLC".PW_Tisch_Drehposition; 
+NETWORK
+TITLE =____Warten bis PW-Tisch-Bewegung fertig
+
+      UN    "DB_NC_PLC".PW_Tisch_Bewegung_Fertig; 
+      SPB   SEND; 
+NETWORK
+TITLE =____Weiterschaltung, RESET PW-Tisch-Drehposition
+
+      U     "DB_NC_PLC".PW_Tisch_Bewegung_Fertig; 
+      SPBNB _00b; 
+      L     "DB_PW_DATA".iSKZ_PWAblauf; 
+      L     1; 
+      +I    ; 
+      T     "DB_PW_DATA".iSKZ_PWAblauf; 
+_00b: NOP   0; 
+NETWORK
+TITLE =____Auf nächsten PLC-Zyklus warten
+
+      SPA   SK99; 
+
+NETWORK
+TITLE =SK07: RESET PW-Tisch-Drehposition
+
+SK07: U     "DB_PW_DATA".In.IX_PW_Hub_oben; 
+      R     "DB_NC_PLC".PW_Tisch_Drehposition; 
+NETWORK
+TITLE =____Warten bis PW-Tisch-Drehposition fertig
+
+      U     "DB_NC_PLC".PW_Tisch_Bewegung_Fertig; 
+      SPB   SEND; 
+NETWORK
+TITLE =____Weiterschaltung, Drehen 0-Grad / Drehen 180-Grad
+
+      UN    "DB_NC_PLC".PW_Tisch_Bewegung_Fertig; 
+      U     "DB_PW_DATA".Next_Step; 
+      SPBNB _00c; 
+      L     "DB_PW_DATA".iSKZ_PWAblauf; 
+      L     1; 
+      +I    ; 
+      T     "DB_PW_DATA".iSKZ_PWAblauf; 
+_00c: NOP   0; 
+NETWORK
+TITLE =____Auf nächsten PLC-Zyklus warten
+
+      SPA   SK99; 
+
+NETWORK
+TITLE =SK08: Drehen 0-Grad / Drehen 180-Grad
+
+SK08: U     "DB_PW_DATA".In.IX_PW_Hub_oben; 
+      UN    "DB_NC_PLC".PW_Tisch_Bewegung_Fertig; 
+      SPBNB _00d; 
+      L     "DB_PW_DATA".iSKZ_PWAblauf; 
+      L     1; 
+      +I    ; 
+      T     "DB_PW_DATA".iSKZ_PWAblauf; 
+      UN    OV; 
+      SAVE  ; 
+      CLR   ; 
+_00d: U     BIE; 
+      =     L      9.0; 
+      U     L      9.0; 
+      U     "DB_PW_DATA".bPW_0Grad; 
+      =     L      9.1; 
+      U     L      9.1; 
+      UN    "DB_PW_DATA".Option.bPW_NCAchse; 
+      S     "DB_PW_DATA".bPW_Direction_180Grad; 
+      R     "DB_PW_DATA".bPW_Direction_0Grad; 
+      U     L      9.1; 
+      U     "DB_PW_DATA".Option.bPW_NCAchse; 
+      R     "DB_NC_PLC".PW_Richtung_0Grad; 
+      U     L      9.0; 
+      U     "DB_PW_DATA".bPW_180Grad; 
+      =     L      9.1; 
+      U     L      9.1; 
+      UN    "DB_PW_DATA".Option.bPW_NCAchse; 
+      S     "DB_PW_DATA".bPW_Direction_0Grad; 
+      R     "DB_PW_DATA".bPW_Direction_180Grad; 
+      U     L      9.1; 
+      U     "DB_PW_DATA".Option.bPW_NCAchse; 
+      S     "DB_NC_PLC".PW_Richtung_0Grad; 
+      U     L      9.0; 
+      BLD   102; 
+      R     "M_PW_Pumpe_Tischspuel"; 
+      U     L      9.0; 
+      BLD   102; 
+      S     "O_PW_SPANNKONEN_ABBLAS"; 
+      U     L      9.0; 
+      BLD   102; 
+      S     "O_PW_N_VENTIL_ABFRAGE"; 
+NETWORK
+TITLE =____Auf nächsten PLC-Zyklus warten
+
+      SPA   SK99; 
+
+NETWORK
+TITLE =SK09: PW-Wechsler auf 0 oder 180 Grad drehen
+
+SK09: U     "DB_PW_DATA".In.IX_PW_Hub_oben; 
+      UN    "DB_NC_PLC".PW_Tisch_Bewegung_Fertig; 
+      =     L      9.0; 
+      U     L      9.0; 
+      UN    "DB_PW_DATA".Option.bPW_NCAchse; 
+      =     L      9.1; 
+      U     L      9.1; 
+      U     "DB_PW_DATA".bPW_Direction_180Grad; 
+      =     "DB_PW_DATA".Automatik.bPW_Dreh_180Grad; 
+      U     L      9.1; 
+      U     "DB_PW_DATA".bPW_Direction_0Grad; 
+      =     "DB_PW_DATA".Automatik.bPW_Dreh_0Grad; 
+      U     L      9.0; 
+      UN    "DB_NC_PLC".PW_Dreh_Fertig; 
+      S     "DB_NC_PLC".PW_Hub_oben; 
+      U     L      9.0; 
+      U     "DB_PW_DATA".Automatik2.bMPL_Abfr_Dru_aktiv; 
+      U     "DB_PW_DATA".Option.bPW_Konen_Spuelung; 
+      FP    "mx_FP_MPL_Abfra_Ventil"; 
+      S     "O_PW_Ventil_Abfrage"; 
+      R     "O_PW_N_VENTIL_ABFRAGE"; 
+      R     "O_PW_SPANNKONEN_ABBLAS"; 
+      U     L      9.0; 
+      U     "DB_PW_DATA".Automatik2.bMPL_belegt_ueberpr; 
+      UN    "DB_PW_DATA".In.IX_PW_PAL_Vorhanden; 
+      =     L      9.1; 
+      U(    ; 
+      U     L      9.1; 
+      FP    "mx_FP_deakti_Ventil_Abfr"; 
+      )     ; 
+      U     "DB_PW_DATA".Option.bPW_Konen_Spuelung; 
+      R     "O_PW_Ventil_Abfrage"; 
+      U     L      9.1; 
+      UN    "DB_PW_DATA".bTrockenbearbeitung; 
+      U     "M_KM_Anlage_angewaehlt"; 
+      S     "M_PW_Pumpe_Tischspuel"; 
+NETWORK
+TITLE =____M-Ausgang: PW Umschaltung Hydraulik schnell
+
+      UN    "DB_PW_DATA".Option.bPW_NCAchse; 
+      U(    ; 
+      O     "DB_PW_DATA".Automatik.bPW_Dreh_180Grad; 
+      O     "DB_PW_DATA".Automatik.bPW_Dreh_0Grad; 
+      )     ; 
+      U     "DB_PW_DATA".bPaletteSchwerAktiv; 
+      R     "DB_PW_DATA".Out.OX_PW_Hydraulik_schnell; 
+NETWORK
+TITLE =____Warten auf Drehbewegung fertig
+
+      UN    "DB_PW_DATA".Option.bPW_NCAchse; 
+      U(    ; 
+      O     "DB_PW_DATA".Automatik.bPW_Dreh_180Grad; 
+      O     "DB_PW_DATA".Automatik.bPW_Dreh_0Grad; 
+      )     ; 
+      UN    "DB_PW_DATA".AblaufReady.bPW_Dreh; 
+      O     ; 
+      U     "DB_PW_DATA".Option.bPW_NCAchse; 
+      UN    "DB_NC_PLC".PW_Dreh_Fertig; 
+      SPB   SEND; 
+NETWORK
+TITLE =____PW: PW-Tisch-Wechselposition anfahren
+
+      U(    ; 
+      UN    "DB_PW_DATA".Option.bPW_NCAchse; 
+      U(    ; 
+      O     "DB_PW_DATA".Automatik.bPW_Dreh_180Grad; 
+      O     "DB_PW_DATA".Automatik.bPW_Dreh_0Grad; 
+      )     ; 
+      U     "DB_PW_DATA".AblaufReady.bPW_Dreh; 
+      O     ; 
+      U     "DB_PW_DATA".Option.bPW_NCAchse; 
+      U     "DB_NC_PLC".PW_Dreh_Fertig; 
+      )     ; 
+      U     "DB_PW_DATA".Next_Step; 
+      =     L      9.0; 
+      U     L      9.0; 
+      BLD   102; 
+      R     "DB_PW_DATA".Automatik.bPW_Dreh_180Grad; 
+      U     L      9.0; 
+      BLD   102; 
+      R     "DB_PW_DATA".Automatik.bPW_Dreh_0Grad; 
+      U     L      9.0; 
+      SPBNB _00e; 
+      L     "DB_PW_DATA".iSKZ_PWAblauf; 
+      L     1; 
+      +I    ; 
+      T     "DB_PW_DATA".iSKZ_PWAblauf; 
+_00e: NOP   0; 
+NETWORK
+TITLE =:____Auf nächsten PLC-Zyklus warten
+
+      SPA   SK99; 
+
+NETWORK
+TITLE =SK10: PW-Tisch-Wechselposition anfahren
+
+SK10: UN    "DB_PW_DATA".Option.bSchwenkrundtisch; 
+      SPBNB _00f; 
+      L     "DB_PW_DATA".iSKZ_PWAblauf; 
+      L     2; 
+      +I    ; 
+      T     "DB_PW_DATA".iSKZ_PWAblauf; 
+      UN    OV; 
+      SAVE  ; 
+      CLR   ; 
+_00f: U     BIE; 
+      SPB   SK99; 
+NETWORK
+TITLE =____PLC>>>NC: Fahre auf PW-Tisch-Wechselposition
+
+      U     "DB_PW_DATA".Option.bSchwenkrundtisch; 
+      U     "DB_PW_DATA".In.IX_PW_Hub_oben; 
+      S     "DB_NC_PLC".PW_Tisch_Wechselposition; 
+NETWORK
+TITLE =____Warten auf fahre auf PW-Tisch-Wechselposition fertig
+
+      UN    "DB_NC_PLC".PW_Tisch_Bewegung_Fertig; 
+      SPB   SEND; 
+NETWORK
+TITLE =____Weiterschaltung: RESET PW-Tisch-Wechselposition anfahren
+
+      U     "DB_NC_PLC".PW_Tisch_Bewegung_Fertig; 
+      SPBNB _010; 
+      L     "DB_PW_DATA".iSKZ_PWAblauf; 
+      L     1; 
+      +I    ; 
+      T     "DB_PW_DATA".iSKZ_PWAblauf; 
+_010: NOP   0; 
+NETWORK
+TITLE =____Auf nächsten PLC-Zyklus warten
+
+      SPA   SK99; 
+
+NETWORK
+TITLE =SK11: RESET PW-Tisch-Wechselposition anfahren
+
+SK11: U     "DB_PW_DATA".In.IX_PW_Hub_oben; 
+      R     "DB_NC_PLC".PW_Tisch_Wechselposition; 
+NETWORK
+TITLE =____Warten auf RESET Fahre auf PW-Tisch-Wechselpos
+
+      U     "DB_NC_PLC".PW_Tisch_Bewegung_Fertig; 
+      SPB   SEND; 
+NETWORK
+TITLE =____Weiterschaltung: PW-Hub senken
+
+      UN    "DB_NC_PLC".PW_Tisch_Bewegung_Fertig; 
+      U     "DB_PW_DATA".Next_Step; 
+      SPBNB _011; 
+      L     "DB_PW_DATA".iSKZ_PWAblauf; 
+      L     1; 
+      +I    ; 
+      T     "DB_PW_DATA".iSKZ_PWAblauf; 
+_011: NOP   0; 
+NETWORK
+TITLE =____Auf nächsten PLC-Zyklus warten
+
+      SPA   SK99; 
+
+NETWORK
+TITLE =SK12: PW-Hub senken
+
+SK12: O     "DB_PW_DATA".bPW_0Grad; 
+      O     "DB_PW_DATA".bPW_180Grad; 
+      =     L      9.0; 
+      U     L      9.0; 
+      BLD   102; 
+      =     "DB_PW_DATA".Automatik.bPW_Hub_senken; 
+      U     L      9.0; 
+      U     "DB_PW_DATA".Option.bSchwenkrundtisch; 
+      =     L      9.1; 
+      U     L      9.1; 
+      U     "MX_PW_HUB_VOR_MITTE_SENK"; 
+      S     "O_PW_HUB_2_SENKEN"; 
+      U     L      9.1; 
+      U     "MX_PW_HUB_VOR_UNTEN_SENK"; 
+      R     "O_PW_HUB_2_SENKEN"; 
+      U     L      9.0; 
+      BLD   102; 
+      R     "DB_NC_PLC".PW_Hub_oben; 
+      U     L      9.0; 
+      U(    ; 
+      U     "DB_PW_DATA".Automatik2.bSpue_deakt_ohne_Pos4; 
+      U     "DB_PW_DATA".Option.bPW_Konen_Spuelung; 
+      O     "I_PW_HUB_POSITION_4"; 
+      )     ; 
+      R     "M_PW_Pumpe_Tischspuel"; 
+      S     "O_PW_SPANNKONEN_ABBLAS"; 
+      S     "O_PW_N_VENTIL_ABFRAGE"; 
+      U     L      9.0; 
+      U     "DB_PW_DATA".Option.bPW_Hub_Mitte_langsam; 
+      U     "DB_PW_DATA".In.IX_PW_Hub_mitte; 
+      R     "DB_PW_DATA".Out.OX_PW_Hydraulik_schnell; 
+      U     L      9.0; 
+      U     "DB_PW_DATA".In.IX_PW_Hub_mitte; 
+      U     "DB_PW_DATA".Option.bPW_Konen_Spuelung; 
+      R     "O_PW_N_VENTIL_ABFRAGE"; 
+      U     L      9.0; 
+      U     "DB_PW_DATA".In.IX_PW_Hub_mitte; 
+      R     "M_PW_Pumpe_Tischspuel"; 
+      U     L      9.0; 
+      U     "DB_PLC_MD_DB20".UDHex._23_Bit5_PW_KL_AB_MITTE; 
+      U     "DB_PW_DATA".In.IX_PW_Hub_mitte; 
+      =     "DB_PW_DATA".Automatik.bPW_Klemmung_spannen; 
+      R     "O_PW_SPANNKONEN_ABBLAS"; 
+      S     "O_PW_Ventil_Abfrage"; 
+NETWORK
+TITLE =____Warten auf Absenken fertig
+
+      UN    "DB_PW_DATA".AblaufReady.bPW_Hub; 
+      SPB   SEND; 
+NETWORK
+TITLE =____Weiterschaltung, Anwesendheitkontrolle Palette
+
+      U     "DB_PW_DATA".AblaufReady.bPW_Hub; 
+      U     "DB_PW_DATA".Next_Step; 
+      SPBNB _012; 
+      L     "DB_PW_DATA".iSKZ_PWAblauf; 
+      L     1; 
+      +I    ; 
+      T     "DB_PW_DATA".iSKZ_PWAblauf; 
+      UN    OV; 
+      SAVE  ; 
+      CLR   ; 
+_012: U     BIE; 
+      =     L      9.0; 
+      U     L      9.0; 
+      BLD   102; 
+      R     "DB_PW_DATA".Automatik.bPW_Hub_senken; 
+      U     L      9.0; 
+      U     "DB_PW_DATA".Option.bSchwenkrundtisch; 
+      R     "O_PW_HUB_2_SENKEN"; 
+      U     L      9.0; 
+      BLD   102; 
+      R     "DB_PW_DATA".Automatik2.bMPL_Abfr_Dru_aktiv; 
+      U     L      9.0; 
+      BLD   102; 
+      R     "DB_PW_DATA".Automatik2.bMPL_belegt_ueberpr; 
+      U     L      9.0; 
+      BLD   102; 
+      R     "DB_PW_DATA".Automatik2.bSpue_deakt_ohne_Pos4; 
+      U     L      9.0; 
+      BLD   102; 
+      R     "O_PW_N_VENTIL_ABFRAGE"; 
+      U     L      9.0; 
+      BLD   102; 
+      R     "O_PW_Ventil_Tischspuel"; 
+      U     L      9.0; 
+      BLD   102; 
+      R     "M_PW_Pumpe_Tischspuel"; 
+NETWORK
+TITLE =____Auf nächsten PLC-Zyklus warten
+
+      SPA   SK99; 
+
+NETWORK
+TITLE =SK13: Anwesendheitkontrolle Palette
+//wenn keine Option, Weiterschaltung auf SK14
+SK13: UN    "DB_PW_DATA".Option.bPW_Palette_vorhanden; 
+      SPBNB _013; 
+      L     "DB_PW_DATA".iSKZ_PWAblauf; 
+      L     1; 
+      +I    ; 
+      T     "DB_PW_DATA".iSKZ_PWAblauf; 
+      UN    OV; 
+      SAVE  ; 
+      CLR   ; 
+_013: U     BIE; 
+      SPB   SK99; 
+NETWORK
+TITLE =____Weiterschaltung, PW-Klemmung am NC-Tisch spannen
+
+      U     "DB_PW_DATA".Option.bPW_Palette_vorhanden; 
+      U(    ; 
+      O     "DB_PW_DATA".In.IX_PW_PAL_Vorhanden; 
+      O     "DB_PW_DATA".Option.bPW_Konen_Spuelung; 
+      O(    ; 
+      L     "DB_PW_DATA".iMFunktion; 
+      L     63; 
+      ==I   ; 
+      )     ; 
+      O     "M_PW_Pal_Vorhanden"; 
+      )     ; 
+      SPBNB _014; 
+      L     "DB_PW_DATA".iSKZ_PWAblauf; 
+      L     1; 
+      +I    ; 
+      T     "DB_PW_DATA".iSKZ_PWAblauf; 
+_014: NOP   0; 
+NETWORK
+TITLE =____Auf nächsten PLC-Zyklus warten
+
+      SPA   SK99; 
+
+NETWORK
+TITLE =SK14: PW-Klemmung am NC-Tisch spannen
+
+SK14: U     "DB_PW_DATA".In.IX_PW_Hub_unten; 
+      =     "DB_PW_DATA".Automatik.bPW_Klemmung_spannen; 
+      R     "O_PW_SPANNKONEN_ABBLAS"; 
+      S     "O_PW_Ventil_Abfrage"; 
+NETWORK
+TITLE =____Warten bis PW-Klemmung fertig
+
+      UN    "DB_PW_DATA".AblaufReady.bPW_Klemmung; 
+      SPB   SEND; 
+NETWORK
+TITLE =____Weiterschaltung, Palette vorhanden
+
+      U     "DB_PW_DATA".AblaufReady.bPW_Klemmung; 
+      U     "DB_PW_DATA".Next_Step; 
+      SPBNB _015; 
+      L     "DB_PW_DATA".iSKZ_PWAblauf; 
+      L     1; 
+      +I    ; 
+      T     "DB_PW_DATA".iSKZ_PWAblauf; 
+      UN    OV; 
+      SAVE  ; 
+      CLR   ; 
+_015: U     BIE; 
+      R     "DB_PW_DATA".Automatik.bPW_Klemmung_spannen; 
+      R     "O_PW_Ventil_Tischspuel"; 
+NETWORK
+TITLE =____Auf nächsten PLC-Zyklus warten
+
+      SPA   SK99; 
+
+NETWORK
+TITLE =SK15: Anwesendheitkontrolle Palette
+
+SK15: UN    "DB_PW_DATA".Option.bPW_Palette_vorhanden; 
+      SPBNB _016; 
+      L     "DB_PW_DATA".iSKZ_PWAblauf; 
+      L     1; 
+      +I    ; 
+      T     "DB_PW_DATA".iSKZ_PWAblauf; 
+      UN    OV; 
+      SAVE  ; 
+      CLR   ; 
+_016: U     BIE; 
+      SPB   SK99; 
+NETWORK
+TITLE =____Weiterschaltung, Fräs-Drehtisch Medienkupplung abkuppeln
+
+      U     "DB_PW_DATA".Option.bPW_Palette_vorhanden; 
+      U(    ; 
+      O     "DB_PW_DATA".In.IX_PW_PAL_Vorhanden; 
+      O     ; 
+      U     "DB_PW_DATA".Option.bPW_Tisch_Spuelung; 
+      U(    ; 
+      U(    ; 
+      L     "MW_PW_Anwahl_Option"; 
+      L     2; 
+      ==I   ; 
+      )     ; 
+      U     "DB_PW_DATA".In.IX_PW_PAL_Vorhanden; 
+      O(    ; 
+      L     "MW_PW_Anwahl_Option"; 
+      L     2; 
+      <>I   ; 
+      )     ; 
+      )     ; 
+      O(    ; 
+      L     "DB_PW_DATA".iMFunktion; 
+      L     63; 
+      ==I   ; 
+      )     ; 
+      O     "M_PW_Pal_Vorhanden"; 
+      )     ; 
+      SPBNB _017; 
+      L     "DB_PW_DATA".iSKZ_PWAblauf; 
+      L     1; 
+      +I    ; 
+      T     "DB_PW_DATA".iSKZ_PWAblauf; 
+_017: NOP   0; 
+NETWORK
+TITLE =____Auf nächsten PLC-Zyklus warten
+
+      SPA   SK99; 
+
+NETWORK
+TITLE =SK16: Fräs-Drehtisch Medienkupplung abkuppeln
+
+SK16: UN    "DB_PW_DATA".Option2.bMaschineTypFD_70_80; 
+      SPBNB _018; 
+      L     "DB_PW_DATA".iSKZ_PWAblauf; 
+      L     1; 
+      +I    ; 
+      T     "DB_PW_DATA".iSKZ_PWAblauf; 
+      UN    OV; 
+      SAVE  ; 
+      CLR   ; 
+_018: U     BIE; 
+      SPB   SK99; 
+NETWORK
+TITLE =____Anstoß Medienkupplung senken
+
+      U     "DB_PW_DATA".Option2.bMaschineTypFD_70_80; 
+      =     "DB_PW_DATA".Automatik.bFD_Medienkupp_senken; 
+NETWORK
+TITLE =____Warten auf Medienkupplung senken fertig
+
+      UN    "DB_PW_DATA".AblaufReady.bFD_Medienkupplung; 
+      SPB   SEND; 
+NETWORK
+TITLE =____Weiterschaltung, RRüstplatz Paletten-Klemmung einschalten
+
+      U     "DB_PW_DATA".AblaufReady.bFD_Medienkupplung; 
+      U     "DB_PW_DATA".Next_Step; 
+      SPBNB _019; 
+      L     "DB_PW_DATA".iSKZ_PWAblauf; 
+      L     1; 
+      +I    ; 
+      T     "DB_PW_DATA".iSKZ_PWAblauf; 
+      UN    OV; 
+      SAVE  ; 
+      CLR   ; 
+_019: U     BIE; 
+      R     "DB_PW_DATA".Automatik.bFD_Medienkupp_senken; 
+NETWORK
+TITLE =____Auf nächsten PLC-Zyklus warten
+
+      SPA   SK99; 
+
+NETWORK
+TITLE =SK17: Rüstplatz Paletten-Klemmung einschalten
+
+SK17: U(    ; 
+      ON    "DB_PLC_MD_DB20".UDHex._17_BIT7_RP_HYD_KLEMMEN; 
+      O     "MX_ABST_Rundspeicher"; 
+      )     ; 
+      SPBNB _01a; 
+      L     "DB_PW_DATA".iSKZ_PWAblauf; 
+      L     1; 
+      +I    ; 
+      T     "DB_PW_DATA".iSKZ_PWAblauf; 
+      UN    OV; 
+      SAVE  ; 
+      CLR   ; 
+_01a: U     BIE; 
+      SPB   SK99; 
+NETWORK
+TITLE =____Paletten-Klemmung am Rüstplatz spannen
+
+      U     "DB_PLC_MD_DB20".UDHex._17_BIT7_RP_HYD_KLEMMEN; 
+      U     "DB_PW_DATA".In.IX_PW_Hub_unten; 
+      UN    "MX_ABST_Rundspeicher"; 
+      =     "DB_PW_DATA".Automatik.bRP_Klemmung_spannen; 
+NETWORK
+TITLE =____Warten auf Paletten-Klemmung am Rüstplatz spannen fertig
+
+      UN    "DB_PW_DATA".AblaufReady.bRP_Klemmung; 
+      UN    "MX_ABST_Rundspeicher"; 
+      SPB   SEND; 
+NETWORK
+TITLE =____Weiterschaltung, Kupplung RPL+MPL ankuppeln
+
+      U     "DB_PW_DATA".AblaufReady.bRP_Klemmung; 
+      U     "DB_PW_DATA".Next_Step; 
+      SPBNB _01b; 
+      L     "DB_PW_DATA".iSKZ_PWAblauf; 
+      L     1; 
+      +I    ; 
+      T     "DB_PW_DATA".iSKZ_PWAblauf; 
+      UN    OV; 
+      SAVE  ; 
+      CLR   ; 
+_01b: U     BIE; 
+      R     "DB_PW_DATA".Automatik.bRP_Klemmung_spannen; 
+NETWORK
+TITLE =____Auf nächsten PLC-Zyklus warten
+
+      SPA   SK99; 
+
+NETWORK
+TITLE =SK18: Kupplung RPL+MPL ankuppeln
+
+SK18: U(    ; 
+      ON    "DB_PLC_MD_DB20".UDHex._27_Bit3_RPLmitKupplung; 
+      O     "MX_ABST_Rundspeicher"; 
+      )     ; 
+      UN    "DB_PLC_MD_DB20".UDHex._27_Bit4_MPLmitKupplung; 
+      SPBNB _01c; 
+      L     "DB_PW_DATA".iSKZ_PWAblauf; 
+      L     1; 
+      +I    ; 
+      T     "DB_PW_DATA".iSKZ_PWAblauf; 
+      UN    OV; 
+      SAVE  ; 
+      CLR   ; 
+_01c: U     BIE; 
+      SPB   SK99; 
+NETWORK
+TITLE =____Anstoß-Automatik-Ablauf: Rüstplatz ankuppeln
+
+      U     "DB_PLC_MD_DB20".UDHex._27_Bit3_RPLmitKupplung; 
+      UN    "MX_ABST_Rundspeicher"; 
+      =     "DB_PW_DATA".Automatik2.bRPL_Kupplung_ankuppeln; 
+NETWORK
+TITLE =____Anstoß-Automatik-Ablauf: Maschinenplatz ankuppeln
+
+      U     "DB_PLC_MD_DB20".UDHex._27_Bit4_MPLmitKupplung; 
+      =     "DB_PW_DATA".Automatik2.bMPL_Kupplung_ankuppeln; 
+NETWORK
+TITLE =____Warten bis Ankuppeln fertig
+
+      UN    "DB_PW_DATA".BewegReady.bRPL_SP_Kupplung; 
+      U     "DB_PLC_MD_DB20".UDHex._27_Bit3_RPLmitKupplung; 
+      UN    "MX_ABST_Rundspeicher"; 
+      O     ; 
+      UN    "DB_PW_DATA".BewegReady.bMPL_SP_Kupplung; 
+      U     "DB_PLC_MD_DB20".UDHex._27_Bit4_MPLmitKupplung; 
+      SPB   SEND; 
+NETWORK
+TITLE =____Weiterschaltung, PW-Ablauf beendet
+
+      U(    ; 
+      O     "DB_PW_DATA".BewegReady.bRPL_SP_Kupplung; 
+      ON    "DB_PLC_MD_DB20".UDHex._27_Bit3_RPLmitKupplung; 
+      O     "MX_ABST_Rundspeicher"; 
+      )     ; 
+      U(    ; 
+      O     "DB_PW_DATA".BewegReady.bMPL_SP_Kupplung; 
+      ON    "DB_PLC_MD_DB20".UDHex._27_Bit4_MPLmitKupplung; 
+      )     ; 
+      U     "DB_PW_DATA".Next_Step; 
+      SPBNB _01d; 
+      L     "DB_PW_DATA".iSKZ_PWAblauf; 
+      L     1; 
+      +I    ; 
+      T     "DB_PW_DATA".iSKZ_PWAblauf; 
+      UN    OV; 
+      SAVE  ; 
+      CLR   ; 
+_01d: U     BIE; 
+      =     L      9.0; 
+      U     L      9.0; 
+      UN    "MX_ABST_Rundspeicher"; 
+      R     "DB_PW_DATA".Automatik2.bRPL_Kupplung_ankuppeln; 
+      U     L      9.0; 
+      BLD   102; 
+      R     "DB_PW_DATA".Automatik2.bMPL_Kupplung_ankuppeln; 
+NETWORK
+TITLE =____Auf nächsten PLC-Zyklus warten
+
+      SPA   SK99; 
+
+NETWORK
+TITLE =SK19: PW-Ablauf beenden
+
+SK19: L     "DB_PW_DATA".iSKZ_PWAblauf; 
+      L     1; 
+      +I    ; 
+      T     "DB_PW_DATA".iSKZ_PWAblauf; 
+      UN    OV; 
+      SAVE  ; 
+      CLR   ; 
+      U     BIE; 
+      =     L      9.0; 
+      U     L      9.0; 
+      BLD   102; 
+      S     "DB_NC_PLC".PW_Beendet; 
+      U     L      9.0; 
+      U     "DB_HR".ABST.SP_SA_MTU; 
+      R     "O_PW_SPANNDRUCK_HYD_AUS"; 
+      U     L      9.0; 
+      U     "DB_DM_M_FUNKTION".MX_M[250]; 
+      R     "DB_DM_M_FUNKTION".MX_M[250]; 
+      U     L      9.0; 
+      U     "DB_HR".ABST.SP_FD; 
+      R     "O_PW_SPANNDRUCK_HYD_AUS"; 
+      U     L      9.0; 
+      BLD   102; 
+      R     "O_PW_Ventil_Abfrage"; 
+NETWORK
+TITLE =____Auf nächsten PLC-Zyklus warten
+
+      SPA   SK99; 
+
+NETWORK
+TITLE =SK20: PW-Ablauf beendet
+
+SK20: UN    "M_PW_Aktiv"; 
+      SPBNB _01e; 
+      L     0; 
+      T     "DB_PW_DATA".iSKZ_PWAblauf; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+_01e: U     BIE; 
+      R     "DB_NC_PLC".PW_Beendet; 
+      R     "DB_PW_DATA".bDachspuelungaus; 
+      R     "DB_PW_DATA".bTrockenbearbeitung; 
+NETWORK
+TITLE =____Auf nächsten PLC-Zyklus warten
+
+      SPA   SEND; 
+
+NETWORK
+TITLE =SK99-Label ==================================
+
+SK99: U     "DB_PW_DATA".bContinueSKZ; 
+      SPB   SSRT; 
+NETWORK
+TITLE =Zurücksetzen Timer Spuelung
+
+SEND: UN    "M_PW_Aktiv"; 
+      R     "TE_PW_Spuelung"; 
+NETWORK
+TITLE =Spülung verhindern, wenn M31
+
+      O     "DB_DM_M_FUNKTION".MX_M[31]; 
+      O     "DB_DM_M_FUNKTION".MX_M[291]; 
+      S     "DB_PW_DATA".bTrockenbearbeitung; 
+      R     "DB_DM_M_FUNKTION".MX_M[31]; 
+      R     "DB_DM_M_FUNKTION".MX_M[291]; 
+NETWORK
+TITLE =Dachspülung verhindern, bei M31(1)
+//M31(1) Dachspülung aus, aber Kaluenspülung ein lassen
+      U     "DB_DM_M_FUNKTION".MX_M[290]; 
+      S     "DB_PW_DATA".bDachspuelungaus; 
+      R     "DB_DM_M_FUNKTION".MX_M[290]; 
+NETWORK
+TITLE =RESET: Trockenbearbeitung / Dachspülung aus
+
+      U     "M_Reset_Taste"; 
+      R     "DB_PW_DATA".bTrockenbearbeitung; 
+      R     "DB_PW_DATA".bDachspuelungaus; 
+NETWORK
+TITLE =Freigabe Spülung
+
+      U     "M_PW_Aktiv"; 
+      U     "DB_NC_PLC".PW_Start_Spuelung; 
+      U(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._132_SPUELZEIT_VORPOS; 
+      L     0; 
+      >I    ; 
+      )     ; 
+      =     #tx_Spuelung; 
+NETWORK
+TITLE =Spülzeit Vorposition MD INTEGER_132 aufbereiten für S5Timer
+
+      U(    ; 
+      U(    ; 
+      U     #tx_Spuelung; 
+      SPBNB _01f; 
+      L     "DB_PLC_MD_DB20".UDInt._132_SPUELZEIT_VORPOS; 
+      ITB   ; 
+      T     #tw_BCD_Zeit; 
+      UN    OV; 
+      SAVE  ; 
+      CLR   ; 
+_01f: U     BIE; 
+      )     ; 
+      SPBNB _020; 
+      L     W#16#2000; 
+      L     #tw_BCD_Zeit; 
+      OW    ; 
+      T     #tw_Spuelzeit; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+_020: U     BIE; 
+      )     ; 
+      SPBNB _021; 
+      L     #tw_Spuelzeit; 
+      T     #ts5t_Spuelzeit; 
+_021: NOP   0; 
+NETWORK
+TITLE =Start der Spülung und des Timers für Spülung
+
+      U     #tx_Spuelung; 
+      S     "DB_NC_PLC".PW_Spuelung; 
+      L     #ts5t_Spuelzeit; 
+      SV    "TE_PW_Spuelung"; 
+NETWORK
+TITLE =Stop der Spülung bei abgelaufener Zeit
+
+      U     "M_PW_Aktiv"; 
+      U(    ; 
+      ON    "TE_PW_Spuelung"; 
+      O(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._132_SPUELZEIT_VORPOS; 
+      L     0; 
+      ==I   ; 
+      )     ; 
+      )     ; 
+      R     "DB_NC_PLC".PW_Spuelung; 
+NETWORK
+TITLE =Spülung starten
+
+      U     "M_PW_Aktiv"; 
+      U(    ; 
+      U     "DB_NC_PLC".PW_Spuelung; 
+      UN    "DB_PLC_MD_DB20".UDHex._23_Bit0_PW_Dachspuelung; 
+      O     ; 
+      U     "DB_NC_PLC".PW_Start_Spuelung_Sofort; 
+      U     "DB_PLC_MD_DB20".UDHex._23_Bit0_PW_Dachspuelung; 
+      )     ; 
+      UN    "DB_PW_DATA".bTrockenbearbeitung; 
+      UN    "DB_PW_DATA".bDachspuelungaus; 
+      =     "Mx_PW_Werkstückspülung"; 
+NETWORK
+TITLE =PLC>>>NC: Trockenbearbeitung
+
+      O     "DB_PW_DATA".bTrockenbearbeitung; 
+      O     "DB_PW_DATA".bDachspuelungaus; 
+      =     "DB_NC_PLC".PW_Trockenbearbeitung; 
+END_FUNCTION
+

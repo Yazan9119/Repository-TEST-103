@@ -1,0 +1,30 @@
+DATA_BLOCK "DI_SMARTKEY_TEST"
+TITLE =
+{ S7_language := '7(1) Deutsch (Deutschland)  23.01.2008  11:09:22' }
+VERSION : 0.0
+
+"FB_SMARTKEY_TEST"
+BEGIN
+   EX_Enable := FALSE; 
+   EX_Init := FALSE; 
+   EX_MaschineEin := FALSE; 
+   EX_Start := FALSE; 
+   EX_TagRemoved := FALSE; 
+   EX_GEN_OM_ID_DATA_0 := FALSE; 
+   EX_GEN_OM_ID_DATA_1 := FALSE; 
+   EDW_SEND_DATA := DW#16#0; 
+   ES5T_Clock := S5T#0MS; 
+   ET_Clock := T 0; 
+   EAX_GEN_OM_ID_SYNC := FALSE; 
+   EAX_GEN_OM_ID_CLOCK := FALSE; 
+   EAX_GEN_OM_ID_DATA_0 := FALSE; 
+   EAX_GEN_OM_ID_DATA_1 := FALSE; 
+   SW_Schrittkette := W#16#0; 
+   SW_Send_Data_0 := W#16#0; 
+   SW_Send_Data_1 := W#16#0; 
+   SW_Bit_Mask := W#16#0; 
+   SB_Data_Counter := B#16#0; 
+   SX_FP_Start := FALSE; 
+   SX_Start := FALSE; 
+END_DATA_BLOCK
+

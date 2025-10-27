@@ -1,0 +1,2296 @@
+TYPE "UDT_PLC_MD_DB20"
+//$Revision: 1.280 $
+//$Date: 2008/11/06 11:11:19CET $
+//$Author: kee $
+
+
+  STRUCT 	
+   UDInt : STRUCT 	//PLC-MaschinenDatum (max=200): Beginn MD145010 USER_DATA_INT [0] => DB20.DBB0 
+    _000_STANDORT_MASCHTYP : INT ;	//Hersteller-Standort und Maschinentyp  
+    _001_RND_ACHSE_4 : INT ;	//Anwahl/Zurord. Rundachsen: 1.Dek 4=4.Achse 5=5.Achse, 2.Dek. Typ, 3.Dek Funk.
+    _002_RND_ACHSE_5 : INT ;	//Anwahl/Zurord. Rundachsen: 1.Dek 4=4.Achse 5=5.Achse, 2.Dek. Typ, 3.Dek Funk.
+    _003_RND_ACHSE_6 : INT ;	//Anwahl/Zurord. Rundachsen: 1.Dek 4=4.Achse 5=5.Achse, 2.Dek. Typ, 3.Dek Funk.
+    _004_ANWAHL_SPINDEL : INT ;	//Anwahl Spindel: 0=aus, 1=Digital, 2=Sonder
+    _005_ANWAHL_SONDER_SPDL : INT ;	//Anwahl Sonderfunktionen Spindel: 0=aus, 1=Abfrage Eingang'Freig.Sp', 2=mit Klem
+    _006_ANWAHL_GETRIEBE : INT ;	//Anwahl Getriebe: 0=aus, 1=Zweistufiges Getriebe, 2=Stern Dreieck Umschaltung
+    _007_ANWAHL_FRAESKOPF : INT ;	//Anwahl Fraeskopf: 0=aus,1=Uni Schw.,2=Uni Schw.mit B-Achse,3=man.,4=mit A-Achs 
+    _008_ANWAHL_WZW_TYP : INT ;	//Anw WZW-Typ:0=aus,1=60V,2=125V,3=60H,4=125H,5=200V,6=Regal,7=Pickup Hub,8=PU
+    _009_ANWAHL_WZSPANNER : INT ;	//Anwahl WZ-Spanner: 0=SK40, 1=HSK mit 3 Endschalter, 2=HSK mit 4 Endschalter
+    _010_ANWAHL_WERZEUGBRUCH : INT ;	//Anwahl Werkzeugbruch: 0=aus, 1=ein
+    _011_ANWAHL_MASCH_KUEHL : INT ;	//Anwahl Maschinenkuehlung: 0=aus, 1=ein
+    _012_ANWAHL_WKZ_WASCHEN : INT ;	//Anwahl Werzeug Waschen: 0=aus, 1=ein
+    _013_ANWAHL_TDS : INT ;	//Anwahl Tool Dialog System: 0=aus, 1=ein
+    _014_ANWAHL_MAGAZIN : INT ;	//Anwahl Magazin: 0=aus,1=getakted,2=geregelt,3=Omron,4=Rad,5=Zusatz,6=Mast-Slave
+    _015_ANWAHL_PALWECHLSER : INT ;	//Anwahl Palettenwechsler: 0=aus, 1=DMC60P, 2=DMC125P, 3=DMP60
+    _016_ANWAHL_PALSPEICHER : INT ;	//Anwahl Palettenspeicher: 0=aus, 1=RS4
+    _017_ANWAHL_ZENTR_SCHM : INT ;	//Anwahl Zentralschmierung: 0=aus, 1=Fettschmierung
+    _018_ANWAHL_SPDL_SCHMIER : INT ;	//Anwahl Spindel Schmierung: 0=aus, 1=Öl/Luft Schmierung, 2=GMN-Schmierung
+    _019_ANWAHL_KMTL_ANLAGE : INT ;	//Anwahl Kuehlmittelanlage: 0=aus, 1-12=Kuehlmittelanlagen siehe Parameterliste
+    _020_ANWAHL_KMTL_LUFT : INT ;	//Anwahl Kuehlluft: 0=aus, 1=ein
+    _021_ANWAHL_IKUEZ : INT ;	//Anwahl Innere Kuehlmittelanlage: 0=aus, 1=ein
+    _022_ANWAHL_SPAENEFOERD : INT ;	//Anwahl Spaenefoerderer: 0=aus, 1=ein
+    _023_ANWAHL_MESSTASTER : INT ;	//Anwahl Messtaster: 0=aus, 1=Kabelmesstaster, 2=Infrarot HH, 3=MP10 Opt.Ein Aus 
+    _024_ANWAHL_SONDER_BA : INT ;	//Anwahl Sonderbetriebsarten: 0=aus, 1=3. BA, 2=4. BA
+    _025_ANWAHL_TEMP_KOMP : INT ;	//Anwahl Temperaturkompensation: 0=aus, 1=Einfühlerkomp., 2=Mehrfühlerkomp.
+    _026_ANWAHL_SPANNVORR : INT ;	//Anwahl Spannvorrichtung: 0=aus, 1=ein
+    _027_ANWAHL_HANDLINGSYST : INT ;	//Anwahl Handlingsystem: 0=aus, 1=SYSTEM_3R
+    _028_WARTEZEIT_T_NEXT : INT ;	//Wartezeit (nach Handverfahren) für Freigabe MAG-Positionierung durch T-Befehl
+    _029_BEDIENOPTIION_SIE : INT ;	//Bedienoptionen Siemens: 0=aus, 1=PHG, 2=BHG, 3=MBHG
+    _030_ANWAHL_WERKSTUECKZ : INT ;	//Anwahl Werkstueckzaehler
+    _031_ANWAHL_HYDRAULIK : INT ;	//Anwahl Hydraulik: 0=aus, 1=ein
+    _032_ANWAHL_WZVERMESSUNG : INT ;	//Anwahl Werkzeugvermessung : 0=aus, 1/2 = BLUM-Laser, 3 = Dose, 4 BLUM-Diagonal
+    _033_ANWAHL_SPUELPISTOLE : INT ;	//Anwahl Spuelpistole : 0 = aus, 1 = ein
+    _034_ANWAHL_DREHDURCH_SM : INT ;	//Anwahl Schmierung Dreh-Durführung: 0=aus, 1=ein mit Pumpe, 2=ein ohne Pumpe
+    _035_ANWAHL_MIN_SCHMIER : INT ;	//Anwahl Minimalmengen-Schmierung: 0 = aus, 1 = ein
+    _036_ANWAHL_SCHMPW_STANG : INT ;	//DMC_80U,DMC_100,DMC125 Schmierung PW Pausenzeit / DMU60SAnwahl Stangenlader
+    _037_ANWAHL_REITSTOCK : INT ;	//Anwahl Reitstock bei DMC60S: 0=aus 1: Reitstock
+    _038_ANWAHL_6TE_SEITE : INT ;	//Anwahl 6te Seite bei DMC60S: 0=aus 1: 6te Seite
+    _039_ANWAHL_DREHMOMENT : INT ;	//Anwahl 1=OMAT 2=ARTIS 3=MCU-Toolinspect
+    _040_ANWAHL_TeiLEENTSORG : INT ;	//Anwahl Teileent. Stange 1:Achsen2:kl.Rut 3:gr.Rut 
+    _041_ANWAHL_PALVERWAL : INT ;	//Anwahl Option Palettenverwaltung 1: Ein 0: Aus    
+    _042_ANWAHL_KINE_TYP : INT ;	//Anwahl Kinematik : 0:aus; 1:Rund-Schwenktisch
+    _043_ANWAHL_TISCH : INT ;	//Anwahl Option: 1 = mit NC-Teilapperat; 2 = Schwenkrundisch
+    _044_ANWAHL_VIBRATIONSEN : INT ;	//Anwahl Vibrationssensor: 0=aus 1=ein 
+    _045_ANWAHL_DRUCKSTUFEN : INT ;	//Anwahl Druckstufen IKZ: 0=aus, >1=Anz.DruckstSep. Ausg., >1000=analog Ausgang
+    _046_ANWAHL_WS_SPANN_AAX : INT ;	//Anwahl Werkstückspanner A-Achse: 0=Spann. norm. auf/zu, 1=Spann. m. HAWE auf/zu
+    _047_ANWAHL_FD_FETTSCHM : INT ;	//Anwahl FD FETTSCHM: 0=keine 1=Fettpresse 2=Vogel
+    _048_AHWAHL_SAFETY : INT ;	//Anwahl Safety
+    _049_ANWAHL_RAUCH_NEBEL : INT ;	//Anwahl Rauch und Nebel Abscheider: 1=ein
+    _050_ANWAHL_KMTL_SO : INT ;	//Anwahl Kühlmittel Sonderfunktion: 1=BEMA Düsen
+    _051_ANWAHL_VORSATZSPIND : INT ;	//Anwahl Vorsatzspindel
+    _052_ZEIT_PW_KLEMM_AUF : INT ;	//Wartezeit für Palettenwechsler "Klemmung auf" nach Eingangsmeldung
+    _053_IO_SONDER : INT ;	//Sonderanwendung: IO Belegung
+    _054_SONDER_1 : INT ;	//Sonderanwendung: 1. MD
+    _055_SONDER_2 : INT ;	//Sonderanwendung: 2. MD
+    _056_SONDER_3 : INT ;	//Sonderanwendung: 3. MD
+    _057_SONDER_4 : INT ;	//Sonderanwendung: 4. MD
+    _058_SONDER_5 : INT ;	//Sonderanwendung: 5. MD
+    _059_SONDER_6 : INT ;	//Sonderanwendung: 6. MD
+    _060_MAX_SPEED_AX1 : INT ;	//Maximale Geschwindigkeit Achse 1 [m/min]
+    _061_MAX_SPEED_AX2 : INT ;	//Maximale Geschwindigkeit Achse 2 [m/min]
+    _062_MAX_SPEED_AX3 : INT ;	//Maximale Geschwindigkeit Achse 3 [m/min]
+    _063_MAX_SPEED_AX4 : INT ;	//Maximale Geschwindigkeit Achse 4 [[U/min]*10]
+    _064_MAX_SPEED_AX5 : INT ;	//Maximale Geschwindigkeit Achse 5 [[U/min]*10]
+    _065_MAX_SPEED_AX10 : INT ;	//Maximale Geschwindigkeit Achse 10 [[U/min]*10] (Stangenlader)
+    _066_MAX_SPINDELDREHZAHL : INT ;	//Maximale Spindeldrehzahl [U/min]
+    _067_VORSCH_G00 : INT ;	//Vorschub bei G00
+    _068_VORSCH_BEG_EINRICHT : INT ;	//Einrichtbetriebs: Maximaler Vorschub/Eilgang [m/min]
+    _069_VORSCH_BEG_BA3 : INT ;	//Betriebsart 3: Maximaler Vorschub/Eilgang [m/min]
+    _070_VORSCH_BEG_BA4 : INT ;	//Betriebsart 4: Maximaler Vorschub/Eilgang [m/min]
+    _071_DREHZ_BEG_SP_EINRIC : INT ;	//Betriebsart 2: Maximale Drehzahl [U/min] (Einrichtbetrieb)
+    _072_DREHZ_BEG_SPI_BA3 : INT ;	//Betriebsart 3: Maximale Drehzahl [U/min]
+    _073_DREHZ_BEG_SPI_BA4 : INT ;	//Betriebsart 4: Maximale Drehzahl [U/min]
+    _074_DREHZ_BEG_KONST : INT ;	//Drehzahl-Begranzungs-Konstante
+    _075_DREHZ_BEG_RADIUS_0 : INT ;	//max Drehzahl bei WZ-Radius = 0
+    _076_GREIFER_SCHNELLLA : INT ;	//Greifer schnell langsam schwenken 
+    _077_VORSCHUBOVERRIDE_X : INT ;	//Vorschuboverride >x% 
+    _078_DREHZ_MAG_TUER_ZU : INT ;	//Drehzahl Magazin Magazintüre geschlossen [[U/min]/10]
+    _079_DREHZ_MAG_TUER_AUF : INT ;	//Drehzahl Magazin Magazintüre geöffnet [[U/min]/10]
+    _080_EINSCHALTVERZ_4_AX : INT ;	//Einschaltverzoegerung 4. Achse [s]
+    _081_AUSSCHALTVERZ_4_AX : INT ;	//Ausschaltverzoegerung 4. Achse [s]
+    _082_AUSSCHALTVERZ_5_AX : INT ;	//Einschaltverzoegerung 5./11. Achse [s]
+    _083_EINSCHALTVERZ_5_AX : INT ;	//Ausschaltverzoegerung 5./11. Achse [s]
+    _084_DREHZ_BEG_AX4_EINRI : INT ;	//Eintrichtbetriebsart: Achse 4 Maximale Drehzahl [[U/min]*10]
+    _085_DREHZ_BEG_AX4_BA3 : INT ;	//Betriebsart 3: Achse 4 Maximale Drehzahl [[U/min]*10]
+    _086_DREHZ_BEG_AX4_BA4 : INT ;	//Betriebsart 4: Achse 4 Maximale Drehzahl [[U/min]*10]
+    _087_DREHZ_BEG_AX5_EINRI : INT ;	//Einrichtbetriebsart: Achse 5 Maximale Drehzahl [[U/min]*10]
+    _088_DREHZ_BEG_AX5_BA3 : INT ;	//Betriebsart 3: Achse 5 Maximale Drehzahl [[U/min]*10]
+    _089_DREHZ_BEG_AX5_BA4 : INT ;	//Betriebsart 4: Achse 5 Maximale Drehzahl [[U/min]*10]
+    _090_ANST_MOTOR : INT ;	//Getriebe: Ansteuerung Motor [s]
+    _091_ANST_DREHRICHTUNG : INT ;	//Getriebe: Ansteuerung Drehrichtungsumkehr Motor [s]
+    _092_ANST_UNDEF_POS : INT ;	//Getriebe: Ansteuerung Motor aus undef. Position [s]
+    _093_DREHZ_BEG_A10_EINRI : INT ;	//Eintrichtbetriebsart: Achse 10 (Stangenlader) Maximale Drehzahl [U/min]
+    _094_DREHZ_BEG_AX10_BA3 : INT ;	//Betriebsart 3: Achse 10 (Stangenlader) Maximale Drehzahl [U/min]
+    _095_PW_TIME_AUSB : INT ;	//Time ausblasen der Spannkonen/Spannzapfen vor der MPL-Schalter-Kontrolle1=100ms
+    _096_SER_AG_WARTUNG1 : INT ;	//Service-Agent: Stundenzahl für 1. Wartung
+    _097_DREZ_BEG_A_SP_BA2 : INT ;	//Betriebsart 2: Maximale Drehzahl [U/min] (Einrichtbetrieb)
+    _098_DREZ_BEG_A_SP_BA34 : INT ;	//Betriebsart 3/4: Maximale Drehzahl [U/min] (Einrichtbetrieb)
+    _099_SPDL_MAX_TEMP2 : INT ;	//Maximale Spindeltemperatur 2: 0=aus >1=ein [0,1 Grad]
+    _100_SPDL_MAX_TEMP1 : INT ;	//Maximale Spindeltemperatur 1: 0=aus >1=ein [0,1 Grad]
+    _101_MAX_SPEED_AX4_Drehb : INT ;	//Maximale Geschwindigkeit Achse 4 Drehspindel [U/min]
+    _102_BA4_TIME_MELD : INT  := 60;	//Zeit in BA4 von Zustimmtaste bis Meldung kommt (sec)
+    _103_BA4_TIME_HUPE : INT  := 20;	//Zeit in BA4 von Meldung bis Hupe kommt (sec)
+    _104_BA4_TIME_STOP : INT  := 20;	//Zeit in BA4 von Hupe bis Stop (sec)
+    _105_MAX_DRUCK_GREIF : INT ;	//maximaler Druck für Greifer der 6ten Seite
+    _106_MAX_DRUCK_PINOLE : INT ;	//maximaler Druck für Pinole von Reitstock
+    _107_MAX_DRUCK_WS_SPANN : INT ;	//maximaler Druck für WS-Spanner A-Achse
+    _108_MIN_DRUCK_WS_SPANN : INT ;	//minimaler Druck für WS-Spanner A-Achse
+    _109_WZK_REINIG_ZEIT : INT ;	//WZ-Reinigen: Dauer Reinigung [s]
+    _110_WZW_SCHWENKEN_KOPF : INT ;	//Anwahl Positionieren der Achsen mit Schwenken FK: 0=aus, 1=ein
+    _111_WZW_SONDERFUNKTION : INT ;	//Anwahl WZW Sonderfunktionen
+    _112_WZ_ABLAGE_VERZ_ZEIT : INT ;	//WZW: Ablage WZ in Magazin Verzoegerungzeit [s]
+    _113_VERZZEIT_GRF_DREHEN : INT ;	//WZW: Verzoegerungszeit Greifer drehen [s]
+    _114_LANGSAM_WZWH : INT ;	//WZW: Grenze langsam Drehen WZ-Greifer (LxR) 
+    _115_WZB_TOLERANZ : INT ;	//WZB: max. Toleranz (+/-)
+    _116_TISCH_MAX_TEMP : INT ;	//Maximale Tischtemperatur: 0=aus >1=ein [0,1 Grad]
+    _117_KM_Laufzeit_Vlies : INT ;	//Kühlmittelanlage Laufzeit Vlies
+    _118_TDS_DIFF_WP_EP : INT ;	//TDS: Differenz zwischen Wechselposition und Eingabenplatz
+    _119_TDS_LESEPLATZ : INT ;	//TDS: Leseplatz
+    _120_ANZAHL_MAG_PLAETZE : INT ;	//Magazin: Anzahl Plaetze
+    _121_ANZAHL_HSK_PLAETZE : INT ;	//Magazin: Anzahl HSK-Plaetze
+    _122_RUESTPOSITION : INT ;	//Magazin: Ruestpostion TIN/TOUT
+    _123_MAX_ZAEHLIMPULS : INT ;	//Magazin getaktet: maximales Zaehlimpulsstand [s]
+    _124_ABSCHALT_VERZ_MAG : INT ;	//Magazin getaktet: Abschaltverzoegerung nach erreichen des Wechselplatzes [ms]
+    _125_MAG_ZH_UEB_ZEIT : INT ;	//Magazin Zweihandbedienung Überwachungszeit [100ms]
+    _126_ZEIT_LECK_DREHD : INT ;	//Zeit Lekageüberwachung Drehdurchführung  
+    _127_Abstand_KR : INT ;	//Magazin Abstand Kegelreinigung
+    _128_MAG_HUB : INT ;	//Magazinhub
+    _129_KSA3_Zwangstakt_TPF : INT ;	//KSA3/7: Zwangstaktung Papierbandfilter / Intervallzeit Spaltsieb
+    _130_SONDER_PALWECHSLER : INT ;	//Palettenwechsler Sonderfunktionen: 0=aus
+    _131_MAX_LAENGE_WZ_PW : INT ;	//Palettenwechsler: maximale Länge WZ zum durchfuehren PW [mm]
+    _132_SPUELZEIT_VORPOS : INT ;	//Palettenwechsler: Spuelzeit Vorsposition
+    _133_ANZ_SPEICHER_PLAETZ : INT ;	//Anzahl Speicherplätze Palettenspeicher
+    _134_PS_SONDERFUNKTION : INT ;	//Palettenspeicher Sonderfunktion
+    _135_PAL_NULLP_VERSCHIE : INT ;	//Paletten Nullpunktverschiebung
+    _136_FD_SCHMIERZEIT : INT ;	// FD-Tisch Schmierzeit in Minuten 
+    _137_FD_SCH_HUB : INT ;	//Anzahl Schmierhub pro Intervall   
+    _138_MD_STAND_TEIL_1 : INT ;	//Maschinendatenstand Teil 1
+    _139_MD_STAND_TEIL_2 : INT ;	//Maschinendatenstand Teil 2
+    _140_ZEIT_DRUCK_OK : INT ;	//Spindel Schmierung: Pumpennachlaufzeit für den erforderlichen Druckaufbau [s]
+    _141_AUSZEIT_SCHMIERIMP : INT ;	//Spindel Schmierung: Auszeit Schmierimpuls bei Vorschmierung [s]
+    _142_DAUER_VORSCHMIERUNG : INT ;	//Spindel Schmierung: Gesamte Vorschmierzeit [s]
+    _143_ERNEUTE_VORSCHM : INT ;	//Spindel Schmierung: Erneute Vorschmierung [min]
+    _144_NACHLAUFZEIT_SCHM : INT ;	//Spindel Schmierung: Nachlaufzeit Schmierung nach Spindelstillstand [s]
+    _145_SCHMIER_LAUFZEIT : INT ;	//Spindel Schmierung: Schmierintervall bei drehender Spindel [s]
+    _146_DAUER_SCHMIERIMP : INT ;	//Spindel Schmierung: Ansteuerzeit Schmierung [s]
+    _147_Zeit_SPVH_G0 : INT ;	//Zeit in Sekunden für spindelvorschubhalt bei G0
+    _148_Zeit_SPF_Schecken : INT ;	// Einschaltzeit der Schnecken    
+    _149_Zeit_Schnecken_aus : INT ;	// Pausenzeit Schnecken
+    _150_ZENTR_SCHM_INTERV : INT ;	//Zentralschmierung: Intervall Schmierung [min]
+    _151_ZENTR_SCHM_IMPULS : INT ;	//Zentralschmierung: Inpulsdauer Ausgang Schmierung [s]
+    _152_DREHDURCH_AUSZEIT : INT ;	//Schmierung DrehDurchführung: Intervall Schmierung [min]
+    _153_ZENTR_SCHM_UEBER : INT ;	//Zentralschmierung: Überwachung [s]
+    _154_Vib_Grenzw_Gr_Ge : INT ;	//Vibrationssensor: Vibrationsgrenzwert zwischen Bereich Gruen und Gelb in[mV]
+    _155_Vib_Grenzw_Ge_Ro : INT ;	//Vibrationssensor: Vibrationsgrenzwert zwischen Bereich Gelb und Rot in[mV]
+    _156_Vib_Grenzw_Ro_Extr : INT ;	//Vibrationssensor: Vibrationsgrenzwert zwischen Bereich Rot und Extrembereich in
+    _157_Vib_Zeit_Reakt_RoBe : INT ;	//Vibrationssensor: Zeit in s im Roten Bereich bis Reaktion (Fehler)   
+    _158_KSA3_Fuellst_Vorw : INT ;	//Kühlmittelanlage Füllstand Vorwarnung : Zeit is Fehler bei aktivem M8/M7 [s]
+    _159_KMTL_VERRIEGELUNG : INT ;	//Kühlmittelanlage: 1: Werkstück- und Spänespülung gegenseitig verriegelt
+    _160_KMTL_ABPUMP_ZEIT : INT ;	//Kühlmittelanlage: maximale Abpumpzeit Hebepumpe [s]
+    _161_KMTL_KONFIGURATION : INT ;	//Konfiguration Kuehlmittel: 0=Spindel muss drehen 1=keine Spindelbewegung 
+    _162_IKUEZ_KONFIGURATION : INT ;	//Konfiguration Innere Kuehlmittelzufuehrung:0=Spindel muss drehen 1=keine Spinde
+    _163_ZEIT_SPUEHLPISTOLE : INT ;	//SpuehlPistole: Anwahl/Einschaltzeig Pumpe: [s]
+    _164_INTERVAL_SCHNECKEN : INT ;	//Späneförderer: 0=Beide Schnecken, >0 = Laufzeit abwechselnd [s]
+    _165_SpH_Druck_erreicht : INT  := 3;	//I_165: Tol-Fenster(+/-) "Druck erreicht" beim Spannen (initial: 3bar)
+    _166_SpH_Nachregeln : INT  := 10;	//I_166: Tol-Fenster(-) "Nachregeln" (initial: 10bar)
+    _167_SpH_Notaus : INT  := 25;	//I_167: Tol-Fenster(-) "Druckabfall NOTAUS-Abschaltung" (initial: 25bar)
+    _168_SpH_Vorgabe_Steuern : INT  := 90;	//I_168: %-Vorgabe vom SOLL-Wert zum Steuern (initial: 90%)
+    _169_SpH_Schwelle_Regeln : INT  := 80;	//I_169: %-Vorgabe vom SOLL-Wert für Übergang Regelung (initial: 80%)
+    _170_ANWAHL_BATTERIE_UEB : INT ;	//Anwahl Batterie Überwachung: 0=aus, 1=ein
+    _171_MESTTASTER_Blasluft : INT ;	//Messtaster Zeit Blasluft in sec
+    _172_MESTTASTER_Begr : INT ;	//Messtaster: Maximaler Vorschub/Eilgang [m/min]
+    _173_Max_Tempkomp_Wert : INT ;	//Temperaurkompensation Maximaler Wert in [mm]
+    _174_WZB_Abblaszeit : INT ;	//Werkzeugbruch: Abblaszeit
+    _175_TKMP_MESSINTERVALL : INT ;	//Temp.-Komp.: Einlesen Temp. Wert [s]
+    _176_TKMP_UEBERGABEINT : INT ;	//Temp.-Komp.: Glattung Temp. Wert [s]
+    _177_UEB_ZEIT_WZW_TUERE : INT ;	//WZW: Überwachungszeit Türbewegung [s]
+    _178_UEB_ZEIT_WZW_HUB : INT ;	//WZW: Überwachungszeit Hubbewegung [s]
+    _179_UEB_ZEIT_WZW_GREIF : INT ;	//WZW: Überwachungszeit Greiferbewegung [s]
+    _180_UEB_ZEIT_WZW_REINIG : INT ;	//WZW: Überwachungszeit Kegelreinigungsbewegung [s]
+    _181_UEB_ZEIT_WZW_VERRIE : INT ;	//WZW: Überwachungszeit Verriegelungsbewegung [s]
+    _182_VLIESS_SCHALT_DEF : INT ;	//Kühlmittelanlage: Zeit bis Füllstandschalter wieder 0 wird [s] 0=aus
+    _183_ANSTEUER_HYDRAULIK : INT ;	//Hydraulik: Maximale Zeit bis Druck aufgebaut sein muss [s]
+    _184_SpH_P_Vorr_oeffnen : INT  := 150;	//I_184: Druckvorgabe für Vorrichtung öffnen (initial: 150bar)
+    _185_SpH_P_RV_oeffnen : INT  := 100;	//I_185: Druckvorgabe für Rückschlag-Ventil öffnen (initial: 100bar)
+    _186_SpH_gespannt_verz : INT  := 5;	//I_186: Verzögerungszeit "Spannstelle gespannt" in [100ms] (initial: 5)
+    _187_SpH_Zeit_RV_oeffnen : INT  := 10;	//I_187: Laufzeit "Rückschlag-Ventil öffnen" in [100ms] (initial: 10)
+    _188_KONFIG_M20_21 : INT ;	//Konfiguration M190/M191: 0-4
+    _189_AUSGABE_M_FUNKT : INT ;	//Anwahl Ausgabe M180-M189 M-Funktionen: 0=Ausgabe BCD, 1=separat
+    _190_M80_KONFIG : INT ;	//Konfiguration M180 (4 Dekaden)
+    _191_M81_KONFIG : INT ;	//Konfiguration M181 (4 Dekaden)
+    _192_M82_KONFIG : INT ;	//Konfiguration M182 (4 Dekaden)
+    _193_M83_KONFIG : INT ;	//Konfiguration M183 (4 Dekaden)
+    _194_M84_KONFIG : INT ;	//Konfiguration M184 (4 Dekaden)
+    _195_M85_KONFIG : INT ;	//Konfiguration M185 (4 Dekaden)
+    _196_M86_KONFIG : INT ;	//Konfiguration M186 (4 Dekaden)
+    _197_M87_KONFIG : INT ;	//Konfiguration M187 (4 Dekaden)
+    _198_M88_KONFIG : INT ;	//Konfiguration M188 (4 Dekaden)
+    _199_M89_KONFIG : INT ;	//Konfiguration M189 (4 Dekaden)
+   END_STRUCT ;	
+   UDHex : STRUCT 	//PLC-MaschinenDatum (max=50) Beginn MD145012 USER_DATA_HEX [0] => DB20.DBX400.0 
+    _00_BIT0_ACHSE1_AUSBLEND : BOOL ;	//Abwahl 1.Achse: 1=ein, 0=aus
+    _00_BIT1_ACHSE2_AUSBLEND : BOOL ;	//Abwahl 2.Achse: 1=ein, 0=aus
+    _00_BIT2_ACHSE3_AUSBLEND : BOOL ;	//Abwahl 3.Achse: 1=ein, 0=aus
+    _00_BIT3_ACHSE4_AUSBLEND : BOOL ;	//Abwahl 4.Achse: 1=ein, 0=aus
+    _00_BIT4_ACHSE5_AUSBLEND : BOOL ;	//Abwahl 5.Achse: 1=ein, 0=aus
+    _00_BIT5_ACHSE6_AUSBLEND : BOOL ;	//Abwahl 6.Achse: 1=ein, 0=aus
+    _00_BIT6_ACHSE7_AUSBLEND : BOOL ;	//Abwahl 7.Achse: 1=ein, 0=aus
+    _00_BIT7_ACHSE8_AUSBLEND : BOOL ;	//Abwahl 8.Achse: 1=ein, 0=aus
+    _01_BIT0_ACHSE9_AUSBLEND : BOOL ;	//Abwahl 9.Achse: 1=ein, 0=aus
+    _01_BIT1_ACHSE10_AUSBLEN : BOOL ;	//Abwahl 10.Achse: 1=ein, 0=aus
+    _01_BIT2_ACHSE11_AUSBLEN : BOOL ;	//Abwahl 11.Achse: 1=ein, 0=aus
+    _01_BIT3_ACHSE12_AUSBLEN : BOOL ;	//Abwahl 12.Achse: 1=ein, 0=aus
+    _01_BIT4_ACHSE13_AUSBLEN : BOOL ;	//Abwahl 13.Achse: 1=ein, 0=aus
+    _01_BIT5_ACHSE14_AUSBLEN : BOOL ;	//Abwahl 14.Achse: 1=ein, 0=aus
+    _01_BIT6_WW_Drehrichtung : BOOL ;	//Keine Typ-Einschränkung für Drehrichtung Werkzeugwechsler
+    _01_BIT7_FILTER_IKZ : BOOL ;	//Filterüberwachung Hochdruckpumpe
+    _02_BIT0_ACHSE1_MESSYST : BOOL ;	//Anwahl Messystem 1.Achse: 0=indirekt, 1=direkt
+    _02_BIT1_ACHSE2_MESSYST : BOOL ;	//Anwahl Messystem 2.Achse: 0=indirekt, 1=direkt
+    _02_BIT2_ACHSE3_MESSYST : BOOL ;	//Anwahl Messystem 3.Achse: 0=indirekt, 1=direkt
+    _02_BIT3_ACHSE4_MESSYST : BOOL ;	//Anwahl Messystem 4.Achse: 0=indirekt, 1=direkt
+    _02_BIT4_ACHSE5_MESSYST : BOOL ;	//Anwahl Messystem 5.Achse: 0=indirekt, 1=direkt
+    _02_BIT5_ACHSE6_MESSYST : BOOL ;	//Anwahl Messystem 6.Achse: 0=indirekt, 1=direkt
+    _02_BIT6_ACHSE7_MESSYST : BOOL ;	//Anwahl Messystem 7.Achse: 0=indirekt, 1=direkt
+    _02_BIT7_ACHSE8_MESSYST : BOOL ;	//Anwahl Messystem 8.Achse: 0=indirekt, 1=direkt
+    _03_BIT0_ACHSE9_MESSYST : BOOL ;	//Anwahl Messystem 9.Achse: 0=indirekt, 1=direkt 
+    _03_BIT1_ACHSE10_MESSYST : BOOL ;	//Anwahl Messystem 10.Achse: 0=indirekt, 1=direkt 
+    _03_BIT2_ACHSE11_MESSYST : BOOL ;	//Anwahl Messystem 11.Achse: 0=indirekt, 1=direkt 
+    _03_BIT3_ACHSE12_MESSYST : BOOL ;	//Anwahl Messystem 12.Achse: 0=indirekt, 1=direkt 
+    _03_BIT4_AchsKr_drehen_x : BOOL ;	
+    _03_BIT5_AchsKr_drehen_Y : BOOL ;	
+    _03_BIT6_AchsKr_drehen_Z : BOOL ;	
+    _03_BIT7_IKZ_ausblasen : BOOL ;	//IKZ Werkzeuge ausblasen bei WZW-Start
+    _04_BIT0_OVR_HILFSACHSEN : BOOL ;	//Anwahl Vorschubkorrektur bei Hilfsachsen wirksam
+    _04_BIT1_ACHSENTEST : BOOL ;	//Anwahl Achsentest: 0=aus, 1=ein
+    _04_BIT2_SHOPMILL : BOOL ;	//Anwahl Shopmill: 0=aus, 1=ein
+    _04_BIT3_SPI_TAST : BOOL ;	//Spindeltasten 0: linke Taste->linkslauf rechte Taste-->rechtslauf 1: anderstrum
+    _04_BIT4_EINRICHT_BETR : BOOL ;	//Einrichtbetrieb (gebrückte Türen)
+    _04_BIT5_TASTE_TOFRAME : BOOL ;	//Verriegeln der Taste TO-Frame: 0=ein, 1=aus
+    _04_BIT6_SAFETY_IBN : BOOL ;	//Safety Inbetriebnahme: 0=aus, 1=ein
+    _04_BIT7_SAFETY : BOOL ;	//Option Safety ist eingebaut
+    _05_BIT0_TESTRACK_IO : BOOL ;	
+    _05_BIT1_Spanner_FT : BOOL ;	//Fusstaster für Wz-Spanner
+    _05_BIT2_SAFTY_ABNAHME : BOOL ;	//Um bei der Safetyabnahme auch bei offener Türe die Voschubfreigabe zu haben
+    _05_BIT3_PNOTZMULTI : BOOL ;	//PNOTZMULTI eingebaut
+    _05_BIT4_ABST_MESSSYST : BOOL ;	//Anwahl Abstandkodiertes Messsystem 0=aus, 1=ein
+    _05_BIT5_Gr2_Entriegel : BOOL ;	//Option Greifer 2 entriegeln pneumatisch
+    _05_BIT6_SpKlPos_ungerad : BOOL ;	//Spindelklemmposition (Hirthverzahnung) muss ungerade sein
+    _05_BIT7_Freif_o_RFP : BOOL ;	//Option Freifahren ohne Referenzpunkt
+    _06_BIT0_KAB_ENT_M30 : BOOL ;	//Kabinentuer entriegeln bei M30
+    _06_BIT1_KAB_ENT_M0 : BOOL ;	//Kabinentuer entriegeln bei M0, M1
+    _06_BIT2_KAB_ENT_M6162 : BOOL ;	//Kabinentuer entriegeln bei M61 und M62
+    _06_BIT3_KAB_ENT_M2 : BOOL ;	//Kabinentuer entriegeln bei M2
+    _06_BIT4_KAB_TUER_LINKS : BOOL ;	//Kabinentüre links nicht vorhanden(True) :BMW_DMU160P
+    _06_BIT5_KAB_TUER_GEBRUE : BOOL ;	//Kabinentüren gebrückt während IBN
+    _06_BIT6_TRITTROST_Y : BOOL ;	//Trittrost angebaut (DMU160): 0=aus 1=ein
+    _06_BIT7_KAB_ZU_VERRIE : BOOL ;	//Kabinentuer automatisch verriegeln
+    _07_BIT0_MANNLOSE_SCHICH : BOOL ;	//Mannlose Schicht
+    _07_BIT1_FEIERABENDABEND : BOOL ;	//Feierabendabschaltung
+    _07_BIT2_Vibs_Fehlerart : BOOL ;	//Fehlerreaktion (Meldung oder SPI_VORSCHUB_HALT) 
+    _07_BIT3_Anwahl_M59 : BOOL ;	//Freischaltung Voller Fahrbereich M59
+    _07_BIT4_5_6_AX_N_HOCHLA : BOOL ;	//0: 6-te Achse nach Hochlauf aktiv auf Plus/Minus Taste  1: 5-te Achse 
+    _07_BIT5_Schwenk_Stange : BOOL ;	//Verhalten Stange 0: alt -> ohne Richtung 1: neu -> mit Richtung bei Rundachse
+    _07_BIT6_Opt_DMS_Blasluf : BOOL ;	//Option Drehmomentstütze Blasluft
+    _07_BIT7_Siemens_Regal : BOOL ;	//Option Siemens-WZRegal angewählt
+    _08_BIT0_UGP_BELEGT : BOOL ;	//WZW: Muss der UGP Belegt sein 0=aus, 1=ein
+    _08_BIT1_ANW_SPANNER : BOOL ;	//Anwahl WZ-Spanner loesen in BA Manual: 0=aus, 1=ein
+    _08_BIT2_Quit_Beladen : BOOL ;	//Option Beladen Entladen quittieren
+    _08_BIT3_VORBEREITEN : BOOL ;	//WZW: Anwahl WZ Vorbereiten
+    _08_BIT4_RP_MAG_Richtung : BOOL ;	//Magazin: Anfahrrichtung Referieren: 0=negativ 1=positiv 
+    _08_BIT5_Start_Schwenken : BOOL ;	//WZW Start vom Schwenken nach Horizonzal/Vertikal: 0=auf Vorpos., 1=beim Fahren
+    _08_BIT6_WZV_Quit : BOOL ;	//WZV: Quittierung nach öffnen der Tür, 0=aus 1=ein
+    _08_BIT7_MAG_Leistung : BOOL ;	//Geregeltes Magazin: Leistung bei offener Kabinentür
+    _09_BIT0_PERMANENT_PUMP : BOOL ;	//PW: Anwahl Permanent Pumpen Hydraulik
+    _09_BIT1_Fehler_Bei_M60 : BOOL ;	//PW: Anwahl Ausgabe Fehler bei fehlender Freigabe: 0=Fehler, 1=Meldung
+    _09_BIT2_Pal_nur1_Pal : BOOL ;	//PW: 200er nur mit 1er Palette
+    _09_BIT3_SPH_Palverwalt : BOOL ;	//Pal.Verwaltung: Spannhydraulik RP gespannt wird immer überwacht 
+    _09_BIT4_Folgebearbeitun : BOOL ;	//Pal-Speicher: Anwahl Folgebearbeitung
+    _09_BIT5_kein_PW_Fre_Tue : BOOL ;	//Pal-Speicher: keine Palettenwechselfreigabe bei offener Rüstplatz Türe
+    _09_BIT6_kein_Pal_ueberw : BOOL ;	//Pal-Speicher: keine Palettenüberwachung bei Rundspeicher, Transporter belegt/ni
+    _09_BIT7_P_STOER_WECHSEL : BOOL ;	//Pal-Speicher: 1: nach Störung wird Auto Betr. Palette gewechselt 0: nicht gewe 
+    _10_BIT0_ENDE_PROG : BOOL ;	//Ausgang Programm Ende: 0=Impuls, 1=Statisch bis Reset, Start
+    _10_BIT1_MAG_Zweihandbed : BOOL ;	//Magazin: Neue Zweihandbedienung für Verfahren Werkzeugmagazin mit Knebeltaster
+    _10_BIT2_BKLEMM_Komp : BOOL ;	//Kompensation B-Achse Klemmung Auf: 1: Komp Ein 0:Komp Aus 
+    _10_BIT3_AAchse_6te : BOOL ;	//CQ:A-Achse verfahrbar, wenn Greifer zu: 0: nicht verfahrbar, 1: verfahrbar     
+    _10_BIT4_Freif_deakt : BOOL ;	//Freifahren deaktiviert wenn kein Wechsel
+    _10_BIT5_Pneu_Ueb_aktiv : BOOL ;	//Stangenlader: Pneumatiküberwachung aktivieren
+    _10_BIT6_RueckZug_M46 : BOOL ;	//M46: Rückzug auf Ebene 0=aus, 1=ein
+    _10_BIT7_Y_M46 : BOOL ;	//M46: Rückzug Y bei M46, 0=aus, 1=ein
+    _11_BIT0_POS_TUER_AUF : BOOL ;	//WZW DMU160: Anwahl freifahren WZW-Achse bei Dach Auf 0=aus, 1=ein
+    _11_BIT1_POS_KLAPPE_AUF : BOOL ;	//WZW DMU160: Anwahl freifahren WZW-Achse bei Klappe Auf 0=aus 1=ein
+    _11_BIT2_Abw_INC_MSST : BOOL ;	//Incrementtasten auf MSST werden ausgeblended
+    _11_BIT3_PW_OHNE_WASSWER : BOOL ;	//PW:Palettenwechsel bei DMU200P Ohne Wasser
+    _11_BIT4_Klemmung_BAxe : BOOL ;	//Einschaltzustand Klemmung B-Achse 
+    _11_BIT5_LECKAGE_UEBERW : BOOL ;	//Anwahl Leckagenüberwachung: 0=aus 1=ein
+    _11_BIT6_KMTL_M0_1 : BOOL ;	//Kühlmittel: 0=Wasser läuft, 1=Wasser aus
+    _11_BIT7_ABW_KMTL_PW : BOOL ;	//PW: Abwahl Kühlmittel beim Wechsel 0=aus, 1=ein 
+    _12_BIT0_DS1_RUECKMELD : BOOL ;	//Kühlmittelanlage IKZ: Druckstufe 1 Überwachung Eingang Rückmeldung Druckstufe 
+    _12_BIT1_DS2_RUECKMELD : BOOL ;	//Kühlmittelanlage IKZ: Druckstufe 2 Überwachung Eingang Rückmeldung Druckstufe 
+    _12_BIT2_DS3_RUECKMELD : BOOL ;	//Kühlmittelanlage IKZ: Druckstufe 3 Überwachung Eingang Rückmeldung Druckstufe 
+    _12_BIT3_DS4_RUECKMELD : BOOL ;	//Kühlmittelanlage IKZ: Druckstufe 4 Überwachung Eingang Rückmeldung Druckstufe 
+    _12_BIT4_DS5_RUECKMELD : BOOL ;	//Kühlmittelanlage IKZ: Druckstufe 5 Überwachung Eingang Rückmeldung Druckstufe 
+    _12_BIT5_DS6_RUECKMELD : BOOL ;	//Kühlmittelanlage IKZ: Druckstufe 6 Überwachung Eingang Rückmeldung Druckstufe 
+    _12_BIT6_DS7_RUECKMELD : BOOL ;	//Kühlmittelanlage IKZ: Druckstufe 7 Überwachung Eingang Rückmeldung Druckstufe 
+    _12_BIT7_Option_U_Achse : BOOL ;	//Option U-Achse vorhanden (Auswahl U-Achse über 14512.56 Bit0)
+    _13_BIT0_DS1_FREIGABE : BOOL ;	//Kühlmittelanlage IKZ: Druckstufe 1 Freigabe/Überwachung aktivieren 0=aus, 1=ein
+    _13_BIT1_DS2_FREIGABE : BOOL ;	//Kühlmittelanlage IKZ: Druckstufe 2 Freigabe/Überwachung aktivieren 0=aus, 1=ein
+    _13_BIT2_DS3_FREIGABE : BOOL ;	//Kühlmittelanlage IKZ: Druckstufe 3 Freigabe/Überwachung aktivieren 0=aus, 1=ein
+    _13_BIT3_DS4_FREIGABE : BOOL ;	//Kühlmittelanlage IKZ: Druckstufe 4 Freigabe/Überwachung aktivieren 0=aus, 1=ein
+    _13_BIT4_DS5_FREIGABE : BOOL ;	//Kühlmittelanlage IKZ: Druckstufe 5 Freigabe/Überwachung aktivieren 0=aus, 1=ein
+    _13_BIT5_DS6_FREIGABE : BOOL ;	//Kühlmittelanlage IKZ: Druckstufe 6 Freigabe/Überwachung aktivieren 0=aus, 1=ein
+    _13_BIT6_DS7_FREIGABE : BOOL ;	//Kühlmittelanlage IKZ: Druckstufe 7 Freigabe/Überwachung aktivieren 0=aus, 1=ein
+    _13_BIT7_Zusatzmag : BOOL ;	//Option Zusatzmagazin für lange Werkzeuge
+    _14_BIT0_Safety_SI_PWHub : BOOL ;	//Safety: Palettenwechsler Anwahl Sicherheitsventil Hub
+    _14_BIT1_ESR : BOOL ;	//Erweitertes Stillsetzen und Rückziehen
+    _14_BIT2_BBK_Teller : BOOL ;	// Bohrerbruchkontrolle am Tellermagazin
+    _14_BIT3_SOKO_Schnittst : BOOL ;	//Sonderkonstruktion Schnittstelle Alt/Neu
+    _14_BIT4_MagPlatzKontrol : BOOL ;	//Ausblenden Magazinplatzkontrolle
+    _14_BIT5_OelNebel_Fehl_R : BOOL ;	//Oel-Nebelabscheier Fehlerreaktion
+    _14_BIT6_MSST_Profibus : BOOL ;	//Maschinensteuertafel über Profibus
+    _14_BIT7_BP_SIEMENS_B : BOOL ;	//Breite Maschinensteuertafel Siemens Standard
+    _15_BIT0_Stange_Getri : BOOL ;	
+    _15_BIT1_kl_SERI_1663 : BOOL ;	//Serie DMC60S 0: Serie grosser/gleich 1663 1: Serie kleiner 1663   
+    _15_BIT2_Konz_BP_Alt : BOOL ;	//altes Konzernbedienpul
+    _15_BIT3_Abw_Rolltor : BOOL ;	//PW: Abwahl Rolltor für Inbetriebnahme 0=aus, 1=ein
+    _15_BIT4_Blum_Ausg : BOOL ;	//Blum: =1:Anwahl Analog-Ausgang 3
+    _15_BIT5_Anwahl_TFunkter : BOOL ;	//Anwahl T-Funktionsersetzung (DMC60T)
+    _15_BIT6_AnwahlATC_Zykl : BOOL ;	//Anwahl ATC-Zyklus
+    _15_BIT7_Konf_TDS_Belade : BOOL ;	//0=Mit Leerplatzsuche; 1=den aktuellen Platz beladen
+    _16_BIT0_Tuer_spuel : BOOL ;	//DMC60T Kofiguration Türspülung
+    _16_BIT1_Spritzd_ausblM8 : BOOL ;	//Nach Abschalten M8 werden die Spritzdüsen für 0,5s ausgeblasen; 0=aus 1=ein
+    _16_BIT2_KM_Temperierung : BOOL ;	//Kühlmittelanlage mit Kühlmitteltemperierung
+    _16_BIT3_IKZ_Durchflussw : BOOL ;	//Innere Kühlmittelzufuhr mit Strömungswächter
+    _16_BIT4_WZTyp6_Greif2 : BOOL ;	//Werkzeugtyp 6 in Greifer 2 übernehmen
+    _16_BIT5_Eilg_Ovr_JOG_Nu : BOOL ;	//Eilgang Overide in Jog auf Null
+    _16_BIT6_Not_AUS_PCU_0 : BOOL ;	//Not Aus bei PCU nich ein
+    _16_BIT7_SPI_STOP_BA2 : BOOL ;	//Bei neg Flanke Taste Spindel Links/rechts in BA2 -->Spindel Stop
+    _17_Bit0_Safe_SPL_Schutz : BOOL ;	//Safety SPL Schutz: 0=ein, 1=aus
+    _17_BIT1_Z_Achs_Richtung : BOOL ;	//Safety Z-Achse Richtung Bremsentest
+    _17_BIT2_BT_5_Achse : BOOL ;	//Safety 5. Achse: Anwahl Bremsentest 0=aus 1=ein
+    _17_BIT3_WZW_Klappe_druc : BOOL ;	//1: WZW Klappe drucklos
+    _17_BIT4_Bremse_auf_XYZ : BOOL ;	//IB Bremse loesen XYZ
+    _17_BIT5_ACHSE13_MESSYST : BOOL ;	//Anwahl Messystem 13.Achse: 0=indirekt, 1=direkt 
+    _17_BIT6_ACHSE14_MESSYST : BOOL ;	//Anwahl Messystem 14.Achse: 0=indirekt, 1=direkt 
+    _17_BIT7_RP_HYD_KLEMMEN : BOOL ;	//Option: Rüstplatz hydraulisch klemmen/lösen
+    _18_BIT0_Spi_Tempk_X : BOOL ;	//Option Spindelkompensation X-Achse
+    _18_BIT1_Spi_Tempk_Y : BOOL ;	//Option Spindelkompensation Y-Achse
+    _18_BIT2_Spi_Tempk_Z : BOOL ;	//Option Spindelkompensation Z-Achse
+    _18_BIT3_Ti_Tempk_X : BOOL ;	//Option Tischkompensation X-Achse
+    _18_BIT4_Ti_Tempk_Y : BOOL ;	//Option Tischkompensation Y-Achse
+    _18_BIT5_Ti_Tempk_Z : BOOL ;	//Option Tischkompensation Z-Achse
+    _18_BIT6_DREHZAHL_KOMP : BOOL ;	//Anwahl: Drehzahlkompensation 0=aus, 1=ein
+    _18_BIT7_KM_Sammelbehael : BOOL ;	//Anwahl Kühlmittel Sammelbehälter Überlaufpumpe
+    _19_BIT0_TempKo_Glaett_1 : BOOL ;	//Glättung des Temperaturwertes bei Temperaturkompensation 
+    _19_BIT1_TempKo_Glaett_2 : BOOL ;	//Glättung des Temperaturwertes bei Temperaturkompensation 
+    _19_BIT2_TempKo_Glaett_3 : BOOL ;	//Glättung des Temperaturwertes bei Temperaturkompensation 
+    _19_BIT3_TempKo_Glaett_4 : BOOL ;	//Glättung des Temperaturwertes bei Temperaturkompensation 
+    _19_BIT4_TempKo_Glaett_5 : BOOL ;	//Glättung des Temperaturwertes bei Temperaturkompensation 
+    _19_BIT5_TempKo_Glaett_6 : BOOL ;	//Glättung des Temperaturwertes bei Temperaturkompensation 
+    _19_BIT6_TempKo_Glaett_7 : BOOL ;	//Glättung des Temperaturwertes bei Temperaturkompensation 
+    _19_BIT7_TempKo_Glaett_8 : BOOL ;	//Glättung des Temperaturwertes bei Temperaturkompensation 
+    _20_Bit0_VM_Folge_1 : BOOL ;	//Vertikalmagazin Schritt TPU in Grundstellung Werkzeug verriegeln gleichzeitig 
+    _20_Bit1_WZ_ni_ablegen : BOOL ;	//Werkzeug wird nicht ins Magazin abgelegt (bleibt im Greifer)
+    _20_Bit2_VM_Folge_2 : BOOL ;	//Vertikalmagazin Schritt TPU in Kegelposition Werkzeug entriegeln gleichzeitig
+    _20_Bit3_Te_TPU_TRANSFER : BOOL ;	//Vertikalmagazin: TPU verzögert in Übergabestellung fahren
+    _20_Bit4_WZ_SP_vorz_auf : BOOL ;	//Vertikalmagazin: Werkzeugspanner bei kleinem Werkzeug vorzeitig öffnen
+    _20_Bit5_VM_MAG_SK50 : BOOL ;	//Vertikalmagazin: Ausführung SK50/HSK100
+    _20_Bit6_MAG_MIT_PUMPE : BOOL ;	//Werkzeugmagazin mit Hebepumpe Kühlschmierstoff
+    _20_Bit7_UEBERW_GR : BOOL ;	//Überwachung Greifer drehen ausblenden
+    _21_Bit0_DM_ATC_ON : BOOL ;	//ApplicationTuningCycle: EIN
+    _21_Bit1_DM_QSET_ON : BOOL ;	//QuickSet Kinematik messen&schreiben EIN
+    _21_Bit2_DM_DRST_ON : BOOL ;	//DrehStechZyklus EIN
+    _21_Bit3_H30_H7 : BOOL ;	//DH: innerer Kühlmitteldruck 1: H30 0: H7
+    _21_Bit4_frei : BOOL ;	
+    _21_Bit5_frei : BOOL ;	
+    _21_Bit6_frei : BOOL ;	
+    _21_Bit7_DM_Z0_500 : BOOL ;	//DM_ZO_500 => Funktion "Tischmittelpunkt + Höhe auf G500 schreiben"
+    _22_Bit0_DM_ZOT_ON : BOOL ;	//FräsDrehen: Nullpunkt auf Drehmittelpunkt (Tischmitte)
+    _22_Bit1_frei : BOOL ;	
+    _22_Bit2_frei : BOOL ;	
+    _22_Bit3_frei : BOOL ;	
+    _22_Bit4_frei : BOOL ;	
+    _22_Bit5_frei : BOOL ;	
+    _22_Bit6_frei : BOOL ;	
+    _22_Bit7_frei : BOOL ;	
+    _23_Bit0_PW_Dachspuelung : BOOL ;	//Dachspülung: 0-bei Spülposition starten 1-bei PW aktiv starten
+    _23_Bit1_SpPi_Kabine : BOOL ;	//Spülpistole: Aktivieren bei Kabine auf
+    _23_Bit2_PW_senken_heben : BOOL ;	//1 = PW Hub senken u heben gleichzeitig nach Erreichen der Endlage Drehbewegung 
+    _23_Bit3_SpPi_RP : BOOL ;	//Spülpistole: Aktivieren bei Rüstplatztür auf	
+    _23_Bit4_PW_AX_VAR : BOOL ;	//Variable Geschwindigkeit PW-Achse aktivieren
+    _23_Bit5_PW_KL_AB_MITTE : BOOL ;	//PW-Klemmung beim Absenken klemmen ab: 0 = Hub unten , 1 = Hub mitte
+    _23_Bit6_RP_ohne_Spuelp : BOOL ;	//keine Spülpistole am Rüstplatz
+    _23_Bit7_PW_HUB_ABFR_NEU : BOOL ;	//Anwahl für neue Palettenwechsler-Hub-Abfrage
+    _24_Bit0_WZ_EinlegeCTRL : BOOL ;	//ABST Magazin: WZ-Einlegekontrolle am Rüstplatz
+    _24_Bit1_MAG_Umk_plus : BOOL ;	//Magazinkette: Anwahl Ausgleich Umkehrspiel bei Plusfahrt
+    _24_Bit2_MAG_Umk_min : BOOL ;	//Magazinkette: Anwahl Ausgleich Umkehrspiel bei Minusfahrt
+    _24_Bit3_M0_WZ_Erstemal : BOOL ;	//M0 falls Werkzeug im Ersteinsatz
+    _24_Bit4_Rad_n_einfahren : BOOL ;	//Radmagazin nach Bewegung nicht einfahren
+    _24_Bit5_MAG_POS_BEI_oWZ : BOOL ;	//Magazin Positionieren auf Beladeplatz bei fehlendem Werkzeug
+    _24_Bit6_frei : BOOL ;	
+    _24_Bit7_KMTL_Aus_M6 : BOOL ;	//0=ohne Funktion, 1=nach M6 und bei offener Tür kein KMTL 
+    _25_Bit0_IKZ_DFW : BOOL ;	//KSA: IKZ-Durchflusswächter vorhanden
+    _25_Bit1_Filter_Feinb : BOOL ;	//KSA: Filter für Feinbereich vorhanden
+    _25_Bit2_M7_nach_WZW_aus : BOOL ;	//Kuehlmittel (nur M7) wird durch WZW (M6) abgelöscht
+    _25_Bit3_SOKO_Kuehlm : BOOL ;	
+    _25_Bit4_Niveau_Feinstb : BOOL ;	//KSA: Niveauschalter im Feinstbereich für Pumpensteuerung
+    _25_Bit5_IKZ_Abschaltung : BOOL ;	//KSA: IKZ-Überwachung-Abschaltphase ausschalten
+    _25_Bit6_DUF_40Bar_PUM : BOOL ;	//KSA:Doppelumschaltfilter für 40 Bar Pumpe
+    _25_Bit7_DUF_80Bar_PUM : BOOL ;	//KSA:Doppelumschaltfilter für 80 Bar Pumpe
+    _26_Bit0_FD_PalKle_Tisch : BOOL ;	//FD: Permanente Druckueberwachung Palettenklemmung Tisch
+    _26_Bit1_keine_SpF_SCH : BOOL ;	//FD: keine Funktion Spannfutter-Schmierung am Ruestplatz
+    _26_Bit2_FDmaxDruck_60 : BOOL ;	//FD: 0=maxDruck=50   1=maxDruck=60
+    _26_Bit3_Fahrbereich_Z : BOOL ;	//Fahrbereiche II (Z-Achse): 0=aus, 1=ein
+    _26_Bit4_HA_WZW : BOOL ;	//Halb Automatischer Werkzeugwechsel: 0=aus, 1=ein
+    _26_Bit5_FRG_PL1_7 : BOOL ;	//Regal Magazin: Freigabe Mag.-Plaetze 1-7 (MAN)
+    _26_Bit6_Frei_Wechseler : BOOL ;	//Anwahl Freifahren Wechsler: 0=aus, 1=ein
+    _26_Bit7_Ext_Taste_Kab : BOOL ;	//Anwahl externe Verriegelungs-Taste Kabine: 0=aus, 1=ein
+    _27_Bit0_Z_BREMSE_UEBERW : BOOL ;	//Zusatz-Bremse, Überwachung defekt: 0=aus, 1=ein 
+    _27_Bit1_VSP_Drehricht : BOOL ;	//Vorsatz-Spindel: Negation Spindeltasten
+    _27_Bit2_FB_Aktiv : BOOL ;	//Fahrbereiche: 0=aus, 1=ein
+    _27_Bit3_RPLmitKupplung : BOOL ;	//ABST: Rüstplatz mit Kupplung für Spannhydraulik
+    _27_Bit4_MPLmitKupplung : BOOL ;	//ABST: Maschinenplatz mit Kupplung für Spannhydraulik
+    _27_Bit5_G01_vorzeitig : BOOL ;	//ABST: G01 vorzeitig zulassen bei Spannhydraulik
+    _27_Bit6_AUTO_RPLT : BOOL ;	//ABST: Automatische Rüstplatztür
+    _27_Bit7_SPH_FKT_oRPLT : BOOL ;	//ABST: SPH-Funktionen bei offener Rüstplatztür
+    _28_Bit0_AusGewichtsausg : BOOL ;	//Abwahl: Drucküberwachung Gewichtsausgleich
+    _28_Bit1_RPL_FG_abblasen : BOOL ;	//Freischalten: Funktion Rüstplatz Spannstellen abblasen
+    _28_Bit2_te_ausblasenSPI : BOOL ;	//Verzögerung ausblasen Spindelkonus
+    _28_Bit3_WFK_Anwahl : BOOL ;	//Anwahl Winkelfräskopf zweifach (MTU)
+    _28_Bit4_MessVorg_Horz : BOOL ;	//Messvorgang (Laser) Horizontal: ´1=ein
+    _28_Bit5_Verriegeln_ST : BOOL ;	//ABST: Arbeitsraumtuer verriegeln mit "sicherer" Taste
+    _28_Bit6_FLUSH_JET : BOOL ;	//Anwahl Drehsprühsystem
+    _28_Bit7_B_C_Takttisch : BOOL ;	//Anwahl B/C-Achse ist Takttisch (z.B.55H)
+    _29_Bit0_SpH_St1_NICHT1 : BOOL ;	//SpH: Stelle 1 nicht freigebeben
+    _29_Bit1_SpH_St2_NICHT1 : BOOL ;	//SpH: Stelle 2 nicht freigegeben
+    _29_Bit2_SpH_St3_NICHT1 : BOOL ;	//SpH: Stelle 3 nicht freigebeben
+    _29_Bit3_SpH_St4_NICHT1 : BOOL ;	//SpH: Stelle 4 nicht freigebeben
+    _29_Bit4_St1_ALK1_ALK2 : BOOL ;	//SpH: Stelle 1 mit 2 Auflagekontrollen (ALK1+ALK2)
+    _29_Bit5_ALK_FESTO : BOOL ;	//SpH: Auflagenkontrolle Ausführung FESTO
+    _29_Bit6_frei : BOOL ;	
+    _29_Bit7_frei : BOOL ;	
+    _30_Bit0_60T_WZGR : BOOL ;	//Werkzeuggreiferverriegelung an Dmc60T/Dmp60S Anwahl 0=Aus/1=Ein
+    _30_Bit1_WZB_G0_Sp_X_na : BOOL ;	//Werkzeugbruch G0-Sperre X nicht aktiv
+    _30_Bit2_WZB_G0_Sp_Y_na : BOOL ;	//Werkzeugbruch G0-Sperre Y nicht aktiv
+    _30_Bit3_WZB_G0_Sp_Z_na : BOOL ;	//Werkzeugbruch G0-Sperre Z nicht aktiv
+    _30_Bit4_AX11_ohneSafety : BOOL ;	//Ausschalten der Safety-Überwachung für die 11.Achse (NC-Teilapperat)
+    _30_Bit5_TDS_Bel_ohne_sp : BOOL ;	//Werkzeug beladen mit TDS ohne sperren des Werkzeugs
+    _30_Bit6_TDS_BISF : BOOL ;	
+    _30_Bit7_TDS_Auto_WZGroe : BOOL ;	//Tool Dialog System: Anwahl Automatiche-Werkzeuggrößen-Erkennung 0=Aus/1=Ein
+    _31_Bit0_TL2000_Projekt : BOOL ;	//Maschine ist TRANSLINE 2000 Projekt: 0=aus, 1=ein 
+    _31_Bit1_SOLUTIONLINE : BOOL ;	//Maschine mit SOLUTIONLINE: 0=aus, 1=ein 
+    _31_Bit2_ERGOLINE : BOOL ;	//Maschine mit ERGOLINE: 0=aus, 1=ein 
+    _31_Bit3_SPDL_PRZ_Taste : BOOL ;	//Spindel Prozent +/- Taste: 1=Tausch
+    _31_Bit4_PW_alle20Minute : BOOL ;	//Passwort alle 20 Minuten zurücksetzen
+    _31_Bit5_frei : BOOL ;	
+    _31_Bit6_frei : BOOL ;	
+    _31_Bit7_frei : BOOL ;	
+    _32_Bit0_RPL_Endlos : BOOL ;	//PS: Endlos drehbarer Rüstplatz: 0=aus, 1=ein
+    _32_Bit1_RPL_Erweit_Data : BOOL ;	//Erweiterte Palettendaten zur Werkstück-Identifikation: 0=nein, 1=ja
+    _32_Bit2_RPL_Velo_Adjust : BOOL ;	//Rüstplatzgeschwindigkeit über Handbediengerät einstellbar: 0=nein, 1=ja
+    _32_Bit3_PW_Ein_Pal_Mode : BOOL ;	//1-Palettenbetrieb - Rüstplatz wird bei M61/M62 freigehalten
+    _32_Bit4_PW_Mehr_Pal_Mod : BOOL ;	//Mehr-Palettenbetrieb - M61/M62 wird bei fehlender Palette gesperrt
+    _32_Bit5_RPL_Kont_Bew : BOOL ;	//Rüstplatz kontinuierlich Drehen: 0=aus, 1=ein
+    _32_Bit6_PS_DrehFraesPal : BOOL ;	//Rundspeicher: Unterschiedliche Palettenarten (Drehen und Fräsen) im System
+    _32_Bit7_RPL_UEBERBR : BOOL ;	//Überbrückung Rüstplatz aktiv (Bit nach Inbetriebnahme wieder auf 0 setzen)
+    _33_Bit0_SPH_RPL : BOOL ;	//ABST: Spannhydraulik am RPL (nicht FD-Maschine)
+    _33_Bit1_SPH_MPL : BOOL ;	//ABST: Spannhydraulik am MPL (nicht FD-Maschine)
+    _33_Bit2_SPH_oPW : BOOL ;	//ABST: Spannhydraulik ohne PW (nicht FD-Maschine)
+    _33_Bit3_SPH_FD : BOOL ;	//ABST: Spannhydraulik für FD-Maschine
+    _33_Bit4_SPH_vorb : BOOL ;	//ABST: Spannhydraulik vorbereitet (nicht FD-Maschine)
+    _33_Bit5_Pal_SP_Rohteils : BOOL ;	//Pal.Speicher Rohteil setzen ohne offen RPL-TUERE
+    _33_Bit6_VollAuto_RPL : BOOL ;	//ABST: Voll-Automatik am Rüstplatz
+    _33_Bit7_RPL_keine_Klemm : BOOL ;	//Rüstplatz ohne hyd. Klemmung und Hand Klemmung (FASTEMS)
+    _34_Bit0_SA_BYTE : BOOL ;	//Wird als BYTE 00...FF für Sonderausführungen ausgewertet
+    _34_Bit1_SA_BYTE : BOOL ;	//Wird als BYTE 00...FF für Sonderausführungen ausgewertet
+    _34_Bit2_SA_BYTE : BOOL ;	//Wird als BYTE 00...FF für Sonderausführungen ausgewertet
+    _34_Bit3_SA_BYTE : BOOL ;	//Wird als BYTE 00...FF für Sonderausführungen ausgewertet
+    _34_Bit4_SA_BYTE : BOOL ;	//Wird als BYTE 00...FF für Sonderausführungen ausgewertet
+    _34_Bit5_SA_BYTE : BOOL ;	//Wird als BYTE 00...FF für Sonderausführungen ausgewertet
+    _34_Bit6_SA_BYTE : BOOL ;	//Wird als BYTE 00...FF für Sonderausführungen ausgewertet
+    _34_Bit7_SA_BYTE : BOOL ;	//Wird als BYTE 00...FF für Sonderausführungen ausgewertet
+    _35_SYNCH_SPI_UEBTMP : BOOL ;	//Synchronspindel mit Überwachung Übertemperatur
+    _35_ACHSE4_MOTOR_TEMP : BOOL ;	//Abwahl Überwachung Motortemperatur Achse 4
+    _35_ERMODUL_TEMP : BOOL ;	//Abwahl der Temperaturueberwachung ER-Modul
+    _35_Bit3_frei : BOOL ;	
+    _35_Bit4_frei : BOOL ;	
+    _35_Bit5_frei : BOOL ;	
+    _35_Bit6_frei : BOOL ;	
+    _35_Bit7_frei : BOOL ;	
+    _36_Bit0_Laser_auserhalb : BOOL ;	//LASER: Laser befindet sich ausserhalb des Verfahrbereichs X-Achse (55H/65H ...)
+    _36_Bit1_Klappe_zwangsg : BOOL ;	//LASER/Kalibrier: Klappe zwangsgeführt kein IX_LA_Klappe_zu/IX_MT_KAL_KLAPPE_ZU
+    _36_Bit2_Blum_3D_Hybrid : BOOL ;	//LASER: Drehwerkzeuge vermessen mit BLUM
+    _36_Bit3_frei : BOOL ;	//LASER: Reserve
+    _36_Bit4_frei : BOOL ;	//LASER: Reserve
+    _36_Bit5_frei : BOOL ;	//LASER: Reserve
+    _36_Bit6_frei : BOOL ;	//LASER: Reserve
+    _36_Bit7_frei : BOOL ;	//LASER: Reserve
+    _37_Bit0_MTU_WZVS : BOOL ;	//Sonder-MTU Werkzeugverschleiss bei Blum-Messen
+    _37_Bit1_MTU_WIKO : BOOL ;	//Sonder-MTU Winkelkopf bei Blum-Messen
+    _37_Bit2_frei : BOOL ;	//Sonder Reserve
+    _37_Bit3_MTU_WIKO_o_KLE : BOOL ;	//Sonder-MTU Winkelkopf ohne WIKO-Klemmung an Spindel
+    _37_Bit4_MSST_Ueberw_o_Z : BOOL ;	//Sonder Überwachung Messtaster im Raum
+    _37_Bit5_LA_AUSF_BA4 : BOOL ;	//Sonder-Aero_Tech_Peissenb--Laser kann in BA4 ausgefahren bzw.eingefahren werden
+    _37_Bit6_Opt_Dru_erh_Tis : BOOL ;	//Sonder-Geislinger_Takten der Tischklemmung -> Druckerhoehung 180 Bar 
+    _37_Bit7_frei : BOOL ;	//Sonder Reserve
+    _38_Bit0_PV_4SEITEN_AUSB : BOOL ;	//Pal.Verwaltung: 4-Seitenbearbeitung ausblenden 
+    _38_Bit1_PV_TEILENR_AUSB : BOOL ;	//Pal.Verwaltung: Teilenummer ausblenden 
+    _38_Bit2_PV_SK_PALschwer : BOOL ;	//Pal.Verwaltung: Softkey schwere Palette einblenden
+    _38_Bit3_PV_RPA_Teilung : BOOL ;	//Pal.Verwaltung: Teilung Rüstplatzachse einblenden
+    _38_Bit4_frei : BOOL ;	
+    _38_Bit5_frei : BOOL ;	
+    _38_Bit6_frei : BOOL ;	
+    _38_Bit7_frei : BOOL ;	
+    _39_Bit0_APR : BOOL ;	//Späneabsaugung APR: 0=aus, 1=ein
+    _39_Bit1_RPL_Auflage : BOOL ;	//PW Rüstplatz: 0=aus, 1=mit Auflagekontrolle
+    _39_Bit2_Vib_Ein_Start : BOOL ;	//Vibrations-Sensor: 1=bei PLC hochlauf einblenden
+    _39_Bit3_frei : BOOL ;	
+    _39_Bit4_frei : BOOL ;	
+    _39_Bit5_frei : BOOL ;	
+    _39_Bit6_frei : BOOL ;	
+    _39_Bit7_Wechsel_Fest : BOOL ;	//1:1 Wechsel bei Festplatzkodierten WZ: 0=aus 1=ein
+    _40_BIT0_ACHSE15_AUSBLEN : BOOL ;	//Abwahl 15.Achse: 1=ein, 0=aus
+    _40_Bit1_ACHSE16_AUSBLEN : BOOL ;	//Abwahl 16.Achse: 1=ein, 0=aus
+    _40_Bit2_ACHSE17_AUSBLEN : BOOL ;	//Abwahl 17.Achse: 1=ein, 0=aus
+    _40_Bit3_ACHSE18_AUSBLEN : BOOL ;	//Abwahl 18.Achse: 1=ein, 0=aus
+    _40_Bit4_ACHSE19_AUSBLEN : BOOL ;	//Abwahl 19.Achse: 1=ein, 0=aus
+    _40_Bit5_frei : BOOL ;	
+    _40_Bit6_frei : BOOL ;	
+    _40_Bit7_frei : BOOL ;	
+    _41_Bit0_frei : BOOL ;	
+    _41_Bit1_frei : BOOL ;	
+    _41_Bit2_frei : BOOL ;	
+    _41_Bit3_frei : BOOL ;	
+    _41_Bit4_frei : BOOL ;	
+    _41_Bit5_frei : BOOL ;	
+    _41_Bit6_frei : BOOL ;	
+    _41_Bit7_frei : BOOL ;	
+    _42_BIT0_ACHSE15_MESSYST : BOOL ;	//Anwahl Messystem 15.Achse: 0=indirekt, 1=direkt 
+    _42_BIT1_ACHSE16_MESSYST : BOOL ;	//Anwahl Messystem 16.Achse: 0=indirekt, 1=direkt 
+    _42_Bit2_ACHSE17_MESSYST : BOOL ;	//Anwahl Messystem 17.Achse: 0=indirekt, 1=direkt 
+    _42_Bit3_ACHSE18_MESSYST : BOOL ;	//Anwahl Messystem 18.Achse: 0=indirekt, 1=direkt 
+    _42_Bit4_ACHSE19_MESSYST : BOOL ;	//Anwahl Messystem 19.Achse: 0=indirekt, 1=direkt 
+    _42_Bit5_frei : BOOL ;	
+    _42_Bit6_frei : BOOL ;	
+    _42_Bit7_frei : BOOL ;	
+    _43_Bit0_frei : BOOL ;	
+    _43_Bit1_frei : BOOL ;	
+    _43_Bit2_frei : BOOL ;	
+    _43_Bit3_frei : BOOL ;	
+    _43_Bit4_frei : BOOL ;	
+    _43_Bit5_frei : BOOL ;	
+    _43_Bit6_frei : BOOL ;	
+    _43_Bit7_frei : BOOL ;	
+    _44_Bit0_Anpassung : BOOL ;	//Wechsel Standart (Icons, M-Funktionen..) 0=aus, 1=Wechsel
+    _44_Bit1_Spaeneabsaugung : BOOL ;	//Späneabsaugung: 0=aus, 1=ein 
+    _44_Bit2_WZW_Klappe : BOOL ;	//WZW Klappe DN: 0=2 Klappen, 1=1 Tür
+    _44_Bit3_WZW_Ext_Frg : BOOL ;	//WZW Freigabe: 0=aus, 1=ein (Eingang)
+    _44_Bit4_Gewichtsausgl : BOOL ;	//Gewichtsausgleich bei DMCxxHL-Maschinen
+    _44_Bit5_IKZ_2DS_1PUMPE : BOOL ;	//IKZ mit 2 Druckstufen und nur 1 Pumpe
+    _44_Bit6_Verfahrbe_Z_lim : BOOL ;	//Verfahrbereichseinschränkung Z-Achse --> 2.SW-Endschalter Plus
+    _44_Bit7_Kalib_Pt100 : BOOL ;	//Einstellung des Analogen Eingansmodules für PT100 Sensoren Klima/Standard
+    _45_Bit0_Abw_RPwegdrehen : BOOL ;	//Abwahl: Wegdrehen Drehsteller von Rüstplatzposition
+    _45_Bit1_nicht_absenken : BOOL ;	//Kein Absenken zum Drehen bei belegtem Drehsteller
+    _45_Bit2_frei : BOOL ;	
+    _45_Bit3_frei : BOOL ;	
+    _45_Bit4_frei : BOOL ;	
+    _45_Bit5_frei : BOOL ;	
+    _45_Bit6_frei : BOOL ;	
+    _45_Bit7_frei : BOOL ;	
+    _46_Bit0_Vakuumsp_RP : BOOL ;	//Anwahl Vakuumspannung am Rüstplatz
+    _46_Bit1_Scanner_RP : BOOL ;	//Anwahl Flächenscanner am Rüstplatz
+    _46_Bit2_frei : BOOL ;	
+    _46_Bit3_frei : BOOL ;	
+    _46_Bit4_frei : BOOL ;	
+    _46_Bit5_frei : BOOL ;	
+    _46_Bit6_frei : BOOL ;	
+    _46_Bit7_frei : BOOL ;	
+    _47_Bit0_SpPi_GES_Kabine : BOOL ;	//Spuelpistole: Aktivieren der Spuelpistole bei geschlossener Kabinentüre
+    _47_Bit1_frei : BOOL ;	
+    _47_Bit2_frei : BOOL ;	
+    _47_Bit3_frei : BOOL ;	
+    _47_Bit4_frei : BOOL ;	
+    _47_Bit5_frei : BOOL ;	
+    _47_Bit6_frei : BOOL ;	
+    _47_Bit7_frei : BOOL ;	
+    _48_Bit0_Wiko_Mag : BOOL ;	//Einwechseln von Wiegenköpfe über Magazin
+    _48_Bit1_frei : BOOL ;	
+    _48_Bit2_frei : BOOL ;	
+    _48_Bit3_frei : BOOL ;	
+    _48_Bit4_frei : BOOL ;	
+    _48_Bit5_frei : BOOL ;	
+    _48_Bit6_frei : BOOL ;	
+    _48_Bit7_frei : BOOL ;	
+    _49_Bit0_PW_beendet : BOOL ;	//PW-Ablauf: PW beendet vorzeitig mit Hub unten
+    _49_Bit1_PW_Verfahrb : BOOL ;	//Dauerhaft Einschraekung des Verfahrbereiches der Tisch-Achse
+    _49_Bit2_PW_Anwes_Kont : BOOL ;	//Bei Spannkonen wird das Ventil der Paletten-Anwesenheitsk abgeschaltet
+    _49_Bit3_PW_HubPos_1234 : BOOL ;	//PW-Hubstellungs-Erkennung Unten/Mitte/Oben mittels Pos 1+2+3+4
+    _49_Bit4_PW_MPL_Ablau : BOOL ;	//Palette wird nach nicht korrekter Palettenkontrolle angehoben und gereinigt 
+    _49_Bit5_frei : BOOL ;	
+    _49_Bit6_PW_Verfahrb_MFK : BOOL ;	//Einschraenkung des Verfahrbereiches der Tisch-Achse > M-Funktion M153/M154
+    _49_Bit7_frei : BOOL ;	
+    _50_Bit0_AKT_FMS : BOOL ;	//Externer Programmstart Leitrechner
+    _50_Bit1_FMS_PW_one_Pal : BOOL ;	//Signal für externen Leitrechner das Palettenwechsel mit einer Palette erlaubt 	
+    _50_Bit2_frei : BOOL ;	
+    _50_Bit3_frei : BOOL ;	
+    _50_Bit4_frei : BOOL ;	
+    _50_Bit5_frei : BOOL ;	
+    _50_Bit6_frei : BOOL ;	
+    _50_Bit7_frei : BOOL ;	
+    _51_Bit0_RPL_GR_SPV : BOOL ;	//Rüstplatz kann nur bei offenen RPL-Türen gedreht werden/große Spannvorrichtun  
+    _51_Bit1_FD_3BF_SCHM1 : BOOL ;	//FD-Maschine: Softkey für Schmieren 3-Backen-Kraftspannfutter
+    _51_Bit2_RPL_AX_OHNE_EES : BOOL ;	//Rüstplatzachse ohne 0 Grad Endschalter
+    _51_Bit3_RPL_Auflagekont : BOOL ;	//Rüstplatz mit Auflagekontrolle: 0=aus, 1=ein
+    _51_Bit4_RPLT_OHNE_ES : BOOL ;	//Rüstplatztür ohne Endschalter offen
+    _51_Bit5_frei : BOOL ;	
+    _51_Bit6_frei : BOOL ;	
+    _51_Bit7_frei : BOOL ;	
+    _52_Bit0_ROB_OhnePrgCTRL : BOOL ;	//Roboter-Beladung: OHNE Programm-Kontrolle
+    _52_Bit1_ROB_PrgUebern : BOOL ;	//Roboter-Beladung: Programm-Uebergabe bei PW-Freigabe durch Roboter
+    _52_Bit2_EROWA_PROMOT_1 : BOOL ;	//EROWA/PROMOT Anwahl Kabinetüre öffnen ohne Handshake möglich
+    _52_Bit3_PrgAblageOrt : BOOL ;	//Roboter-Beladung: Auswahl NC-Programm-AblageOrt (0=Teileprogramm   1=Werkstück)
+    _52_Bit4_frei : BOOL ;	
+    _52_Bit5_frei : BOOL ;	
+    _52_Bit6_frei : BOOL ;	
+    _52_Bit7_frei : BOOL ;	
+    _53_Bit0_SKEY_No_IdentNr : BOOL ;	//Ergoline: Abwahl der Übertragung der Smartkey-Identnummer
+    _53_Bit1_SKEY_Test_Ident : BOOL ;	//Ergoline: Test der Übertragung der Smartkey-Identnummer
+    _53_Bit2_frei : BOOL ;	
+    _53_Bit3_frei : BOOL ;	
+    _53_Bit4_frei : BOOL ;	
+    _53_Bit5_frei : BOOL ;	
+    _53_Bit6_frei : BOOL ;	
+    _53_Bit7_frei : BOOL ;	
+    _54_Bit0_Soko_KSA_Drucks : BOOL ;	//Soko KSA übergabe Druckstufe 0=BCD/1=INT
+    _54_Bit1_KMTL_M8_BA4 : BOOL ;	//In BA2,3,4 kann M8 nicht aktiviert werden.
+    _54_Bit2_frei : BOOL ;	
+    _54_Bit3_frei : BOOL ;	
+    _54_Bit4_frei : BOOL ;	
+    _54_Bit5_frei : BOOL ;	
+    _54_Bit6_frei : BOOL ;	
+    _54_Bit7_frei : BOOL ;	
+    _55_Bit0_SI_BREMSEN_TEST : BOOL ;	//ABST: SafetyIntegrated mit Bremsen-Test für Y-Achse (HL-Reihe)
+    _55_Bit1_frei : BOOL ;	
+    _55_Bit2_frei : BOOL ;	
+    _55_Bit3_frei : BOOL ;	
+    _55_Bit4_frei : BOOL ;	
+    _55_Bit5_frei : BOOL ;	
+    _55_Bit6_frei : BOOL ;	
+    _55_Bit7_frei : BOOL ;	
+    _56_Bit0_Auswahl_U_Achse : BOOL ;	//Auswahl Komet/Mapal (nur relevant wenn U-Achse angewählt 14512.12 Bit7 == 1)
+    _56_Bit1_Auswahl_UAchse2 : BOOL ;	//Auswahl U-Achse (nur relevant wenn U-Achse angewählt 14512.12 Bit7 == 1)
+    _56_Bit2_WAR_plus_EinlSP : BOOL ;	//Zusätzliche Ausgabe von Einlesesperre mit Meldung oder Warnung 
+    _56_Bit3_frei : BOOL ;	
+    _56_Bit4_frei : BOOL ;	
+    _56_Bit5_frei : BOOL ;	
+    _56_Bit6_frei : BOOL ;	
+    _56_Bit7_frei : BOOL ;	
+    _57_Bit0_FASTEMS_DPDP : BOOL ;	//Fastems externen DPDP-Coupler abwählen 
+    _57_Bit1_frei : BOOL ;	
+    _57_Bit2_frei : BOOL ;	
+    _57_Bit3_frei : BOOL ;	
+    _57_Bit4_frei : BOOL ;	
+    _57_Bit5_frei : BOOL ;	
+    _57_Bit6_frei : BOOL ;	
+    _57_Bit7_frei : BOOL ;	
+    _58_Bit0_SCHWER_ZSP_ATC : BOOL ;	//ATC SL neu: Schwerzerspanung
+    _58_Bit1_BELADUNG_ATC : BOOL ;	//ATC SL neu: Beladungs-ATC
+    _58_Bit2_SONDERBEL_ATC : BOOL ;	//ATC SL neu: Sonderbeladungs-ATC
+    _58_Bit3_frei : BOOL ;	
+    _58_Bit4_frei : BOOL ;	
+    _58_Bit5_frei : BOOL ;	
+    _58_Bit6_frei : BOOL ;	
+    _58_Bit7_frei : BOOL ;	
+    _59_Bit0_YZCOR : BOOL ;	//Wizard Sondermasken: Aktivierung Werkzeugverschleissmaske YZCOR
+    _59_Bit1_frei : BOOL ;	
+    _59_Bit2_frei : BOOL ;	
+    _59_Bit3_frei : BOOL ;	
+    _59_Bit4_frei : BOOL ;	
+    _59_Bit5_frei : BOOL ;	
+    _59_Bit6_frei : BOOL ;	
+    _59_Bit7_frei : BOOL ;	
+    _60_Bit0_WZB_lang : BOOL ;	//WZB: Lange Ausführung (Fehler, wenn Wert > 16384)
+    _60_Bit1_frei : BOOL ;	
+    _60_Bit2_frei : BOOL ;	
+    _60_Bit3_frei : BOOL ;	
+    _60_Bit4_frei : BOOL ;	
+    _60_Bit5_frei : BOOL ;	
+    _60_Bit6_frei : BOOL ;	
+    _60_Bit7_frei : BOOL ;	
+    _61_Bit0_WWoT_Achse_quer : BOOL ;	//WZW ohne TPU: Querhub mit Achse
+    _61_Bit1_WWoT_Doppelmag : BOOL ;	//WZW ohne TPU: Doppelmagazin
+    _61_Bit2_frei : BOOL ;	//WZW ohne TPU: 
+    _61_Bit3_frei : BOOL ;	//WZW ohne TPU: 
+    _61_Bit4_frei : BOOL ;	//WZW ohne TPU: 
+    _61_Bit5_frei : BOOL ;	//WZW ohne TPU: 
+    _61_Bit6_frei : BOOL ;	//WZW ohne TPU: 
+    _61_Bit7_frei : BOOL ;	//WZW ohne TPU: 
+    _62_Bit0_frei : BOOL ;	
+    _62_Bit1_frei : BOOL ;	
+    _62_Bit2_frei : BOOL ;	
+    _62_Bit3_frei : BOOL ;	
+    _62_Bit4_frei : BOOL ;	
+    _62_Bit5_frei : BOOL ;	
+    _62_Bit6_frei : BOOL ;	
+    _62_Bit7_frei : BOOL ;	
+    _63_Bit0_frei : BOOL ;	
+    _63_Bit1_frei : BOOL ;	
+    _63_Bit2_frei : BOOL ;	
+    _63_Bit3_frei : BOOL ;	
+    _63_Bit4_frei : BOOL ;	
+    _63_Bit5_frei : BOOL ;	
+    _63_Bit6_frei : BOOL ;	
+    _63_Bit7_frei : BOOL ;	
+    _64_Bit0_frei : BOOL ;	
+    _64_Bit1_frei : BOOL ;	
+    _64_Bit2_frei : BOOL ;	
+    _64_Bit3_frei : BOOL ;	
+    _64_Bit4_frei : BOOL ;	
+    _64_Bit5_frei : BOOL ;	
+    _64_Bit6_frei : BOOL ;	
+    _64_Bit7_frei : BOOL ;	
+    _65_Bit0_frei : BOOL ;	
+    _65_Bit1_frei : BOOL ;	
+    _65_Bit2_frei : BOOL ;	
+    _65_Bit3_frei : BOOL ;	
+    _65_Bit4_frei : BOOL ;	
+    _65_Bit5_frei : BOOL ;	
+    _65_Bit6_frei : BOOL ;	
+    _65_Bit7_frei : BOOL ;	
+    _66_Bit0_frei : BOOL ;	
+    _66_Bit1_frei : BOOL ;	
+    _66_Bit2_frei : BOOL ;	
+    _66_Bit3_frei : BOOL ;	
+    _66_Bit4_frei : BOOL ;	
+    _66_Bit5_frei : BOOL ;	
+    _66_Bit6_frei : BOOL ;	
+    _66_Bit7_frei : BOOL ;	
+    _67_Bit0_frei : BOOL ;	
+    _67_Bit1_frei : BOOL ;	
+    _67_Bit2_frei : BOOL ;	
+    _67_Bit3_frei : BOOL ;	
+    _67_Bit4_frei : BOOL ;	
+    _67_Bit5_frei : BOOL ;	
+    _67_Bit6_frei : BOOL ;	
+    _67_Bit7_frei : BOOL ;	
+    _68_Bit0_frei : BOOL ;	
+    _68_Bit1_frei : BOOL ;	
+    _68_Bit2_frei : BOOL ;	
+    _68_Bit3_frei : BOOL ;	
+    _68_Bit4_frei : BOOL ;	
+    _68_Bit5_frei : BOOL ;	
+    _68_Bit6_frei : BOOL ;	
+    _68_Bit7_frei : BOOL ;	
+    _69_Bit0_frei : BOOL ;	
+    _69_Bit1_frei : BOOL ;	
+    _69_Bit2_frei : BOOL ;	
+    _69_Bit3_frei : BOOL ;	
+    _69_Bit4_frei : BOOL ;	
+    _69_Bit5_frei : BOOL ;	
+    _69_Bit6_frei : BOOL ;	
+    _69_Bit7_frei : BOOL ;	
+    _70_Bit0_frei : BOOL ;	
+    _70_Bit1_frei : BOOL ;	
+    _70_Bit2_frei : BOOL ;	
+    _70_Bit3_frei : BOOL ;	
+    _70_Bit4_frei : BOOL ;	
+    _70_Bit5_frei : BOOL ;	
+    _70_Bit6_frei : BOOL ;	
+    _70_Bit7_frei : BOOL ;	
+    _71_Bit0_frei : BOOL ;	
+    _71_Bit1_frei : BOOL ;	
+    _71_Bit2_frei : BOOL ;	
+    _71_Bit3_frei : BOOL ;	
+    _71_Bit4_frei : BOOL ;	
+    _71_Bit5_frei : BOOL ;	
+    _71_Bit6_frei : BOOL ;	
+    _71_Bit7_frei : BOOL ;	
+    _72_Bit0_frei : BOOL ;	
+    _72_Bit1_frei : BOOL ;	
+    _72_Bit2_frei : BOOL ;	
+    _72_Bit3_frei : BOOL ;	
+    _72_Bit4_frei : BOOL ;	
+    _72_Bit5_frei : BOOL ;	
+    _72_Bit6_frei : BOOL ;	
+    _72_Bit7_frei : BOOL ;	
+    _73_Bit0_frei : BOOL ;	
+    _73_Bit1_frei : BOOL ;	
+    _73_Bit2_frei : BOOL ;	
+    _73_Bit3_frei : BOOL ;	
+    _73_Bit4_frei : BOOL ;	
+    _73_Bit5_frei : BOOL ;	
+    _73_Bit6_frei : BOOL ;	
+    _73_Bit7_frei : BOOL ;	
+    _74_Bit0_frei : BOOL ;	
+    _74_Bit1_frei : BOOL ;	
+    _74_Bit2_frei : BOOL ;	
+    _74_Bit3_frei : BOOL ;	
+    _74_Bit4_frei : BOOL ;	
+    _74_Bit5_frei : BOOL ;	
+    _74_Bit6_frei : BOOL ;	
+    _74_Bit7_frei : BOOL ;	
+    _75_Bit0_frei : BOOL ;	
+    _75_Bit1_frei : BOOL ;	
+    _75_Bit2_frei : BOOL ;	
+    _75_Bit3_frei : BOOL ;	
+    _75_Bit4_frei : BOOL ;	
+    _75_Bit5_frei : BOOL ;	
+    _75_Bit6_frei : BOOL ;	
+    _75_Bit7_frei : BOOL ;	
+    _76_Bit0_frei : BOOL ;	
+    _76_Bit1_frei : BOOL ;	
+    _76_Bit2_frei : BOOL ;	
+    _76_Bit3_frei : BOOL ;	
+    _76_Bit4_frei : BOOL ;	
+    _76_Bit5_frei : BOOL ;	
+    _76_Bit6_frei : BOOL ;	
+    _76_Bit7_frei : BOOL ;	
+    _77_Bit0_frei : BOOL ;	
+    _77_Bit1_frei : BOOL ;	
+    _77_Bit2_frei : BOOL ;	
+    _77_Bit3_frei : BOOL ;	
+    _77_Bit4_frei : BOOL ;	
+    _77_Bit5_frei : BOOL ;	
+    _77_Bit6_frei : BOOL ;	
+    _77_Bit7_frei : BOOL ;	
+    _78_Bit0_frei : BOOL ;	
+    _78_Bit1_frei : BOOL ;	
+    _78_Bit2_frei : BOOL ;	
+    _78_Bit3_frei : BOOL ;	
+    _78_Bit4_frei : BOOL ;	
+    _78_Bit5_frei : BOOL ;	
+    _78_Bit6_frei : BOOL ;	
+    _78_Bit7_frei : BOOL ;	
+    _79_Bit0_frei : BOOL ;	
+    _79_Bit1_frei : BOOL ;	
+    _79_Bit2_frei : BOOL ;	
+    _79_Bit3_frei : BOOL ;	
+    _79_Bit4_frei : BOOL ;	
+    _79_Bit5_frei : BOOL ;	
+    _79_Bit6_frei : BOOL ;	
+    _79_Bit7_frei : BOOL ;	
+    _80_Bit0_frei : BOOL ;	
+    _80_Bit1_frei : BOOL ;	
+    _80_Bit2_frei : BOOL ;	
+    _80_Bit3_frei : BOOL ;	
+    _80_Bit4_frei : BOOL ;	
+    _80_Bit5_frei : BOOL ;	
+    _80_Bit6_frei : BOOL ;	
+    _80_Bit7_frei : BOOL ;	
+    _81_Bit0_frei : BOOL ;	
+    _81_Bit1_frei : BOOL ;	
+    _81_Bit2_frei : BOOL ;	
+    _81_Bit3_frei : BOOL ;	
+    _81_Bit4_frei : BOOL ;	
+    _81_Bit5_frei : BOOL ;	
+    _81_Bit6_frei : BOOL ;	
+    _81_Bit7_frei : BOOL ;	
+    _82_Bit0_frei : BOOL ;	
+    _82_Bit1_frei : BOOL ;	
+    _82_Bit2_frei : BOOL ;	
+    _82_Bit3_frei : BOOL ;	
+    _82_Bit4_frei : BOOL ;	
+    _82_Bit5_frei : BOOL ;	
+    _82_Bit6_frei : BOOL ;	
+    _82_Bit7_frei : BOOL ;	
+    _83_Bit0_frei : BOOL ;	
+    _83_Bit1_frei : BOOL ;	
+    _83_Bit2_frei : BOOL ;	
+    _83_Bit3_frei : BOOL ;	
+    _83_Bit4_frei : BOOL ;	
+    _83_Bit5_frei : BOOL ;	
+    _83_Bit6_frei : BOOL ;	
+    _83_Bit7_frei : BOOL ;	
+    _84_Bit0_frei : BOOL ;	
+    _84_Bit1_frei : BOOL ;	
+    _84_Bit2_frei : BOOL ;	
+    _84_Bit3_frei : BOOL ;	
+    _84_Bit4_frei : BOOL ;	
+    _84_Bit5_frei : BOOL ;	
+    _84_Bit6_frei : BOOL ;	
+    _84_Bit7_frei : BOOL ;	
+    _85_Bit0_frei : BOOL ;	
+    _85_Bit1_frei : BOOL ;	
+    _85_Bit2_frei : BOOL ;	
+    _85_Bit3_frei : BOOL ;	
+    _85_Bit4_frei : BOOL ;	
+    _85_Bit5_frei : BOOL ;	
+    _85_Bit6_frei : BOOL ;	
+    _85_Bit7_frei : BOOL ;	
+    _86_Bit0_frei : BOOL ;	
+    _86_Bit1_frei : BOOL ;	
+    _86_Bit2_frei : BOOL ;	
+    _86_Bit3_frei : BOOL ;	
+    _86_Bit4_frei : BOOL ;	
+    _86_Bit5_frei : BOOL ;	
+    _86_Bit6_frei : BOOL ;	
+    _86_Bit7_frei : BOOL ;	
+    _87_Bit0_frei : BOOL ;	
+    _87_Bit1_frei : BOOL ;	
+    _87_Bit2_frei : BOOL ;	
+    _87_Bit3_frei : BOOL ;	
+    _87_Bit4_frei : BOOL ;	
+    _87_Bit5_frei : BOOL ;	
+    _87_Bit6_frei : BOOL ;	
+    _87_Bit7_frei : BOOL ;	
+    _88_Bit0_frei : BOOL ;	
+    _88_Bit1_frei : BOOL ;	
+    _88_Bit2_frei : BOOL ;	
+    _88_Bit3_frei : BOOL ;	
+    _88_Bit4_frei : BOOL ;	
+    _88_Bit5_frei : BOOL ;	
+    _88_Bit6_frei : BOOL ;	
+    _88_Bit7_frei : BOOL ;	
+    _89_Bit0_frei : BOOL ;	
+    _89_Bit1_frei : BOOL ;	
+    _89_Bit2_frei : BOOL ;	
+    _89_Bit3_frei : BOOL ;	
+    _89_Bit4_frei : BOOL ;	
+    _89_Bit5_frei : BOOL ;	
+    _89_Bit6_frei : BOOL ;	
+    _89_Bit7_frei : BOOL ;	
+    _90_Bit0_frei : BOOL ;	
+    _90_Bit1_frei : BOOL ;	
+    _90_Bit2_frei : BOOL ;	
+    _90_Bit3_frei : BOOL ;	
+    _90_Bit4_frei : BOOL ;	
+    _90_Bit5_frei : BOOL ;	
+    _90_Bit6_frei : BOOL ;	
+    _90_Bit7_frei : BOOL ;	
+    _91_Bit0_frei : BOOL ;	
+    _91_Bit1_frei : BOOL ;	
+    _91_Bit2_frei : BOOL ;	
+    _91_Bit3_frei : BOOL ;	
+    _91_Bit4_frei : BOOL ;	
+    _91_Bit5_frei : BOOL ;	
+    _91_Bit6_frei : BOOL ;	
+    _91_Bit7_frei : BOOL ;	
+    _92_Bit0_frei : BOOL ;	
+    _92_Bit1_frei : BOOL ;	
+    _92_Bit2_frei : BOOL ;	
+    _92_Bit3_frei : BOOL ;	
+    _92_Bit4_frei : BOOL ;	
+    _92_Bit5_frei : BOOL ;	
+    _92_Bit6_frei : BOOL ;	
+    _92_Bit7_frei : BOOL ;	
+    _93_Bit0_frei : BOOL ;	
+    _93_Bit1_frei : BOOL ;	
+    _93_Bit2_frei : BOOL ;	
+    _93_Bit3_frei : BOOL ;	
+    _93_Bit4_frei : BOOL ;	
+    _93_Bit5_frei : BOOL ;	
+    _93_Bit6_frei : BOOL ;	
+    _93_Bit7_frei : BOOL ;	
+    _94_Bit0_frei : BOOL ;	
+    _94_Bit1_frei : BOOL ;	
+    _94_Bit2_frei : BOOL ;	
+    _94_Bit3_frei : BOOL ;	
+    _94_Bit4_frei : BOOL ;	
+    _94_Bit5_frei : BOOL ;	
+    _94_Bit6_frei : BOOL ;	
+    _94_Bit7_frei : BOOL ;	
+    _95_Bit0_frei : BOOL ;	
+    _95_Bit1_frei : BOOL ;	
+    _95_Bit2_frei : BOOL ;	
+    _95_Bit3_frei : BOOL ;	
+    _95_Bit4_frei : BOOL ;	
+    _95_Bit5_frei : BOOL ;	
+    _95_Bit6_frei : BOOL ;	
+    _95_Bit7_frei : BOOL ;	
+    _96_Bit0_frei : BOOL ;	
+    _96_Bit1_frei : BOOL ;	
+    _96_Bit2_frei : BOOL ;	
+    _96_Bit3_frei : BOOL ;	
+    _96_Bit4_frei : BOOL ;	
+    _96_Bit5_frei : BOOL ;	
+    _96_Bit6_frei : BOOL ;	
+    _96_Bit7_frei : BOOL ;	
+    _97_Bit0_frei : BOOL ;	
+    _97_Bit1_frei : BOOL ;	
+    _97_Bit2_frei : BOOL ;	
+    _97_Bit3_frei : BOOL ;	
+    _97_Bit4_frei : BOOL ;	
+    _97_Bit5_frei : BOOL ;	
+    _97_Bit6_frei : BOOL ;	
+    _97_Bit7_frei : BOOL ;	
+    _98_Bit0_frei : BOOL ;	
+    _98_Bit1_frei : BOOL ;	
+    _98_Bit2_frei : BOOL ;	
+    _98_Bit3_frei : BOOL ;	
+    _98_Bit4_frei : BOOL ;	
+    _98_Bit5_frei : BOOL ;	
+    _98_Bit6_frei : BOOL ;	
+    _98_Bit7_frei : BOOL ;	
+    _99_Bit0_frei : BOOL ;	
+    _99_Bit1_frei : BOOL ;	
+    _99_Bit2_frei : BOOL ;	
+    _99_Bit3_frei : BOOL ;	
+    _99_Bit4_frei : BOOL ;	
+    _99_Bit5_frei : BOOL ;	
+    _99_Bit6_frei : BOOL ;	
+    _99_Bit7_frei : BOOL ;	
+    _100_Bit0_frei : BOOL ;	
+    _100_Bit1_frei : BOOL ;	
+    _100_Bit2_frei : BOOL ;	
+    _100_Bit3_frei : BOOL ;	
+    _100_Bit4_frei : BOOL ;	
+    _100_Bit5_frei : BOOL ;	
+    _100_Bit6_frei : BOOL ;	
+    _100_Bit7_frei : BOOL ;	
+    _101_Bit0_frei : BOOL ;	
+    _101_Bit1_frei : BOOL ;	
+    _101_Bit2_frei : BOOL ;	
+    _101_Bit3_frei : BOOL ;	
+    _101_Bit4_frei : BOOL ;	
+    _101_Bit5_frei : BOOL ;	
+    _101_Bit6_frei : BOOL ;	
+    _101_Bit7_frei : BOOL ;	
+    _102_Bit0_frei : BOOL ;	
+    _102_Bit1_frei : BOOL ;	
+    _102_Bit2_frei : BOOL ;	
+    _102_Bit3_frei : BOOL ;	
+    _102_Bit4_frei : BOOL ;	
+    _102_Bit5_frei : BOOL ;	
+    _102_Bit6_frei : BOOL ;	
+    _102_Bit7_frei : BOOL ;	
+    _103_Bit0_frei : BOOL ;	
+    _103_Bit1_frei : BOOL ;	
+    _103_Bit2_frei : BOOL ;	
+    _103_Bit3_frei : BOOL ;	
+    _103_Bit4_frei : BOOL ;	
+    _103_Bit5_frei : BOOL ;	
+    _103_Bit6_frei : BOOL ;	
+    _103_Bit7_frei : BOOL ;	
+    _104_Bit0_frei : BOOL ;	
+    _104_Bit1_frei : BOOL ;	
+    _104_Bit2_frei : BOOL ;	
+    _104_Bit3_frei : BOOL ;	
+    _104_Bit4_frei : BOOL ;	
+    _104_Bit5_frei : BOOL ;	
+    _104_Bit6_frei : BOOL ;	
+    _104_Bit7_frei : BOOL ;	
+    _105_Bit0_frei : BOOL ;	
+    _105_Bit1_frei : BOOL ;	
+    _105_Bit2_frei : BOOL ;	
+    _105_Bit3_frei : BOOL ;	
+    _105_Bit4_frei : BOOL ;	
+    _105_Bit5_frei : BOOL ;	
+    _105_Bit6_frei : BOOL ;	
+    _105_Bit7_frei : BOOL ;	
+    _106_Bit0_frei : BOOL ;	
+    _106_Bit1_frei : BOOL ;	
+    _106_Bit2_frei : BOOL ;	
+    _106_Bit3_frei : BOOL ;	
+    _106_Bit4_frei : BOOL ;	
+    _106_Bit5_frei : BOOL ;	
+    _106_Bit6_frei : BOOL ;	
+    _106_Bit7_frei : BOOL ;	
+    _107_Bit0_frei : BOOL ;	
+    _107_Bit1_frei : BOOL ;	
+    _107_Bit2_frei : BOOL ;	
+    _107_Bit3_frei : BOOL ;	
+    _107_Bit4_frei : BOOL ;	
+    _107_Bit5_frei : BOOL ;	
+    _107_Bit6_frei : BOOL ;	
+    _107_Bit7_frei : BOOL ;	
+    _108_Bit0_frei : BOOL ;	
+    _108_Bit1_frei : BOOL ;	
+    _108_Bit2_frei : BOOL ;	
+    _108_Bit3_frei : BOOL ;	
+    _108_Bit4_frei : BOOL ;	
+    _108_Bit5_frei : BOOL ;	
+    _108_Bit6_frei : BOOL ;	
+    _108_Bit7_frei : BOOL ;	
+    _109_Bit0_frei : BOOL ;	
+    _109_Bit1_frei : BOOL ;	
+    _109_Bit2_frei : BOOL ;	
+    _109_Bit3_frei : BOOL ;	
+    _109_Bit4_frei : BOOL ;	
+    _109_Bit5_frei : BOOL ;	
+    _109_Bit6_frei : BOOL ;	
+    _109_Bit7_frei : BOOL ;	
+    _110_Bit0_frei : BOOL ;	
+    _110_Bit1_frei : BOOL ;	
+    _110_Bit2_frei : BOOL ;	
+    _110_Bit3_frei : BOOL ;	
+    _110_Bit4_frei : BOOL ;	
+    _110_Bit5_frei : BOOL ;	
+    _110_Bit6_frei : BOOL ;	
+    _110_Bit7_frei : BOOL ;	
+    _111_Bit0_frei : BOOL ;	
+    _111_Bit1_frei : BOOL ;	
+    _111_Bit2_frei : BOOL ;	
+    _111_Bit3_frei : BOOL ;	
+    _111_Bit4_frei : BOOL ;	
+    _111_Bit5_frei : BOOL ;	
+    _111_Bit6_frei : BOOL ;	
+    _111_Bit7_frei : BOOL ;	
+    _112_Bit0_frei : BOOL ;	
+    _112_Bit1_frei : BOOL ;	
+    _112_Bit2_frei : BOOL ;	
+    _112_Bit3_frei : BOOL ;	
+    _112_Bit4_frei : BOOL ;	
+    _112_Bit5_frei : BOOL ;	
+    _112_Bit6_frei : BOOL ;	
+    _112_Bit7_frei : BOOL ;	
+    _113_Bit0_frei : BOOL ;	
+    _113_Bit1_frei : BOOL ;	
+    _113_Bit2_frei : BOOL ;	
+    _113_Bit3_frei : BOOL ;	
+    _113_Bit4_frei : BOOL ;	
+    _113_Bit5_frei : BOOL ;	
+    _113_Bit6_frei : BOOL ;	
+    _113_Bit7_frei : BOOL ;	
+    _114_Bit0_frei : BOOL ;	
+    _114_Bit1_frei : BOOL ;	
+    _114_Bit2_frei : BOOL ;	
+    _114_Bit3_frei : BOOL ;	
+    _114_Bit4_frei : BOOL ;	
+    _114_Bit5_frei : BOOL ;	
+    _114_Bit6_frei : BOOL ;	
+    _114_Bit7_frei : BOOL ;	
+    _115_Bit0_frei : BOOL ;	
+    _115_Bit1_frei : BOOL ;	
+    _115_Bit2_frei : BOOL ;	
+    _115_Bit3_frei : BOOL ;	
+    _115_Bit4_frei : BOOL ;	
+    _115_Bit5_frei : BOOL ;	
+    _115_Bit6_frei : BOOL ;	
+    _115_Bit7_frei : BOOL ;	
+    _116_Bit0_frei : BOOL ;	
+    _116_Bit1_frei : BOOL ;	
+    _116_Bit2_frei : BOOL ;	
+    _116_Bit3_frei : BOOL ;	
+    _116_Bit4_frei : BOOL ;	
+    _116_Bit5_frei : BOOL ;	
+    _116_Bit6_frei : BOOL ;	
+    _116_Bit7_frei : BOOL ;	
+    _117_Bit0_frei : BOOL ;	
+    _117_Bit1_frei : BOOL ;	
+    _117_Bit2_frei : BOOL ;	
+    _117_Bit3_frei : BOOL ;	
+    _117_Bit4_frei : BOOL ;	
+    _117_Bit5_frei : BOOL ;	
+    _117_Bit6_frei : BOOL ;	
+    _117_Bit7_frei : BOOL ;	
+    _118_Bit0_frei : BOOL ;	
+    _118_Bit1_frei : BOOL ;	
+    _118_Bit2_frei : BOOL ;	
+    _118_Bit3_frei : BOOL ;	
+    _118_Bit4_frei : BOOL ;	
+    _118_Bit5_frei : BOOL ;	
+    _118_Bit6_frei : BOOL ;	
+    _118_Bit7_frei : BOOL ;	
+    _119_Bit0_frei : BOOL ;	
+    _119_Bit1_frei : BOOL ;	
+    _119_Bit2_frei : BOOL ;	
+    _119_Bit3_frei : BOOL ;	
+    _119_Bit4_frei : BOOL ;	
+    _119_Bit5_frei : BOOL ;	
+    _119_Bit6_frei : BOOL ;	
+    _119_Bit7_frei : BOOL ;	
+    _120_Bit0_frei : BOOL ;	
+    _120_Bit1_frei : BOOL ;	
+    _120_Bit2_frei : BOOL ;	
+    _120_Bit3_frei : BOOL ;	
+    _120_Bit4_frei : BOOL ;	
+    _120_Bit5_frei : BOOL ;	
+    _120_Bit6_frei : BOOL ;	
+    _120_Bit7_frei : BOOL ;	
+    _121_Bit0_frei : BOOL ;	
+    _121_Bit1_frei : BOOL ;	
+    _121_Bit2_frei : BOOL ;	
+    _121_Bit3_frei : BOOL ;	
+    _121_Bit4_frei : BOOL ;	
+    _121_Bit5_frei : BOOL ;	
+    _121_Bit6_frei : BOOL ;	
+    _121_Bit7_frei : BOOL ;	
+    _122_Bit0_frei : BOOL ;	
+    _122_Bit1_frei : BOOL ;	
+    _122_Bit2_frei : BOOL ;	
+    _122_Bit3_frei : BOOL ;	
+    _122_Bit4_frei : BOOL ;	
+    _122_Bit5_frei : BOOL ;	
+    _122_Bit6_frei : BOOL ;	
+    _122_Bit7_frei : BOOL ;	
+    _123_Bit0_frei : BOOL ;	
+    _123_Bit1_frei : BOOL ;	
+    _123_Bit2_frei : BOOL ;	
+    _123_Bit3_frei : BOOL ;	
+    _123_Bit4_frei : BOOL ;	
+    _123_Bit5_frei : BOOL ;	
+    _123_Bit6_frei : BOOL ;	
+    _123_Bit7_frei : BOOL ;	
+    _124_Bit0_frei : BOOL ;	
+    _124_Bit1_frei : BOOL ;	
+    _124_Bit2_frei : BOOL ;	
+    _124_Bit3_frei : BOOL ;	
+    _124_Bit4_frei : BOOL ;	
+    _124_Bit5_frei : BOOL ;	
+    _124_Bit6_frei : BOOL ;	
+    _124_Bit7_frei : BOOL ;	
+    _125_Bit0_frei : BOOL ;	
+    _125_Bit1_frei : BOOL ;	
+    _125_Bit2_frei : BOOL ;	
+    _125_Bit3_frei : BOOL ;	
+    _125_Bit4_frei : BOOL ;	
+    _125_Bit5_frei : BOOL ;	
+    _125_Bit6_frei : BOOL ;	
+    _125_Bit7_frei : BOOL ;	
+    _126_Bit0_frei : BOOL ;	
+    _126_Bit1_frei : BOOL ;	
+    _126_Bit2_frei : BOOL ;	
+    _126_Bit3_frei : BOOL ;	
+    _126_Bit4_frei : BOOL ;	
+    _126_Bit5_frei : BOOL ;	
+    _126_Bit6_frei : BOOL ;	
+    _126_Bit7_frei : BOOL ;	
+    _127_Bit0_frei : BOOL ;	
+    _127_Bit1_frei : BOOL ;	
+    _127_Bit2_frei : BOOL ;	
+    _127_Bit3_frei : BOOL ;	
+    _127_Bit4_frei : BOOL ;	
+    _127_Bit5_frei : BOOL ;	
+    _127_Bit6_frei : BOOL ;	
+    _127_Bit7_frei : BOOL ;	
+    _128_Bit0_frei : BOOL ;	
+    _128_Bit1_frei : BOOL ;	
+    _128_Bit2_frei : BOOL ;	
+    _128_Bit3_frei : BOOL ;	
+    _128_Bit4_frei : BOOL ;	
+    _128_Bit5_frei : BOOL ;	
+    _128_Bit6_frei : BOOL ;	
+    _128_Bit7_frei : BOOL ;	
+    _129_Bit0_frei : BOOL ;	
+    _129_Bit1_frei : BOOL ;	
+    _129_Bit2_frei : BOOL ;	
+    _129_Bit3_frei : BOOL ;	
+    _129_Bit4_frei : BOOL ;	
+    _129_Bit5_frei : BOOL ;	
+    _129_Bit6_frei : BOOL ;	
+    _129_Bit7_frei : BOOL ;	
+    _130_Bit0_frei : BOOL ;	
+    _130_Bit1_frei : BOOL ;	
+    _130_Bit2_frei : BOOL ;	
+    _130_Bit3_frei : BOOL ;	
+    _130_Bit4_frei : BOOL ;	
+    _130_Bit5_frei : BOOL ;	
+    _130_Bit6_frei : BOOL ;	
+    _130_Bit7_frei : BOOL ;	
+    _131_Bit0_frei : BOOL ;	
+    _131_Bit1_frei : BOOL ;	
+    _131_Bit2_frei : BOOL ;	
+    _131_Bit3_frei : BOOL ;	
+    _131_Bit4_frei : BOOL ;	
+    _131_Bit5_frei : BOOL ;	
+    _131_Bit6_frei : BOOL ;	
+    _131_Bit7_frei : BOOL ;	
+    _132_Bit0_frei : BOOL ;	
+    _132_Bit1_frei : BOOL ;	
+    _132_Bit2_frei : BOOL ;	
+    _132_Bit3_frei : BOOL ;	
+    _132_Bit4_frei : BOOL ;	
+    _132_Bit5_frei : BOOL ;	
+    _132_Bit6_frei : BOOL ;	
+    _132_Bit7_frei : BOOL ;	
+    _133_Bit0_frei : BOOL ;	
+    _133_Bit1_frei : BOOL ;	
+    _133_Bit2_frei : BOOL ;	
+    _133_Bit3_frei : BOOL ;	
+    _133_Bit4_frei : BOOL ;	
+    _133_Bit5_frei : BOOL ;	
+    _133_Bit6_frei : BOOL ;	
+    _133_Bit7_frei : BOOL ;	
+    _134_Bit0_frei : BOOL ;	
+    _134_Bit1_frei : BOOL ;	
+    _134_Bit2_frei : BOOL ;	
+    _134_Bit3_frei : BOOL ;	
+    _134_Bit4_frei : BOOL ;	
+    _134_Bit5_frei : BOOL ;	
+    _134_Bit6_frei : BOOL ;	
+    _134_Bit7_frei : BOOL ;	
+    _135_Bit0_frei : BOOL ;	
+    _135_Bit1_frei : BOOL ;	
+    _135_Bit2_frei : BOOL ;	
+    _135_Bit3_frei : BOOL ;	
+    _135_Bit4_frei : BOOL ;	
+    _135_Bit5_frei : BOOL ;	
+    _135_Bit6_frei : BOOL ;	
+    _135_Bit7_frei : BOOL ;	
+    _136_Bit0_frei : BOOL ;	
+    _136_Bit1_frei : BOOL ;	
+    _136_Bit2_frei : BOOL ;	
+    _136_Bit3_frei : BOOL ;	
+    _136_Bit4_frei : BOOL ;	
+    _136_Bit5_frei : BOOL ;	
+    _136_Bit6_frei : BOOL ;	
+    _136_Bit7_frei : BOOL ;	
+    _137_Bit0_frei : BOOL ;	
+    _137_Bit1_frei : BOOL ;	
+    _137_Bit2_frei : BOOL ;	
+    _137_Bit3_frei : BOOL ;	
+    _137_Bit4_frei : BOOL ;	
+    _137_Bit5_frei : BOOL ;	
+    _137_Bit6_frei : BOOL ;	
+    _137_Bit7_frei : BOOL ;	
+    _138_Bit0_frei : BOOL ;	
+    _138_Bit1_frei : BOOL ;	
+    _138_Bit2_frei : BOOL ;	
+    _138_Bit3_frei : BOOL ;	
+    _138_Bit4_frei : BOOL ;	
+    _138_Bit5_frei : BOOL ;	
+    _138_Bit6_frei : BOOL ;	
+    _138_Bit7_frei : BOOL ;	
+    _139_Bit0_frei : BOOL ;	
+    _139_Bit1_frei : BOOL ;	
+    _139_Bit2_frei : BOOL ;	
+    _139_Bit3_frei : BOOL ;	
+    _139_Bit4_frei : BOOL ;	
+    _139_Bit5_frei : BOOL ;	
+    _139_Bit6_frei : BOOL ;	
+    _139_Bit7_frei : BOOL ;	
+    _140_Bit0_frei : BOOL ;	
+    _140_Bit1_frei : BOOL ;	
+    _140_Bit2_frei : BOOL ;	
+    _140_Bit3_frei : BOOL ;	
+    _140_Bit4_frei : BOOL ;	
+    _140_Bit5_frei : BOOL ;	
+    _140_Bit6_frei : BOOL ;	
+    _140_Bit7_frei : BOOL ;	
+    _141_Bit0_frei : BOOL ;	
+    _141_Bit1_frei : BOOL ;	
+    _141_Bit2_frei : BOOL ;	
+    _141_Bit3_frei : BOOL ;	
+    _141_Bit4_frei : BOOL ;	
+    _141_Bit5_frei : BOOL ;	
+    _141_Bit6_frei : BOOL ;	
+    _141_Bit7_frei : BOOL ;	
+    _142_Bit0_frei : BOOL ;	
+    _142_Bit1_frei : BOOL ;	
+    _142_Bit2_frei : BOOL ;	
+    _142_Bit3_frei : BOOL ;	
+    _142_Bit4_frei : BOOL ;	
+    _142_Bit5_frei : BOOL ;	
+    _142_Bit6_frei : BOOL ;	
+    _142_Bit7_frei : BOOL ;	
+    _143_Bit0_frei : BOOL ;	
+    _143_Bit1_frei : BOOL ;	
+    _143_Bit2_frei : BOOL ;	
+    _143_Bit3_frei : BOOL ;	
+    _143_Bit4_frei : BOOL ;	
+    _143_Bit5_frei : BOOL ;	
+    _143_Bit6_frei : BOOL ;	
+    _143_Bit7_frei : BOOL ;	
+    _144_Bit0_frei : BOOL ;	
+    _144_Bit1_frei : BOOL ;	
+    _144_Bit2_frei : BOOL ;	
+    _144_Bit3_frei : BOOL ;	
+    _144_Bit4_frei : BOOL ;	
+    _144_Bit5_frei : BOOL ;	
+    _144_Bit6_frei : BOOL ;	
+    _144_Bit7_frei : BOOL ;	
+    _145_Bit0_frei : BOOL ;	
+    _145_Bit1_frei : BOOL ;	
+    _145_Bit2_frei : BOOL ;	
+    _145_Bit3_frei : BOOL ;	
+    _145_Bit4_frei : BOOL ;	
+    _145_Bit5_frei : BOOL ;	
+    _145_Bit6_frei : BOOL ;	
+    _145_Bit7_frei : BOOL ;	
+    _146_Bit0_frei : BOOL ;	
+    _146_Bit1_frei : BOOL ;	
+    _146_Bit2_frei : BOOL ;	
+    _146_Bit3_frei : BOOL ;	
+    _146_Bit4_frei : BOOL ;	
+    _146_Bit5_frei : BOOL ;	
+    _146_Bit6_frei : BOOL ;	
+    _146_Bit7_frei : BOOL ;	
+    _147_Bit0_frei : BOOL ;	
+    _147_Bit1_frei : BOOL ;	
+    _147_Bit2_frei : BOOL ;	
+    _147_Bit3_frei : BOOL ;	
+    _147_Bit4_frei : BOOL ;	
+    _147_Bit5_frei : BOOL ;	
+    _147_Bit6_frei : BOOL ;	
+    _147_Bit7_frei : BOOL ;	
+    _148_Bit0_frei : BOOL ;	
+    _148_Bit1_frei : BOOL ;	
+    _148_Bit2_frei : BOOL ;	
+    _148_Bit3_frei : BOOL ;	
+    _148_Bit4_frei : BOOL ;	
+    _148_Bit5_frei : BOOL ;	
+    _148_Bit6_frei : BOOL ;	
+    _148_Bit7_frei : BOOL ;	
+    _149_Bit0_frei : BOOL ;	
+    _149_Bit1_frei : BOOL ;	
+    _149_Bit2_frei : BOOL ;	
+    _149_Bit3_frei : BOOL ;	
+    _149_Bit4_frei : BOOL ;	
+    _149_Bit5_frei : BOOL ;	
+    _149_Bit6_frei : BOOL ;	
+    _149_Bit7_frei : BOOL ;	
+    _150_Bit0_frei : BOOL ;	
+    _150_Bit1_frei : BOOL ;	
+    _150_Bit2_frei : BOOL ;	
+    _150_Bit3_frei : BOOL ;	
+    _150_Bit4_frei : BOOL ;	
+    _150_Bit5_frei : BOOL ;	
+    _150_Bit6_frei : BOOL ;	
+    _150_Bit7_frei : BOOL ;	
+    _151_Bit0_frei : BOOL ;	
+    _151_Bit1_frei : BOOL ;	
+    _151_Bit2_frei : BOOL ;	
+    _151_Bit3_frei : BOOL ;	
+    _151_Bit4_frei : BOOL ;	
+    _151_Bit5_frei : BOOL ;	
+    _151_Bit6_frei : BOOL ;	
+    _151_Bit7_frei : BOOL ;	
+    _152_Bit0_frei : BOOL ;	
+    _152_Bit1_frei : BOOL ;	
+    _152_Bit2_frei : BOOL ;	
+    _152_Bit3_frei : BOOL ;	
+    _152_Bit4_frei : BOOL ;	
+    _152_Bit5_frei : BOOL ;	
+    _152_Bit6_frei : BOOL ;	
+    _152_Bit7_frei : BOOL ;	
+    _153_Bit0_frei : BOOL ;	
+    _153_Bit1_frei : BOOL ;	
+    _153_Bit2_frei : BOOL ;	
+    _153_Bit3_frei : BOOL ;	
+    _153_Bit4_frei : BOOL ;	
+    _153_Bit5_frei : BOOL ;	
+    _153_Bit6_frei : BOOL ;	
+    _153_Bit7_frei : BOOL ;	
+    _154_Bit0_frei : BOOL ;	
+    _154_Bit1_frei : BOOL ;	
+    _154_Bit2_frei : BOOL ;	
+    _154_Bit3_frei : BOOL ;	
+    _154_Bit4_frei : BOOL ;	
+    _154_Bit5_frei : BOOL ;	
+    _154_Bit6_frei : BOOL ;	
+    _154_Bit7_frei : BOOL ;	
+    _155_Bit0_frei : BOOL ;	
+    _155_Bit1_frei : BOOL ;	
+    _155_Bit2_frei : BOOL ;	
+    _155_Bit3_frei : BOOL ;	
+    _155_Bit4_frei : BOOL ;	
+    _155_Bit5_frei : BOOL ;	
+    _155_Bit6_frei : BOOL ;	
+    _155_Bit7_frei : BOOL ;	
+    _156_Bit0_frei : BOOL ;	
+    _156_Bit1_frei : BOOL ;	
+    _156_Bit2_frei : BOOL ;	
+    _156_Bit3_frei : BOOL ;	
+    _156_Bit4_frei : BOOL ;	
+    _156_Bit5_frei : BOOL ;	
+    _156_Bit6_frei : BOOL ;	
+    _156_Bit7_frei : BOOL ;	
+    _157_Bit0_frei : BOOL ;	
+    _157_Bit1_frei : BOOL ;	
+    _157_Bit2_frei : BOOL ;	
+    _157_Bit3_frei : BOOL ;	
+    _157_Bit4_frei : BOOL ;	
+    _157_Bit5_frei : BOOL ;	
+    _157_Bit6_frei : BOOL ;	
+    _157_Bit7_frei : BOOL ;	
+    _158_Bit0_frei : BOOL ;	
+    _158_Bit1_frei : BOOL ;	
+    _158_Bit2_frei : BOOL ;	
+    _158_Bit3_frei : BOOL ;	
+    _158_Bit4_frei : BOOL ;	
+    _158_Bit5_frei : BOOL ;	
+    _158_Bit6_frei : BOOL ;	
+    _158_Bit7_frei : BOOL ;	
+    _159_Bit0_frei : BOOL ;	
+    _159_Bit1_frei : BOOL ;	
+    _159_Bit2_frei : BOOL ;	
+    _159_Bit3_frei : BOOL ;	
+    _159_Bit4_frei : BOOL ;	
+    _159_Bit5_frei : BOOL ;	
+    _159_Bit6_frei : BOOL ;	
+    _159_Bit7_frei : BOOL ;	
+    _160_Bit0_frei : BOOL ;	
+    _160_Bit1_frei : BOOL ;	
+    _160_Bit2_frei : BOOL ;	
+    _160_Bit3_frei : BOOL ;	
+    _160_Bit4_frei : BOOL ;	
+    _160_Bit5_frei : BOOL ;	
+    _160_Bit6_frei : BOOL ;	
+    _160_Bit7_frei : BOOL ;	
+    _161_Bit0_frei : BOOL ;	
+    _161_Bit1_frei : BOOL ;	
+    _161_Bit2_frei : BOOL ;	
+    _161_Bit3_frei : BOOL ;	
+    _161_Bit4_frei : BOOL ;	
+    _161_Bit5_frei : BOOL ;	
+    _161_Bit6_frei : BOOL ;	
+    _161_Bit7_frei : BOOL ;	
+    _162_Bit0_frei : BOOL ;	
+    _162_Bit1_frei : BOOL ;	
+    _162_Bit2_frei : BOOL ;	
+    _162_Bit3_frei : BOOL ;	
+    _162_Bit4_frei : BOOL ;	
+    _162_Bit5_frei : BOOL ;	
+    _162_Bit6_frei : BOOL ;	
+    _162_Bit7_frei : BOOL ;	
+    _163_Bit0_frei : BOOL ;	
+    _163_Bit1_frei : BOOL ;	
+    _163_Bit2_frei : BOOL ;	
+    _163_Bit3_frei : BOOL ;	
+    _163_Bit4_frei : BOOL ;	
+    _163_Bit5_frei : BOOL ;	
+    _163_Bit6_frei : BOOL ;	
+    _163_Bit7_frei : BOOL ;	
+    _164_Bit0_frei : BOOL ;	
+    _164_Bit1_frei : BOOL ;	
+    _164_Bit2_frei : BOOL ;	
+    _164_Bit3_frei : BOOL ;	
+    _164_Bit4_frei : BOOL ;	
+    _164_Bit5_frei : BOOL ;	
+    _164_Bit6_frei : BOOL ;	
+    _164_Bit7_frei : BOOL ;	
+    _165_Bit0_frei : BOOL ;	
+    _165_Bit1_frei : BOOL ;	
+    _165_Bit2_frei : BOOL ;	
+    _165_Bit3_frei : BOOL ;	
+    _165_Bit4_frei : BOOL ;	
+    _165_Bit5_frei : BOOL ;	
+    _165_Bit6_frei : BOOL ;	
+    _165_Bit7_frei : BOOL ;	
+    _166_Bit0_frei : BOOL ;	
+    _166_Bit1_frei : BOOL ;	
+    _166_Bit2_frei : BOOL ;	
+    _166_Bit3_frei : BOOL ;	
+    _166_Bit4_frei : BOOL ;	
+    _166_Bit5_frei : BOOL ;	
+    _166_Bit6_frei : BOOL ;	
+    _166_Bit7_frei : BOOL ;	
+    _167_Bit0_frei : BOOL ;	
+    _167_Bit1_frei : BOOL ;	
+    _167_Bit2_frei : BOOL ;	
+    _167_Bit3_frei : BOOL ;	
+    _167_Bit4_frei : BOOL ;	
+    _167_Bit5_frei : BOOL ;	
+    _167_Bit6_frei : BOOL ;	
+    _167_Bit7_frei : BOOL ;	
+    _168_Bit0_frei : BOOL ;	
+    _168_Bit1_frei : BOOL ;	
+    _168_Bit2_frei : BOOL ;	
+    _168_Bit3_frei : BOOL ;	
+    _168_Bit4_frei : BOOL ;	
+    _168_Bit5_frei : BOOL ;	
+    _168_Bit6_frei : BOOL ;	
+    _168_Bit7_frei : BOOL ;	
+    _169_Bit0_frei : BOOL ;	
+    _169_Bit1_frei : BOOL ;	
+    _169_Bit2_frei : BOOL ;	
+    _169_Bit3_frei : BOOL ;	
+    _169_Bit4_frei : BOOL ;	
+    _169_Bit5_frei : BOOL ;	
+    _169_Bit6_frei : BOOL ;	
+    _169_Bit7_frei : BOOL ;	
+    _170_Bit0_frei : BOOL ;	
+    _170_Bit1_frei : BOOL ;	
+    _170_Bit2_frei : BOOL ;	
+    _170_Bit3_frei : BOOL ;	
+    _170_Bit4_frei : BOOL ;	
+    _170_Bit5_frei : BOOL ;	
+    _170_Bit6_frei : BOOL ;	
+    _170_Bit7_frei : BOOL ;	
+    _171_Bit0_frei : BOOL ;	
+    _171_Bit1_frei : BOOL ;	
+    _171_Bit2_frei : BOOL ;	
+    _171_Bit3_frei : BOOL ;	
+    _171_Bit4_frei : BOOL ;	
+    _171_Bit5_frei : BOOL ;	
+    _171_Bit6_frei : BOOL ;	
+    _171_Bit7_frei : BOOL ;	
+    _172_Bit0_frei : BOOL ;	
+    _172_Bit1_frei : BOOL ;	
+    _172_Bit2_frei : BOOL ;	
+    _172_Bit3_frei : BOOL ;	
+    _172_Bit4_frei : BOOL ;	
+    _172_Bit5_frei : BOOL ;	
+    _172_Bit6_frei : BOOL ;	
+    _172_Bit7_frei : BOOL ;	
+    _173_Bit0_frei : BOOL ;	
+    _173_Bit1_frei : BOOL ;	
+    _173_Bit2_frei : BOOL ;	
+    _173_Bit3_frei : BOOL ;	
+    _173_Bit4_frei : BOOL ;	
+    _173_Bit5_frei : BOOL ;	
+    _173_Bit6_frei : BOOL ;	
+    _173_Bit7_frei : BOOL ;	
+    _174_Bit0_frei : BOOL ;	
+    _174_Bit1_frei : BOOL ;	
+    _174_Bit2_frei : BOOL ;	
+    _174_Bit3_frei : BOOL ;	
+    _174_Bit4_frei : BOOL ;	
+    _174_Bit5_frei : BOOL ;	
+    _174_Bit6_frei : BOOL ;	
+    _174_Bit7_frei : BOOL ;	
+    _175_Bit0_frei : BOOL ;	
+    _175_Bit1_frei : BOOL ;	
+    _175_Bit2_frei : BOOL ;	
+    _175_Bit3_frei : BOOL ;	
+    _175_Bit4_frei : BOOL ;	
+    _175_Bit5_frei : BOOL ;	
+    _175_Bit6_frei : BOOL ;	
+    _175_Bit7_frei : BOOL ;	
+    _176_Bit0_frei : BOOL ;	
+    _176_Bit1_frei : BOOL ;	
+    _176_Bit2_frei : BOOL ;	
+    _176_Bit3_frei : BOOL ;	
+    _176_Bit4_frei : BOOL ;	
+    _176_Bit5_frei : BOOL ;	
+    _176_Bit6_frei : BOOL ;	
+    _176_Bit7_frei : BOOL ;	
+    _177_Bit0_frei : BOOL ;	
+    _177_Bit1_frei : BOOL ;	
+    _177_Bit2_frei : BOOL ;	
+    _177_Bit3_frei : BOOL ;	
+    _177_Bit4_frei : BOOL ;	
+    _177_Bit5_frei : BOOL ;	
+    _177_Bit6_frei : BOOL ;	
+    _177_Bit7_frei : BOOL ;	
+    _178_Bit0_frei : BOOL ;	
+    _178_Bit1_frei : BOOL ;	
+    _178_Bit2_frei : BOOL ;	
+    _178_Bit3_frei : BOOL ;	
+    _178_Bit4_frei : BOOL ;	
+    _178_Bit5_frei : BOOL ;	
+    _178_Bit6_frei : BOOL ;	
+    _178_Bit7_frei : BOOL ;	
+    _179_Bit0_frei : BOOL ;	
+    _179_Bit1_frei : BOOL ;	
+    _179_Bit2_frei : BOOL ;	
+    _179_Bit3_frei : BOOL ;	
+    _179_Bit4_frei : BOOL ;	
+    _179_Bit5_frei : BOOL ;	
+    _179_Bit6_frei : BOOL ;	
+    _179_Bit7_frei : BOOL ;	
+    _180_Bit0_frei : BOOL ;	
+    _180_Bit1_frei : BOOL ;	
+    _180_Bit2_frei : BOOL ;	
+    _180_Bit3_frei : BOOL ;	
+    _180_Bit4_frei : BOOL ;	
+    _180_Bit5_frei : BOOL ;	
+    _180_Bit6_frei : BOOL ;	
+    _180_Bit7_frei : BOOL ;	
+    _181_Bit0_frei : BOOL ;	
+    _181_Bit1_frei : BOOL ;	
+    _181_Bit2_frei : BOOL ;	
+    _181_Bit3_frei : BOOL ;	
+    _181_Bit4_frei : BOOL ;	
+    _181_Bit5_frei : BOOL ;	
+    _181_Bit6_frei : BOOL ;	
+    _181_Bit7_frei : BOOL ;	
+    _182_Bit0_frei : BOOL ;	
+    _182_Bit1_frei : BOOL ;	
+    _182_Bit2_frei : BOOL ;	
+    _182_Bit3_frei : BOOL ;	
+    _182_Bit4_frei : BOOL ;	
+    _182_Bit5_frei : BOOL ;	
+    _182_Bit6_frei : BOOL ;	
+    _182_Bit7_frei : BOOL ;	
+    _183_Bit0_frei : BOOL ;	
+    _183_Bit1_frei : BOOL ;	
+    _183_Bit2_frei : BOOL ;	
+    _183_Bit3_frei : BOOL ;	
+    _183_Bit4_frei : BOOL ;	
+    _183_Bit5_frei : BOOL ;	
+    _183_Bit6_frei : BOOL ;	
+    _183_Bit7_frei : BOOL ;	
+    _184_Bit0_frei : BOOL ;	
+    _184_Bit1_frei : BOOL ;	
+    _184_Bit2_frei : BOOL ;	
+    _184_Bit3_frei : BOOL ;	
+    _184_Bit4_frei : BOOL ;	
+    _184_Bit5_frei : BOOL ;	
+    _184_Bit6_frei : BOOL ;	
+    _184_Bit7_frei : BOOL ;	
+    _185_Bit0_frei : BOOL ;	
+    _185_Bit1_frei : BOOL ;	
+    _185_Bit2_frei : BOOL ;	
+    _185_Bit3_frei : BOOL ;	
+    _185_Bit4_frei : BOOL ;	
+    _185_Bit5_frei : BOOL ;	
+    _185_Bit6_frei : BOOL ;	
+    _185_Bit7_frei : BOOL ;	
+    _186_Bit0_frei : BOOL ;	
+    _186_Bit1_frei : BOOL ;	
+    _186_Bit2_frei : BOOL ;	
+    _186_Bit3_frei : BOOL ;	
+    _186_Bit4_frei : BOOL ;	
+    _186_Bit5_frei : BOOL ;	
+    _186_Bit6_frei : BOOL ;	
+    _186_Bit7_frei : BOOL ;	
+    _187_Bit0_frei : BOOL ;	
+    _187_Bit1_frei : BOOL ;	
+    _187_Bit2_frei : BOOL ;	
+    _187_Bit3_frei : BOOL ;	
+    _187_Bit4_frei : BOOL ;	
+    _187_Bit5_frei : BOOL ;	
+    _187_Bit6_frei : BOOL ;	
+    _187_Bit7_frei : BOOL ;	
+    _188_Bit0_frei : BOOL ;	
+    _188_Bit1_frei : BOOL ;	
+    _188_Bit2_frei : BOOL ;	
+    _188_Bit3_frei : BOOL ;	
+    _188_Bit4_frei : BOOL ;	
+    _188_Bit5_frei : BOOL ;	
+    _188_Bit6_frei : BOOL ;	
+    _188_Bit7_frei : BOOL ;	
+    _189_Bit0_frei : BOOL ;	
+    _189_Bit1_frei : BOOL ;	
+    _189_Bit2_frei : BOOL ;	
+    _189_Bit3_frei : BOOL ;	
+    _189_Bit4_frei : BOOL ;	
+    _189_Bit5_frei : BOOL ;	
+    _189_Bit6_frei : BOOL ;	
+    _189_Bit7_frei : BOOL ;	
+    _190_Bit0_frei : BOOL ;	
+    _190_Bit1_frei : BOOL ;	
+    _190_Bit2_frei : BOOL ;	
+    _190_Bit3_frei : BOOL ;	
+    _190_Bit4_frei : BOOL ;	
+    _190_Bit5_frei : BOOL ;	
+    _190_Bit6_frei : BOOL ;	
+    _190_Bit7_frei : BOOL ;	
+    _191_Bit0_frei : BOOL ;	
+    _191_Bit1_frei : BOOL ;	
+    _191_Bit2_frei : BOOL ;	
+    _191_Bit3_frei : BOOL ;	
+    _191_Bit4_frei : BOOL ;	
+    _191_Bit5_frei : BOOL ;	
+    _191_Bit6_frei : BOOL ;	
+    _191_Bit7_frei : BOOL ;	
+    _192_Bit0_frei : BOOL ;	
+    _192_Bit1_frei : BOOL ;	
+    _192_Bit2_frei : BOOL ;	
+    _192_Bit3_frei : BOOL ;	
+    _192_Bit4_frei : BOOL ;	
+    _192_Bit5_frei : BOOL ;	
+    _192_Bit6_frei : BOOL ;	
+    _192_Bit7_frei : BOOL ;	
+    _193_Bit0_frei : BOOL ;	
+    _193_Bit1_frei : BOOL ;	
+    _193_Bit2_frei : BOOL ;	
+    _193_Bit3_frei : BOOL ;	
+    _193_Bit4_frei : BOOL ;	
+    _193_Bit5_frei : BOOL ;	
+    _193_Bit6_frei : BOOL ;	
+    _193_Bit7_frei : BOOL ;	
+    _194_Bit0_frei : BOOL ;	
+    _194_Bit1_frei : BOOL ;	
+    _194_Bit2_frei : BOOL ;	
+    _194_Bit3_frei : BOOL ;	
+    _194_Bit4_frei : BOOL ;	
+    _194_Bit5_frei : BOOL ;	
+    _194_Bit6_frei : BOOL ;	
+    _194_Bit7_frei : BOOL ;	
+    _195_Bit0_frei : BOOL ;	
+    _195_Bit1_frei : BOOL ;	
+    _195_Bit2_frei : BOOL ;	
+    _195_Bit3_frei : BOOL ;	
+    _195_Bit4_frei : BOOL ;	
+    _195_Bit5_frei : BOOL ;	
+    _195_Bit6_frei : BOOL ;	
+    _195_Bit7_frei : BOOL ;	
+    _196_Bit0_frei : BOOL ;	
+    _196_Bit1_frei : BOOL ;	
+    _196_Bit2_frei : BOOL ;	
+    _196_Bit3_frei : BOOL ;	
+    _196_Bit4_frei : BOOL ;	
+    _196_Bit5_frei : BOOL ;	
+    _196_Bit6_frei : BOOL ;	
+    _196_Bit7_frei : BOOL ;	
+    _197_Bit0_frei : BOOL ;	
+    _197_Bit1_frei : BOOL ;	
+    _197_Bit2_frei : BOOL ;	
+    _197_Bit3_frei : BOOL ;	
+    _197_Bit4_frei : BOOL ;	
+    _197_Bit5_frei : BOOL ;	
+    _197_Bit6_frei : BOOL ;	
+    _197_Bit7_frei : BOOL ;	
+    _198_Bit0_frei : BOOL ;	
+    _198_Bit1_frei : BOOL ;	
+    _198_Bit2_frei : BOOL ;	
+    _198_Bit3_frei : BOOL ;	
+    _198_Bit4_frei : BOOL ;	
+    _198_Bit5_frei : BOOL ;	
+    _198_Bit6_frei : BOOL ;	
+    _198_Bit7_frei : BOOL ;	
+    _199_Bit0_frei : BOOL ;	
+    _199_Bit1_frei : BOOL ;	
+    _199_Bit2_frei : BOOL ;	
+    _199_Bit3_frei : BOOL ;	
+    _199_Bit4_frei : BOOL ;	
+    _199_Bit5_frei : BOOL ;	
+    _199_Bit6_frei : BOOL ;	
+    _199_Bit7_frei : BOOL ;	
+    _200_Bit0_frei : BOOL ;	
+    _200_Bit1_frei : BOOL ;	
+    _200_Bit2_frei : BOOL ;	
+    _200_Bit3_frei : BOOL ;	
+    _200_Bit4_frei : BOOL ;	
+    _200_Bit5_frei : BOOL ;	
+    _200_Bit6_frei : BOOL ;	
+    _200_Bit7_frei : BOOL ;	
+    _201_Bit0_frei : BOOL ;	
+    _201_Bit1_frei : BOOL ;	
+    _201_Bit2_frei : BOOL ;	
+    _201_Bit3_frei : BOOL ;	
+    _201_Bit4_frei : BOOL ;	
+    _201_Bit5_frei : BOOL ;	
+    _201_Bit6_frei : BOOL ;	
+    _201_Bit7_frei : BOOL ;	
+    _202_Bit0_frei : BOOL ;	
+    _202_Bit1_frei : BOOL ;	
+    _202_Bit2_frei : BOOL ;	
+    _202_Bit3_frei : BOOL ;	
+    _202_Bit4_frei : BOOL ;	
+    _202_Bit5_frei : BOOL ;	
+    _202_Bit6_frei : BOOL ;	
+    _202_Bit7_frei : BOOL ;	
+    _203_Bit0_frei : BOOL ;	
+    _203_Bit1_frei : BOOL ;	
+    _203_Bit2_frei : BOOL ;	
+    _203_Bit3_frei : BOOL ;	
+    _203_Bit4_frei : BOOL ;	
+    _203_Bit5_frei : BOOL ;	
+    _203_Bit6_frei : BOOL ;	
+    _203_Bit7_frei : BOOL ;	
+    _204_Bit0_frei : BOOL ;	
+    _204_Bit1_frei : BOOL ;	
+    _204_Bit2_frei : BOOL ;	
+    _204_Bit3_frei : BOOL ;	
+    _204_Bit4_frei : BOOL ;	
+    _204_Bit5_frei : BOOL ;	
+    _204_Bit6_frei : BOOL ;	
+    _204_Bit7_frei : BOOL ;	
+    _205_Bit0_frei : BOOL ;	
+    _205_Bit1_frei : BOOL ;	
+    _205_Bit2_frei : BOOL ;	
+    _205_Bit3_frei : BOOL ;	
+    _205_Bit4_frei : BOOL ;	
+    _205_Bit5_frei : BOOL ;	
+    _205_Bit6_frei : BOOL ;	
+    _205_Bit7_frei : BOOL ;	
+    _206_Bit0_frei : BOOL ;	
+    _206_Bit1_frei : BOOL ;	
+    _206_Bit2_frei : BOOL ;	
+    _206_Bit3_frei : BOOL ;	
+    _206_Bit4_frei : BOOL ;	
+    _206_Bit5_frei : BOOL ;	
+    _206_Bit6_frei : BOOL ;	
+    _206_Bit7_frei : BOOL ;	
+    _207_Bit0_frei : BOOL ;	
+    _207_Bit1_frei : BOOL ;	
+    _207_Bit2_frei : BOOL ;	
+    _207_Bit3_frei : BOOL ;	
+    _207_Bit4_frei : BOOL ;	
+    _207_Bit5_frei : BOOL ;	
+    _207_Bit6_frei : BOOL ;	
+    _207_Bit7_frei : BOOL ;	
+    _208_Bit0_frei : BOOL ;	
+    _208_Bit1_frei : BOOL ;	
+    _208_Bit2_frei : BOOL ;	
+    _208_Bit3_frei : BOOL ;	
+    _208_Bit4_frei : BOOL ;	
+    _208_Bit5_frei : BOOL ;	
+    _208_Bit6_frei : BOOL ;	
+    _208_Bit7_frei : BOOL ;	
+    _209_Bit0_frei : BOOL ;	
+    _209_Bit1_frei : BOOL ;	
+    _209_Bit2_frei : BOOL ;	
+    _209_Bit3_frei : BOOL ;	
+    _209_Bit4_frei : BOOL ;	
+    _209_Bit5_frei : BOOL ;	
+    _209_Bit6_frei : BOOL ;	
+    _209_Bit7_frei : BOOL ;	
+    _210_Bit0_frei : BOOL ;	
+    _210_Bit1_frei : BOOL ;	
+    _210_Bit2_frei : BOOL ;	
+    _210_Bit3_frei : BOOL ;	
+    _210_Bit4_frei : BOOL ;	
+    _210_Bit5_frei : BOOL ;	
+    _210_Bit6_frei : BOOL ;	
+    _210_Bit7_frei : BOOL ;	
+    _211_Bit0_frei : BOOL ;	
+    _211_Bit1_frei : BOOL ;	
+    _211_Bit2_frei : BOOL ;	
+    _211_Bit3_frei : BOOL ;	
+    _211_Bit4_frei : BOOL ;	
+    _211_Bit5_frei : BOOL ;	
+    _211_Bit6_frei : BOOL ;	
+    _211_Bit7_frei : BOOL ;	
+    _212_Bit0_frei : BOOL ;	
+    _212_Bit1_frei : BOOL ;	
+    _212_Bit2_frei : BOOL ;	
+    _212_Bit3_frei : BOOL ;	
+    _212_Bit4_frei : BOOL ;	
+    _212_Bit5_frei : BOOL ;	
+    _212_Bit6_frei : BOOL ;	
+    _212_Bit7_frei : BOOL ;	
+    _213_Bit0_frei : BOOL ;	
+    _213_Bit1_frei : BOOL ;	
+    _213_Bit2_frei : BOOL ;	
+    _213_Bit3_frei : BOOL ;	
+    _213_Bit4_frei : BOOL ;	
+    _213_Bit5_frei : BOOL ;	
+    _213_Bit6_frei : BOOL ;	
+    _213_Bit7_frei : BOOL ;	
+    _214_Bit0_frei : BOOL ;	
+    _214_Bit1_frei : BOOL ;	
+    _214_Bit2_frei : BOOL ;	
+    _214_Bit3_frei : BOOL ;	
+    _214_Bit4_frei : BOOL ;	
+    _214_Bit5_frei : BOOL ;	
+    _214_Bit6_frei : BOOL ;	
+    _214_Bit7_frei : BOOL ;	
+    _215_Bit0_frei : BOOL ;	
+    _215_Bit1_frei : BOOL ;	
+    _215_Bit2_frei : BOOL ;	
+    _215_Bit3_frei : BOOL ;	
+    _215_Bit4_frei : BOOL ;	
+    _215_Bit5_frei : BOOL ;	
+    _215_Bit6_frei : BOOL ;	
+    _215_Bit7_frei : BOOL ;	
+    _216_Bit0_frei : BOOL ;	
+    _216_Bit1_frei : BOOL ;	
+    _216_Bit2_frei : BOOL ;	
+    _216_Bit3_frei : BOOL ;	
+    _216_Bit4_frei : BOOL ;	
+    _216_Bit5_frei : BOOL ;	
+    _216_Bit6_frei : BOOL ;	
+    _216_Bit7_frei : BOOL ;	
+    _217_Bit0_frei : BOOL ;	
+    _217_Bit1_frei : BOOL ;	
+    _217_Bit2_frei : BOOL ;	
+    _217_Bit3_frei : BOOL ;	
+    _217_Bit4_frei : BOOL ;	
+    _217_Bit5_frei : BOOL ;	
+    _217_Bit6_frei : BOOL ;	
+    _217_Bit7_frei : BOOL ;	
+    _218_Bit0_frei : BOOL ;	
+    _218_Bit1_frei : BOOL ;	
+    _218_Bit2_frei : BOOL ;	
+    _218_Bit3_frei : BOOL ;	
+    _218_Bit4_frei : BOOL ;	
+    _218_Bit5_frei : BOOL ;	
+    _218_Bit6_frei : BOOL ;	
+    _218_Bit7_frei : BOOL ;	
+    _219_Bit0_frei : BOOL ;	
+    _219_Bit1_frei : BOOL ;	
+    _219_Bit2_frei : BOOL ;	
+    _219_Bit3_frei : BOOL ;	
+    _219_Bit4_frei : BOOL ;	
+    _219_Bit5_frei : BOOL ;	
+    _219_Bit6_frei : BOOL ;	
+    _219_Bit7_frei : BOOL ;	
+    _220_Bit0_frei : BOOL ;	
+    _220_Bit1_frei : BOOL ;	
+    _220_Bit2_frei : BOOL ;	
+    _220_Bit3_frei : BOOL ;	
+    _220_Bit4_frei : BOOL ;	
+    _220_Bit5_frei : BOOL ;	
+    _220_Bit6_frei : BOOL ;	
+    _220_Bit7_frei : BOOL ;	
+    _221_Bit0_frei : BOOL ;	
+    _221_Bit1_frei : BOOL ;	
+    _221_Bit2_frei : BOOL ;	
+    _221_Bit3_frei : BOOL ;	
+    _221_Bit4_frei : BOOL ;	
+    _221_Bit5_frei : BOOL ;	
+    _221_Bit6_frei : BOOL ;	
+    _221_Bit7_frei : BOOL ;	
+    _222_Bit0_frei : BOOL ;	
+    _222_Bit1_frei : BOOL ;	
+    _222_Bit2_frei : BOOL ;	
+    _222_Bit3_frei : BOOL ;	
+    _222_Bit4_frei : BOOL ;	
+    _222_Bit5_frei : BOOL ;	
+    _222_Bit6_frei : BOOL ;	
+    _222_Bit7_frei : BOOL ;	
+    _223_Bit0_frei : BOOL ;	
+    _223_Bit1_frei : BOOL ;	
+    _223_Bit2_frei : BOOL ;	
+    _223_Bit3_frei : BOOL ;	
+    _223_Bit4_frei : BOOL ;	
+    _223_Bit5_frei : BOOL ;	
+    _223_Bit6_frei : BOOL ;	
+    _223_Bit7_frei : BOOL ;	
+    _224_Bit0_frei : BOOL ;	
+    _224_Bit1_frei : BOOL ;	
+    _224_Bit2_frei : BOOL ;	
+    _224_Bit3_frei : BOOL ;	
+    _224_Bit4_frei : BOOL ;	
+    _224_Bit5_frei : BOOL ;	
+    _224_Bit6_frei : BOOL ;	
+    _224_Bit7_frei : BOOL ;	
+    _225_Bit0_frei : BOOL ;	
+    _225_Bit1_frei : BOOL ;	
+    _225_Bit2_frei : BOOL ;	
+    _225_Bit3_frei : BOOL ;	
+    _225_Bit4_frei : BOOL ;	
+    _225_Bit5_frei : BOOL ;	
+    _225_Bit6_frei : BOOL ;	
+    _225_Bit7_frei : BOOL ;	
+    _226_Bit0_frei : BOOL ;	
+    _226_Bit1_frei : BOOL ;	
+    _226_Bit2_frei : BOOL ;	
+    _226_Bit3_frei : BOOL ;	
+    _226_Bit4_frei : BOOL ;	
+    _226_Bit5_frei : BOOL ;	
+    _226_Bit6_frei : BOOL ;	
+    _226_Bit7_frei : BOOL ;	
+    _227_Bit0_frei : BOOL ;	
+    _227_Bit1_frei : BOOL ;	
+    _227_Bit2_frei : BOOL ;	
+    _227_Bit3_frei : BOOL ;	
+    _227_Bit4_frei : BOOL ;	
+    _227_Bit5_frei : BOOL ;	
+    _227_Bit6_frei : BOOL ;	
+    _227_Bit7_frei : BOOL ;	
+    _228_Bit0_frei : BOOL ;	
+    _228_Bit1_frei : BOOL ;	
+    _228_Bit2_frei : BOOL ;	
+    _228_Bit3_frei : BOOL ;	
+    _228_Bit4_frei : BOOL ;	
+    _228_Bit5_frei : BOOL ;	
+    _228_Bit6_frei : BOOL ;	
+    _228_Bit7_frei : BOOL ;	
+    _229_Bit0_frei : BOOL ;	
+    _229_Bit1_frei : BOOL ;	
+    _229_Bit2_frei : BOOL ;	
+    _229_Bit3_frei : BOOL ;	
+    _229_Bit4_frei : BOOL ;	
+    _229_Bit5_frei : BOOL ;	
+    _229_Bit6_frei : BOOL ;	
+    _229_Bit7_frei : BOOL ;	
+    _230_Bit0_frei : BOOL ;	
+    _230_Bit1_frei : BOOL ;	
+    _230_Bit2_frei : BOOL ;	
+    _230_Bit3_frei : BOOL ;	
+    _230_Bit4_frei : BOOL ;	
+    _230_Bit5_frei : BOOL ;	
+    _230_Bit6_frei : BOOL ;	
+    _230_Bit7_frei : BOOL ;	
+    _231_Bit0_frei : BOOL ;	
+    _231_Bit1_frei : BOOL ;	
+    _231_Bit2_frei : BOOL ;	
+    _231_Bit3_frei : BOOL ;	
+    _231_Bit4_frei : BOOL ;	
+    _231_Bit5_frei : BOOL ;	
+    _231_Bit6_frei : BOOL ;	
+    _231_Bit7_frei : BOOL ;	
+    _232_Bit0_frei : BOOL ;	
+    _232_Bit1_frei : BOOL ;	
+    _232_Bit2_frei : BOOL ;	
+    _232_Bit3_frei : BOOL ;	
+    _232_Bit4_frei : BOOL ;	
+    _232_Bit5_frei : BOOL ;	
+    _232_Bit6_frei : BOOL ;	
+    _232_Bit7_frei : BOOL ;	
+    _233_Bit0_frei : BOOL ;	
+    _233_Bit1_frei : BOOL ;	
+    _233_Bit2_frei : BOOL ;	
+    _233_Bit3_frei : BOOL ;	
+    _233_Bit4_frei : BOOL ;	
+    _233_Bit5_frei : BOOL ;	
+    _233_Bit6_frei : BOOL ;	
+    _233_Bit7_frei : BOOL ;	
+    _234_Bit0_frei : BOOL ;	
+    _234_Bit1_frei : BOOL ;	
+    _234_Bit2_frei : BOOL ;	
+    _234_Bit3_frei : BOOL ;	
+    _234_Bit4_frei : BOOL ;	
+    _234_Bit5_frei : BOOL ;	
+    _234_Bit6_frei : BOOL ;	
+    _234_Bit7_frei : BOOL ;	
+    _235_Bit0_frei : BOOL ;	
+    _235_Bit1_frei : BOOL ;	
+    _235_Bit2_frei : BOOL ;	
+    _235_Bit3_frei : BOOL ;	
+    _235_Bit4_frei : BOOL ;	
+    _235_Bit5_frei : BOOL ;	
+    _235_Bit6_frei : BOOL ;	
+    _235_Bit7_frei : BOOL ;	
+    _236_Bit0_frei : BOOL ;	
+    _236_Bit1_frei : BOOL ;	
+    _236_Bit2_frei : BOOL ;	
+    _236_Bit3_frei : BOOL ;	
+    _236_Bit4_frei : BOOL ;	
+    _236_Bit5_frei : BOOL ;	
+    _236_Bit6_frei : BOOL ;	
+    _236_Bit7_frei : BOOL ;	
+    _237_Bit0_frei : BOOL ;	
+    _237_Bit1_frei : BOOL ;	
+    _237_Bit2_frei : BOOL ;	
+    _237_Bit3_frei : BOOL ;	
+    _237_Bit4_frei : BOOL ;	
+    _237_Bit5_frei : BOOL ;	
+    _237_Bit6_frei : BOOL ;	
+    _237_Bit7_frei : BOOL ;	
+    _238_Bit0_frei : BOOL ;	
+    _238_Bit1_frei : BOOL ;	
+    _238_Bit2_frei : BOOL ;	
+    _238_Bit3_frei : BOOL ;	
+    _238_Bit4_frei : BOOL ;	
+    _238_Bit5_frei : BOOL ;	
+    _238_Bit6_frei : BOOL ;	
+    _238_Bit7_frei : BOOL ;	
+    _239_Bit0_frei : BOOL ;	
+    _239_Bit1_frei : BOOL ;	
+    _239_Bit2_frei : BOOL ;	
+    _239_Bit3_frei : BOOL ;	
+    _239_Bit4_frei : BOOL ;	
+    _239_Bit5_frei : BOOL ;	
+    _239_Bit6_frei : BOOL ;	
+    _239_Bit7_frei : BOOL ;	
+    _240_Bit0_frei : BOOL ;	
+    _240_Bit1_frei : BOOL ;	
+    _240_Bit2_frei : BOOL ;	
+    _240_Bit3_frei : BOOL ;	
+    _240_Bit4_frei : BOOL ;	
+    _240_Bit5_frei : BOOL ;	
+    _240_Bit6_frei : BOOL ;	
+    _240_Bit7_frei : BOOL ;	
+    _241_Bit0_frei : BOOL ;	
+    _241_Bit1_frei : BOOL ;	
+    _241_Bit2_frei : BOOL ;	
+    _241_Bit3_frei : BOOL ;	
+    _241_Bit4_frei : BOOL ;	
+    _241_Bit5_frei : BOOL ;	
+    _241_Bit6_frei : BOOL ;	
+    _241_Bit7_frei : BOOL ;	
+    _242_Bit0_frei : BOOL ;	
+    _242_Bit1_frei : BOOL ;	
+    _242_Bit2_frei : BOOL ;	
+    _242_Bit3_frei : BOOL ;	
+    _242_Bit4_frei : BOOL ;	
+    _242_Bit5_frei : BOOL ;	
+    _242_Bit6_frei : BOOL ;	
+    _242_Bit7_frei : BOOL ;	
+    _243_Bit0_frei : BOOL ;	
+    _243_Bit1_frei : BOOL ;	
+    _243_Bit2_frei : BOOL ;	
+    _243_Bit3_frei : BOOL ;	
+    _243_Bit4_frei : BOOL ;	
+    _243_Bit5_frei : BOOL ;	
+    _243_Bit6_frei : BOOL ;	
+    _243_Bit7_frei : BOOL ;	
+    _244_Bit0_frei : BOOL ;	
+    _244_Bit1_frei : BOOL ;	
+    _244_Bit2_frei : BOOL ;	
+    _244_Bit3_frei : BOOL ;	
+    _244_Bit4_frei : BOOL ;	
+    _244_Bit5_frei : BOOL ;	
+    _244_Bit6_frei : BOOL ;	
+    _244_Bit7_frei : BOOL ;	
+    _245_Bit0_frei : BOOL ;	
+    _245_Bit1_frei : BOOL ;	
+    _245_Bit2_frei : BOOL ;	
+    _245_Bit3_frei : BOOL ;	
+    _245_Bit4_frei : BOOL ;	
+    _245_Bit5_frei : BOOL ;	
+    _245_Bit6_frei : BOOL ;	
+    _245_Bit7_frei : BOOL ;	
+    _246_Bit0_frei : BOOL ;	
+    _246_Bit1_frei : BOOL ;	
+    _246_Bit2_frei : BOOL ;	
+    _246_Bit3_frei : BOOL ;	
+    _246_Bit4_frei : BOOL ;	
+    _246_Bit5_frei : BOOL ;	
+    _246_Bit6_frei : BOOL ;	
+    _246_Bit7_frei : BOOL ;	
+    _247_Bit0_frei : BOOL ;	
+    _247_Bit1_frei : BOOL ;	
+    _247_Bit2_frei : BOOL ;	
+    _247_Bit3_frei : BOOL ;	
+    _247_Bit4_frei : BOOL ;	
+    _247_Bit5_frei : BOOL ;	
+    _247_Bit6_frei : BOOL ;	
+    _247_Bit7_frei : BOOL ;	
+    _248_Bit0_frei : BOOL ;	
+    _248_Bit1_frei : BOOL ;	
+    _248_Bit2_frei : BOOL ;	
+    _248_Bit3_frei : BOOL ;	
+    _248_Bit4_frei : BOOL ;	
+    _248_Bit5_frei : BOOL ;	
+    _248_Bit6_frei : BOOL ;	
+    _248_Bit7_frei : BOOL ;	
+    _249_Bit0_frei : BOOL ;	
+    _249_Bit1_frei : BOOL ;	
+    _249_Bit2_frei : BOOL ;	
+    _249_Bit3_frei : BOOL ;	
+    _249_Bit4_frei : BOOL ;	
+    _249_Bit5_frei : BOOL ;	
+    _249_Bit6_frei : BOOL ;	
+    _249_Bit7_frei : BOOL ;	
+    _250_Bit0_frei : BOOL ;	
+    _250_Bit1_frei : BOOL ;	
+    _250_Bit2_frei : BOOL ;	
+    _250_Bit3_frei : BOOL ;	
+    _250_Bit4_frei : BOOL ;	
+    _250_Bit5_frei : BOOL ;	
+    _250_Bit6_frei : BOOL ;	
+    _250_Bit7_frei : BOOL ;	
+    _251_Bit0_frei : BOOL ;	
+    _251_Bit1_frei : BOOL ;	
+    _251_Bit2_frei : BOOL ;	
+    _251_Bit3_frei : BOOL ;	
+    _251_Bit4_frei : BOOL ;	
+    _251_Bit5_frei : BOOL ;	
+    _251_Bit6_frei : BOOL ;	
+    _251_Bit7_frei : BOOL ;	
+    _252_Bit0_frei : BOOL ;	
+    _252_Bit1_frei : BOOL ;	
+    _252_Bit2_frei : BOOL ;	
+    _252_Bit3_frei : BOOL ;	
+    _252_Bit4_frei : BOOL ;	
+    _252_Bit5_frei : BOOL ;	
+    _252_Bit6_frei : BOOL ;	
+    _252_Bit7_frei : BOOL ;	
+    _253_Bit0_frei : BOOL ;	
+    _253_Bit1_frei : BOOL ;	
+    _253_Bit2_frei : BOOL ;	
+    _253_Bit3_frei : BOOL ;	
+    _253_Bit4_frei : BOOL ;	
+    _253_Bit5_frei : BOOL ;	
+    _253_Bit6_frei : BOOL ;	
+    _253_Bit7_frei : BOOL ;	
+    _254_Bit0_frei : BOOL ;	
+    _254_Bit1_frei : BOOL ;	
+    _254_Bit2_frei : BOOL ;	
+    _254_Bit3_frei : BOOL ;	
+    _254_Bit4_frei : BOOL ;	
+    _254_Bit5_frei : BOOL ;	
+    _254_Bit6_frei : BOOL ;	
+    _254_Bit7_frei : BOOL ;	
+    _255_Bit0_UPD_IB : BOOL ;	//Updatemodus: 0=Hochrüstung, 1=Neuinbetriebnahme
+    _255_Bit1_UPD_NACHRUEST : BOOL ;	//Updatemodus: 1=Nachrüstung
+    _255_Bit2_frei : BOOL ;	
+    _255_Bit3_frei : BOOL ;	
+    _255_Bit4_frei : BOOL ;	
+    _255_Bit5_frei : BOOL ;	
+    _255_Bit6_frei : BOOL ;	
+    _255_Bit7_frei : BOOL ;	
+   END_STRUCT ;	
+   UDReal : STRUCT 	//PLC-MaschinenDatum (max=32): Beginn MD145014 USER_DATA_REAL [0] => DB20.DBB450
+    _00 : REAL ;	
+    _01 : REAL ;	
+    _02 : REAL ;	
+    _03 : REAL ;	
+    _04 : REAL ;	
+    _05 : REAL ;	
+    _06 : REAL ;	
+    _07 : REAL ;	
+    _08 : REAL ;	
+    _09_TDS_Kennung_Format : REAL ;	//Kennung des TDS Formates 
+    _10_KOPF_VERSATZ_X : REAL ;	//Kompensation des Kopf-Versatzes in X für hydraulischen Schwenkkopf
+    _11_KOPF_VERSATZ_Z : REAL ;	//Kompensation des Kopf-Versatzes in Z für hydraulischen Schwenkkopf
+    _12_KOPF_VERSATZ_Y : REAL ;	//Kompensation des Kopf-Versatzes in Y für hydraulischen Schwenkkopf
+    _13_KOPF_VERSATZ_VSP_X : REAL ;	//Kompensation des Kopf-Versatzes in X für hydr. Schwenkkopf mit Vorsatzspindel
+    _14_KOMP_FAKTOR_Kz : REAL ;	//Axiale Wellenverlagerung GMN Kompensationsfaktor KZ
+    _15_START_FAKTOR_Uzo : REAL ;	//Axiale Wellenverlagerung GMN Startwert Uzo
+    _16_ANWAHL_KALIBRIERRING : REAL ;	//Anwahl Kalibrierring : 0=aus, 1=ein
+    _17_SPI_LEITUNG_TEMP : REAL ;	//Temperatursensor Leitungsueberwachung Hauptantrieb (Spindel)
+    _18_WZSP_ZU_MIT_WZ : REAL ;	//Werkzeug gespannt
+    _19_WZSP_OHNE_WZ : REAL ;	//Werkzeug gespannt ohne WZ
+    _20_WZSP_OFFEN : REAL ;	//Werkzeug offen 
+    _21_HYST_WZSP_ZU : REAL ;	//Hysterese WZ-Spanner Zu 
+    _22_HYST_WZSP_ZU_OWZ : REAL ;	//Hysterese WZ-Spanner Zu ohne WZ
+    _23_HYST_WZSP_OFFEN : REAL ;	//Hysterese WZ-Spanner Offen 
+    _24_STA_Werkstuecklaenge : REAL ;	//STANGE: Werkstücklänge an Stangenlader KUPA
+    _25_VM_WW_VELO_1 : REAL ;	//Vertikalmagazin: WW-Geschwindigkeitsstufe 1
+    _26_VM_WW_VELO_2 : REAL ;	//Vertikalmagazin: WW-Geschwindigkeitsstufe 2
+    _27_VM_WW_VELO_3 : REAL ;	//Vertikalmagazin: WW-Geschwindigkeitsstufe 3
+    _28_VM_WW_VELO_4 : REAL ;	//Vertikalmagazin: WW-Geschwindigkeitsstufe 4
+    _29_VM_WW_VELO_5 : REAL ;	//Vertikalmagazin: WW-Geschwindigkeitsstufe 5
+    _30_WZW_GRE1_POS_KEG : REAL ;	//WZW_60S: Position Greifer 1 an Kegelreinigung
+    _31_WZW_GRE2_POS_KEG : REAL ;	//WZW_60S: Position Greifer 2 an Kegelreinigung
+   END_STRUCT ;	
+  END_STRUCT ;	
+END_TYPE
+

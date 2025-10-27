@@ -1,0 +1,6961 @@
+"V01.00.000"
+"$_Languages"
+"9(1) Englisch (USA)";"7(1) Deutsch (Deutschland)";"513(1) Key"
+"$_Timestamp"
+"08.05.2008  10:10:21";"08.05.2008  13:04:05";""
+"$_Typ(BlockComment)"
+"$Revision: 1.36 $
+$Date: 2007/11/29 16:22:35CET $
+$Author: riedlh $
+";"$Revision: 1.36 $
+$Date: 2007/11/29 16:22:35CET $
+$Author: riedlh $
+";""
+"$Revision: 3.15 $
+$Date: 2007/11/29 10:31:20CET $
+$Author: riedlh $
+";"$Revision: 3.15 $
+$Date: 2007/11/29 10:31:20CET $
+$Author: riedlh $
+";""
+"$Revision: 1.20 $
+$Date: 2007/11/30 10:14:47CET $
+$Author: hgc $
+$ProjectRevision: Last Checkpoint: 1.52 $
+
+TRANSLINE 2000 Baustein 
+
+Verwaltung der Schutztüren / Schutztüren geschlossen gesamt
+";"$Revision: 1.20 $
+$Date: 2007/11/30 10:14:47CET $
+$Author: hgc $
+$ProjectRevision: Last Checkpoint: 1.52 $
+
+TRANSLINE 2000 Baustein 
+
+Verwaltung der Schutztüren / Schutztüren geschlossen gesamt
+";""
+"$Revision: 1.37 $
+$Date: 2007/11/30 11:25:43CET $
+$Author: hgc $
+";"$Revision: 1.37 $
+$Date: 2007/11/30 11:25:43CET $
+$Author: hgc $
+";""
+"$Revision: 1.12 $
+$Date: 2007/11/29 10:41:52CET $
+$Author: riedlh $
+";"$Revision: 1.12 $
+$Date: 2007/11/29 10:41:52CET $
+$Author: riedlh $
+";""
+"$Revision: 1.43 $
+$Date: 2007/10/31 12:51:42CET $
+$Author: kee $
+
+";"$Revision: 1.43 $
+$Date: 2007/10/31 12:51:42CET $
+$Author: kee $
+
+";""
+"$Revision: 1.37 $
+$Date: 2007/10/15 13:41:06CEST $
+$Author: kee $
+
+V0.2 / 24.08.2000 / SCH
+- Modul überarbeitet
+-------------------------------------------------------------------------------
+Änderung: Datum      / Abteilung / Name / Version x.y
+Änderung: 22.06.2006 /          / slh   / V0.2
+        :Lokaldaten laden/retten mit SFC20 BLKMOVE, ""DB_WWZ"".TMDR löschen mit
+        :SFC21 FILL; Doppelwortzugriffe entfernt (Absolutadressen vermeiden)
+        :
+Änderung:           /          /        / V
+        :
+-------------------------------------------------------------------------------
+";"$Revision: 1.37 $
+$Date: 2007/10/15 13:41:06CEST $
+$Author: kee $
+
+V0.2 / 24.08.2000 / SCH
+- Modul überarbeitet
+-------------------------------------------------------------------------------
+Änderung: Datum      / Abteilung / Name / Version x.y
+Änderung: 22.06.2006 /          / slh   / V0.2
+        :Lokaldaten laden/retten mit SFC20 BLKMOVE, ""DB_WWZ"".TMDR löschen mit
+        :SFC21 FILL; Doppelwortzugriffe entfernt (Absolutadressen vermeiden)
+        :
+Änderung:           /          /        / V
+        :
+-------------------------------------------------------------------------------
+";""
+"$Revision: 1.108 $
+$Date: 2007/12/06 14:41:16CET $
+$Author: sja $
+";"$Revision: 1.108 $
+$Date: 2007/12/06 14:41:16CET $
+$Author: sja $
+";""
+"$Revision: 1.63 $
+$Date: 2007/12/06 14:38:10CET $
+$Author: sja $
+-------------------------------------------------------------------------------
+Änderung: Datum      / Abteilung / Name / Version x.y
+Änderung: 22.06.2006 /          / slh   / V0.2
+        :Wzw.Grundstlg.fahren eingepflegt; Lokaldaten laden/retten mit
+        :SFC20 BLKMOVE; Doppelwortzugriffe entfernt (Absolutadressen vermeiden)
+        :Quelle:FC_WZW_VMAG_STATUS.AWL vom 22.06.2006 10:29:25
+Änderung:           /          /        / V
+        :
+-------------------------------------------------------------------------------
+";"$Revision: 1.63 $
+$Date: 2007/12/06 14:38:10CET $
+$Author: sja $
+-------------------------------------------------------------------------------
+Änderung: Datum      / Abteilung / Name / Version x.y
+Änderung: 22.06.2006 /          / slh   / V0.2
+        :Wzw.Grundstlg.fahren eingepflegt; Lokaldaten laden/retten mit
+        :SFC20 BLKMOVE; Doppelwortzugriffe entfernt (Absolutadressen vermeiden)
+        :Quelle:FC_WZW_VMAG_STATUS.AWL vom 22.06.2006 10:29:25
+Änderung:           /          /        / V
+        :
+-------------------------------------------------------------------------------
+";""
+"$Revision: 1.3 $
+$Date: 2007/12/06 14:35:18CET $
+$Author: sja $
+";"$Revision: 1.3 $
+$Date: 2007/12/06 14:35:18CET $
+$Author: sja $
+";""
+"$Revision: 1.4 $
+$Date: 2007/12/13 07:56:36CET $
+$Author: hgc $
+";"$Revision: 1.4 $
+$Date: 2007/12/13 07:56:36CET $
+$Author: hgc $
+";""
+"$Revision: 1.49 $
+$Date: 2007/12/13 07:59:30CET $
+$Author: hgc $
+";"$Revision: 1.49 $
+$Date: 2007/12/13 07:59:30CET $
+$Author: hgc $
+";""
+"$Revision: 1.35 $
+$Date: 2007/12/05 17:04:03CET $
+$Author: gfr $
+
+";"$Revision: 1.35 $
+$Date: 2007/12/05 17:04:03CET $
+$Author: gfr $
+
+";""
+"$Revision: 1.40 $
+$Date: 2007/12/13 07:09:31CET $
+$Author: riedlh $
+";"$Revision: 1.40 $
+$Date: 2007/12/13 07:09:31CET $
+$Author: riedlh $
+";""
+"$Revision: 1.37 $
+$Date: 2007/11/30 18:39:37CET $
+$Author: schmoelp $
+
+";"$Revision: 1.37 $
+$Date: 2007/11/30 18:39:37CET $
+$Author: schmoelp $
+
+";""
+"$Revision: 1.27 $
+$Date: 2007/12/04 14:25:26CET $
+$Author: schmoelp $
+
+Rundspeicher RS4 / RS5 Rettungsfunktion
+=============================
+";"$Revision: 1.27 $
+$Date: 2007/12/04 14:25:26CET $
+$Author: schmoelp $
+
+Rundspeicher RS4 / RS5 Rettungsfunktion
+=============================
+";""
+"$Revision: 1.8 $
+$Date: 2007/07/16 13:14:48CEST $
+$Author: riedlh $
+
+Logbuch:
+
+V0.1 / 18.01.2000 / SCH
+
+- Modul Erstellt
+";"$Revision: 1.8 $
+$Date: 2007/07/16 13:14:48CEST $
+$Author: riedlh $
+
+Logbuch:
+
+V0.1 / 18.01.2000 / SCH
+
+- Modul Erstellt
+";""
+"$Revision: 1.7 $
+$Date: 2007/07/16 13:14:48CEST $
+$Author: riedlh $
+
+Logbuch:
+
+V0.1 / 18.01.2000 / SCH
+
+- Modul Erstellt
+
+";"$Revision: 1.7 $
+$Date: 2007/07/16 13:14:48CEST $
+$Author: riedlh $
+
+Logbuch:
+
+V0.1 / 18.01.2000 / SCH
+
+- Modul Erstellt
+
+";""
+"$Revision: 1.218 $
+$Date: 2007/12/07 13:13:20CET $
+$Author: boa $
+";"$Revision: 1.218 $
+$Date: 2007/12/07 13:13:20CET $
+$Author: boa $
+";""
+"$Revision: 1.8 $
+$Date: 2007/12/07 13:35:17CET $
+$Author: boa $
+
+Logbuch:
+
+V0.1 / 18.01.2000 / SCH
+
+- Modul Erstellt
+
+";"$Revision: 1.8 $
+$Date: 2007/12/07 13:35:17CET $
+$Author: boa $
+
+Logbuch:
+
+V0.1 / 18.01.2000 / SCH
+
+- Modul Erstellt
+
+";""
+"$Revision: 1.9 $
+$Date: 2007/12/07 13:27:34CET $
+$Author: boa $
+
+Logbuch:
+
+V0.1 / 18.01.2000 / SCH
+
+- Modul Erstellt
+";"$Revision: 1.9 $
+$Date: 2007/12/07 13:27:34CET $
+$Author: boa $
+
+Logbuch:
+
+V0.1 / 18.01.2000 / SCH
+
+- Modul Erstellt
+";""
+"$Revision: 1.52 $
+$Date: 2007/09/05 10:35:34CEST $
+$Author: riedlh $
+
+3-08-2000 SJA
+
+o Drehzahlüberwachung für die Betriebsarten
+BA's
+2-800 (DB20.dbw118)
+3-4000 (DB20.DBW120)
+4-4000 (DB20.DBW122)
+
+o Überwachung auf Drehzahleinbruch
+
+o Drehzahlüberwachung abhängig vom Radius
+
+o Leitungstemperaturüberwachung 
+";"$Revision: 1.52 $
+$Date: 2007/09/05 10:35:34CEST $
+$Author: riedlh $
+
+3-08-2000 SJA
+
+o Drehzahlüberwachung für die Betriebsarten
+BA's
+2-800 (DB20.dbw118)
+3-4000 (DB20.DBW120)
+4-4000 (DB20.DBW122)
+
+o Überwachung auf Drehzahleinbruch
+
+o Drehzahlüberwachung abhängig vom Radius
+
+o Leitungstemperaturüberwachung 
+";""
+"$Revision: 1.53 $
+$Date: 2007/12/07 13:44:07CET $
+$Author: sth $
+
+3-08-2000 SJA
+
+o Drehzahlüberwachung für die Betriebsarten
+BA's
+2-800 (DB20.dbw118)
+3-4000 (DB20.DBW120)
+4-4000 (DB20.DBW122)
+
+o Überwachung auf Drehzahleinbruch
+
+o Drehzahlüberwachung abhängig vom Radius
+
+o Leitungstemperaturüberwachung 
+";"$Revision: 1.53 $
+$Date: 2007/12/07 13:44:07CET $
+$Author: sth $
+
+3-08-2000 SJA
+
+o Drehzahlüberwachung für die Betriebsarten
+BA's
+2-800 (DB20.dbw118)
+3-4000 (DB20.DBW120)
+4-4000 (DB20.DBW122)
+
+o Überwachung auf Drehzahleinbruch
+
+o Drehzahlüberwachung abhängig vom Radius
+
+o Leitungstemperaturüberwachung 
+";""
+"$Revision: 1.6 $
+$Date: 2007/12/06 10:48:54CET $
+$Author: schmoelp $
+
+Wz-Bruch-Kennung lesen
+
+erstellt 27.06.01 AB
+";"$Revision: 1.6 $
+$Date: 2007/12/06 10:48:54CET $
+$Author: schmoelp $
+
+Wz-Bruch-Kennung lesen
+
+erstellt 27.06.01 AB
+";""
+"$Revision: 1.6 $
+$Date: 2007/12/06 11:29:20CET $
+$Author: schmoelp $
+";"$Revision: 1.6 $
+$Date: 2007/12/06 11:29:20CET $
+$Author: schmoelp $
+";""
+"$Revision: 2.9 $
+$Date: 2007/11/26 14:17:14CET $
+$Author: maassk $
+$ProjectRevision: Last Checkpoint: 1.89 $
+";"$Revision: 2.9 $
+$Date: 2007/11/26 14:17:14CET $
+$Author: maassk $
+$ProjectRevision: Last Checkpoint: 1.89 $
+";""
+"$Revision: 1.44 $
+$Date: 2007/12/13 09:52:48CET $
+$Author: hgc $
+
+";"$Revision: 1.44 $
+$Date: 2007/12/13 09:52:48CET $
+$Author: hgc $
+
+";""
+"$Revision: 1.111 $
+$Date: 2007/12/12 13:48:34CET $
+$Author: schmoelp $
+";"$Revision: 1.111 $
+$Date: 2007/12/12 13:48:34CET $
+$Author: schmoelp $
+";""
+"$Revision: 1.4 $
+$Date: 2007/12/12 13:57:01CET $
+$Author: schmoelp $
+";"$Revision: 1.4 $
+$Date: 2007/12/12 13:57:01CET $
+$Author: schmoelp $
+";""
+"$Revision: 1.285 $ 
+$Date: 2007/12/13 10:19:26CET $  
+$Author: wri $   
+  
+DB für Fehlermeldung  
+==================================================
+Änderung: Datum / Abteilung / Name / Version x.y
+Änderung: 
+Änderung: 18.05.2005 / SPAC / slh / V0.2
+Änderung: 700506-700508, 701060-701115 (Komet) neu
+
+";"$Revision: 1.285 $ 
+$Date: 2007/12/13 10:19:26CET $  
+$Author: wri $   
+  
+DB für Fehlermeldung  
+==================================================
+Änderung: Datum / Abteilung / Name / Version x.y
+Änderung: 
+Änderung: 18.05.2005 / SPAC / slh / V0.2
+Änderung: 700506-700508, 701060-701115 (Komet) neu
+
+";""
+"$Revision: 1.15 $
+$Date: 2007/12/03 13:16:27CET $
+$Author: riedlh $
+";"$Revision: 1.15 $
+$Date: 2007/12/03 13:16:27CET $
+$Author: riedlh $
+";""
+"$Revision: 1.2 $
+$Date: 2007/08/30 11:01:08CEST $
+$Author: riedlh $
+Fehlererkennung und Speicherung
+Funktionsbeschreibung:
+1.Neuer Fehler bzw. Bedienung erkannt? dann Auswertung
+2.Datenbaustein vorhanden sonst erzeugen
+3.Uhrzeit stellen und auslesen
+4.Test den letzten Eintrag
+";"$Revision: 1.2 $
+$Date: 2007/08/30 11:01:08CEST $
+$Author: riedlh $
+Fehlererkennung und Speicherung
+Funktionsbeschreibung:
+1.Neuer Fehler bzw. Bedienung erkannt? dann Auswertung
+2.Datenbaustein vorhanden sonst erzeugen
+3.Uhrzeit stellen und auslesen
+4.Test den letzten Eintrag
+";""
+"$Revision: 1.5 $
+$Date: 2007/12/10 15:29:39CET $
+$Author: riedlh $
+Fehler erkannt, dann Fehlernummer auslesen und auswerten
+";"$Revision: 1.5 $
+$Date: 2007/12/10 15:29:39CET $
+$Author: riedlh $
+Fehler erkannt, dann Fehlernummer auslesen und auswerten
+";""
+"$Revision: 1.17 $
+$Date: 2007/11/06 06:31:11CET $
+$Author: rieds $
+";"$Revision: 1.17 $
+$Date: 2007/11/06 06:31:11CET $
+$Author: rieds $
+";""
+"$Revision: 1.20 $
+$Date: 2007/12/10 08:48:15CET $
+$Author: rieds $
+";"$Revision: 1.20 $
+$Date: 2007/12/10 08:48:15CET $
+$Author: rieds $
+";""
+"$Revision: 1.27 $
+$Date: 2007/12/05 11:19:10CET $
+$Author: kee $
+";"$Revision: 1.27 $
+$Date: 2007/12/05 11:19:10CET $
+$Author: kee $
+";""
+"$Revision: 1.3 $
+$Date: 2007/09/04 12:50:12CEST $
+$Author: riedlh $
+
+General Electric Spezifikation GE P11T12
+Baustein für Spezifikation GE P11T12 (mit OMATIVE ACM ab Version 2.0.6):
+
+NW4: Spindellastüberwachung OMATIVE ACM Software-Lösung
+     (Drehmomentüberwachung OMATIVE ACM)
+NW8: Kühlmittelflussüberwachung
+NW9: Spindeldrehzahlüberwachung
+";"$Revision: 1.3 $
+$Date: 2007/09/04 12:50:12CEST $
+$Author: riedlh $
+
+General Electric Spezifikation GE P11T12
+Baustein für Spezifikation GE P11T12 (mit OMATIVE ACM ab Version 2.0.6):
+
+NW4: Spindellastüberwachung OMATIVE ACM Software-Lösung
+     (Drehmomentüberwachung OMATIVE ACM)
+NW8: Kühlmittelflussüberwachung
+NW9: Spindeldrehzahlüberwachung
+";""
+"$Revision: 1.4 $
+$Date: 2007/12/05 11:22:40CET $
+$Author: kee $
+
+General Electric Spezifikation GE P11T12
+Baustein für Spezifikation GE P11T12 (mit OMATIVE ACM ab Version 2.0.6):
+
+Anwahl INT39==4 --> Standard GE P11TF12 mit Omative ACM
+                    Funktion nur nach Installation von OMATIVE ACM Standard
+                    ab Version 2.0.5
+
+Anwahl INT39==5 --> Erweiterte GE P11TF12 mit Omative ACM für Volvo
+                --> Advanced Hole Making
+                    Funktion nur nach Installation von OMATIVE ACM Custom Volvo
+                    ab Version 2.2.4
+";"$Revision: 1.4 $
+$Date: 2007/12/05 11:22:40CET $
+$Author: kee $
+
+General Electric Spezifikation GE P11T12
+Baustein für Spezifikation GE P11T12 (mit OMATIVE ACM ab Version 2.0.6):
+
+Anwahl INT39==4 --> Standard GE P11TF12 mit Omative ACM
+                    Funktion nur nach Installation von OMATIVE ACM Standard
+                    ab Version 2.0.5
+
+Anwahl INT39==5 --> Erweiterte GE P11TF12 mit Omative ACM für Volvo
+                --> Advanced Hole Making
+                    Funktion nur nach Installation von OMATIVE ACM Custom Volvo
+                    ab Version 2.2.4
+";""
+"$Revision: 4.17 $
+$Date: 2007/12/12 18:24:47CET $
+$Author: schmoelp $
+";"$Revision: 4.17 $
+$Date: 2007/12/12 18:24:47CET $
+$Author: schmoelp $
+";""
+"$Revision: 1.21 $
+$Date: 2007/12/07 13:50:36CET $
+$Author: sth $
+
+17.03.03 JW Aufrufe zum Kompensieren jetzt im FC40 --> sonst PLC Fehler 
+Lokaldatenüberlauf
+10.06.02 JW Ini Temp_komp mit 0 bei Reset raus!
+24.04.02 JW PT100 und Glättung komplett überarbeitet
+         variabler Anstieg über Hex[49]; Einlesetakt über Hex[48] programmierbar
+
+08.02.02 JW KTY-weitere Messfühler möglich
+21.11.01 mogs
+- für KTY: Anzeigevariable für aktuelle Temperatur geändert
+10.11.01 mogs
+- Grenzwert 2. Geber auf 99999
+24.10.01 mogs/grü
+- Unterstützung 2x Temp-Fühler + Tabellenwert-Addition
+- optional 1x KTY-Geber Spindellagertemperatur
+";"$Revision: 1.21 $
+$Date: 2007/12/07 13:50:36CET $
+$Author: sth $
+
+17.03.03 JW Aufrufe zum Kompensieren jetzt im FC40 --> sonst PLC Fehler 
+Lokaldatenüberlauf
+10.06.02 JW Ini Temp_komp mit 0 bei Reset raus!
+24.04.02 JW PT100 und Glättung komplett überarbeitet
+         variabler Anstieg über Hex[49]; Einlesetakt über Hex[48] programmierbar
+
+08.02.02 JW KTY-weitere Messfühler möglich
+21.11.01 mogs
+- für KTY: Anzeigevariable für aktuelle Temperatur geändert
+10.11.01 mogs
+- Grenzwert 2. Geber auf 99999
+24.10.01 mogs/grü
+- Unterstützung 2x Temp-Fühler + Tabellenwert-Addition
+- optional 1x KTY-Geber Spindellagertemperatur
+";""
+"$Revision: 1.4 $
+$Date: 2007/12/07 13:51:57CET $
+$Author: sth $
+
+24.04.02 JW komplett überarbeitet nach Vorgabe M. Gröger --> einen Messwert 
+pro vereinbarte Zeit [sek] liefern (wird über Eingang Messimpuls gesteuert)
+10.11.01 mogs
+- Meßwertausgabe löschen bei Werterfassung
+- 16.05.01 ka
+  Umstellung auf Klima-Bereich
+";"$Revision: 1.4 $
+$Date: 2007/12/07 13:51:57CET $
+$Author: sth $
+
+24.04.02 JW komplett überarbeitet nach Vorgabe M. Gröger --> einen Messwert 
+pro vereinbarte Zeit [sek] liefern (wird über Eingang Messimpuls gesteuert)
+10.11.01 mogs
+- Meßwertausgabe löschen bei Werterfassung
+- 16.05.01 ka
+  Umstellung auf Klima-Bereich
+";""
+"$Revision: 1.9 $
+$Date: 2007/08/30 11:01:07CEST $
+$Author: riedlh $
+";"$Revision: 1.9 $
+$Date: 2007/08/30 11:01:07CEST $
+$Author: riedlh $
+";""
+"$Revision: 1.11 $
+$Date: 2007/11/26 13:42:28CET $
+$Author: maassk $
+";"$Revision: 1.11 $
+$Date: 2007/11/26 13:42:28CET $
+$Author: maassk $
+";""
+"$Revision: 1.3 $
+$Date: 2007/11/26 15:36:52CET $
+$Author: maassk $
+$ProjectRevision: Last Checkpoint: 1.200 $
+Fehler erkannt, dann Fehlernummer auslesen und auswerten
+";"$Revision: 1.3 $
+$Date: 2007/11/26 15:36:52CET $
+$Author: maassk $
+$ProjectRevision: Last Checkpoint: 1.200 $
+Fehler erkannt, dann Fehlernummer auslesen und auswerten
+";""
+"$Revision: 1.112 $
+$Date: 2007/12/13 11:57:37CET $
+$Author: schmoelp $
+";"$Revision: 1.112 $
+$Date: 2007/12/13 11:57:37CET $
+$Author: schmoelp $
+";""
+"$Revision: 2.13 $
+$Date: 2007/12/10 16:14:44CET $
+$Author: schmoelp $
+";"$Revision: 2.13 $
+$Date: 2007/12/10 16:14:44CET $
+$Author: schmoelp $
+";""
+"$Revision: 2.8 $
+$Date: 2007/12/14 10:15:14CET $
+$Author: hgc $
+
+Kette_Tx Werkzeug vorbereiten 
+
+erstellt: 1.2.2000 AB
+geändert: 27.06.01 AB
+   --> Aufruf Wzbruch- Erkennung 
+geändert: 18.07.02 FUH
+   --> Werkzeug vorbereiten in Zwischenspeicher
+geändert: 05.06.2007
+   --> Wz umspeichern mit Bewegung (phys.Umsetzen)
+
+Version: vorläufig
+
+Konfiguration:
+
+Wechsler mit Doppelgreifer (Holer und Bringer)
+     1:1 Tausch ist Standard ($TC_MAMP2) Bit 15 = 1
+     --> wandern der Werkzeuge über Magazine ist möglich
+
+Eingangsparameter:
+    E_EN_1zu1_Uebergross : 0: übergrosse werkzeuge können nicht 1:1 getauscht 
+                              werden
+                           1: auch übergrosse werkzeuge können 1:1 getauscht 
+                              werden
+
+    E_Nr_Bereitst_Platz  :Zwischenspeicher-Nr. des Bereitstellungsplatzes
+                           0: kein Bereitstellen
+                           2: Greifer 1
+                           3: Greifer 2
+                           4: Bereitstellungsplatz
+
+    E_Mag1_Fertig: Positonier-Anforderung an Mag1 fertig -> Quit Txx   
+    E_Mag2_Fertig: Positonier-Anforderung an Mag2 fertig <-- i.V   
+   
+    E_WZ_abgelegt_in_Mag   : Wz aus ZwSp wieder in Mag abgelegt bei Txx
+    E_Bereitstellen_Fertig : Bereitstellen in Zwischenspeicher fertig
+";"$Revision: 2.8 $
+$Date: 2007/12/14 10:15:14CET $
+$Author: hgc $
+
+Kette_Tx Werkzeug vorbereiten 
+
+erstellt: 1.2.2000 AB
+geändert: 27.06.01 AB
+   --> Aufruf Wzbruch- Erkennung 
+geändert: 18.07.02 FUH
+   --> Werkzeug vorbereiten in Zwischenspeicher
+geändert: 05.06.2007
+   --> Wz umspeichern mit Bewegung (phys.Umsetzen)
+
+Version: vorläufig
+
+Konfiguration:
+
+Wechsler mit Doppelgreifer (Holer und Bringer)
+     1:1 Tausch ist Standard ($TC_MAMP2) Bit 15 = 1
+     --> wandern der Werkzeuge über Magazine ist möglich
+
+Eingangsparameter:
+    E_EN_1zu1_Uebergross : 0: übergrosse werkzeuge können nicht 1:1 getauscht 
+                              werden
+                           1: auch übergrosse werkzeuge können 1:1 getauscht 
+                              werden
+
+    E_Nr_Bereitst_Platz  :Zwischenspeicher-Nr. des Bereitstellungsplatzes
+                           0: kein Bereitstellen
+                           2: Greifer 1
+                           3: Greifer 2
+                           4: Bereitstellungsplatz
+
+    E_Mag1_Fertig: Positonier-Anforderung an Mag1 fertig -> Quit Txx   
+    E_Mag2_Fertig: Positonier-Anforderung an Mag2 fertig <-- i.V   
+   
+    E_WZ_abgelegt_in_Mag   : Wz aus ZwSp wieder in Mag abgelegt bei Txx
+    E_Bereitstellen_Fertig : Bereitstellen in Zwischenspeicher fertig
+";""
+"$Revision: 1.21 $
+$Date: 2007/12/14 11:04:17CET $
+$Author: hgc $
+
+===============================================================================
+Omron_Regal_Tx Werkzeug vorbereiten 
+===============================================================================
+
+erstellt: 1.2.2000 AB
+geändert: 27.06.01 AB
+   --> Aufruf Wzbruch- Erkennung 
+geändert: 18.07.02 FUH
+   --> Werkzeug vorbereiten in Zwischenspeicher
+geändert: 30.11.2006, Helmut Scheuenstuhl (slh)
+   --> WzWechsler und Regal autom. Grundstlg. fahren
+geändert: 07.12.2006, slh
+   --> umspeichern in Sr24 (Marke R24) auch bei Omronregal wenn Regalgrf. das Wz
+       gespannt hat und Kommando[2].Pos_Quitt. 
+       Bisher galt: Umspeichern bei Omron erst wenn WzwHub in Gst
+
+Version: vorläufig
+
+Konfiguration:
+
+Wechsler mit Doppelgreifer (Holer und Bringer)
+     1:1 Tausch ist Standard ($TC_MAMP2) Bit 15 = 1
+     --> wandern der Werkzeuge über Magazine ist möglich
+
+Eingangsparameter:
+    E_EN_1zu1_Uebergross : 0: übergrosse werkzeuge können nicht 1:1 getauscht 
+                              werden
+                           1: auch übergrosse werkzeuge können 1:1 getauscht 
+                              werden
+
+    E_Nr_Bereitst_Platz  :Zwischenspeicher-Nr. des Bereitstellungsplatzes
+                           0: kein Bereitstellen
+                           2: Greifer 1
+                           3: Greifer 2
+                           4: Bereitstellungsplatz
+
+    E_Mag1_Fertig: Positonier-Anforderung an Mag1 fertig -> Quit Txx   
+    E_Mag2_Fertig: Positonier-Anforderung an Mag2 fertig <-- i.V   
+   
+    E_WZ_abgelegt_in_Mag   : Wz aus ZwSp wieder in Mag abgelegt bei Txx
+    E_Bereitstellen_Fertig : Bereitstellen in Zwischenspeicher fertig
+";"$Revision: 1.21 $
+$Date: 2007/12/14 11:04:17CET $
+$Author: hgc $
+
+===============================================================================
+Omron_Regal_Tx Werkzeug vorbereiten 
+===============================================================================
+
+erstellt: 1.2.2000 AB
+geändert: 27.06.01 AB
+   --> Aufruf Wzbruch- Erkennung 
+geändert: 18.07.02 FUH
+   --> Werkzeug vorbereiten in Zwischenspeicher
+geändert: 30.11.2006, Helmut Scheuenstuhl (slh)
+   --> WzWechsler und Regal autom. Grundstlg. fahren
+geändert: 07.12.2006, slh
+   --> umspeichern in Sr24 (Marke R24) auch bei Omronregal wenn Regalgrf. das Wz
+       gespannt hat und Kommando[2].Pos_Quitt. 
+       Bisher galt: Umspeichern bei Omron erst wenn WzwHub in Gst
+
+Version: vorläufig
+
+Konfiguration:
+
+Wechsler mit Doppelgreifer (Holer und Bringer)
+     1:1 Tausch ist Standard ($TC_MAMP2) Bit 15 = 1
+     --> wandern der Werkzeuge über Magazine ist möglich
+
+Eingangsparameter:
+    E_EN_1zu1_Uebergross : 0: übergrosse werkzeuge können nicht 1:1 getauscht 
+                              werden
+                           1: auch übergrosse werkzeuge können 1:1 getauscht 
+                              werden
+
+    E_Nr_Bereitst_Platz  :Zwischenspeicher-Nr. des Bereitstellungsplatzes
+                           0: kein Bereitstellen
+                           2: Greifer 1
+                           3: Greifer 2
+                           4: Bereitstellungsplatz
+
+    E_Mag1_Fertig: Positonier-Anforderung an Mag1 fertig -> Quit Txx   
+    E_Mag2_Fertig: Positonier-Anforderung an Mag2 fertig <-- i.V   
+   
+    E_WZ_abgelegt_in_Mag   : Wz aus ZwSp wieder in Mag abgelegt bei Txx
+    E_Bereitstellen_Fertig : Bereitstellen in Zwischenspeicher fertig
+";""
+"$Revision: 1.45 $
+$Date: 2007/12/14 11:03:25CET $
+$Author: hgc $
+";"$Revision: 1.45 $
+$Date: 2007/12/14 11:03:25CET $
+$Author: hgc $
+";""
+"$Revision: 1.41 $
+$Date: 2007/12/14 17:51:22CET $
+$Author: hgc $
+";"$Revision: 1.41 $
+$Date: 2007/12/14 17:51:22CET $
+$Author: hgc $
+";""
+"$Revision: 1.36 $
+$Date: 2007/12/14 17:51:05CET $
+$Author: hgc $
+
+";"$Revision: 1.36 $
+$Date: 2007/12/14 17:51:05CET $
+$Author: hgc $
+
+";""
+"$Revision: 1.16 $
+$Date: 2007/12/14 17:51:39CET $
+$Author: hgc $
+";"$Revision: 1.16 $
+$Date: 2007/12/14 17:51:39CET $
+$Author: hgc $
+";""
+"$Revision: 1.8 $
+$Date: 2007/08/02 07:22:24CEST $
+$Author: hgc $
+";"$Revision: 1.8 $
+$Date: 2007/08/02 07:22:24CEST $
+$Author: hgc $
+";""
+"$Revision: 1.12 $
+$Date: 2007/12/14 12:43:19CET $
+$Author: riedlh $
+";"$Revision: 1.12 $
+$Date: 2007/12/14 12:43:19CET $
+$Author: riedlh $
+";""
+"$Revision: 1.5 $
+$Date: 2007/10/17 07:10:38CEST $
+$Author: hgc $
+
+
+Funktionesbeschreibung:
+Logbuch:
+V0.1 /30.01.00/ HS - Modul angelegt
+
+V0.2 /18.05.00/ SJA -Aufruf FC243 (Spaenefoerdere, Spulepistole)
+V0.3 /25.05.00/ SJA -Aufruf FC244 (M20)
+V0.4 /30.05.00/ SJA -Aufruf FC245 (M80-M89)  
+ 
+KNOW_HOW_PROTECT 
+ (falls angegeben, kann im generierten Block keine Änderungen mehr vorgenommen 
+werden)
+";"$Revision: 1.5 $
+$Date: 2007/10/17 07:10:38CEST $
+$Author: hgc $
+
+
+Funktionesbeschreibung:
+Logbuch:
+V0.1 /30.01.00/ HS - Modul angelegt
+
+V0.2 /18.05.00/ SJA -Aufruf FC243 (Spaenefoerdere, Spulepistole)
+V0.3 /25.05.00/ SJA -Aufruf FC244 (M20)
+V0.4 /30.05.00/ SJA -Aufruf FC245 (M80-M89)  
+ 
+KNOW_HOW_PROTECT 
+ (falls angegeben, kann im generierten Block keine Änderungen mehr vorgenommen 
+werden)
+";""
+"$Revision: 1.6 $
+$Date: 2007/12/17 08:47:01CET $
+$Author: riedlh $
+
+
+Funktionesbeschreibung:
+Logbuch:
+V0.1 /30.01.00/ HS - Modul angelegt
+
+V0.2 /18.05.00/ SJA -Aufruf FC243 (Spaenefoerdere, Spulepistole)
+V0.3 /25.05.00/ SJA -Aufruf FC244 (M20)
+V0.4 /30.05.00/ SJA -Aufruf FC245 (M80-M89)  
+ 
+KNOW_HOW_PROTECT 
+ (falls angegeben, kann im generierten Block keine Änderungen mehr vorgenommen 
+werden)
+";"$Revision: 1.6 $
+$Date: 2007/12/17 08:47:01CET $
+$Author: riedlh $
+
+
+Funktionesbeschreibung:
+Logbuch:
+V0.1 /30.01.00/ HS - Modul angelegt
+
+V0.2 /18.05.00/ SJA -Aufruf FC243 (Spaenefoerdere, Spulepistole)
+V0.3 /25.05.00/ SJA -Aufruf FC244 (M20)
+V0.4 /30.05.00/ SJA -Aufruf FC245 (M80-M89)  
+ 
+KNOW_HOW_PROTECT 
+ (falls angegeben, kann im generierten Block keine Änderungen mehr vorgenommen 
+werden)
+";""
+"$Revision: 1.23 $
+$Date: 2007/12/17 07:14:52CET $
+$Author: riedlh $
+
+===============================================================================
+Omron_Regal_Tx Werkzeug vorbereiten 
+===============================================================================
+
+erstellt: 1.2.2000 AB
+geändert: 27.06.01 AB
+   --> Aufruf Wzbruch- Erkennung 
+geändert: 18.07.02 FUH
+   --> Werkzeug vorbereiten in Zwischenspeicher
+geändert: 30.11.2006, Helmut Scheuenstuhl (slh)
+   --> WzWechsler und Regal autom. Grundstlg. fahren
+geändert: 07.12.2006, slh
+   --> umspeichern in Sr24 (Marke R24) auch bei Omronregal wenn Regalgrf. das Wz
+       gespannt hat und Kommando[2].Pos_Quitt. 
+       Bisher galt: Umspeichern bei Omron erst wenn WzwHub in Gst
+
+Version: vorläufig
+
+Konfiguration:
+
+Wechsler mit Doppelgreifer (Holer und Bringer)
+     1:1 Tausch ist Standard ($TC_MAMP2) Bit 15 = 1
+     --> wandern der Werkzeuge über Magazine ist möglich
+
+Eingangsparameter:
+    E_EN_1zu1_Uebergross : 0: übergrosse werkzeuge können nicht 1:1 getauscht 
+                              werden
+                           1: auch übergrosse werkzeuge können 1:1 getauscht 
+                              werden
+
+    E_Nr_Bereitst_Platz  :Zwischenspeicher-Nr. des Bereitstellungsplatzes
+                           0: kein Bereitstellen
+                           2: Greifer 1
+                           3: Greifer 2
+                           4: Bereitstellungsplatz
+
+    E_Mag1_Fertig: Positonier-Anforderung an Mag1 fertig -> Quit Txx   
+    E_Mag2_Fertig: Positonier-Anforderung an Mag2 fertig <-- i.V   
+   
+    E_WZ_abgelegt_in_Mag   : Wz aus ZwSp wieder in Mag abgelegt bei Txx
+    E_Bereitstellen_Fertig : Bereitstellen in Zwischenspeicher fertig
+";"$Revision: 1.23 $
+$Date: 2007/12/17 07:14:52CET $
+$Author: riedlh $
+
+===============================================================================
+Omron_Regal_Tx Werkzeug vorbereiten 
+===============================================================================
+
+erstellt: 1.2.2000 AB
+geändert: 27.06.01 AB
+   --> Aufruf Wzbruch- Erkennung 
+geändert: 18.07.02 FUH
+   --> Werkzeug vorbereiten in Zwischenspeicher
+geändert: 30.11.2006, Helmut Scheuenstuhl (slh)
+   --> WzWechsler und Regal autom. Grundstlg. fahren
+geändert: 07.12.2006, slh
+   --> umspeichern in Sr24 (Marke R24) auch bei Omronregal wenn Regalgrf. das Wz
+       gespannt hat und Kommando[2].Pos_Quitt. 
+       Bisher galt: Umspeichern bei Omron erst wenn WzwHub in Gst
+
+Version: vorläufig
+
+Konfiguration:
+
+Wechsler mit Doppelgreifer (Holer und Bringer)
+     1:1 Tausch ist Standard ($TC_MAMP2) Bit 15 = 1
+     --> wandern der Werkzeuge über Magazine ist möglich
+
+Eingangsparameter:
+    E_EN_1zu1_Uebergross : 0: übergrosse werkzeuge können nicht 1:1 getauscht 
+                              werden
+                           1: auch übergrosse werkzeuge können 1:1 getauscht 
+                              werden
+
+    E_Nr_Bereitst_Platz  :Zwischenspeicher-Nr. des Bereitstellungsplatzes
+                           0: kein Bereitstellen
+                           2: Greifer 1
+                           3: Greifer 2
+                           4: Bereitstellungsplatz
+
+    E_Mag1_Fertig: Positonier-Anforderung an Mag1 fertig -> Quit Txx   
+    E_Mag2_Fertig: Positonier-Anforderung an Mag2 fertig <-- i.V   
+   
+    E_WZ_abgelegt_in_Mag   : Wz aus ZwSp wieder in Mag abgelegt bei Txx
+    E_Bereitstellen_Fertig : Bereitstellen in Zwischenspeicher fertig
+";""
+"$Revision: 1.24 $
+$Date: 2007/12/17 10:41:35CET $
+$Author: hgc $
+
+===============================================================================
+Omron_Regal_Tx Werkzeug vorbereiten 
+===============================================================================
+
+erstellt: 1.2.2000 AB
+geändert: 27.06.01 AB
+   --> Aufruf Wzbruch- Erkennung 
+geändert: 18.07.02 FUH
+   --> Werkzeug vorbereiten in Zwischenspeicher
+geändert: 30.11.2006, Helmut Scheuenstuhl (slh)
+   --> WzWechsler und Regal autom. Grundstlg. fahren
+geändert: 07.12.2006, slh
+   --> umspeichern in Sr24 (Marke R24) auch bei Omronregal wenn Regalgrf. das Wz
+       gespannt hat und Kommando[2].Pos_Quitt. 
+       Bisher galt: Umspeichern bei Omron erst wenn WzwHub in Gst
+
+Version: vorläufig
+
+Konfiguration:
+
+Wechsler mit Doppelgreifer (Holer und Bringer)
+     1:1 Tausch ist Standard ($TC_MAMP2) Bit 15 = 1
+     --> wandern der Werkzeuge über Magazine ist möglich
+
+Eingangsparameter:
+    E_EN_1zu1_Uebergross : 0: übergrosse werkzeuge können nicht 1:1 getauscht 
+                              werden
+                           1: auch übergrosse werkzeuge können 1:1 getauscht 
+                              werden
+
+    E_Nr_Bereitst_Platz  :Zwischenspeicher-Nr. des Bereitstellungsplatzes
+                           0: kein Bereitstellen
+                           2: Greifer 1
+                           3: Greifer 2
+                           4: Bereitstellungsplatz
+
+    E_Mag1_Fertig: Positonier-Anforderung an Mag1 fertig -> Quit Txx   
+    E_Mag2_Fertig: Positonier-Anforderung an Mag2 fertig <-- i.V   
+   
+    E_WZ_abgelegt_in_Mag   : Wz aus ZwSp wieder in Mag abgelegt bei Txx
+    E_Bereitstellen_Fertig : Bereitstellen in Zwischenspeicher fertig
+";"$Revision: 1.24 $
+$Date: 2007/12/17 10:41:35CET $
+$Author: hgc $
+
+===============================================================================
+Omron_Regal_Tx Werkzeug vorbereiten 
+===============================================================================
+
+erstellt: 1.2.2000 AB
+geändert: 27.06.01 AB
+   --> Aufruf Wzbruch- Erkennung 
+geändert: 18.07.02 FUH
+   --> Werkzeug vorbereiten in Zwischenspeicher
+geändert: 30.11.2006, Helmut Scheuenstuhl (slh)
+   --> WzWechsler und Regal autom. Grundstlg. fahren
+geändert: 07.12.2006, slh
+   --> umspeichern in Sr24 (Marke R24) auch bei Omronregal wenn Regalgrf. das Wz
+       gespannt hat und Kommando[2].Pos_Quitt. 
+       Bisher galt: Umspeichern bei Omron erst wenn WzwHub in Gst
+
+Version: vorläufig
+
+Konfiguration:
+
+Wechsler mit Doppelgreifer (Holer und Bringer)
+     1:1 Tausch ist Standard ($TC_MAMP2) Bit 15 = 1
+     --> wandern der Werkzeuge über Magazine ist möglich
+
+Eingangsparameter:
+    E_EN_1zu1_Uebergross : 0: übergrosse werkzeuge können nicht 1:1 getauscht 
+                              werden
+                           1: auch übergrosse werkzeuge können 1:1 getauscht 
+                              werden
+
+    E_Nr_Bereitst_Platz  :Zwischenspeicher-Nr. des Bereitstellungsplatzes
+                           0: kein Bereitstellen
+                           2: Greifer 1
+                           3: Greifer 2
+                           4: Bereitstellungsplatz
+
+    E_Mag1_Fertig: Positonier-Anforderung an Mag1 fertig -> Quit Txx   
+    E_Mag2_Fertig: Positonier-Anforderung an Mag2 fertig <-- i.V   
+   
+    E_WZ_abgelegt_in_Mag   : Wz aus ZwSp wieder in Mag abgelegt bei Txx
+    E_Bereitstellen_Fertig : Bereitstellen in Zwischenspeicher fertig
+";""
+"$Revision: 1.113 $
+$Date: 2007/12/17 13:42:21CET $
+$Author: hgc $
+";"$Revision: 1.113 $
+$Date: 2007/12/17 13:42:21CET $
+$Author: hgc $
+";""
+"$Revision: 1.64 $
+$Date: 2007/12/17 13:42:22CET $
+$Author: hgc $
+-------------------------------------------------------------------------------
+Änderung: Datum      / Abteilung / Name / Version x.y
+Änderung: 22.06.2006 /          / slh   / V0.2
+        :Wzw.Grundstlg.fahren eingepflegt; Lokaldaten laden/retten mit
+        :SFC20 BLKMOVE; Doppelwortzugriffe entfernt (Absolutadressen vermeiden)
+        :Quelle:FC_WZW_VMAG_STATUS.AWL vom 22.06.2006 10:29:25
+Änderung:           /          /        / V
+        :
+-------------------------------------------------------------------------------
+";"$Revision: 1.64 $
+$Date: 2007/12/17 13:42:22CET $
+$Author: hgc $
+-------------------------------------------------------------------------------
+Änderung: Datum      / Abteilung / Name / Version x.y
+Änderung: 22.06.2006 /          / slh   / V0.2
+        :Wzw.Grundstlg.fahren eingepflegt; Lokaldaten laden/retten mit
+        :SFC20 BLKMOVE; Doppelwortzugriffe entfernt (Absolutadressen vermeiden)
+        :Quelle:FC_WZW_VMAG_STATUS.AWL vom 22.06.2006 10:29:25
+Änderung:           /          /        / V
+        :
+-------------------------------------------------------------------------------
+";""
+"$Revision: 1.21 $
+$Date: 2007/12/17 14:43:40CET $
+$Author: hgc $
+$ProjectRevision: Last Checkpoint: 1.52 $
+
+TRANSLINE 2000 Baustein 
+
+Verwaltung der Schutztüren / Schutztüren geschlossen gesamt
+";"$Revision: 1.21 $
+$Date: 2007/12/17 14:43:40CET $
+$Author: hgc $
+$ProjectRevision: Last Checkpoint: 1.52 $
+
+TRANSLINE 2000 Baustein 
+
+Verwaltung der Schutztüren / Schutztüren geschlossen gesamt
+";""
+"$Revision: 1.9 $
+$Date: 2007/12/18 06:40:21CET $
+$Author: riedlh $
+";"$Revision: 1.9 $
+$Date: 2007/12/18 06:40:21CET $
+$Author: riedlh $
+";""
+"$Revision: 1.287 $ 
+$Date: 2007/12/18 07:38:16CET $  
+$Author: hgc $   
+  
+DB für Fehlermeldung  
+==================================================
+Änderung: Datum / Abteilung / Name / Version x.y
+Änderung: 
+Änderung: 18.05.2005 / SPAC / slh / V0.2
+Änderung: 700506-700508, 701060-701115 (Komet) neu
+
+";"$Revision: 1.287 $ 
+$Date: 2007/12/18 07:38:16CET $  
+$Author: hgc $   
+  
+DB für Fehlermeldung  
+==================================================
+Änderung: Datum / Abteilung / Name / Version x.y
+Änderung: 
+Änderung: 18.05.2005 / SPAC / slh / V0.2
+Änderung: 700506-700508, 701060-701115 (Komet) neu
+
+";""
+"$Revision: 1.114 $
+$Date: 2007/12/18 07:37:47CET $
+$Author: hgc $
+";"$Revision: 1.114 $
+$Date: 2007/12/18 07:37:47CET $
+$Author: hgc $
+";""
+"$Revision: 1.22 $
+$Date: 2007/12/18 14:09:30CET $
+$Author: sth $
+
+17.03.03 JW Aufrufe zum Kompensieren jetzt im FC40 --> sonst PLC Fehler 
+Lokaldatenüberlauf
+10.06.02 JW Ini Temp_komp mit 0 bei Reset raus!
+24.04.02 JW PT100 und Glättung komplett überarbeitet
+         variabler Anstieg über Hex[49]; Einlesetakt über Hex[48] programmierbar
+
+08.02.02 JW KTY-weitere Messfühler möglich
+21.11.01 mogs
+- für KTY: Anzeigevariable für aktuelle Temperatur geändert
+10.11.01 mogs
+- Grenzwert 2. Geber auf 99999
+24.10.01 mogs/grü
+- Unterstützung 2x Temp-Fühler + Tabellenwert-Addition
+- optional 1x KTY-Geber Spindellagertemperatur
+";"$Revision: 1.22 $
+$Date: 2007/12/18 14:09:30CET $
+$Author: sth $
+
+17.03.03 JW Aufrufe zum Kompensieren jetzt im FC40 --> sonst PLC Fehler 
+Lokaldatenüberlauf
+10.06.02 JW Ini Temp_komp mit 0 bei Reset raus!
+24.04.02 JW PT100 und Glättung komplett überarbeitet
+         variabler Anstieg über Hex[49]; Einlesetakt über Hex[48] programmierbar
+
+08.02.02 JW KTY-weitere Messfühler möglich
+21.11.01 mogs
+- für KTY: Anzeigevariable für aktuelle Temperatur geändert
+10.11.01 mogs
+- Grenzwert 2. Geber auf 99999
+24.10.01 mogs/grü
+- Unterstützung 2x Temp-Fühler + Tabellenwert-Addition
+- optional 1x KTY-Geber Spindellagertemperatur
+";""
+"$Revision: 1.54 $
+$Date: 2007/12/19 15:33:14CET $
+$Author: hgc $
+
+
+";"$Revision: 1.54 $
+$Date: 2007/12/19 15:33:14CET $
+$Author: hgc $
+
+
+";""
+"$Revision: 1.46 $
+$Date: 2007/12/20 11:01:24CET $
+$Author: hgc $
+
+ Werkzeugwechsler Teller
+";"$Revision: 1.46 $
+$Date: 2007/12/20 11:01:24CET $
+$Author: hgc $
+
+ Werkzeugwechsler Teller
+";""
+"$Revision: 1.37 $
+$Date: 2007/12/20 14:16:27CET $
+$Author: hgc $
+
+Logbuch:
+
+25.05.00  AB Flankenmerker Betriebsarten eingeführt
+";"$Revision: 1.37 $
+$Date: 2007/12/20 14:16:27CET $
+$Author: hgc $
+
+Logbuch:
+
+25.05.00  AB Flankenmerker Betriebsarten eingeführt
+";""
+"$Revision: 1.5 $
+$Date: 2007/12/20 11:55:04CET $
+$Author: kee $
+
+General Electric Spezifikation GE P11T12
+Baustein für Spezifikation GE P11T12 (mit OMATIVE ACM ab Version 2.0.6):
+
+Anwahl INT39==4 --> Standard GE P11TF12 mit Omative ACM
+                    Funktion nur nach Installation von OMATIVE ACM Standard
+                    ab Version 2.0.5
+
+Anwahl INT39==5 --> Erweiterte GE P11TF12 mit Omative ACM für Volvo
+                --> Advanced Hole Making
+                    Funktion nur nach Installation von OMATIVE ACM Custom Volvo
+                    ab Version 2.2.4
+";"$Revision: 1.5 $
+$Date: 2007/12/20 11:55:04CET $
+$Author: kee $
+
+General Electric Spezifikation GE P11T12
+Baustein für Spezifikation GE P11T12 (mit OMATIVE ACM ab Version 2.0.6):
+
+Anwahl INT39==4 --> Standard GE P11TF12 mit Omative ACM
+                    Funktion nur nach Installation von OMATIVE ACM Standard
+                    ab Version 2.0.5
+
+Anwahl INT39==5 --> Erweiterte GE P11TF12 mit Omative ACM für Volvo
+                --> Advanced Hole Making
+                    Funktion nur nach Installation von OMATIVE ACM Custom Volvo
+                    ab Version 2.2.4
+";""
+"$Revision: 1.29 $
+$Date: 2007/10/10 08:52:56CEST $
+$Author: boa $
+
+Beschreibung: 
+SOKO-Schnittstelle
+";"$Revision: 1.29 $
+$Date: 2007/10/10 08:52:56CEST $
+$Author: boa $
+
+Beschreibung: 
+SOKO-Schnittstelle
+";""
+"$Revision: 1.46 $
+$Date: 2007/12/21 08:09:23CET $
+$Author: kee $
+";"$Revision: 1.46 $
+$Date: 2007/12/21 08:09:23CET $
+$Author: kee $
+";""
+"$Revision: 1.15 $
+$Date: 2007/09/04 12:49:12CEST $
+$Author: riedlh $
+";"$Revision: 1.15 $
+$Date: 2007/09/04 12:49:12CEST $
+$Author: riedlh $
+";""
+"$Revision: 1.15 $
+$Date: 2007/12/20 11:55:39CET $
+$Author: kee $
+
+Funktionsbeschreibung
+
+     Alle Spindel-Funktionen im Kanal aktivieren:
+      o Fehlerqiuttierung (auch in FC140 Achsen  -> später zentral !)
+      o Spindel-Override initialisieren (100% setzen im 1.ten OB1-Zykl)
+      o M3/M4/M5 Rücksetzlogik
+      o Abfrage: Achse/Spindeln vorhanden ?
+      o Aufruf Spindel_1: Allgemeine Funktionen
+      o Aufruf Spindel_2: Allgemeine Funktionen (z.B. Vorsatzspindel)
+     ModulEnde
+
+Logbuch:
+
+27.02.2001 SCH: Modulaufrufe angepasst, Stern Dreieck vorbereitet
+
+V2.0 /17-07-00 /SJA 
+- Alle Sekunde Request Spindelistdrehzahl, Toolnr.,d-Nr
+- bei T-Nr Aenderung Reuqest der neuen Werkzeugdaten 
+- Aufruf des Spindelueberwachungsbausteins FC153
+
+V1.0 /14-06-00/ BAG
+- Modul-Struktur reduziert um eine Ebene (FC151 entfällt)
+- Modul-Schnittstelle geändert
+
+28.03.00/ M3/M4/M5 Rücksetzlogik eingebaut /AB
+
+V0.1 /28.10.99/ BAG
+- Modul angelegt
+";"$Revision: 1.15 $
+$Date: 2007/12/20 11:55:39CET $
+$Author: kee $
+
+Funktionsbeschreibung
+
+     Alle Spindel-Funktionen im Kanal aktivieren:
+      o Fehlerqiuttierung (auch in FC140 Achsen  -> später zentral !)
+      o Spindel-Override initialisieren (100% setzen im 1.ten OB1-Zykl)
+      o M3/M4/M5 Rücksetzlogik
+      o Abfrage: Achse/Spindeln vorhanden ?
+      o Aufruf Spindel_1: Allgemeine Funktionen
+      o Aufruf Spindel_2: Allgemeine Funktionen (z.B. Vorsatzspindel)
+     ModulEnde
+
+Logbuch:
+
+27.02.2001 SCH: Modulaufrufe angepasst, Stern Dreieck vorbereitet
+
+V2.0 /17-07-00 /SJA 
+- Alle Sekunde Request Spindelistdrehzahl, Toolnr.,d-Nr
+- bei T-Nr Aenderung Reuqest der neuen Werkzeugdaten 
+- Aufruf des Spindelueberwachungsbausteins FC153
+
+V1.0 /14-06-00/ BAG
+- Modul-Struktur reduziert um eine Ebene (FC151 entfällt)
+- Modul-Schnittstelle geändert
+
+28.03.00/ M3/M4/M5 Rücksetzlogik eingebaut /AB
+
+V0.1 /28.10.99/ BAG
+- Modul angelegt
+";""
+"$Revision: 1.222 $
+$Date: 2007/12/20 11:30:28CET $
+$Author: boa $
+";"$Revision: 1.222 $
+$Date: 2007/12/20 11:30:28CET $
+$Author: boa $
+";""
+"$Revision: 1.10 $
+$Date: 2007/07/16 13:12:28CEST $
+$Author: riedlh $
+";"$Revision: 1.10 $
+$Date: 2007/07/16 13:12:28CEST $
+$Author: riedlh $
+";""
+"$Revision: 1.11 $
+$Date: 2007/12/20 09:31:39CET $
+$Author: boa $
+";"$Revision: 1.11 $
+$Date: 2007/12/20 09:31:39CET $
+$Author: boa $
+";""
+"$Revision: 1.16 $
+$Date: 2007/12/20 09:32:44CET $
+$Author: boa $
+";"$Revision: 1.16 $
+$Date: 2007/12/20 09:32:44CET $
+$Author: boa $
+";""
+"$Revision: 1.23 $
+$Date: 2007/12/14 10:28:36CET $
+$Author: schmoelp $
+
+
+Funktionsbeschreibung:
+
+    Abfrage: Achse vorhanden ? 
+    Aktivierung Meßsystem
+    Vorschubkorrekturschalter / Eilgang-Überlagerung aktivieren 
+
+    Achse: Nachführbetrieb 
+    Umschaltung OVR für Eilgang
+    Achse: ""Bremse lösen"" Übergabe-Signal bilden
+    Verzögerung bilden: Reglerfreigabe nach Bremse lüften
+    
+    Achse: Impulsfreigabe
+    Achse: Bremse lösen Verzögerung bilden 
+    Achse: Reglerfreigabe
+
+
+Achs Typ:
+    1 = Teilungsachse
+    2 = Positionierachse
+
+    Achse: Fehlermeldung //VS-SP-X,Reglersperre
+    Achse: //NC-Schnittstelle: Reglersperre
+    Achse: Servomodul-Überwachung  //NOT-AUS,Antrieb nicht bereit
+    Achse: Temperatur-Überwachung  //VS-SP-X,Motortemperatur zu hoch
+
+Logbuch:
+/V1.0 /23-05-00/ AB Schnittstellen geändert
+
+
+/V0.11/8-Mai-00/ BAG
+ o Eilgang-Überlagerung in Jog mit Eilgang-Override veränderbar aktiviert
+
+/V0.10/23-02-00/ BAG
+ o Schnittstelle erweitert: => Vorschubfreigabe für Antriebsoptimierungs-Tests 
+    E_Taste_Brems_Auf_Messen  // für Antriebsoptimierungs-Tests 
+
+/V0.9/17-02-00/ BAG
+ o Schnittstelle erweitert: E_Kanal1_E_Transform => Vorschubfreigabe
+
+/V0.8/15.12.99/ BAG
+- NST ""Achsen_Halt_von_aussen"" ergänzt
+- Vorschubkorrekturschalter / Eilgang-Überlagerung aktivieren 
+- Achse: Nachführbetrieb 
+
+V0.6 /22.10.99/ BAG
+- Modul Schnittstelle eingerichtet 
+
+22.12.99 / AB
+Fehler mit Quittiertaste rückgesetzt 
+";"$Revision: 1.23 $
+$Date: 2007/12/14 10:28:36CET $
+$Author: schmoelp $
+
+
+Funktionsbeschreibung:
+
+    Abfrage: Achse vorhanden ? 
+    Aktivierung Meßsystem
+    Vorschubkorrekturschalter / Eilgang-Überlagerung aktivieren 
+
+    Achse: Nachführbetrieb 
+    Umschaltung OVR für Eilgang
+    Achse: ""Bremse lösen"" Übergabe-Signal bilden
+    Verzögerung bilden: Reglerfreigabe nach Bremse lüften
+    
+    Achse: Impulsfreigabe
+    Achse: Bremse lösen Verzögerung bilden 
+    Achse: Reglerfreigabe
+
+
+Achs Typ:
+    1 = Teilungsachse
+    2 = Positionierachse
+
+    Achse: Fehlermeldung //VS-SP-X,Reglersperre
+    Achse: //NC-Schnittstelle: Reglersperre
+    Achse: Servomodul-Überwachung  //NOT-AUS,Antrieb nicht bereit
+    Achse: Temperatur-Überwachung  //VS-SP-X,Motortemperatur zu hoch
+
+Logbuch:
+/V1.0 /23-05-00/ AB Schnittstellen geändert
+
+
+/V0.11/8-Mai-00/ BAG
+ o Eilgang-Überlagerung in Jog mit Eilgang-Override veränderbar aktiviert
+
+/V0.10/23-02-00/ BAG
+ o Schnittstelle erweitert: => Vorschubfreigabe für Antriebsoptimierungs-Tests 
+    E_Taste_Brems_Auf_Messen  // für Antriebsoptimierungs-Tests 
+
+/V0.9/17-02-00/ BAG
+ o Schnittstelle erweitert: E_Kanal1_E_Transform => Vorschubfreigabe
+
+/V0.8/15.12.99/ BAG
+- NST ""Achsen_Halt_von_aussen"" ergänzt
+- Vorschubkorrekturschalter / Eilgang-Überlagerung aktivieren 
+- Achse: Nachführbetrieb 
+
+V0.6 /22.10.99/ BAG
+- Modul Schnittstelle eingerichtet 
+
+22.12.99 / AB
+Fehler mit Quittiertaste rückgesetzt 
+";""
+"$Revision: 1.44 $
+$Date: 2007/12/13 11:04:53CET $
+$Author: schmoelp $
+$ProjectRevision: Last Checkpoint: 1.200 $
+";"$Revision: 1.44 $
+$Date: 2007/12/13 11:04:53CET $
+$Author: schmoelp $
+$ProjectRevision: Last Checkpoint: 1.200 $
+";""
+"$Revision: 1.288 $ 
+$Date: 2007/12/18 15:57:22CET $  
+$Author: riedlh $   
+  
+DB für Fehlermeldung  
+==================================================
+Änderung: Datum / Abteilung / Name / Version x.y
+Änderung: 
+Änderung: 18.05.2005 / SPAC / slh / V0.2
+Änderung: 700506-700508, 701060-701115 (Komet) neu
+
+";"$Revision: 1.288 $ 
+$Date: 2007/12/18 15:57:22CET $  
+$Author: riedlh $   
+  
+DB für Fehlermeldung  
+==================================================
+Änderung: Datum / Abteilung / Name / Version x.y
+Änderung: 
+Änderung: 18.05.2005 / SPAC / slh / V0.2
+Änderung: 700506-700508, 701060-701115 (Komet) neu
+
+";""
+"$Revision: 1.14 $
+$Date: 2007/12/21 08:12:03CET $
+$Author: kee $
+";"$Revision: 1.14 $
+$Date: 2007/12/21 08:12:03CET $
+$Author: kee $
+";""
+"$Revision: 1.54 $
+$Date: 2007/11/20 13:11:21CET $
+$Author: boa $
+";"$Revision: 1.54 $
+$Date: 2007/11/20 13:11:21CET $
+$Author: boa $
+";""
+"$Revision: 1.55 $
+$Date: 2007/12/20 13:46:14CET $
+$Author: boa $
+";"$Revision: 1.55 $
+$Date: 2007/12/20 13:46:14CET $
+$Author: boa $
+";""
+"$Revision: 1.23 $
+$Date: 2007/12/19 14:15:56CET $
+$Author: rieds $
+";"$Revision: 1.23 $
+$Date: 2007/12/19 14:15:56CET $
+$Author: rieds $
+";""
+"$Revision: 1.34 $
+$Date: 2007/12/17 13:32:34CET $
+$Author: sth $
+";"$Revision: 1.34 $
+$Date: 2007/12/17 13:32:34CET $
+$Author: sth $
+";""
+"$Revision: 1.73 $
+$Date: 2007/12/05 11:16:56CET $
+$Author: kee $
+V0.2 31-07-00 SJA
+              --> umkonfiguriert auf 
+              M96, M97, M98
+
+              M96: Spänespülung, Werkstückreinigung AUS 
+              M97: Spänespülung EIN
+              M98: Werkstückreinigung EIN
+
+V0.1 01-07-00 SJA
+              Spaenespuelung und Werkstueckreinigung
+";"$Revision: 1.73 $
+$Date: 2007/12/05 11:16:56CET $
+$Author: kee $
+V0.2 31-07-00 SJA
+              --> umkonfiguriert auf 
+              M96, M97, M98
+
+              M96: Spänespülung, Werkstückreinigung AUS 
+              M97: Spänespülung EIN
+              M98: Werkstückreinigung EIN
+
+V0.1 01-07-00 SJA
+              Spaenespuelung und Werkstueckreinigung
+";""
+"$Revision: 1.38 $
+$Date: 2007/12/20 13:09:57CET $
+$Author: boa $
+";"$Revision: 1.38 $
+$Date: 2007/12/20 13:09:57CET $
+$Author: boa $
+";""
+"$Revision: 1.39 $
+$Date: 2007/12/21 08:06:26CET $
+$Author: kee $
+";"$Revision: 1.39 $
+$Date: 2007/12/21 08:06:26CET $
+$Author: kee $
+";""
+"$Revision: 1.65 $
+$Date: 2008/01/04 10:09:10CET $
+$Author: hgc $
+
+";"$Revision: 1.65 $
+$Date: 2008/01/04 10:09:10CET $
+$Author: hgc $
+
+";""
+"$Revision: 1.35 $
+$Date: 2008/01/07 10:01:46CET $
+$Author: hgc $
+
+27.01.00 SJA - Baustein angelegt
+
+31.10.01 SCH - Schnittstelle erweitert
+17.01.03 FUH - Schnittstelle erweitert und neue Zweihandbedienung eingebracht
+";"$Revision: 1.35 $
+$Date: 2008/01/07 10:01:46CET $
+$Author: hgc $
+
+27.01.00 SJA - Baustein angelegt
+
+31.10.01 SCH - Schnittstelle erweitert
+17.01.03 FUH - Schnittstelle erweitert und neue Zweihandbedienung eingebracht
+";""
+"$Revision: 1.13 $
+$Date: 2008/01/07 09:58:21CET $
+$Author: hgc $
+
+Magazin Beladen / Entladen
+erstellt: 27.07.00 AB
+------------------------------------------------------------------------------
+geändert: 21.03.01 AB
+   -->Magazin Positionieren auf Magazinplatz
+geändert: 22.07.02 FUH
+   -->Belade"".IF[1] auf Belade"".IF[2] geändert
+Änderung: Datum     / Abteilung / Name  / Version x.y
+Änderung: 14.06.2007 /          / slh   / 
+        : Wz.umsetzen mit Bewegung
+Änderung:          /            /      / 
+        : 
+
+------------------------------------------------------------------------------
+Beschreibung:
+Netzwerk 1 : Erkennen der Anforderung Be/Entladen
+Netzwerk 2 : Schrittkette beladen
+Netzwerk 3 : Schrittkette entladen
+Netzwerk 4 : Schrittkette positionieren
+
+Durch den Eingang E_Quittierpflicht wird festgelegt ob der Beladen und Entladen 
+vorgang quittiert werden muß.
+Es wird dann mit E_Fertig der Belade- oder Entladevorgang datentechnisch 
+übernommen, oder mit E_Abbruch verworfen.
+
+Beachte: Damit in ShopMill der Beladevorgang gestartet wird muß mit dem Cursor 
+aus dem Feld gesprungen werden.
+";"$Revision: 1.13 $
+$Date: 2008/01/07 09:58:21CET $
+$Author: hgc $
+
+Magazin Beladen / Entladen
+erstellt: 27.07.00 AB
+------------------------------------------------------------------------------
+geändert: 21.03.01 AB
+   -->Magazin Positionieren auf Magazinplatz
+geändert: 22.07.02 FUH
+   -->Belade"".IF[1] auf Belade"".IF[2] geändert
+Änderung: Datum     / Abteilung / Name  / Version x.y
+Änderung: 14.06.2007 /          / slh   / 
+        : Wz.umsetzen mit Bewegung
+Änderung:          /            /      / 
+        : 
+
+------------------------------------------------------------------------------
+Beschreibung:
+Netzwerk 1 : Erkennen der Anforderung Be/Entladen
+Netzwerk 2 : Schrittkette beladen
+Netzwerk 3 : Schrittkette entladen
+Netzwerk 4 : Schrittkette positionieren
+
+Durch den Eingang E_Quittierpflicht wird festgelegt ob der Beladen und Entladen 
+vorgang quittiert werden muß.
+Es wird dann mit E_Fertig der Belade- oder Entladevorgang datentechnisch 
+übernommen, oder mit E_Abbruch verworfen.
+
+Beachte: Damit in ShopMill der Beladevorgang gestartet wird muß mit dem Cursor 
+aus dem Feld gesprungen werden.
+";""
+"$Revision: 1.41 $
+$Date: 2007/10/18 07:27:05CEST $
+$Author: hgc $
+
+";"$Revision: 1.41 $
+$Date: 2007/10/18 07:27:05CEST $
+$Author: hgc $
+
+";""
+"$Revision: 1.22 $
+$Date: 2007/11/27 07:34:48CET $
+$Author: hgc $
+$ProjectRevision: Last Checkpoint: 1.52 $
+
+Bedienerführung
+";"$Revision: 1.22 $
+$Date: 2007/11/27 07:34:48CET $
+$Author: hgc $
+$ProjectRevision: Last Checkpoint: 1.52 $
+
+Bedienerführung
+";""
+"$Revision: 1.289 $ 
+$Date: 2008/01/07 15:06:25CET $  
+$Author: hgc $   
+  
+DB für Fehlermeldung  
+==================================================
+Änderung: Datum / Abteilung / Name / Version x.y
+Änderung: 
+Änderung: 18.05.2005 / SPAC / slh / V0.2
+Änderung: 700506-700508, 701060-701115 (Komet) neu
+
+";"$Revision: 1.289 $ 
+$Date: 2008/01/07 15:06:25CET $  
+$Author: hgc $   
+  
+DB für Fehlermeldung  
+==================================================
+Änderung: Datum / Abteilung / Name / Version x.y
+Änderung: 
+Änderung: 18.05.2005 / SPAC / slh / V0.2
+Änderung: 700506-700508, 701060-701115 (Komet) neu
+
+";""
+"$Revision: 1.23 $
+$Date: 2008/01/07 15:07:41CET $
+$Author: hgc $
+$ProjectRevision: Last Checkpoint: 1.52 $
+
+Bedienerführung
+";"$Revision: 1.23 $
+$Date: 2008/01/07 15:07:41CET $
+$Author: hgc $
+$ProjectRevision: Last Checkpoint: 1.52 $
+
+Bedienerführung
+";""
+"$Revision: 1.42 $
+$Date: 2008/01/07 15:08:03CET $
+$Author: hgc $
+
+";"$Revision: 1.42 $
+$Date: 2008/01/07 15:08:03CET $
+$Author: hgc $
+
+";""
+"$Revision: 1.16 $
+$Date: 2008/01/08 10:50:31CET $
+$Author: hgc $
+
+Logbuch:
+
+26.09.2001 SCH: Modul erstellt
+";"$Revision: 1.16 $
+$Date: 2008/01/08 10:50:31CET $
+$Author: hgc $
+
+Logbuch:
+
+26.09.2001 SCH: Modul erstellt
+";""
+"$Revision: 1.19 $
+$Date: 2008/01/08 13:25:58CET $
+$Author: hgc $
+
+Logbuch:
+23.08.00 Wenn kein M3/M4 erlaubt Request for Spindle stop 
+28.03.00 Tastenbedienung nur wenn Programm abgebrochen ansteht /AB
+";"$Revision: 1.19 $
+$Date: 2008/01/08 13:25:58CET $
+$Author: hgc $
+
+Logbuch:
+23.08.00 Wenn kein M3/M4 erlaubt Request for Spindle stop 
+28.03.00 Tastenbedienung nur wenn Programm abgebrochen ansteht /AB
+";""
+"$Revision: 1.12 $
+$Date: 2008/01/08 15:51:38CET $
+$Author: hgc $
+";"$Revision: 1.12 $
+$Date: 2008/01/08 15:51:38CET $
+$Author: hgc $
+";""
+"$Revision: 1.28 $
+$Date: 2008/01/09 10:39:00CET $
+$Author: hgc $
+
+Rundspeicher RS4 / RS5 Rettungsfunktion
+=============================
+";"$Revision: 1.28 $
+$Date: 2008/01/09 10:39:00CET $
+$Author: hgc $
+
+Rundspeicher RS4 / RS5 Rettungsfunktion
+=============================
+";""
+"$Revision: 1.224 $
+$Date: 2008/01/07 14:25:39CET $
+$Author: boa $
+";"$Revision: 1.224 $
+$Date: 2008/01/07 14:25:39CET $
+$Author: boa $
+";""
+"$Revision: 1.290 $ 
+$Date: 2008/01/08 10:32:29CET $  
+$Author: boa $   
+  
+DB für Fehlermeldung  
+==================================================
+Änderung: Datum / Abteilung / Name / Version x.y
+Änderung: 
+Änderung: 18.05.2005 / SPAC / slh / V0.2
+Änderung: 700506-700508, 701060-701115 (Komet) neu
+
+";"$Revision: 1.290 $ 
+$Date: 2008/01/08 10:32:29CET $  
+$Author: boa $   
+  
+DB für Fehlermeldung  
+==================================================
+Änderung: Datum / Abteilung / Name / Version x.y
+Änderung: 
+Änderung: 18.05.2005 / SPAC / slh / V0.2
+Änderung: 700506-700508, 701060-701115 (Komet) neu
+
+";""
+"$Revision: 1.4 $
+$Date: 2008/01/10 12:55:03CET $
+$Author: sth $
+
+";"$Revision: 1.4 $
+$Date: 2008/01/10 12:55:03CET $
+$Author: sth $
+
+";""
+"$Revision: 1.74 $
+$Date: 2008/01/08 08:07:40CET $
+$Author: riedlh $
+V0.2 31-07-00 SJA
+              --> umkonfiguriert auf 
+              M96, M97, M98
+
+              M96: Spänespülung, Werkstückreinigung AUS 
+              M97: Spänespülung EIN
+              M98: Werkstückreinigung EIN
+
+V0.1 01-07-00 SJA
+              Spaenespuelung und Werkstueckreinigung
+";"$Revision: 1.74 $
+$Date: 2008/01/08 08:07:40CET $
+$Author: riedlh $
+V0.2 31-07-00 SJA
+              --> umkonfiguriert auf 
+              M96, M97, M98
+
+              M96: Spänespülung, Werkstückreinigung AUS 
+              M97: Spänespülung EIN
+              M98: Werkstückreinigung EIN
+
+V0.1 01-07-00 SJA
+              Spaenespuelung und Werkstueckreinigung
+";""
+"$Revision: 1.37 $
+$Date: 2008/01/12 15:09:26CET $
+$Author: hgc $
+
+";"$Revision: 1.37 $
+$Date: 2008/01/12 15:09:26CET $
+$Author: hgc $
+
+";""
+"$Revision: 1.16 $
+$Date: 2008/01/11 12:28:13CET $
+$Author: boa $
+";"$Revision: 1.16 $
+$Date: 2008/01/11 12:28:13CET $
+$Author: boa $
+";""
+"$Revision: 1.12 $
+$Date: 2007/07/16 13:12:57CEST $
+$Author: riedlh $
+Vibrationssensor
+Logbuch:
+
+V0.1 / 10.07.03 / STH
+
+
+- Modul Erstellt
+";"$Revision: 1.12 $
+$Date: 2007/07/16 13:12:57CEST $
+$Author: riedlh $
+Vibrationssensor
+Logbuch:
+
+V0.1 / 10.07.03 / STH
+
+
+- Modul Erstellt
+";""
+"$Revision: 1.4 $
+$Date: 2008/01/14 06:18:46CET $
+$Author: hgc $
+
+";"$Revision: 1.4 $
+$Date: 2008/01/14 06:18:46CET $
+$Author: hgc $
+
+";""
+"$Revision: 1.18 $
+$Date: 2008/01/09 13:40:45CET $
+$Author: kee $
+";"$Revision: 1.18 $
+$Date: 2008/01/09 13:40:45CET $
+$Author: kee $
+";""
+"$Revision: 1.13 $
+$Date: 2008/01/10 07:56:14CET $
+$Author: kee $
+Vibrationssensor
+Logbuch:
+
+V0.1 / 10.07.03 / STH
+
+
+- Modul Erstellt
+";"$Revision: 1.13 $
+$Date: 2008/01/10 07:56:14CET $
+$Author: kee $
+Vibrationssensor
+Logbuch:
+
+V0.1 / 10.07.03 / STH
+
+
+- Modul Erstellt
+";""
+"$Revision: 1.56 $
+$Date: 2008/01/11 13:08:47CET $
+$Author: boa $
+";"$Revision: 1.56 $
+$Date: 2008/01/11 13:08:47CET $
+$Author: boa $
+";""
+"$Revision: 2.27 $
+$Date: 2008/01/08 11:14:39CET $
+$Author: boa $
+";"$Revision: 2.27 $
+$Date: 2008/01/08 11:14:39CET $
+$Author: boa $
+";""
+"$Revision: 1.23 $
+$Date: 2008/01/07 09:47:39CET $
+$Author: sth $
+
+18.11.02 GRHS #start löschen mit RESET auch ohne #error
+11.10.02 JW Initialisierung erweitert um ersten Durchlauf ok
+03.06.02 JW Optionen Kompens. anwählen auch für 2. Sensor
+30.05.02 JW fehlerhafte Eingabe 0 impl.
+31.01.02 JW aktiven Tabellenbereich mit Realzahlenvergleich auswählen
+
+12.04.01
+optional abwaehlbar
+abschaltbar durch Softkey
+";"$Revision: 1.23 $
+$Date: 2008/01/07 09:47:39CET $
+$Author: sth $
+
+18.11.02 GRHS #start löschen mit RESET auch ohne #error
+11.10.02 JW Initialisierung erweitert um ersten Durchlauf ok
+03.06.02 JW Optionen Kompens. anwählen auch für 2. Sensor
+30.05.02 JW fehlerhafte Eingabe 0 impl.
+31.01.02 JW aktiven Tabellenbereich mit Realzahlenvergleich auswählen
+
+12.04.01
+optional abwaehlbar
+abschaltbar durch Softkey
+";""
+"$Revision: 1.17 $
+$Date: 2008/01/07 09:47:43CET $
+$Author: sth $
+
+18.11.02 GRHS #start löschen mit RESET auch ohne #error
+11.10.02 JW Initialisierung erweitert um ersten Durchlauf ok
+03.06.02 JW Optionen Kompens. anwählen auch für 2. Sensor
+30.05.02 JW fehlerhafte Eingabe 0 impl.
+31.01.02 JW aktiven Tabellenbereich mit Realzahlenvergleich auswählen
+
+12.04.01
+optional abwaehlbar
+abschaltbar durch Softkey
+";"$Revision: 1.17 $
+$Date: 2008/01/07 09:47:43CET $
+$Author: sth $
+
+18.11.02 GRHS #start löschen mit RESET auch ohne #error
+11.10.02 JW Initialisierung erweitert um ersten Durchlauf ok
+03.06.02 JW Optionen Kompens. anwählen auch für 2. Sensor
+30.05.02 JW fehlerhafte Eingabe 0 impl.
+31.01.02 JW aktiven Tabellenbereich mit Realzahlenvergleich auswählen
+
+12.04.01
+optional abwaehlbar
+abschaltbar durch Softkey
+";""
+"$Revision: 1.23 $
+$Date: 2008/01/08 14:32:40CET $
+$Author: sth $
+
+17.03.03 JW Aufrufe zum Kompensieren jetzt im FC40 --> sonst PLC Fehler 
+Lokaldatenüberlauf
+10.06.02 JW Ini Temp_komp mit 0 bei Reset raus!
+24.04.02 JW PT100 und Glättung komplett überarbeitet
+         variabler Anstieg über Hex[49]; Einlesetakt über Hex[48] programmierbar
+
+08.02.02 JW KTY-weitere Messfühler möglich
+21.11.01 mogs
+- für KTY: Anzeigevariable für aktuelle Temperatur geändert
+10.11.01 mogs
+- Grenzwert 2. Geber auf 99999
+24.10.01 mogs/grü
+- Unterstützung 2x Temp-Fühler + Tabellenwert-Addition
+- optional 1x KTY-Geber Spindellagertemperatur
+";"$Revision: 1.23 $
+$Date: 2008/01/08 14:32:40CET $
+$Author: sth $
+
+17.03.03 JW Aufrufe zum Kompensieren jetzt im FC40 --> sonst PLC Fehler 
+Lokaldatenüberlauf
+10.06.02 JW Ini Temp_komp mit 0 bei Reset raus!
+24.04.02 JW PT100 und Glättung komplett überarbeitet
+         variabler Anstieg über Hex[49]; Einlesetakt über Hex[48] programmierbar
+
+08.02.02 JW KTY-weitere Messfühler möglich
+21.11.01 mogs
+- für KTY: Anzeigevariable für aktuelle Temperatur geändert
+10.11.01 mogs
+- Grenzwert 2. Geber auf 99999
+24.10.01 mogs/grü
+- Unterstützung 2x Temp-Fühler + Tabellenwert-Addition
+- optional 1x KTY-Geber Spindellagertemperatur
+";""
+"$Revision: 1.15 $
+$Date: 2008/01/11 12:37:37CET $
+$Author: boa $
+";"$Revision: 1.15 $
+$Date: 2008/01/11 12:37:37CET $
+$Author: boa $
+";""
+"$Revision: 1.5 $
+$Date: 2008/01/08 15:04:08CET $
+$Author: sth $
+
+";"$Revision: 1.5 $
+$Date: 2008/01/08 15:04:08CET $
+$Author: sth $
+
+";""
+"$Revision: 1.9 $
+$Date: 2008/01/14 15:15:04CET $
+$Author: hgc $
+
+Baustein für Solutionline DMx55-125x2
+";"$Revision: 1.9 $
+$Date: 2008/01/14 15:15:04CET $
+$Author: hgc $
+
+Baustein für Solutionline DMx55-125x2
+";""
+"$Revision: 1.6 $
+$Date: 2008/01/14 15:13:49CET $
+$Author: hgc $
+
+
+Zwangsdynamisierung Baustein für Solutionline DMx55-125x2
+
+Unterteilt in zwei Sicherheitsbereiche:
+1. Bereich 1         (Arbeitsraumachsen / Palettenwechslerachse / Mgazinachsen)
+bestehend aus Achse:    X Y Z B C SPI              PW             MAG1/MAG2 GR  
+
+2. Bereich 2         (Palettenspeicherachsen / Palettenwechslerachse)
+bestehend aus Achse:     DREHST/TRANSP/HUB              PW
+";"$Revision: 1.6 $
+$Date: 2008/01/14 15:13:49CET $
+$Author: hgc $
+
+
+Zwangsdynamisierung Baustein für Solutionline DMx55-125x2
+
+Unterteilt in zwei Sicherheitsbereiche:
+1. Bereich 1         (Arbeitsraumachsen / Palettenwechslerachse / Mgazinachsen)
+bestehend aus Achse:    X Y Z B C SPI              PW             MAG1/MAG2 GR  
+
+2. Bereich 2         (Palettenspeicherachsen / Palettenwechslerachse)
+bestehend aus Achse:     DREHST/TRANSP/HUB              PW
+";""
+"$Revision: 1.291 $ 
+$Date: 2008/01/15 14:31:58CET $  
+$Author: hgc $   
+  
+DB für Fehlermeldung  
+==================================================
+Änderung: Datum / Abteilung / Name / Version x.y
+Änderung: 
+Änderung: 18.05.2005 / SPAC / slh / V0.2
+Änderung: 700506-700508, 701060-701115 (Komet) neu
+
+";"$Revision: 1.291 $ 
+$Date: 2008/01/15 14:31:58CET $  
+$Author: hgc $   
+  
+DB für Fehlermeldung  
+==================================================
+Änderung: Datum / Abteilung / Name / Version x.y
+Änderung: 
+Änderung: 18.05.2005 / SPAC / slh / V0.2
+Änderung: 700506-700508, 701060-701115 (Komet) neu
+
+";""
+"$Revision: 1.24.1.2 $
+$Date: 2008/01/15 14:32:50CET $
+$Author: sth $
+
+17.03.03 JW Aufrufe zum Kompensieren jetzt im FC40 --> sonst PLC Fehler 
+Lokaldatenüberlauf
+10.06.02 JW Ini Temp_komp mit 0 bei Reset raus!
+24.04.02 JW PT100 und Glättung komplett überarbeitet
+         variabler Anstieg über Hex[49]; Einlesetakt über Hex[48] programmierbar
+
+08.02.02 JW KTY-weitere Messfühler möglich
+21.11.01 mogs
+- für KTY: Anzeigevariable für aktuelle Temperatur geändert
+10.11.01 mogs
+- Grenzwert 2. Geber auf 99999
+24.10.01 mogs/grü
+- Unterstützung 2x Temp-Fühler + Tabellenwert-Addition
+- optional 1x KTY-Geber Spindellagertemperatur
+";"$Revision: 1.24.1.2 $
+$Date: 2008/01/15 14:32:50CET $
+$Author: sth $
+
+17.03.03 JW Aufrufe zum Kompensieren jetzt im FC40 --> sonst PLC Fehler 
+Lokaldatenüberlauf
+10.06.02 JW Ini Temp_komp mit 0 bei Reset raus!
+24.04.02 JW PT100 und Glättung komplett überarbeitet
+         variabler Anstieg über Hex[49]; Einlesetakt über Hex[48] programmierbar
+
+08.02.02 JW KTY-weitere Messfühler möglich
+21.11.01 mogs
+- für KTY: Anzeigevariable für aktuelle Temperatur geändert
+10.11.01 mogs
+- Grenzwert 2. Geber auf 99999
+24.10.01 mogs/grü
+- Unterstützung 2x Temp-Fühler + Tabellenwert-Addition
+- optional 1x KTY-Geber Spindellagertemperatur
+";""
+"$Revision: 1.6.1.1 $
+$Date: 2008/01/14 10:06:20CET $
+$Author: sth $
+
+Funktion_1 ... Auswerten von Maschinenparametern
+";"$Revision: 1.6.1.1 $
+$Date: 2008/01/14 10:06:20CET $
+$Author: sth $
+
+Funktion_1 ... Auswerten von Maschinenparametern
+";""
+"$Revision: 1.5.1.1 $
+$Date: 2008/01/14 10:06:25CET $
+$Author: sth $
+
+";"$Revision: 1.5.1.1 $
+$Date: 2008/01/14 10:06:25CET $
+$Author: sth $
+
+";""
+"$Revision: 1.16.1.1 $
+$Date: 2008/01/14 10:06:31CET $
+$Author: sth $
+
+Funktionsbeschreibung:
+
+  hier werden Funktionskomponenten eingebunden,
+  die am Ende vom Zyklus aufgerufen werden:
+        
+  CO_Main_FC120
+    CO_Chan1_FC113          Kanal-Reaktionen an die NC
+    CO_Error_FC115          PLC-Fehlermedlungen
+    CO_PLC_NCK_FC116        Kommunikationsschnittstelle NC_PLC über Dual-Port
+    CIO_IO_Rangier_FC111    Rangierung der DECKEL MAHO Ausgänge
+    CO_MSST_FC117           MaschinenSteuertafel und DECKEL MAHO Achsen-Kreuz
+
+Logbuch:
+
+V0.3/23-feb-00/BAG
+ o Taste ""PLC_Fehlermeldunegn Quittieren"" ersetzt durch 
+    ProgrammierTaste ""BIG MAC"" im Aufruf ""CO_ErroR_FC115"" und ""CO_Chan1_FC113""
+ o Netzwerk: Programmier-Taste ""BIG_MAC"" zurücksetzen, am Modul_Ende eingefügt.
+ o Taste ""MKS/WKS"" auf ehemalige ""PLC_FM_Quitt""-Taste(E6.1) gelegt (im Aufruf 
+   von CO_MSTT_FC117
+     Grund: Funktion ""ToFrame"" und ""MKS/WKS"" passen nicht immer überein !
+
+V0.2/17-feb-00/BAG
+ o Logbuch eingerichtet
+ o wegen Schnittstellenänderung im CO_MSST_FC117), neue Version generiert
+";"$Revision: 1.16.1.1 $
+$Date: 2008/01/14 10:06:31CET $
+$Author: sth $
+
+Funktionsbeschreibung:
+
+  hier werden Funktionskomponenten eingebunden,
+  die am Ende vom Zyklus aufgerufen werden:
+        
+  CO_Main_FC120
+    CO_Chan1_FC113          Kanal-Reaktionen an die NC
+    CO_Error_FC115          PLC-Fehlermedlungen
+    CO_PLC_NCK_FC116        Kommunikationsschnittstelle NC_PLC über Dual-Port
+    CIO_IO_Rangier_FC111    Rangierung der DECKEL MAHO Ausgänge
+    CO_MSST_FC117           MaschinenSteuertafel und DECKEL MAHO Achsen-Kreuz
+
+Logbuch:
+
+V0.3/23-feb-00/BAG
+ o Taste ""PLC_Fehlermeldunegn Quittieren"" ersetzt durch 
+    ProgrammierTaste ""BIG MAC"" im Aufruf ""CO_ErroR_FC115"" und ""CO_Chan1_FC113""
+ o Netzwerk: Programmier-Taste ""BIG_MAC"" zurücksetzen, am Modul_Ende eingefügt.
+ o Taste ""MKS/WKS"" auf ehemalige ""PLC_FM_Quitt""-Taste(E6.1) gelegt (im Aufruf 
+   von CO_MSTT_FC117
+     Grund: Funktion ""ToFrame"" und ""MKS/WKS"" passen nicht immer überein !
+
+V0.2/17-feb-00/BAG
+ o Logbuch eingerichtet
+ o wegen Schnittstellenänderung im CO_MSST_FC117), neue Version generiert
+";""
+"$Revision: 1.4.1.1 $
+$Date: 2008/01/14 10:06:36CET $
+$Author: sth $
+
+24.04.02 JW komplett überarbeitet nach Vorgabe M. Gröger --> einen Messwert 
+pro vereinbarte Zeit [sek] liefern (wird über Eingang Messimpuls gesteuert)
+10.11.01 mogs
+- Meßwertausgabe löschen bei Werterfassung
+- 16.05.01 ka
+  Umstellung auf Klima-Bereich
+";"$Revision: 1.4.1.1 $
+$Date: 2008/01/14 10:06:36CET $
+$Author: sth $
+
+24.04.02 JW komplett überarbeitet nach Vorgabe M. Gröger --> einen Messwert 
+pro vereinbarte Zeit [sek] liefern (wird über Eingang Messimpuls gesteuert)
+10.11.01 mogs
+- Meßwertausgabe löschen bei Werterfassung
+- 16.05.01 ka
+  Umstellung auf Klima-Bereich
+";""
+"$Revision: 1.11.1.1 $
+$Date: 2008/01/14 10:05:35CET $
+$Author: sth $
+
+";"$Revision: 1.11.1.1 $
+$Date: 2008/01/14 10:05:35CET $
+$Author: sth $
+
+";""
+"$Revision: 1.4.1.1 $
+$Date: 2008/01/14 10:05:40CET $
+$Author: sth $
+
+";"$Revision: 1.4.1.1 $
+$Date: 2008/01/14 10:05:40CET $
+$Author: sth $
+
+";""
+"$Revision: 1.7.1.1 $
+$Date: 2008/01/14 10:05:45CET $
+$Author: sth $
+
+";"$Revision: 1.7.1.1 $
+$Date: 2008/01/14 10:05:45CET $
+$Author: sth $
+
+";""
+"$Revision: 1.6.1.1 $
+$Date: 2008/01/14 10:05:50CET $
+$Author: sth $
+
+Auslesen der Temperaturdaten und Umrechnung
+Eingänge Transmitter: TXD -> E36.7
+Ausgänge Transmitter: DSR -> A40.5    CTS -> A40.6 
+ha 01.09.99 
+";"$Revision: 1.6.1.1 $
+$Date: 2008/01/14 10:05:50CET $
+$Author: sth $
+
+Auslesen der Temperaturdaten und Umrechnung
+Eingänge Transmitter: TXD -> E36.7
+Ausgänge Transmitter: DSR -> A40.5    CTS -> A40.6 
+ha 01.09.99 
+";""
+"$Revision: 1.23.1.1 $
+$Date: 2008/01/14 10:06:02CET $
+$Author: sth $
+
+18.11.02 GRHS #start löschen mit RESET auch ohne #error
+11.10.02 JW Initialisierung erweitert um ersten Durchlauf ok
+03.06.02 JW Optionen Kompens. anwählen auch für 2. Sensor
+30.05.02 JW fehlerhafte Eingabe 0 impl.
+31.01.02 JW aktiven Tabellenbereich mit Realzahlenvergleich auswählen
+
+12.04.01
+optional abwaehlbar
+abschaltbar durch Softkey
+";"$Revision: 1.23.1.1 $
+$Date: 2008/01/14 10:06:02CET $
+$Author: sth $
+
+18.11.02 GRHS #start löschen mit RESET auch ohne #error
+11.10.02 JW Initialisierung erweitert um ersten Durchlauf ok
+03.06.02 JW Optionen Kompens. anwählen auch für 2. Sensor
+30.05.02 JW fehlerhafte Eingabe 0 impl.
+31.01.02 JW aktiven Tabellenbereich mit Realzahlenvergleich auswählen
+
+12.04.01
+optional abwaehlbar
+abschaltbar durch Softkey
+";""
+"$Revision: 1.17.1.1 $
+$Date: 2008/01/14 10:06:07CET $
+$Author: sth $
+
+18.11.02 GRHS #start löschen mit RESET auch ohne #error
+11.10.02 JW Initialisierung erweitert um ersten Durchlauf ok
+03.06.02 JW Optionen Kompens. anwählen auch für 2. Sensor
+30.05.02 JW fehlerhafte Eingabe 0 impl.
+31.01.02 JW aktiven Tabellenbereich mit Realzahlenvergleich auswählen
+
+12.04.01
+optional abwaehlbar
+abschaltbar durch Softkey
+";"$Revision: 1.17.1.1 $
+$Date: 2008/01/14 10:06:07CET $
+$Author: sth $
+
+18.11.02 GRHS #start löschen mit RESET auch ohne #error
+11.10.02 JW Initialisierung erweitert um ersten Durchlauf ok
+03.06.02 JW Optionen Kompens. anwählen auch für 2. Sensor
+30.05.02 JW fehlerhafte Eingabe 0 impl.
+31.01.02 JW aktiven Tabellenbereich mit Realzahlenvergleich auswählen
+
+12.04.01
+optional abwaehlbar
+abschaltbar durch Softkey
+";""
+"$Revision: 1.20.1.1 $
+$Date: 2008/01/14 10:06:14CET $
+$Author: sth $
+
+17.03.03 JW Aufrufe zum Kompensieren jetzt im FC40 --> sonst PLC Fehler
+Lokaldatenüberlauf
+10.06.02 JW Ini Temp_komp mit 0 bei Reset raus!
+24.04.02 JW PT100 und Glättung komplett überarbeitet
+         variabler Anstieg über Hex[49]; Einlesetakt über Hex[48] programmierbar
+
+08.02.02 JW KTY-weitere Messfühler möglich
+21.11.01 mogs
+- für KTY: Anzeigevariable für aktuelle Temperatur geändert
+10.11.01 mogs
+- Grenzwert 2. Geber auf 99999
+24.10.01 mogs/grü
+- Unterstützung 2x Temp-Fühler + Tabellenwert-Addition
+- optional 1x KTY-Geber Spindellagertemperatur
+";"$Revision: 1.20.1.1 $
+$Date: 2008/01/14 10:06:14CET $
+$Author: sth $
+
+17.03.03 JW Aufrufe zum Kompensieren jetzt im FC40 --> sonst PLC Fehler
+Lokaldatenüberlauf
+10.06.02 JW Ini Temp_komp mit 0 bei Reset raus!
+24.04.02 JW PT100 und Glättung komplett überarbeitet
+         variabler Anstieg über Hex[49]; Einlesetakt über Hex[48] programmierbar
+
+08.02.02 JW KTY-weitere Messfühler möglich
+21.11.01 mogs
+- für KTY: Anzeigevariable für aktuelle Temperatur geändert
+10.11.01 mogs
+- Grenzwert 2. Geber auf 99999
+24.10.01 mogs/grü
+- Unterstützung 2x Temp-Fühler + Tabellenwert-Addition
+- optional 1x KTY-Geber Spindellagertemperatur
+";""
+"$Revision: 1.29 $
+$Date: 2008/01/15 15:01:48CET $
+$Author: hgc $
+
+Rundspeicher RS4 / RS5 Rettungsfunktion
+=============================
+";"$Revision: 1.29 $
+$Date: 2008/01/15 15:01:48CET $
+$Author: hgc $
+
+Rundspeicher RS4 / RS5 Rettungsfunktion
+=============================
+";""
+"$Revision: 1.39 $
+$Date: 2008/01/15 14:56:01CET $
+$Author: hgc $
+
+";"$Revision: 1.39 $
+$Date: 2008/01/15 14:56:01CET $
+$Author: hgc $
+
+";""
+"$Revision: 1.4 $
+$Date: 2008/01/15 14:55:08CET $
+$Author: hgc $
+
+Rundspeicher RS10 Rettungsfunktion
+=============================
+";"$Revision: 1.4 $
+$Date: 2008/01/15 14:55:08CET $
+$Author: hgc $
+
+Rundspeicher RS10 Rettungsfunktion
+=============================
+";""
+"$Revision: 1.4 $
+$Date: 2008/01/15 14:54:28CET $
+$Author: hgc $
+
+";"$Revision: 1.4 $
+$Date: 2008/01/15 14:54:28CET $
+$Author: hgc $
+
+";""
+"$Revision: 1.40 $
+$Date: 2008/01/15 10:20:42CET $
+$Author: boa $
+";"$Revision: 1.40 $
+$Date: 2008/01/15 10:20:42CET $
+$Author: boa $
+";""
+"$Revision: 1.43 $
+$Date: 2008/01/15 09:01:25CET $
+$Author: rieds $
+
+";"$Revision: 1.43 $
+$Date: 2008/01/15 09:01:25CET $
+$Author: rieds $
+
+";""
+"$Revision: 1.41 $
+$Date: 2008/01/16 10:58:30CET $
+$Author: rieds $
+";"$Revision: 1.41 $
+$Date: 2008/01/16 10:58:30CET $
+$Author: rieds $
+";""
+"$Revision: 1.44 $
+$Date: 2008/01/16 10:58:31CET $
+$Author: rieds $
+
+";"$Revision: 1.44 $
+$Date: 2008/01/16 10:58:31CET $
+$Author: rieds $
+
+";""
+"$Revision: 1.32 $
+$Date: 2007/10/11 10:03:37CEST $
+$Author: hgc $
+
+Rundachsmodul Anforderungen
+";"$Revision: 1.32 $
+$Date: 2007/10/11 10:03:37CEST $
+$Author: hgc $
+
+Rundachsmodul Anforderungen
+";""
+"$Revision: 1.6 $
+$Date: 2008/01/16 14:07:25CET $
+$Author: hgc $
+";"$Revision: 1.6 $
+$Date: 2008/01/16 14:07:25CET $
+$Author: hgc $
+";""
+"$Revision: 1.8 $
+$Date: 2008/01/16 14:07:13CET $
+$Author: hgc $
+";"$Revision: 1.8 $
+$Date: 2008/01/16 14:07:13CET $
+$Author: hgc $
+";""
+"$Revision: 1.6 $
+$Date: 2008/01/16 14:06:46CET $
+$Author: hgc $
+";"$Revision: 1.6 $
+$Date: 2008/01/16 14:06:46CET $
+$Author: hgc $
+";""
+"$Revision: 1.51 $
+$Date: 2008/01/10 08:58:35CET $
+$Author: sth $
+";"$Revision: 1.51 $
+$Date: 2008/01/10 08:58:35CET $
+$Author: sth $
+";""
+"$Revision: 1.34 $
+$Date: 2008/01/11 08:08:45CET $
+$Author: sth $
+
+
+Funktionsbeschreibung:
+
+  hier werden Funktionskomponenten eingebunden,
+  die am Anfang vom Zyklus aufgerufen werden:
+        
+";"$Revision: 1.34 $
+$Date: 2008/01/11 08:08:45CET $
+$Author: sth $
+
+
+Funktionsbeschreibung:
+
+  hier werden Funktionskomponenten eingebunden,
+  die am Anfang vom Zyklus aufgerufen werden:
+        
+";""
+"$Revision: 1.5 $
+$Date: 2008/01/17 15:15:45CET $
+$Author: hgc $
+
+";"$Revision: 1.5 $
+$Date: 2008/01/17 15:15:45CET $
+$Author: hgc $
+
+";""
+"$Revision: 1.40 $
+$Date: 2008/01/17 15:17:34CET $
+$Author: hgc $
+
+";"$Revision: 1.40 $
+$Date: 2008/01/17 15:17:34CET $
+$Author: hgc $
+
+";""
+"$Revision: 1.30 $
+$Date: 2008/01/17 15:18:07CET $
+$Author: hgc $
+
+Rundspeicher RS4 / RS5 Rettungsfunktion
+=============================
+";"$Revision: 1.30 $
+$Date: 2008/01/17 15:18:07CET $
+$Author: hgc $
+
+Rundspeicher RS4 / RS5 Rettungsfunktion
+=============================
+";""
+"$Revision: 1.38 $
+$Date: 2008/01/17 15:14:40CET $
+$Author: hgc $
+
+";"$Revision: 1.38 $
+$Date: 2008/01/17 15:14:40CET $
+$Author: hgc $
+
+";""
+"$Revision: 1.13 $
+$Date: 2008/01/17 15:13:55CET $
+$Author: hgc $
+";"$Revision: 1.13 $
+$Date: 2008/01/17 15:13:55CET $
+$Author: hgc $
+";""
+"$Revision: 1.26 $
+$Date: 2008/01/18 07:42:45CET $
+$Author: hgc $
+";"$Revision: 1.26 $
+$Date: 2008/01/18 07:42:45CET $
+$Author: hgc $
+";""
+"$Revision: 1.35 $
+$Date: 2008/01/18 07:42:02CET $
+$Author: hgc $
+";"$Revision: 1.35 $
+$Date: 2008/01/18 07:42:02CET $
+$Author: hgc $
+";""
+"$Revision: 1.42 $
+$Date: 2008/01/18 11:07:12CET $
+$Author: hgc $
+";"$Revision: 1.42 $
+$Date: 2008/01/18 11:07:12CET $
+$Author: hgc $
+";""
+"$Revision: 1.15 $
+$Date: 2008/01/18 11:10:48CET $
+$Author: hgc $
+
+Logbuch:
+
+V0.1 / 21.11.00 / SCH
+
+- Modul Erstellt
+
+
+";"$Revision: 1.15 $
+$Date: 2008/01/18 11:10:48CET $
+$Author: hgc $
+
+Logbuch:
+
+V0.1 / 21.11.00 / SCH
+
+- Modul Erstellt
+
+
+";""
+"$Revision: 1.41 $
+$Date: 2008/01/18 11:13:41CET $
+$Author: hgc $
+
+";"$Revision: 1.41 $
+$Date: 2008/01/18 11:13:41CET $
+$Author: hgc $
+
+";""
+"$Revision: 1.8 $
+$Date: 2008/01/18 13:24:49CET $
+$Author: hgc $
+$ProjectRevision: Last Checkpoint: 1.5 $
+
+";"$Revision: 1.8 $
+$Date: 2008/01/18 13:24:49CET $
+$Author: hgc $
+$ProjectRevision: Last Checkpoint: 1.5 $
+
+";""
+"$Revision: 1.65 $
+$Date: 2008/01/08 10:58:06CET $
+$Author: fuh $
+-------------------------------------------------------------------------------
+Änderung: Datum      / Abteilung / Name / Version x.y
+Änderung: 22.06.2006 /          / slh   / V0.2
+        :Wzw.Grundstlg.fahren eingepflegt; Lokaldaten laden/retten mit
+        :SFC20 BLKMOVE; Doppelwortzugriffe entfernt (Absolutadressen vermeiden)
+        :Quelle:FC_WZW_VMAG_STATUS.AWL vom 22.06.2006 10:29:25
+Änderung:           /          /        / V
+        :
+-------------------------------------------------------------------------------
+";"$Revision: 1.65 $
+$Date: 2008/01/08 10:58:06CET $
+$Author: fuh $
+-------------------------------------------------------------------------------
+Änderung: Datum      / Abteilung / Name / Version x.y
+Änderung: 22.06.2006 /          / slh   / V0.2
+        :Wzw.Grundstlg.fahren eingepflegt; Lokaldaten laden/retten mit
+        :SFC20 BLKMOVE; Doppelwortzugriffe entfernt (Absolutadressen vermeiden)
+        :Quelle:FC_WZW_VMAG_STATUS.AWL vom 22.06.2006 10:29:25
+Änderung:           /          /        / V
+        :
+-------------------------------------------------------------------------------
+";""
+"$Revision: 1.6 $
+$Date: 2008/01/14 07:38:46CET $
+$Author: fuh $
+
+GET_LOC
+
+Inputs:
+- Req      Start des FB92
+- MagNr    Magazinnummer
+- Platz    Mode 0 aktiv -> Platznummer im Magazin
+           Mode 1 aktiv -> Anzahl der Plätze (3 oder 4) im Zwischenspeicher  
+- Mode     Mode 0 -> Es können aus allen Magazinen (Plätzen) Werkzeugdaten 
+           ausgelesen werden.
+           Mode 1 -> Auslesen der Zwischenspeicher (MagNr 9998)
+           Daten Spindel- und Greiferwerkzeug werden ausgelesen und
+           verglichen.
+
+Outputs:
+- NDR      Fertigmeldung des FB92
+- WZ_equal Werkzeugdaten (Grösse,variable Plätze) sind gleich
+- Error    Fehlerbit siehe State
+- Warning  nur Mode 1 beide Greifer leer oder belegt
+- State    Fehlercode 1-Fehler bei Lesen Magazindaten
+           2-Fehler bei Lesen Werkzeugdaten
+           4-nur Mode 1 Fehler bei Lesen Daten Greiferwerkzeug
+           8-interner Fehler FB92 
+
+Aufrufbeispiel FB92 nur Test:
+      U     ""E___6.2"" //Taste
+      UN    ""M___1.1""
+      S     ""M___1.0""
+
+      CALL  ""FB__92"" , ""DB__62""
+       Req     :=""M___1.0""
+       MagNr   :=9998
+       Platz_Nr:=1
+       Mode    :=1
+       NDR     :=""M___1.1""
+       WZ_equal:=""M___1.6""
+       Error   :=""M___1.2""
+       Warning :=""M___1.7""
+       State   :=MW250
+
+      O     ""M___1.1""
+      O     ""M___1.2""
+      R     ""M___1.0""
+
+Hinweis:
+Aufruf des FB92 erfolgt im zyklischen Teil des PLC-Anwenderprogramms, wobei
+während des Aufrufs kein Datentausch der Werkzeugverwaltung erfolgen
+sollte (FC 8).
+V1.0 Absturz FB6, wenn FB92+FB91 gleichzeitig aufgerufen werden. Ursache unklar
+V1.1 Variable (NC_VAR) in Instanz-DB62 vereinbart
+";"$Revision: 1.6 $
+$Date: 2008/01/14 07:38:46CET $
+$Author: fuh $
+
+GET_LOC
+
+Inputs:
+- Req      Start des FB92
+- MagNr    Magazinnummer
+- Platz    Mode 0 aktiv -> Platznummer im Magazin
+           Mode 1 aktiv -> Anzahl der Plätze (3 oder 4) im Zwischenspeicher  
+- Mode     Mode 0 -> Es können aus allen Magazinen (Plätzen) Werkzeugdaten 
+           ausgelesen werden.
+           Mode 1 -> Auslesen der Zwischenspeicher (MagNr 9998)
+           Daten Spindel- und Greiferwerkzeug werden ausgelesen und
+           verglichen.
+
+Outputs:
+- NDR      Fertigmeldung des FB92
+- WZ_equal Werkzeugdaten (Grösse,variable Plätze) sind gleich
+- Error    Fehlerbit siehe State
+- Warning  nur Mode 1 beide Greifer leer oder belegt
+- State    Fehlercode 1-Fehler bei Lesen Magazindaten
+           2-Fehler bei Lesen Werkzeugdaten
+           4-nur Mode 1 Fehler bei Lesen Daten Greiferwerkzeug
+           8-interner Fehler FB92 
+
+Aufrufbeispiel FB92 nur Test:
+      U     ""E___6.2"" //Taste
+      UN    ""M___1.1""
+      S     ""M___1.0""
+
+      CALL  ""FB__92"" , ""DB__62""
+       Req     :=""M___1.0""
+       MagNr   :=9998
+       Platz_Nr:=1
+       Mode    :=1
+       NDR     :=""M___1.1""
+       WZ_equal:=""M___1.6""
+       Error   :=""M___1.2""
+       Warning :=""M___1.7""
+       State   :=MW250
+
+      O     ""M___1.1""
+      O     ""M___1.2""
+      R     ""M___1.0""
+
+Hinweis:
+Aufruf des FB92 erfolgt im zyklischen Teil des PLC-Anwenderprogramms, wobei
+während des Aufrufs kein Datentausch der Werkzeugverwaltung erfolgen
+sollte (FC 8).
+V1.0 Absturz FB6, wenn FB92+FB91 gleichzeitig aufgerufen werden. Ursache unklar
+V1.1 Variable (NC_VAR) in Instanz-DB62 vereinbart
+";""
+"$Revision: 1.116 $
+$Date: 2008/01/14 07:37:25CET $
+$Author: fuh $
+";"$Revision: 1.116 $
+$Date: 2008/01/14 07:37:25CET $
+$Author: fuh $
+";""
+"$Revision: 1.12 $
+$Date: 2008/01/15 12:22:54CET $
+$Author: boa $
+";"$Revision: 1.12 $
+$Date: 2008/01/15 12:22:54CET $
+$Author: boa $
+";""
+"$Revision: 1.41 $
+$Date: 2008/01/14 07:38:27CET $
+$Author: fuh $
+------------------ Kette_Tx Werkzeug vorbereiten ----------------
+erstellt: 1.2.2000 AB
+geändert: 27.06.01 AB
+   --> Aufruf Wzbruch- Erkennung 
+geändert: 18.07.02 FUH
+   --> Werkzeug vorbereiten in Zwischenspeicher
+
+Version: vorläufig
+
+Konfiguration:
+
+Wechsler mit Doppelgreifer (Holer und Bringer)
+     1:1 Tausch ist Standard ($TC_MAMP2) Bit 15 = 1
+     --> wandern der Werkzeuge über Magazine ist möglich
+
+Eingangsparameter:
+    E_EN_1zu1_Uebergross : 0: übergrosse werkzeuge können nicht 1:1 getauscht 
+                              werden
+                           1: auch übergrosse werkzeuge können 1:1 getauscht 
+                              werden
+
+    E_Nr_Bereitst_Platz  :Zwischenspeicher-Nr. des Bereitstellungsplatzes
+                           0: kein Bereitstellen
+                           2: Greifer 1
+                           3: Greifer 2
+                           4: Bereitstellungsplatz
+
+    E_Mag1_Fertig: Positonier-Anforderung an Mag1 fertig -> Quit Txx   
+    E_Mag2_Fertig: Positonier-Anforderung an Mag2 fertig <-- i.V   
+   
+    E_WZ_abgelegt_in_Mag   : Wz aus ZwSp wieder in Mag abgelegt bei Txx
+    E_Bereitstellen_Fertig : Bereitstellen in Zwischenspeicher fertig
+";"$Revision: 1.41 $
+$Date: 2008/01/14 07:38:27CET $
+$Author: fuh $
+------------------ Kette_Tx Werkzeug vorbereiten ----------------
+erstellt: 1.2.2000 AB
+geändert: 27.06.01 AB
+   --> Aufruf Wzbruch- Erkennung 
+geändert: 18.07.02 FUH
+   --> Werkzeug vorbereiten in Zwischenspeicher
+
+Version: vorläufig
+
+Konfiguration:
+
+Wechsler mit Doppelgreifer (Holer und Bringer)
+     1:1 Tausch ist Standard ($TC_MAMP2) Bit 15 = 1
+     --> wandern der Werkzeuge über Magazine ist möglich
+
+Eingangsparameter:
+    E_EN_1zu1_Uebergross : 0: übergrosse werkzeuge können nicht 1:1 getauscht 
+                              werden
+                           1: auch übergrosse werkzeuge können 1:1 getauscht 
+                              werden
+
+    E_Nr_Bereitst_Platz  :Zwischenspeicher-Nr. des Bereitstellungsplatzes
+                           0: kein Bereitstellen
+                           2: Greifer 1
+                           3: Greifer 2
+                           4: Bereitstellungsplatz
+
+    E_Mag1_Fertig: Positonier-Anforderung an Mag1 fertig -> Quit Txx   
+    E_Mag2_Fertig: Positonier-Anforderung an Mag2 fertig <-- i.V   
+   
+    E_WZ_abgelegt_in_Mag   : Wz aus ZwSp wieder in Mag abgelegt bei Txx
+    E_Bereitstellen_Fertig : Bereitstellen in Zwischenspeicher fertig
+";""
+"$Revision: 1.226 $
+$Date: 2008/01/16 13:54:53CET $
+$Author: boa $
+";"$Revision: 1.226 $
+$Date: 2008/01/16 13:54:53CET $
+$Author: boa $
+";""
+"$Revision: 1.24.1.4 $
+$Date: 2008/01/16 15:07:47CET $
+$Author: boa $
+
+17.03.03 JW Aufrufe zum Kompensieren jetzt im FC40 --> sonst PLC Fehler 
+Lokaldatenüberlauf
+10.06.02 JW Ini Temp_komp mit 0 bei Reset raus!
+24.04.02 JW PT100 und Glättung komplett überarbeitet
+         variabler Anstieg über Hex[49]; Einlesetakt über Hex[48] programmierbar
+
+08.02.02 JW KTY-weitere Messfühler möglich
+21.11.01 mogs
+- für KTY: Anzeigevariable für aktuelle Temperatur geändert
+10.11.01 mogs
+- Grenzwert 2. Geber auf 99999
+24.10.01 mogs/grü
+- Unterstützung 2x Temp-Fühler + Tabellenwert-Addition
+- optional 1x KTY-Geber Spindellagertemperatur
+";"$Revision: 1.24.1.4 $
+$Date: 2008/01/16 15:07:47CET $
+$Author: boa $
+
+17.03.03 JW Aufrufe zum Kompensieren jetzt im FC40 --> sonst PLC Fehler 
+Lokaldatenüberlauf
+10.06.02 JW Ini Temp_komp mit 0 bei Reset raus!
+24.04.02 JW PT100 und Glättung komplett überarbeitet
+         variabler Anstieg über Hex[49]; Einlesetakt über Hex[48] programmierbar
+
+08.02.02 JW KTY-weitere Messfühler möglich
+21.11.01 mogs
+- für KTY: Anzeigevariable für aktuelle Temperatur geändert
+10.11.01 mogs
+- Grenzwert 2. Geber auf 99999
+24.10.01 mogs/grü
+- Unterstützung 2x Temp-Fühler + Tabellenwert-Addition
+- optional 1x KTY-Geber Spindellagertemperatur
+";""
+"$Revision: 1.54 $
+$Date: 2008/01/16 14:22:59CET $
+$Author: boa $
+
+3-08-2000 SJA
+
+o Drehzahlüberwachung für die Betriebsarten
+BA's
+2-800 (DB20.dbw118)
+3-4000 (DB20.DBW120)
+4-4000 (DB20.DBW122)
+
+o Überwachung auf Drehzahleinbruch
+
+o Drehzahlüberwachung abhängig vom Radius
+
+o Leitungstemperaturüberwachung 
+";"$Revision: 1.54 $
+$Date: 2008/01/16 14:22:59CET $
+$Author: boa $
+
+3-08-2000 SJA
+
+o Drehzahlüberwachung für die Betriebsarten
+BA's
+2-800 (DB20.dbw118)
+3-4000 (DB20.DBW120)
+4-4000 (DB20.DBW122)
+
+o Überwachung auf Drehzahleinbruch
+
+o Drehzahlüberwachung abhängig vom Radius
+
+o Leitungstemperaturüberwachung 
+";""
+"$Revision: 1.66 $
+$Date: 2008/01/14 07:40:00CET $
+$Author: fuh $
+
+";"$Revision: 1.66 $
+$Date: 2008/01/14 07:40:00CET $
+$Author: fuh $
+
+";""
+"$Revision: 1.32 $
+$Date: 2008/01/11 08:07:49CET $
+$Author: sth $
+";"$Revision: 1.32 $
+$Date: 2008/01/11 08:07:49CET $
+$Author: sth $
+";""
+"$Revision: 1.15 $
+$Date: 2007/10/02 10:22:47CEST $
+$Author: riedlh $
+";"$Revision: 1.15 $
+$Date: 2007/10/02 10:22:47CEST $
+$Author: riedlh $
+";""
+"$Revision: 1.16 $
+$Date: 2008/01/15 10:55:51CET $
+$Author: boa $
+";"$Revision: 1.16 $
+$Date: 2008/01/15 10:55:51CET $
+$Author: boa $
+";""
+"$Revision: 1.17 $
+$Date: 2008/01/15 12:32:23CET $
+$Author: boa $
+";"$Revision: 1.17 $
+$Date: 2008/01/15 12:32:23CET $
+$Author: boa $
+";""
+"$Revision: 1.9 $
+$Date: 2008/01/14 13:46:06CET $
+$Author: boa $
+
+Logbuch:
+
+V0.1 / 18.01.2000 / SCH
+
+- Modul Erstellt
+
+";"$Revision: 1.9 $
+$Date: 2008/01/14 13:46:06CET $
+$Author: boa $
+
+Logbuch:
+
+V0.1 / 18.01.2000 / SCH
+
+- Modul Erstellt
+
+";""
+"$Revision: 1.32 $
+$Date: 2007/09/04 12:49:53CEST $
+$Author: riedlh $
+
+";"$Revision: 1.32 $
+$Date: 2007/09/04 12:49:53CEST $
+$Author: riedlh $
+
+";""
+"$Revision: 1.15 $
+$Date: 2008/01/14 07:40:56CET $
+$Author: fuh $
+";"$Revision: 1.15 $
+$Date: 2008/01/14 07:40:56CET $
+$Author: fuh $
+";""
+"$Revision: 1.36 $
+$Date: 2008/01/14 07:42:15CET $
+$Author: fuh $
+
+";"$Revision: 1.36 $
+$Date: 2008/01/14 07:42:15CET $
+$Author: fuh $
+
+";""
+"$Revision: 1.37 $
+$Date: 2008/01/18 14:40:28CET $
+$Author: hgc $
+
+";"$Revision: 1.37 $
+$Date: 2008/01/18 14:40:28CET $
+$Author: hgc $
+
+";""
+"$Revision: 1.16 $
+$Date: 2008/01/14 07:33:27CET $
+$Author: fuh $
+";"$Revision: 1.16 $
+$Date: 2008/01/14 07:33:27CET $
+$Author: fuh $
+";""
+"$Revision: 1.21 $
+$Date: 2007/10/18 12:59:44CEST $
+$Author: rieds $
+
+";"$Revision: 1.21 $
+$Date: 2007/10/18 12:59:44CEST $
+$Author: rieds $
+
+";""
+"$Revision: 1.10 $
+$Date: 2008/01/22 15:01:01CET $
+$Author: rieds $
+
+Baustein für Solutionline DMx55-125x2
+";"$Revision: 1.10 $
+$Date: 2008/01/22 15:01:01CET $
+$Author: rieds $
+
+Baustein für Solutionline DMx55-125x2
+";""
+"$Revision: 1.35 $
+$Date: 2008/01/23 10:11:09CET $
+$Author: sth $
+
+
+Funktionsbeschreibung:
+
+  hier werden Funktionskomponenten eingebunden,
+  die am Anfang vom Zyklus aufgerufen werden:
+        
+";"$Revision: 1.35 $
+$Date: 2008/01/23 10:11:09CET $
+$Author: sth $
+
+
+Funktionsbeschreibung:
+
+  hier werden Funktionskomponenten eingebunden,
+  die am Anfang vom Zyklus aufgerufen werden:
+        
+";""
+"$Revision: 1.227 $
+$Date: 2008/01/21 11:35:41CET $
+$Author: riedlh $
+";"$Revision: 1.227 $
+$Date: 2008/01/21 11:35:41CET $
+$Author: riedlh $
+";""
+"$Revision: 1.45 $
+$Date: 2008/01/23 11:08:36CET $
+$Author: rieds $
+
+";"$Revision: 1.45 $
+$Date: 2008/01/23 11:08:36CET $
+$Author: rieds $
+
+";""
+"$Revision: 1.228 $
+$Date: 2008/01/23 11:07:16CET $
+$Author: rieds $
+";"$Revision: 1.228 $
+$Date: 2008/01/23 11:07:16CET $
+$Author: rieds $
+";""
+"$Revision: 1.9 $
+$Date: 2008/01/24 15:31:52CET $
+$Author: hgc $
+
+Baustein für Solutionline DMx55-125x2
+Zwangsdynamisierung Bereich Maschine
+";"$Revision: 1.9 $
+$Date: 2008/01/24 15:31:52CET $
+$Author: hgc $
+
+Baustein für Solutionline DMx55-125x2
+Zwangsdynamisierung Bereich Maschine
+";""
+"$Revision: 1.13 $
+$Date: 2007/11/20 08:14:06CET $
+$Author: hgc $
+
+
+
+PLC-SPL Baustein für Solutionline DMx55-125x2
+
+Unterteilt in zwei Sicherheitsbereiche:
+1. BEREICH 1 (MASCHINE) (Arbeitsraumachsen/Palettenwechslerachse/ Mgazinachsen)
+bestehend aus Achse:     X Y Z B C SPI              PW            MAG1/MAG2 GR  
+
+2. BEREICH 2 (PS)     (Palettenspeicherachsen / Palettenwechslerachse)
+bestehend aus Achse:     DREHST/TRANSP/HUB              PW
+
+";"$Revision: 1.13 $
+$Date: 2007/11/20 08:14:06CET $
+$Author: hgc $
+
+
+
+PLC-SPL Baustein für Solutionline DMx55-125x2
+
+Unterteilt in zwei Sicherheitsbereiche:
+1. BEREICH 1 (MASCHINE) (Arbeitsraumachsen/Palettenwechslerachse/ Mgazinachsen)
+bestehend aus Achse:     X Y Z B C SPI              PW            MAG1/MAG2 GR  
+
+2. BEREICH 2 (PS)     (Palettenspeicherachsen / Palettenwechslerachse)
+bestehend aus Achse:     DREHST/TRANSP/HUB              PW
+
+";""
+"$Revision: 1.9 $
+$Date: 2008/01/24 15:30:16CET $
+$Author: hgc $
+";"$Revision: 1.9 $
+$Date: 2008/01/24 15:30:16CET $
+$Author: hgc $
+";""
+"$Revision: 1.11 $
+$Date: 2008/01/24 15:30:06CET $
+$Author: hgc $
+
+Baustein für Solutionline DMx55-125x2
+";"$Revision: 1.11 $
+$Date: 2008/01/24 15:30:06CET $
+$Author: hgc $
+
+Baustein für Solutionline DMx55-125x2
+";""
+"$Revision: 1.4 $
+$Date: 2008/01/24 15:29:55CET $
+$Author: hgc $
+
+
+";"$Revision: 1.4 $
+$Date: 2008/01/24 15:29:55CET $
+$Author: hgc $
+
+
+";""
+"$Revision: 1.7 $
+$Date: 2008/01/24 15:29:20CET $
+$Author: hgc $
+
+
+Zwangsdynamisierung Baustein für Solutionline DMx55-125x2
+
+Unterteilt in zwei Sicherheitsbereiche:
+1. Bereich 1         (Arbeitsraumachsen / Palettenwechslerachse / Mgazinachsen)
+bestehend aus Achse:    X Y Z B C SPI              PW             MAG1/MAG2 GR  
+
+2. Bereich 2         (Palettenspeicherachsen / Palettenwechslerachse)
+bestehend aus Achse:     DREHST/TRANSP/HUB              PW
+";"$Revision: 1.7 $
+$Date: 2008/01/24 15:29:20CET $
+$Author: hgc $
+
+
+Zwangsdynamisierung Baustein für Solutionline DMx55-125x2
+
+Unterteilt in zwei Sicherheitsbereiche:
+1. Bereich 1         (Arbeitsraumachsen / Palettenwechslerachse / Mgazinachsen)
+bestehend aus Achse:    X Y Z B C SPI              PW             MAG1/MAG2 GR  
+
+2. Bereich 2         (Palettenspeicherachsen / Palettenwechslerachse)
+bestehend aus Achse:     DREHST/TRANSP/HUB              PW
+";""
+"$Revision: 1.42 $
+$Date: 2008/01/24 15:27:30CET $
+$Author: hgc $
+
+";"$Revision: 1.42 $
+$Date: 2008/01/24 15:27:30CET $
+$Author: hgc $
+
+";""
+"$Revision: 1.6 $
+$Date: 2008/01/24 15:25:54CET $
+$Author: hgc $
+
+";"$Revision: 1.6 $
+$Date: 2008/01/24 15:25:54CET $
+$Author: hgc $
+
+";""
+"$Revision: 1.14 $
+$Date: 2008/01/24 15:30:33CET $
+$Author: hgc $
+
+
+
+PLC-SPL Baustein für Solutionline DMx55-125x2
+
+Unterteilt in zwei Sicherheitsbereiche:
+1. BEREICH 1 (MASCHINE) (Arbeitsraumachsen/Palettenwechslerachse/ Mgazinachsen)
+bestehend aus Achse:     X Y Z B C SPI              PW            MAG1/MAG2 GR  
+
+2. BEREICH 2 (PS)     (Palettenspeicherachsen / Palettenwechslerachse)
+bestehend aus Achse:     DREHST/TRANSP/HUB              PW
+
+";"$Revision: 1.14 $
+$Date: 2008/01/24 15:30:33CET $
+$Author: hgc $
+
+
+
+PLC-SPL Baustein für Solutionline DMx55-125x2
+
+Unterteilt in zwei Sicherheitsbereiche:
+1. BEREICH 1 (MASCHINE) (Arbeitsraumachsen/Palettenwechslerachse/ Mgazinachsen)
+bestehend aus Achse:     X Y Z B C SPI              PW            MAG1/MAG2 GR  
+
+2. BEREICH 2 (PS)     (Palettenspeicherachsen / Palettenwechslerachse)
+bestehend aus Achse:     DREHST/TRANSP/HUB              PW
+
+";""
+"$Revision: 1.5 $
+$Date: 2008/01/24 17:17:59CET $
+$Author: hgc $
+
+Rundspeicher RS10 Rettungsfunktion
+=============================
+";"$Revision: 1.5 $
+$Date: 2008/01/24 17:17:59CET $
+$Author: hgc $
+
+Rundspeicher RS10 Rettungsfunktion
+=============================
+";""
+"$Revision: 1.31 $
+$Date: 2008/01/24 17:18:43CET $
+$Author: hgc $
+
+Rundspeicher RS4 / RS5 Rettungsfunktion
+=============================
+";"$Revision: 1.31 $
+$Date: 2008/01/24 17:18:43CET $
+$Author: hgc $
+
+Rundspeicher RS4 / RS5 Rettungsfunktion
+=============================
+";""
+"$Revision: 1.15 $
+$Date: 2008/01/24 17:17:09CET $
+$Author: hgc $
+
+
+
+PLC-SPL Baustein für Solutionline DMx55-125x2
+
+Unterteilt in zwei Sicherheitsbereiche:
+1. BEREICH 1 (MASCHINE) (Arbeitsraumachsen/Palettenwechslerachse/ Mgazinachsen)
+bestehend aus Achse:     X Y Z B C SPI              PW            MAG1/MAG2 GR  
+
+2. BEREICH 2 (PS)     (Palettenspeicherachsen / Palettenwechslerachse)
+bestehend aus Achse:     DREHST/TRANSP/HUB              PW
+
+";"$Revision: 1.15 $
+$Date: 2008/01/24 17:17:09CET $
+$Author: hgc $
+
+
+
+PLC-SPL Baustein für Solutionline DMx55-125x2
+
+Unterteilt in zwei Sicherheitsbereiche:
+1. BEREICH 1 (MASCHINE) (Arbeitsraumachsen/Palettenwechslerachse/ Mgazinachsen)
+bestehend aus Achse:     X Y Z B C SPI              PW            MAG1/MAG2 GR  
+
+2. BEREICH 2 (PS)     (Palettenspeicherachsen / Palettenwechslerachse)
+bestehend aus Achse:     DREHST/TRANSP/HUB              PW
+
+";""
+"$Revision: 1.75 $
+$Date: 2008/01/25 06:27:59CET $
+$Author: rieds $
+V0.2 31-07-00 SJA
+              --> umkonfiguriert auf 
+              M96, M97, M98
+
+              M96: Spänespülung, Werkstückreinigung AUS 
+              M97: Spänespülung EIN
+              M98: Werkstückreinigung EIN
+
+V0.1 01-07-00 SJA
+              Spaenespuelung und Werkstueckreinigung
+";"$Revision: 1.75 $
+$Date: 2008/01/25 06:27:59CET $
+$Author: rieds $
+V0.2 31-07-00 SJA
+              --> umkonfiguriert auf 
+              M96, M97, M98
+
+              M96: Spänespülung, Werkstückreinigung AUS 
+              M97: Spänespülung EIN
+              M98: Werkstückreinigung EIN
+
+V0.1 01-07-00 SJA
+              Spaenespuelung und Werkstueckreinigung
+";""
+"$Revision: 1.12 $
+$Date: 2008/01/25 07:03:46CET $
+$Author: rieds $
+
+Baustein für Solutionline DMx55-125x2
+";"$Revision: 1.12 $
+$Date: 2008/01/25 07:03:46CET $
+$Author: rieds $
+
+Baustein für Solutionline DMx55-125x2
+";""
+"$Revision: 1.22 $
+$Date: 2008/01/25 07:15:34CET $
+$Author: rieds $
+$ProjectRevision: Last Checkpoint: 1.52 $
+
+TRANSLINE 2000 Baustein 
+
+Verwaltung der Schutztüren / Schutztüren geschlossen gesamt
+";"$Revision: 1.22 $
+$Date: 2008/01/25 07:15:34CET $
+$Author: rieds $
+$ProjectRevision: Last Checkpoint: 1.52 $
+
+TRANSLINE 2000 Baustein 
+
+Verwaltung der Schutztüren / Schutztüren geschlossen gesamt
+";""
+"$Revision: 1.22 $
+$Date: 2008/01/28 14:38:07CET $
+$Author: wri $
+
+";"$Revision: 1.22 $
+$Date: 2008/01/28 14:38:07CET $
+$Author: wri $
+
+";""
+"$Revision: 1.2 $
+$Date: 2008/01/28 14:44:38CET $
+$Author: wri $
+
+";"$Revision: 1.2 $
+$Date: 2008/01/28 14:44:38CET $
+$Author: wri $
+
+";""
+"$Revision: 1.40 $
+$Date: 2008/01/28 14:46:22CET $
+$Author: hgc $
+";"$Revision: 1.40 $
+$Date: 2008/01/28 14:46:22CET $
+$Author: hgc $
+";""
+"$Revision: 1.2 $
+$Date: 2008/01/28 14:44:29CET $
+$Author: wri $
+
+";"$Revision: 1.2 $
+$Date: 2008/01/28 14:44:29CET $
+$Author: wri $
+
+";""
+"$Revision: 1.2 $
+$Date: 2008/01/28 14:45:55CET $
+$Author: wri $
+
+";"$Revision: 1.2 $
+$Date: 2008/01/28 14:45:55CET $
+$Author: wri $
+
+";""
+"$Revision: 1.229 $
+$Date: 2008/01/25 09:50:42CET $
+$Author: sth $
+";"$Revision: 1.229 $
+$Date: 2008/01/25 09:50:42CET $
+$Author: sth $
+";""
+"$Revision: 1.3 $
+$Date: 2008/01/29 09:23:40CET $
+$Author: wri $
+
+";"$Revision: 1.3 $
+$Date: 2008/01/29 09:23:40CET $
+$Author: wri $
+
+";""
+"$Revision: 1.3 $
+$Date: 2008/01/29 09:56:30CET $
+$Author: wri $
+
+";"$Revision: 1.3 $
+$Date: 2008/01/29 09:56:30CET $
+$Author: wri $
+
+";""
+"$Revision: 1.4 $
+$Date: 2008/01/29 10:37:13CET $
+$Author: wri $
+
+";"$Revision: 1.4 $
+$Date: 2008/01/29 10:37:13CET $
+$Author: wri $
+
+";""
+"$Revision: 1.230 $
+$Date: 2008/01/29 10:40:49CET $
+$Author: wri $
+";"$Revision: 1.230 $
+$Date: 2008/01/29 10:40:49CET $
+$Author: wri $
+";""
+"$Revision: 1.7 $
+$Date: 2008/01/29 15:00:31CET $
+$Author: hgc $
+
+";"$Revision: 1.7 $
+$Date: 2008/01/29 15:00:31CET $
+$Author: hgc $
+
+";""
+"$Revision: 1.43 $
+$Date: 2008/01/29 15:00:50CET $
+$Author: hgc $
+
+";"$Revision: 1.43 $
+$Date: 2008/01/29 15:00:50CET $
+$Author: hgc $
+
+";""
+"$Revision: 1.18 $
+$Date: 2008/01/29 14:59:48CET $
+$Author: hgc $
+
+Logbuch:
+
+V0.1 / 25.10.99 / SCH
+
+- Modul Erstellt
+ 
+";"$Revision: 1.18 $
+$Date: 2008/01/29 14:59:48CET $
+$Author: hgc $
+
+Logbuch:
+
+V0.1 / 25.10.99 / SCH
+
+- Modul Erstellt
+ 
+";""
+"$Revision: 1.9 $
+$Date: 2008/01/29 14:58:57CET $
+$Author: hgc $
+";"$Revision: 1.9 $
+$Date: 2008/01/29 14:58:57CET $
+$Author: hgc $
+";""
+"$Revision: 1.9 $
+$Date: 2008/01/29 14:58:47CET $
+$Author: hgc $
+";"$Revision: 1.9 $
+$Date: 2008/01/29 14:58:47CET $
+$Author: hgc $
+";""
+"$Revision: 1.9 $
+$Date: 2008/01/29 14:58:14CET $
+$Author: hgc $
+";"$Revision: 1.9 $
+$Date: 2008/01/29 14:58:14CET $
+$Author: hgc $
+";""
+"$Revision: 1.18 $
+$Date: 2008/01/29 14:57:58CET $
+$Author: hgc $
+";"$Revision: 1.18 $
+$Date: 2008/01/29 14:57:58CET $
+$Author: hgc $
+";""
+"$Revision: 1.5 $
+$Date: 2008/01/29 14:57:12CET $
+$Author: hgc $
+$ProjectRevision: Last Checkpoint: 1.52 $
+";"$Revision: 1.5 $
+$Date: 2008/01/29 14:57:12CET $
+$Author: hgc $
+$ProjectRevision: Last Checkpoint: 1.52 $
+";""
+"$Revision: 1.4 $
+$Date: 2008/01/29 14:56:35CET $
+$Author: hgc $
+";"$Revision: 1.4 $
+$Date: 2008/01/29 14:56:35CET $
+$Author: hgc $
+";""
+"$Revision: 1.7 $
+$Date: 2008/01/29 14:56:20CET $
+$Author: hgc $
+";"$Revision: 1.7 $
+$Date: 2008/01/29 14:56:20CET $
+$Author: hgc $
+";""
+"$Revision: 1.17 $
+$Date: 2008/01/29 14:54:19CET $
+$Author: hgc $
+";"$Revision: 1.17 $
+$Date: 2008/01/29 14:54:19CET $
+$Author: hgc $
+";""
+"$Revision: 1.7 $
+$Date: 2008/01/29 14:53:36CET $
+$Author: hgc $
+";"$Revision: 1.7 $
+$Date: 2008/01/29 14:53:36CET $
+$Author: hgc $
+";""
+"$Revision: 1.4 $
+$Date: 2008/01/29 14:52:39CET $
+$Author: hgc $
+";"$Revision: 1.4 $
+$Date: 2008/01/29 14:52:39CET $
+$Author: hgc $
+";""
+"$Revision: 1.9 $
+$Date: 2008/01/29 14:52:22CET $
+$Author: hgc $
+";"$Revision: 1.9 $
+$Date: 2008/01/29 14:52:22CET $
+$Author: hgc $
+";""
+"$Revision: 1.7 $
+$Date: 2008/01/29 14:52:10CET $
+$Author: hgc $
+";"$Revision: 1.7 $
+$Date: 2008/01/29 14:52:10CET $
+$Author: hgc $
+";""
+"$Revision: 1.7 $
+$Date: 2008/01/29 14:51:58CET $
+$Author: hgc $
+";"$Revision: 1.7 $
+$Date: 2008/01/29 14:51:58CET $
+$Author: hgc $
+";""
+"$Revision: 1.6 $
+$Date: 2008/01/29 14:51:45CET $
+$Author: hgc $
+";"$Revision: 1.6 $
+$Date: 2008/01/29 14:51:45CET $
+$Author: hgc $
+";""
+"$Revision: 1.44 $
+$Date: 2008/01/30 08:08:14CET $
+$Author: hgc $
+
+";"$Revision: 1.44 $
+$Date: 2008/01/30 08:08:14CET $
+$Author: hgc $
+
+";""
+"$Revision: 1.17 $
+$Date: 2008/01/30 08:07:34CET $
+$Author: hgc $
+";"$Revision: 1.17 $
+$Date: 2008/01/30 08:07:34CET $
+$Author: hgc $
+";""
+"$Revision: 1.10 $
+$Date: 2008/01/30 13:26:53CET $
+$Author: riedlh $
+";"$Revision: 1.10 $
+$Date: 2008/01/30 13:26:53CET $
+$Author: riedlh $
+";""
+"$Revision: 1.15 $ 
+$Date: 2008/01/30 11:27:30CET $  
+$Author: riedlh $   
+";"$Revision: 1.15 $ 
+$Date: 2008/01/30 11:27:30CET $  
+$Author: riedlh $   
+";""
+"$Revision: 1.12 $ 
+$Date: 2008/01/30 11:27:52CET $  
+$Author: riedlh $   
+";"$Revision: 1.12 $ 
+$Date: 2008/01/30 11:27:52CET $  
+$Author: riedlh $   
+";""
+"$Revision: 1.32 $
+$Date: 2008/01/30 12:52:38CET $
+$Author: riedlh $
+
+Beschreibung: 
+SOKO-Schnittstelle
+";"$Revision: 1.32 $
+$Date: 2008/01/30 12:52:38CET $
+$Author: riedlh $
+
+Beschreibung: 
+SOKO-Schnittstelle
+";""
+"$Revision: 1.11 $
+$Date: 2008/01/30 15:18:01CET $
+$Author: riedlh $
+";"$Revision: 1.11 $
+$Date: 2008/01/30 15:18:01CET $
+$Author: riedlh $
+";""
+"$Revision: 1.12 $
+$Date: 2008/01/31 11:42:34CET $
+$Author: riedlh $
+";"$Revision: 1.12 $
+$Date: 2008/01/31 11:42:34CET $
+$Author: riedlh $
+";""
+"$Revision: 1.3 $
+$Date: 2008/02/11 09:47:01CET $
+$Author: hgc $
+
+
+";"$Revision: 1.3 $
+$Date: 2008/02/11 09:47:01CET $
+$Author: hgc $
+
+
+";""
+"$Revision: 1.6 $
+$Date: 2008/02/11 07:46:29CET $
+$Author: hgc $
+$ProjectRevision: Last Checkpoint: 1.54 $
+";"$Revision: 1.6 $
+$Date: 2008/02/11 07:46:29CET $
+$Author: hgc $
+$ProjectRevision: Last Checkpoint: 1.54 $
+";""
+"$Revision: 1.36 $
+$Date: 2008/02/01 14:02:58CET $
+$Author: sth $
+
+
+Funktionsbeschreibung:
+
+  hier werden Funktionskomponenten eingebunden,
+  die am Anfang vom Zyklus aufgerufen werden:
+        
+";"$Revision: 1.36 $
+$Date: 2008/02/01 14:02:58CET $
+$Author: sth $
+
+
+Funktionsbeschreibung:
+
+  hier werden Funktionskomponenten eingebunden,
+  die am Anfang vom Zyklus aufgerufen werden:
+        
+";""
+"$Revision: 1.37 $
+$Date: 2008/02/12 11:33:23CET $
+$Author: hgc $
+
+
+Funktionsbeschreibung:
+
+  hier werden Funktionskomponenten eingebunden,
+  die am Anfang vom Zyklus aufgerufen werden:
+        
+";"$Revision: 1.37 $
+$Date: 2008/02/12 11:33:23CET $
+$Author: hgc $
+
+
+Funktionsbeschreibung:
+
+  hier werden Funktionskomponenten eingebunden,
+  die am Anfang vom Zyklus aufgerufen werden:
+        
+";""
+"$Revision: 1.66 $
+$Date: 2008/02/06 14:21:06CET $
+$Author: schmoelp $
+-------------------------------------------------------------------------------
+Änderung: Datum      / Abteilung / Name / Version x.y
+Änderung: 22.06.2006 /          / slh   / V0.2
+        :Wzw.Grundstlg.fahren eingepflegt; Lokaldaten laden/retten mit
+        :SFC20 BLKMOVE; Doppelwortzugriffe entfernt (Absolutadressen vermeiden)
+        :Quelle:FC_WZW_VMAG_STATUS.AWL vom 22.06.2006 10:29:25
+Änderung:           /          /        / V
+        :
+-------------------------------------------------------------------------------
+";"$Revision: 1.66 $
+$Date: 2008/02/06 14:21:06CET $
+$Author: schmoelp $
+-------------------------------------------------------------------------------
+Änderung: Datum      / Abteilung / Name / Version x.y
+Änderung: 22.06.2006 /          / slh   / V0.2
+        :Wzw.Grundstlg.fahren eingepflegt; Lokaldaten laden/retten mit
+        :SFC20 BLKMOVE; Doppelwortzugriffe entfernt (Absolutadressen vermeiden)
+        :Quelle:FC_WZW_VMAG_STATUS.AWL vom 22.06.2006 10:29:25
+Änderung:           /          /        / V
+        :
+-------------------------------------------------------------------------------
+";""
+"$Revision: 1.67 $
+$Date: 2008/02/13 13:27:07CET $
+$Author: hgc $
+-------------------------------------------------------------------------------
+Änderung: Datum      / Abteilung / Name / Version x.y
+Änderung: 22.06.2006 /          / slh   / V0.2
+        :Wzw.Grundstlg.fahren eingepflegt; Lokaldaten laden/retten mit
+        :SFC20 BLKMOVE; Doppelwortzugriffe entfernt (Absolutadressen vermeiden)
+        :Quelle:FC_WZW_VMAG_STATUS.AWL vom 22.06.2006 10:29:25
+Änderung:           /          /        / V
+        :
+-------------------------------------------------------------------------------
+";"$Revision: 1.67 $
+$Date: 2008/02/13 13:27:07CET $
+$Author: hgc $
+-------------------------------------------------------------------------------
+Änderung: Datum      / Abteilung / Name / Version x.y
+Änderung: 22.06.2006 /          / slh   / V0.2
+        :Wzw.Grundstlg.fahren eingepflegt; Lokaldaten laden/retten mit
+        :SFC20 BLKMOVE; Doppelwortzugriffe entfernt (Absolutadressen vermeiden)
+        :Quelle:FC_WZW_VMAG_STATUS.AWL vom 22.06.2006 10:29:25
+Änderung:           /          /        / V
+        :
+-------------------------------------------------------------------------------
+";""
+"$Revision: 1.232 $
+$Date: 2008/02/01 08:27:07CET $
+$Author: riedlh $
+";"$Revision: 1.232 $
+$Date: 2008/02/01 08:27:07CET $
+$Author: riedlh $
+";""
+"$Revision: 1.296 $ 
+$Date: 2008/01/30 18:15:40CET $  
+$Author: schmoelp $   
+  
+DB für Fehlermeldung  
+==================================================
+Änderung: Datum / Abteilung / Name / Version x.y
+Änderung: 
+Änderung: 18.05.2005 / SPAC / slh / V0.2
+Änderung: 700506-700508, 701060-701115 (Komet) neu
+
+";"$Revision: 1.296 $ 
+$Date: 2008/01/30 18:15:40CET $  
+$Author: schmoelp $   
+  
+DB für Fehlermeldung  
+==================================================
+Änderung: Datum / Abteilung / Name / Version x.y
+Änderung: 
+Änderung: 18.05.2005 / SPAC / slh / V0.2
+Änderung: 700506-700508, 701060-701115 (Komet) neu
+
+";""
+"$Revision: 1.2 $
+$Date: 2008/02/05 12:35:08CET $
+$Author: riedlh $
+
+";"$Revision: 1.2 $
+$Date: 2008/02/05 12:35:08CET $
+$Author: riedlh $
+
+";""
+"$Revision: 1.9 $
+$Date: 2008/01/24 10:52:27CET $
+$Author: rieds $
+
+Version 1.2
+30.10.2003 KOBS:
+- The Spindle-message with variable interval will only be issued 
+if the interval is greater then zero [h]. Thus the message can be blocked by 
+choosing an interval of zero.
+- Always reset of #yes and #no if the softkey 'yes'/ 'no' is pressed.
+
+Version 1.1:
+12.09.2003 JW 2000h - Message error correction
+PLC-Implement. Service Agent - Stand: 30.07.2003
+";"$Revision: 1.9 $
+$Date: 2008/01/24 10:52:27CET $
+$Author: rieds $
+
+Version 1.2
+30.10.2003 KOBS:
+- The Spindle-message with variable interval will only be issued 
+if the interval is greater then zero [h]. Thus the message can be blocked by 
+choosing an interval of zero.
+- Always reset of #yes and #no if the softkey 'yes'/ 'no' is pressed.
+
+Version 1.1:
+12.09.2003 JW 2000h - Message error correction
+PLC-Implement. Service Agent - Stand: 30.07.2003
+";""
+"$Revision: 1.11 $
+$Date: 2008/01/21 14:01:13CET $
+$Author: boa $
+
+KSA_3
+";"$Revision: 1.11 $
+$Date: 2008/01/21 14:01:13CET $
+$Author: boa $
+
+KSA_3
+";""
+"$Revision: 1.13 $
+$Date: 2008/01/24 10:52:28CET $
+$Author: rieds $
+
+";"$Revision: 1.13 $
+$Date: 2008/01/24 10:52:28CET $
+$Author: rieds $
+
+";""
+"$Revision: 1.22 $
+$Date: 2008/02/01 10:40:03CET $
+$Author: sja $
+
+-------------------------- Einzel-Farbe ------------------------------------
+Rot (Statisch):
+Allgemeine Störung,die eine sofortige Handlung erfordert, gefahrbringender 
+Zustand, Fehler mit hoher Priorität, z. B.-  von Not-Halt,-  Spindel- und 
+Vorschub-Halt.
+Symbolischer Operand OX_AL_LM_RD(OX_GEN_SIGNALLAMP_RD)
+
+Gelb (Statisch):
+Maschineneingriff erforderlich,da eine der
+Fehlermeldung niedriger Priorität ansteht, z. B.
+-  Werkzeugbruch,
+Vorwarnungen für z.B.
+-  Wassermangel
+-  Maschine bekommt keine Werkstücke mehr (Werkstückmagazin leer) oder
+-  Werkstückablaufmagazin voll,
+-  Messwerkstück nicht i.O. (ausgeschleust).
+Symbolischer Operand OX_AL_LM_YE(OX_GEN_SIGNALLAMP_YE)
+
+Gelb (blinkend):
+Materialmangel an Stangennachschubeinrichtung (in Übereinstimmung mit 
+Konzern-Stangenladerschnittstelle)
+Symbolischer Operand OX_AL_LM_YE(OX_GEN_SIGNALLAMP_YE)
+
+Grün (Statisch):
+Normaler Zustand der Maschine, z. B.
+Maschine produziert im Automatikbetrieb (BA 1).
+Die grüne Leuchte leuchtet nicht bei angewählter BA2, BA3 und BA4 !
+Symbolischer Operand OX_AL_LM_GN(OX_GEN_SIGNALLAMP_GN)
+
+Blau (Statisch):
+Zustand an der Maschine, der eine Handlung durch den Bediener erfordert
+-  Freigabe Palettenwechsler am Rüstplatz oder
+-  Maschine ist im Einrichtbetrieb (BA 2) oder BA 3
+Symbolischer Operand OX_AL_LM_BU(OX_GEN_SIGNALLAMP_BU)
+
+Blau (Blinkend):
+Maschine erfordert generell eine Handlung durch den Bediener,BA4 angewählt ist.
+Symbolischer Operand OX_AL_LM_BU(OX_GEN_SIGNALLAMP_BU)
+
+------------------- Kombination von Farben -----------------------------------
+Lasermaschinen Grün (statisch) und Gelb (Statisch):
+Maschine arbeitet mit Laser.
+Symbolischer Operand OX_AL_LM_GN(OX_GEN_SIGNALLAMP_GN)
+Symbolischer Operand OX_AL_LM_YE(OX_GEN_SIGNALLAMP_YE)
+
+Grün (statisch) und Blau (Statisch): 
+Maschine ist voll funktionsfähig, es ist eine Bedienerhandlung 
+erforderlich,z.B. 
+-  Spezialwerkzeug manuell einlegen oder
+-  neues Programm starten, weil Maschine steht oder
+-  M00 / M01 ist aktiv.
+Symbolischer Operand OX_AL_LM_GN(OX_GEN_SIGNALLAMP_GN)
+Symbolischer Operand OX_AL_LM_BU(OX_GEN_SIGNALLAMP_BU)
+
+Grün (statisch),  Blau (Statisch) und Gelb (Statisch):
+Maschine ist voll funktionsfähig, es ist eine Bedienerhandlung erforderlich, z.B
+- Spezialwerkzeug manuell einlegen oder 
+- neues Programm starten und es ist eine Vorwarnung vorhanden,
+  z. B. Wassermangel.
+Symbolischer Operand OX_AL_LM_GN(OX_GEN_SIGNALLAMP_GN)
+Symbolischer Operand OX_AL_LM_BU(OX_GEN_SIGNALLAMP_BU)
+Symbolischer Operand OX_AL_LM_YE(OX_GEN_SIGNALLAMP_YE)
+";"$Revision: 1.22 $
+$Date: 2008/02/01 10:40:03CET $
+$Author: sja $
+
+-------------------------- Einzel-Farbe ------------------------------------
+Rot (Statisch):
+Allgemeine Störung,die eine sofortige Handlung erfordert, gefahrbringender 
+Zustand, Fehler mit hoher Priorität, z. B.-  von Not-Halt,-  Spindel- und 
+Vorschub-Halt.
+Symbolischer Operand OX_AL_LM_RD(OX_GEN_SIGNALLAMP_RD)
+
+Gelb (Statisch):
+Maschineneingriff erforderlich,da eine der
+Fehlermeldung niedriger Priorität ansteht, z. B.
+-  Werkzeugbruch,
+Vorwarnungen für z.B.
+-  Wassermangel
+-  Maschine bekommt keine Werkstücke mehr (Werkstückmagazin leer) oder
+-  Werkstückablaufmagazin voll,
+-  Messwerkstück nicht i.O. (ausgeschleust).
+Symbolischer Operand OX_AL_LM_YE(OX_GEN_SIGNALLAMP_YE)
+
+Gelb (blinkend):
+Materialmangel an Stangennachschubeinrichtung (in Übereinstimmung mit 
+Konzern-Stangenladerschnittstelle)
+Symbolischer Operand OX_AL_LM_YE(OX_GEN_SIGNALLAMP_YE)
+
+Grün (Statisch):
+Normaler Zustand der Maschine, z. B.
+Maschine produziert im Automatikbetrieb (BA 1).
+Die grüne Leuchte leuchtet nicht bei angewählter BA2, BA3 und BA4 !
+Symbolischer Operand OX_AL_LM_GN(OX_GEN_SIGNALLAMP_GN)
+
+Blau (Statisch):
+Zustand an der Maschine, der eine Handlung durch den Bediener erfordert
+-  Freigabe Palettenwechsler am Rüstplatz oder
+-  Maschine ist im Einrichtbetrieb (BA 2) oder BA 3
+Symbolischer Operand OX_AL_LM_BU(OX_GEN_SIGNALLAMP_BU)
+
+Blau (Blinkend):
+Maschine erfordert generell eine Handlung durch den Bediener,BA4 angewählt ist.
+Symbolischer Operand OX_AL_LM_BU(OX_GEN_SIGNALLAMP_BU)
+
+------------------- Kombination von Farben -----------------------------------
+Lasermaschinen Grün (statisch) und Gelb (Statisch):
+Maschine arbeitet mit Laser.
+Symbolischer Operand OX_AL_LM_GN(OX_GEN_SIGNALLAMP_GN)
+Symbolischer Operand OX_AL_LM_YE(OX_GEN_SIGNALLAMP_YE)
+
+Grün (statisch) und Blau (Statisch): 
+Maschine ist voll funktionsfähig, es ist eine Bedienerhandlung 
+erforderlich,z.B. 
+-  Spezialwerkzeug manuell einlegen oder
+-  neues Programm starten, weil Maschine steht oder
+-  M00 / M01 ist aktiv.
+Symbolischer Operand OX_AL_LM_GN(OX_GEN_SIGNALLAMP_GN)
+Symbolischer Operand OX_AL_LM_BU(OX_GEN_SIGNALLAMP_BU)
+
+Grün (statisch),  Blau (Statisch) und Gelb (Statisch):
+Maschine ist voll funktionsfähig, es ist eine Bedienerhandlung erforderlich, z.B
+- Spezialwerkzeug manuell einlegen oder 
+- neues Programm starten und es ist eine Vorwarnung vorhanden,
+  z. B. Wassermangel.
+Symbolischer Operand OX_AL_LM_GN(OX_GEN_SIGNALLAMP_GN)
+Symbolischer Operand OX_AL_LM_BU(OX_GEN_SIGNALLAMP_BU)
+Symbolischer Operand OX_AL_LM_YE(OX_GEN_SIGNALLAMP_YE)
+";""
+"$Revision: 2.24 $
+$Date: 2008/01/28 12:31:50CET $
+$Author: riedlh $
+";"$Revision: 2.24 $
+$Date: 2008/01/28 12:31:50CET $
+$Author: riedlh $
+";""
+"$Revision: 1.18 $
+$Date: 2008/01/24 11:21:20CET $
+$Author: boa $
+
+
+";"$Revision: 1.18 $
+$Date: 2008/01/24 11:21:20CET $
+$Author: boa $
+
+
+";""
+"$Revision: 1.58 $
+$Date: 2008/01/30 11:35:13CET $
+$Author: boa $
+";"$Revision: 1.58 $
+$Date: 2008/01/30 11:35:13CET $
+$Author: boa $
+";""
+"$Revision: 1.49 $
+$Date: 2008/01/24 11:21:44CET $
+$Author: rieds $
+
+erstellt: 14.02.2000 AB
+
+
+Der Baustein bedient die Signale im Kanal-DB 21..30
+Die Anforderungen werden aus dem DB65 entnommen
+
+NC-Stop an Satzwechsel       DBX    7.2 / Impuls      
+NC Startsperre               DBX    7.0 / statisch
+Vorschubsperre Achsen im Ka. DBX    6.0 / statisch  
+NC Einlesesperre             DBX    6.1 / statisch
+
+Es werden Impulsmerker erzeugt für 
+Reset-Taste
+Quittier-Taste
+Reset -oder Quittier-Taste
+
+Es werden Anforderungen erzeugt für
+
+NC-Stop                               durch Tastenbedienung
+Vorschub Halt Kanal                   durch Fehler 
+Spindel Halt Kanal                    durch Fehler
+Vorschub Halt Hauptachsen             durch Fehler oder Taste
+Vorschub Halt asznchr.Prozess1        durch Fehler
+Vorschub Halt asznchr.Prozess2        durch Fehler
+Vorschub Halt asznchr.Prozess3        durch Fehler
+Vorschub Halt asznchr.Prozess4        durch Fehler
+
+
+ 
+";"$Revision: 1.49 $
+$Date: 2008/01/24 11:21:44CET $
+$Author: rieds $
+
+erstellt: 14.02.2000 AB
+
+
+Der Baustein bedient die Signale im Kanal-DB 21..30
+Die Anforderungen werden aus dem DB65 entnommen
+
+NC-Stop an Satzwechsel       DBX    7.2 / Impuls      
+NC Startsperre               DBX    7.0 / statisch
+Vorschubsperre Achsen im Ka. DBX    6.0 / statisch  
+NC Einlesesperre             DBX    6.1 / statisch
+
+Es werden Impulsmerker erzeugt für 
+Reset-Taste
+Quittier-Taste
+Reset -oder Quittier-Taste
+
+Es werden Anforderungen erzeugt für
+
+NC-Stop                               durch Tastenbedienung
+Vorschub Halt Kanal                   durch Fehler 
+Spindel Halt Kanal                    durch Fehler
+Vorschub Halt Hauptachsen             durch Fehler oder Taste
+Vorschub Halt asznchr.Prozess1        durch Fehler
+Vorschub Halt asznchr.Prozess2        durch Fehler
+Vorschub Halt asznchr.Prozess3        durch Fehler
+Vorschub Halt asznchr.Prozess4        durch Fehler
+
+
+ 
+";""
+"$Revision: 1.33 $
+$Date: 2008/01/28 08:50:42CET $
+$Author: boa $
+$ProjectRevision: Last Checkpoint: 1.56 $
+
+";"$Revision: 1.33 $
+$Date: 2008/01/28 08:50:42CET $
+$Author: boa $
+$ProjectRevision: Last Checkpoint: 1.56 $
+
+";""
+"$Revision: 1.9 $
+$Date: 2008/01/28 09:02:28CET $
+$Author: boa $
+";"$Revision: 1.9 $
+$Date: 2008/01/28 09:02:28CET $
+$Author: boa $
+";""
+"$Revision: 1.5 $
+$Date: 2008/01/21 13:59:58CET $
+$Author: boa $
+
+KSA_3
+";"$Revision: 1.5 $
+$Date: 2008/01/21 13:59:58CET $
+$Author: boa $
+
+KSA_3
+";""
+"$Revision: 1.7 $
+$Date: 2008/01/21 14:00:32CET $
+$Author: boa $
+$ProjectRevision: Last Checkpoint: 1.56 $
+
+KSA_3
+";"$Revision: 1.7 $
+$Date: 2008/01/21 14:00:32CET $
+$Author: boa $
+$ProjectRevision: Last Checkpoint: 1.56 $
+
+KSA_3
+";""
+"$Revision: 1.29 $
+$Date: 2008/02/14 08:57:35CET $
+$Author: rieds $
+";"$Revision: 1.29 $
+$Date: 2008/02/14 08:57:35CET $
+$Author: rieds $
+";""
+"$Revision: 1.23 $
+$Date: 2008/02/11 15:18:52CET $
+$Author: rieds $
+
+";"$Revision: 1.23 $
+$Date: 2008/02/11 15:18:52CET $
+$Author: rieds $
+
+";""
+"$Revision: 1.44 $
+$Date: 2008/02/11 13:05:23CET $
+$Author: riedlh $
+";"$Revision: 1.44 $
+$Date: 2008/02/11 13:05:23CET $
+$Author: riedlh $
+";""
+"$Revision: 1.32 $
+$Date: 2008/01/21 14:10:17CET $
+$Author: boa $
+";"$Revision: 1.32 $
+$Date: 2008/01/21 14:10:17CET $
+$Author: boa $
+";""
+"$Revision: 1.46 $
+$Date: 2008/01/30 10:40:23CET $
+$Author: schmoelp $
+
+";"$Revision: 1.46 $
+$Date: 2008/01/30 10:40:23CET $
+$Author: schmoelp $
+
+";""
+"$Revision: 1.22 $
+$Date: 2008/01/25 07:15:34CET $
+$Author: rieds $
+$ProjectRevision: Last Checkpoint: 1.56 $
+
+TRANSLINE 2000 Baustein 
+
+Verwaltung der Schutztüren / Schutztüren geschlossen gesamt
+";"$Revision: 1.22 $
+$Date: 2008/01/25 07:15:34CET $
+$Author: rieds $
+$ProjectRevision: Last Checkpoint: 1.56 $
+
+TRANSLINE 2000 Baustein 
+
+Verwaltung der Schutztüren / Schutztüren geschlossen gesamt
+";""
+"$Revision: 1.8 $
+$Date: 2008/01/22 14:43:55CET $
+$Author: riedlh $
+";"$Revision: 1.8 $
+$Date: 2008/01/22 14:43:55CET $
+$Author: riedlh $
+";""
+"$Revision: 3.19 $
+$Date: 2008/02/07 14:48:47CET $
+$Author: riedlh $
+";"$Revision: 3.19 $
+$Date: 2008/02/07 14:48:47CET $
+$Author: riedlh $
+";""
+"$Revision: 1.12 $
+$Date: 2008/02/11 13:05:22CET $
+$Author: riedlh $
+ JOBLISTE
+";"$Revision: 1.12 $
+$Date: 2008/02/11 13:05:22CET $
+$Author: riedlh $
+ JOBLISTE
+";""
+"$Revision: 1.16 $
+$Date: 2008/02/14 07:47:27CET $
+$Author: riedlh $
+";"$Revision: 1.16 $
+$Date: 2008/02/14 07:47:27CET $
+$Author: riedlh $
+";""
+"$Revision: 4.23 $
+$Date: 2008/02/07 14:48:48CET $
+$Author: riedlh $
+";"$Revision: 4.23 $
+$Date: 2008/02/07 14:48:48CET $
+$Author: riedlh $
+";""
+"$Revision: 1.1 $
+$Date: 2007/08/30 16:44:12CEST $
+$Author: wri $
+
+";"$Revision: 1.1 $
+$Date: 2007/08/30 16:44:12CEST $
+$Author: wri $
+
+";""
+"$Revision: 1.3 $
+$Date: 2008/02/15 12:02:56CET $
+$Author: wri $
+
+";"$Revision: 1.3 $
+$Date: 2008/02/15 12:02:56CET $
+$Author: wri $
+
+";""
+"$Revision: 1.4 $
+$Date: 2008/02/15 12:03:30CET $
+$Author: wri $
+
+";"$Revision: 1.4 $
+$Date: 2008/02/15 12:03:30CET $
+$Author: wri $
+
+";""
+"$Revision: 1.3 $
+$Date: 2008/02/15 12:04:00CET $
+$Author: wri $
+
+";"$Revision: 1.3 $
+$Date: 2008/02/15 12:04:00CET $
+$Author: wri $
+
+";""
+"$Revision: 1.5 $
+$Date: 2008/02/15 12:07:58CET $
+$Author: wri $
+
+";"$Revision: 1.5 $
+$Date: 2008/02/15 12:07:58CET $
+$Author: wri $
+
+";""
+"$Revision: 1.117 $
+$Date: 2008/02/15 14:57:32CET $
+$Author: hgc $
+";"$Revision: 1.117 $
+$Date: 2008/02/15 14:57:32CET $
+$Author: hgc $
+";""
+"$Revision: 1.36 $
+$Date: 2008/02/18 08:26:45CET $
+$Author: hgc $
+";"$Revision: 1.36 $
+$Date: 2008/02/18 08:26:45CET $
+$Author: hgc $
+";""
+"$Revision: 1.78 $
+$Date: 2008/02/18 08:50:34CET $
+$Author: hgc $
+";"$Revision: 1.78 $
+$Date: 2008/02/18 08:50:34CET $
+$Author: hgc $
+";""
+"$Revision: 1.8 $
+$Date: 2008/02/19 11:04:22CET $
+$Author: hgc $
+";"$Revision: 1.8 $
+$Date: 2008/02/19 11:04:22CET $
+$Author: hgc $
+";""
+"$Revision: 1.8 $
+$Date: 2008/02/19 11:03:18CET $
+$Author: hgc $
+";"$Revision: 1.8 $
+$Date: 2008/02/19 11:03:18CET $
+$Author: hgc $
+";""
+"$Revision: 1.10 $
+$Date: 2008/02/19 11:01:56CET $
+$Author: hgc $
+";"$Revision: 1.10 $
+$Date: 2008/02/19 11:01:56CET $
+$Author: hgc $
+";""
+"$Revision: 1.14 $
+$Date: 2008/02/19 10:59:03CET $
+$Author: hgc $
+";"$Revision: 1.14 $
+$Date: 2008/02/19 10:59:03CET $
+$Author: hgc $
+";""
+"$Revision: 1.40 $
+$Date: 2008/02/19 10:57:43CET $
+$Author: hgc $
+
+";"$Revision: 1.40 $
+$Date: 2008/02/19 10:57:43CET $
+$Author: hgc $
+
+";""
+"$Revision: 1.45 $
+$Date: 2008/02/19 10:56:14CET $
+$Author: hgc $
+
+";"$Revision: 1.45 $
+$Date: 2008/02/19 10:56:14CET $
+$Author: hgc $
+
+";""
+"$Revision: 1.32 $
+$Date: 2008/02/19 10:55:42CET $
+$Author: hgc $
+
+Rundspeicher RS4 / RS5 Rettungsfunktion
+=============================
+";"$Revision: 1.32 $
+$Date: 2008/02/19 10:55:42CET $
+$Author: hgc $
+
+Rundspeicher RS4 / RS5 Rettungsfunktion
+=============================
+";""
+"$Revision: 1.8 $
+$Date: 2008/02/19 10:54:09CET $
+$Author: hgc $
+
+
+Zwangsdynamisierung Baustein für Solutionline DMx55-125x2
+
+Unterteilt in zwei Sicherheitsbereiche:
+1. Bereich 1         (Arbeitsraumachsen / Palettenwechslerachse / Mgazinachsen)
+bestehend aus Achse:    X Y Z B C SPI              PW             MAG1/MAG2 GR  
+
+2. Bereich 2         (Palettenspeicherachsen / Palettenwechslerachse)
+bestehend aus Achse:     DREHST/TRANSP/HUB              PW
+";"$Revision: 1.8 $
+$Date: 2008/02/19 10:54:09CET $
+$Author: hgc $
+
+
+Zwangsdynamisierung Baustein für Solutionline DMx55-125x2
+
+Unterteilt in zwei Sicherheitsbereiche:
+1. Bereich 1         (Arbeitsraumachsen / Palettenwechslerachse / Mgazinachsen)
+bestehend aus Achse:    X Y Z B C SPI              PW             MAG1/MAG2 GR  
+
+2. Bereich 2         (Palettenspeicherachsen / Palettenwechslerachse)
+bestehend aus Achse:     DREHST/TRANSP/HUB              PW
+";""
+"$Revision: 1.9 $
+$Date: 2008/02/19 10:52:45CET $
+$Author: hgc $
+
+";"$Revision: 1.9 $
+$Date: 2008/02/19 10:52:45CET $
+$Author: hgc $
+
+";""
+"$Revision: 1.6 $
+$Date: 2008/02/19 10:51:52CET $
+$Author: hgc $
+
+Rundspeicher RS10 Rettungsfunktion
+=============================
+";"$Revision: 1.6 $
+$Date: 2008/02/19 10:51:52CET $
+$Author: hgc $
+
+Rundspeicher RS10 Rettungsfunktion
+=============================
+";""
+"$Revision: 1.13 $
+$Date: 2008/02/19 10:36:07CET $
+$Author: hgc $
+
+Baustein für Solutionline DMx55-125x2
+";"$Revision: 1.13 $
+$Date: 2008/02/19 10:36:07CET $
+$Author: hgc $
+
+Baustein für Solutionline DMx55-125x2
+";""
+"$Revision: 1.16 $
+$Date: 2008/02/19 10:34:45CET $
+$Author: hgc $
+
+
+
+PLC-SPL Baustein für Solutionline DMx55-125x2
+
+Unterteilt in zwei Sicherheitsbereiche:
+1. BEREICH 1 (MASCHINE) (Arbeitsraumachsen/Palettenwechslerachse/ Mgazinachsen)
+bestehend aus Achse:     X Y Z B C SPI              PW            MAG1/MAG2 GR  
+
+2. BEREICH 2 (PS)     (Palettenspeicherachsen / Palettenwechslerachse)
+bestehend aus Achse:     DREHST/TRANSP/HUB              PW
+
+";"$Revision: 1.16 $
+$Date: 2008/02/19 10:34:45CET $
+$Author: hgc $
+
+
+
+PLC-SPL Baustein für Solutionline DMx55-125x2
+
+Unterteilt in zwei Sicherheitsbereiche:
+1. BEREICH 1 (MASCHINE) (Arbeitsraumachsen/Palettenwechslerachse/ Mgazinachsen)
+bestehend aus Achse:     X Y Z B C SPI              PW            MAG1/MAG2 GR  
+
+2. BEREICH 2 (PS)     (Palettenspeicherachsen / Palettenwechslerachse)
+bestehend aus Achse:     DREHST/TRANSP/HUB              PW
+
+";""
+"$Revision: 1.4 $
+$Date: 2008/02/19 10:28:37CET $
+$Author: hgc $
+
+Baustein für Solutionline DMx55-125x2
+Zwangsdynamisierung Bereich 2 Palettenspeicher
+";"$Revision: 1.4 $
+$Date: 2008/02/19 10:28:37CET $
+$Author: hgc $
+
+Baustein für Solutionline DMx55-125x2
+Zwangsdynamisierung Bereich 2 Palettenspeicher
+";""
+"$Revision: 1.19 $
+$Date: 2008/02/20 07:22:22CET $
+$Author: hgc $
+
+
+";"$Revision: 1.19 $
+$Date: 2008/02/20 07:22:22CET $
+$Author: hgc $
+
+
+";""
+"$Revision: 1.47 $
+$Date: 2008/02/20 07:40:16CET $
+$Author: hgc $
+
+";"$Revision: 1.47 $
+$Date: 2008/02/20 07:40:16CET $
+$Author: hgc $
+
+";""
+"$Revision: 1.118 $
+$Date: 2008/02/20 10:41:27CET $
+$Author: hgc $
+";"$Revision: 1.118 $
+$Date: 2008/02/20 10:41:27CET $
+$Author: hgc $
+";""
+"$Revision: 1.119 $
+$Date: 2008/02/20 11:25:23CET $
+$Author: hgc $
+";"$Revision: 1.119 $
+$Date: 2008/02/20 11:25:23CET $
+$Author: hgc $
+";""
+"$Revision: 1.24 $
+$Date: 2008/02/20 11:47:35CET $
+$Author: riedlh $
+
+";"$Revision: 1.24 $
+$Date: 2008/02/20 11:47:35CET $
+$Author: riedlh $
+
+";""
+"$Revision: 1.5 $
+$Date: 2008/02/20 11:47:34CET $
+$Author: riedlh $
+";"$Revision: 1.5 $
+$Date: 2008/02/20 11:47:34CET $
+$Author: riedlh $
+";""
+"$Revision: 1.20 $
+$Date: 2008/02/20 12:44:10CET $
+$Author: hgc $
+
+
+";"$Revision: 1.20 $
+$Date: 2008/02/20 12:44:10CET $
+$Author: hgc $
+
+
+";""
+"$Revision: 1.13 $
+$Date: 2008/02/26 09:26:38CET $
+$Author: riedlh $
+";"$Revision: 1.13 $
+$Date: 2008/02/26 09:26:38CET $
+$Author: riedlh $
+";""
+"$Revision: 3.20 $
+$Date: 2008/02/25 17:42:32CET $
+$Author: riedlh $
+";"$Revision: 3.20 $
+$Date: 2008/02/25 17:42:32CET $
+$Author: riedlh $
+";""
+"$Revision: 1.17 $
+$Date: 2008/02/26 11:05:55CET $
+$Author: hgc $
+
+
+
+PLC-SPL Baustein für Solutionline DMx55-125x2
+
+Unterteilt in zwei Sicherheitsbereiche:
+1. BEREICH 1 (MASCHINE) (Arbeitsraumachsen/Palettenwechslerachse/ Mgazinachsen)
+bestehend aus Achse:     X Y Z B C SPI              PW            MAG1/MAG2 GR  
+
+2. BEREICH 2 (PS)     (Palettenspeicherachsen / Palettenwechslerachse)
+bestehend aus Achse:     DREHST/TRANSP/HUB              PW
+
+";"$Revision: 1.17 $
+$Date: 2008/02/26 11:05:55CET $
+$Author: hgc $
+
+
+
+PLC-SPL Baustein für Solutionline DMx55-125x2
+
+Unterteilt in zwei Sicherheitsbereiche:
+1. BEREICH 1 (MASCHINE) (Arbeitsraumachsen/Palettenwechslerachse/ Mgazinachsen)
+bestehend aus Achse:     X Y Z B C SPI              PW            MAG1/MAG2 GR  
+
+2. BEREICH 2 (PS)     (Palettenspeicherachsen / Palettenwechslerachse)
+bestehend aus Achse:     DREHST/TRANSP/HUB              PW
+
+";""
+"$Revision: 1.24 $
+$Date: 2008/02/26 12:18:02CET $
+$Author: hgc $
+$ProjectRevision: Last Checkpoint: 1.56 $
+
+Bedienerführung
+";"$Revision: 1.24 $
+$Date: 2008/02/26 12:18:02CET $
+$Author: hgc $
+$ProjectRevision: Last Checkpoint: 1.56 $
+
+Bedienerführung
+";""
+"$Revision: 1.14 $
+$Date: 2008/02/29 08:25:46CET $
+$Author: sth $
+";"$Revision: 1.14 $
+$Date: 2008/02/29 08:25:46CET $
+$Author: sth $
+";""
+"$Revision: 1.38 $
+$Date: 2008/02/29 11:07:50CET $
+$Author: sth $
+
+
+Funktionsbeschreibung:
+
+  hier werden Funktionskomponenten eingebunden,
+  die am Anfang vom Zyklus aufgerufen werden:
+        
+";"$Revision: 1.38 $
+$Date: 2008/02/29 11:07:50CET $
+$Author: sth $
+
+
+Funktionsbeschreibung:
+
+  hier werden Funktionskomponenten eingebunden,
+  die am Anfang vom Zyklus aufgerufen werden:
+        
+";""
+"$Revision: 1.5 $
+$Date: 2008/03/03 13:37:46CET $
+$Author: wri $
+
+";"$Revision: 1.5 $
+$Date: 2008/03/03 13:37:46CET $
+$Author: wri $
+
+";""
+"$Revision: 1.4 $
+$Date: 2008/03/03 13:37:46CET $
+$Author: wri $
+
+";"$Revision: 1.4 $
+$Date: 2008/03/03 13:37:46CET $
+$Author: wri $
+
+";""
+"$Revision: 1.6 $
+$Date: 2008/03/03 13:36:48CET $
+$Author: wri $
+
+";"$Revision: 1.6 $
+$Date: 2008/03/03 13:36:48CET $
+$Author: wri $
+
+";""
+"$Revision: 1.39 $
+$Date: 2008/03/04 10:46:50CET $
+$Author: hgc $
+
+
+Funktionsbeschreibung:
+
+  hier werden Funktionskomponenten eingebunden,
+  die am Anfang vom Zyklus aufgerufen werden:
+        
+";"$Revision: 1.39 $
+$Date: 2008/03/04 10:46:50CET $
+$Author: hgc $
+
+
+Funktionsbeschreibung:
+
+  hier werden Funktionskomponenten eingebunden,
+  die am Anfang vom Zyklus aufgerufen werden:
+        
+";""
+"$Revision: 1.26 $
+$Date: 2008/02/25 09:56:49CET $
+$Author: riedlh $
+
+";"$Revision: 1.26 $
+$Date: 2008/02/25 09:56:49CET $
+$Author: riedlh $
+
+";""
+"$Revision: 1.27 $
+$Date: 2008/03/04 11:29:39CET $
+$Author: hgc $
+
+";"$Revision: 1.27 $
+$Date: 2008/03/04 11:29:39CET $
+$Author: hgc $
+
+";""
+"$Revision: 1.8 $ 
+$Date: 2008/03/05 06:38:08CET $  
+$Author: hgc $   
+";"$Revision: 1.8 $ 
+$Date: 2008/03/05 06:38:08CET $  
+$Author: hgc $   
+";""
+"$Revision: 1.15 $
+$Date: 2008/03/05 07:05:26CET $
+$Author: hgc $
+";"$Revision: 1.15 $
+$Date: 2008/03/05 07:05:26CET $
+$Author: hgc $
+";""
+"$Revision: 2.31 $
+$Date: 2008/02/25 17:54:53CET $
+$Author: riedlh $
+";"$Revision: 2.31 $
+$Date: 2008/02/25 17:54:53CET $
+$Author: riedlh $
+";""
+"$Revision: 1.2 $
+$Date: 2008/03/05 11:20:33CET $
+$Author: wri $
+";"$Revision: 1.2 $
+$Date: 2008/03/05 11:20:33CET $
+$Author: wri $
+";""
+"$Revision: 1.52 $
+$Date: 2008/03/05 11:31:21CET $
+$Author: wri $
+";"$Revision: 1.52 $
+$Date: 2008/03/05 11:31:21CET $
+$Author: wri $
+";""
+"$Revision: 1.299 $ 
+$Date: 2008/03/05 13:13:03CET $  
+$Author: hgc $   
+  
+DB für Fehlermeldung  
+==================================================
+Änderung: Datum / Abteilung / Name / Version x.y
+Änderung: 
+Änderung: 18.05.2005 / SPAC / slh / V0.2
+Änderung: 700506-700508, 701060-701115 (Komet) neu
+
+";"$Revision: 1.299 $ 
+$Date: 2008/03/05 13:13:03CET $  
+$Author: hgc $   
+  
+DB für Fehlermeldung  
+==================================================
+Änderung: Datum / Abteilung / Name / Version x.y
+Änderung: 
+Änderung: 18.05.2005 / SPAC / slh / V0.2
+Änderung: 700506-700508, 701060-701115 (Komet) neu
+
+";""
+"$Revision: 1.18 $
+$Date: 2008/03/05 13:16:16CET $
+$Author: hgc $
+
+
+
+PLC-SPL Baustein für Solutionline DMx55-125x2
+
+Unterteilt in zwei Sicherheitsbereiche:
+1. BEREICH 1 (MASCHINE) (Arbeitsraumachsen/Palettenwechslerachse/ Mgazinachsen)
+bestehend aus Achse:     X Y Z B C SPI              PW            MAG1/MAG2 GR  
+
+2. BEREICH 2 (PS)     (Palettenspeicherachsen / Palettenwechslerachse)
+bestehend aus Achse:     DREHST/TRANSP/HUB              PW
+
+";"$Revision: 1.18 $
+$Date: 2008/03/05 13:16:16CET $
+$Author: hgc $
+
+
+
+PLC-SPL Baustein für Solutionline DMx55-125x2
+
+Unterteilt in zwei Sicherheitsbereiche:
+1. BEREICH 1 (MASCHINE) (Arbeitsraumachsen/Palettenwechslerachse/ Mgazinachsen)
+bestehend aus Achse:     X Y Z B C SPI              PW            MAG1/MAG2 GR  
+
+2. BEREICH 2 (PS)     (Palettenspeicherachsen / Palettenwechslerachse)
+bestehend aus Achse:     DREHST/TRANSP/HUB              PW
+
+";""
+"$Revision: 1.46.1.2 $
+$Date: 2008/03/05 13:34:14CET $
+$Author: hgc $
+
+";"$Revision: 1.46.1.2 $
+$Date: 2008/03/05 13:34:14CET $
+$Author: hgc $
+
+";""
+"$Revision: 1.7 $
+$Date: 2008/03/05 13:54:44CET $
+$Author: wri $
+
+";"$Revision: 1.7 $
+$Date: 2008/03/05 13:54:44CET $
+$Author: wri $
+
+";""
+"$Revision: 1.54 $
+$Date: 2008/03/06 07:48:43CET $
+$Author: wri $
+";"$Revision: 1.54 $
+$Date: 2008/03/06 07:48:43CET $
+$Author: wri $
+";""
+"$Revision: 1.6 $
+$Date: 2008/03/06 07:56:28CET $
+$Author: wri $
+";"$Revision: 1.6 $
+$Date: 2008/03/06 07:56:28CET $
+$Author: wri $
+";""
+"$Revision: 1.3 $
+$Date: 2008/03/06 08:21:47CET $
+$Author: wri $
+";"$Revision: 1.3 $
+$Date: 2008/03/06 08:21:47CET $
+$Author: wri $
+";""
+"$Revision: 1.68 $
+$Date: 2008/03/06 09:33:54CET $
+$Author: hgc $
+-------------------------------------------------------------------------------
+Änderung: Datum      / Abteilung / Name / Version x.y
+Änderung: 22.06.2006 /          / slh   / V0.2
+        :Wzw.Grundstlg.fahren eingepflegt; Lokaldaten laden/retten mit
+        :SFC20 BLKMOVE; Doppelwortzugriffe entfernt (Absolutadressen vermeiden)
+        :Quelle:FC_WZW_VMAG_STATUS.AWL vom 22.06.2006 10:29:25
+Änderung:           /          /        / V
+        :
+-------------------------------------------------------------------------------
+";"$Revision: 1.68 $
+$Date: 2008/03/06 09:33:54CET $
+$Author: hgc $
+-------------------------------------------------------------------------------
+Änderung: Datum      / Abteilung / Name / Version x.y
+Änderung: 22.06.2006 /          / slh   / V0.2
+        :Wzw.Grundstlg.fahren eingepflegt; Lokaldaten laden/retten mit
+        :SFC20 BLKMOVE; Doppelwortzugriffe entfernt (Absolutadressen vermeiden)
+        :Quelle:FC_WZW_VMAG_STATUS.AWL vom 22.06.2006 10:29:25
+Änderung:           /          /        / V
+        :
+-------------------------------------------------------------------------------
+";""
+"$Revision: 1.122 $
+$Date: 2008/03/10 11:02:15CET $
+$Author: hgc $
+";"$Revision: 1.122 $
+$Date: 2008/03/10 11:02:15CET $
+$Author: hgc $
+";""
+"$Revision: 1.4 $
+$Date: 2008/03/10 14:21:21CET $
+$Author: wri $
+
+";"$Revision: 1.4 $
+$Date: 2008/03/10 14:21:21CET $
+$Author: wri $
+
+";""
+"$Revision: 1.79 $
+$Date: 2008/03/12 08:19:14CET $
+$Author: hgc $
+";"$Revision: 1.79 $
+$Date: 2008/03/12 08:19:14CET $
+$Author: hgc $
+";""
+"$Revision: 1.33 $
+$Date: 2008/03/12 17:26:33CET $
+$Author: hgc $
+";"$Revision: 1.33 $
+$Date: 2008/03/12 17:26:33CET $
+$Author: hgc $
+";""
+"$Revision: 1.34 $
+$Date: 2008/03/13 08:31:39CET $
+$Author: hgc $
+";"$Revision: 1.34 $
+$Date: 2008/03/13 08:31:39CET $
+$Author: hgc $
+";""
+"$Revision: 1.34 $
+$Date: 2008/03/13 09:51:22CET $
+$Author: sth $
+
+Beschreibung: 
+SOKO-Schnittstelle
+";"$Revision: 1.34 $
+$Date: 2008/03/13 09:51:22CET $
+$Author: sth $
+
+Beschreibung: 
+SOKO-Schnittstelle
+";""
+"$Revision: 1.300 $ 
+$Date: 2008/03/13 12:44:25CET $  
+$Author: hgc $   
+  
+DB für Fehlermeldung  
+==================================================
+Änderung: Datum / Abteilung / Name / Version x.y
+Änderung: 
+Änderung: 18.05.2005 / SPAC / slh / V0.2
+Änderung: 700506-700508, 701060-701115 (Komet) neu
+
+";"$Revision: 1.300 $ 
+$Date: 2008/03/13 12:44:25CET $  
+$Author: hgc $   
+  
+DB für Fehlermeldung  
+==================================================
+Änderung: Datum / Abteilung / Name / Version x.y
+Änderung: 
+Änderung: 18.05.2005 / SPAC / slh / V0.2
+Änderung: 700506-700508, 701060-701115 (Komet) neu
+
+";""
+"$Revision: 1.17 $ 
+$Date: 2008/03/13 12:38:26CET $  
+$Author: hgc $   
+";"$Revision: 1.17 $ 
+$Date: 2008/03/13 12:38:26CET $  
+$Author: hgc $   
+";""
+"$Revision: 1.13 $ 
+$Date: 2008/03/13 12:43:42CET $  
+$Author: hgc $   
+";"$Revision: 1.13 $ 
+$Date: 2008/03/13 12:43:42CET $  
+$Author: hgc $   
+";""
+"$Revision: 1.50 $
+$Date: 2008/02/11 09:40:16CET $
+$Author: rieds $
+";"$Revision: 1.50 $
+$Date: 2008/02/11 09:40:16CET $
+$Author: rieds $
+";""
+"$Revision: 1.51 $
+$Date: 2008/03/13 13:19:49CET $
+$Author: hgc $
+";"$Revision: 1.51 $
+$Date: 2008/03/13 13:19:49CET $
+$Author: hgc $
+";""
+"$Revision: 1.6 $
+$Date: 2008/03/14 08:06:15CET $
+$Author: hgc $
+Fehler erkannt, dann Fehlernummer auslesen und auswerten
+";"$Revision: 1.6 $
+$Date: 2008/03/14 08:06:15CET $
+$Author: hgc $
+Fehler erkannt, dann Fehlernummer auslesen und auswerten
+";""
+"$Revision: 1.35 $
+$Date: 2008/03/14 08:08:04CET $
+$Author: hgc $
+
+Beschreibung: 
+SOKO-Schnittstelle
+";"$Revision: 1.35 $
+$Date: 2008/03/14 08:08:04CET $
+$Author: hgc $
+
+Beschreibung: 
+SOKO-Schnittstelle
+";""
+"$Revision: 1.123 $
+$Date: 2008/03/14 10:52:19CET $
+$Author: hgc $
+";"$Revision: 1.123 $
+$Date: 2008/03/14 10:52:19CET $
+$Author: hgc $
+";""
+"$Revision: 1.67 $
+$Date: 2008/03/14 10:50:30CET $
+$Author: hgc $
+
+";"$Revision: 1.67 $
+$Date: 2008/03/14 10:50:30CET $
+$Author: hgc $
+
+";""
+"$Revision: 1.17 $
+$Date: 2008/03/11 15:48:59CET $
+$Author: riedlh $
+";"$Revision: 1.17 $
+$Date: 2008/03/11 15:48:59CET $
+$Author: riedlh $
+";""
+"$Revision: 1.16 $
+$Date: 2008/03/13 13:37:49CET $
+$Author: schmoelp $
+
+decode 2-3 digit M-codes
+Baustein übernommen vom M-Dekoder Böck Armin
+
+H-Funktion quittierbar
+zusätzlich wird für jede H-Funktion (0-99) der übergebene Wert im DB109 
+abgespeichert.
+Somit kann für jede H-Funktion der letzte übergebene Wert gelesen werden
+
+Ist die H-Funktion quittierpflichtig, so wird Einlesesperre gesetzt bis H-Fkt. 
+quittiert wird.
+
+";"$Revision: 1.16 $
+$Date: 2008/03/13 13:37:49CET $
+$Author: schmoelp $
+
+decode 2-3 digit M-codes
+Baustein übernommen vom M-Dekoder Böck Armin
+
+H-Funktion quittierbar
+zusätzlich wird für jede H-Funktion (0-99) der übergebene Wert im DB109 
+abgespeichert.
+Somit kann für jede H-Funktion der letzte übergebene Wert gelesen werden
+
+Ist die H-Funktion quittierpflichtig, so wird Einlesesperre gesetzt bis H-Fkt. 
+quittiert wird.
+
+";""
+"$Revision: 1.7 $
+$Date: 2008/03/12 17:13:15CET $
+$Author: schmoelp $
+
+GET_LOC
+
+Inputs:
+- Req      Start des FB92
+- MagNr    Magazinnummer
+- Platz    Mode 0 aktiv -> Platznummer im Magazin
+           Mode 1 aktiv -> Anzahl der Plätze (3 oder 4) im Zwischenspeicher  
+- Mode     Mode 0 -> Es können aus allen Magazinen (Plätzen) Werkzeugdaten 
+           ausgelesen werden.
+           Mode 1 -> Auslesen der Zwischenspeicher (MagNr 9998)
+           Daten Spindel- und Greiferwerkzeug werden ausgelesen und
+           verglichen.
+
+Outputs:
+- NDR      Fertigmeldung des FB92
+- WZ_equal Werkzeugdaten (Grösse,variable Plätze) sind gleich
+- Error    Fehlerbit siehe State
+- Warning  nur Mode 1 beide Greifer leer oder belegt
+- State    Fehlercode 1-Fehler bei Lesen Magazindaten
+           2-Fehler bei Lesen Werkzeugdaten
+           4-nur Mode 1 Fehler bei Lesen Daten Greiferwerkzeug
+           8-interner Fehler FB92 
+
+Aufrufbeispiel FB92 nur Test:
+      U     ""E___6.2"" //Taste
+      UN    ""M___1.1""
+      S     ""M___1.0""
+
+      CALL  ""FB__92"" , ""DB__62""
+       Req     :=""M___1.0""
+       MagNr   :=9998
+       Platz_Nr:=1
+       Mode    :=1
+       NDR     :=""M___1.1""
+       WZ_equal:=""M___1.6""
+       Error   :=""M___1.2""
+       Warning :=""M___1.7""
+       State   :=MW250
+
+      O     ""M___1.1""
+      O     ""M___1.2""
+      R     ""M___1.0""
+
+Hinweis:
+Aufruf des FB92 erfolgt im zyklischen Teil des PLC-Anwenderprogramms, wobei
+während des Aufrufs kein Datentausch der Werkzeugverwaltung erfolgen
+sollte (FC 8).
+V1.0 Absturz FB6, wenn FB92+FB91 gleichzeitig aufgerufen werden. Ursache unklar
+V1.1 Variable (NC_VAR) in Instanz-DB62 vereinbart
+";"$Revision: 1.7 $
+$Date: 2008/03/12 17:13:15CET $
+$Author: schmoelp $
+
+GET_LOC
+
+Inputs:
+- Req      Start des FB92
+- MagNr    Magazinnummer
+- Platz    Mode 0 aktiv -> Platznummer im Magazin
+           Mode 1 aktiv -> Anzahl der Plätze (3 oder 4) im Zwischenspeicher  
+- Mode     Mode 0 -> Es können aus allen Magazinen (Plätzen) Werkzeugdaten 
+           ausgelesen werden.
+           Mode 1 -> Auslesen der Zwischenspeicher (MagNr 9998)
+           Daten Spindel- und Greiferwerkzeug werden ausgelesen und
+           verglichen.
+
+Outputs:
+- NDR      Fertigmeldung des FB92
+- WZ_equal Werkzeugdaten (Grösse,variable Plätze) sind gleich
+- Error    Fehlerbit siehe State
+- Warning  nur Mode 1 beide Greifer leer oder belegt
+- State    Fehlercode 1-Fehler bei Lesen Magazindaten
+           2-Fehler bei Lesen Werkzeugdaten
+           4-nur Mode 1 Fehler bei Lesen Daten Greiferwerkzeug
+           8-interner Fehler FB92 
+
+Aufrufbeispiel FB92 nur Test:
+      U     ""E___6.2"" //Taste
+      UN    ""M___1.1""
+      S     ""M___1.0""
+
+      CALL  ""FB__92"" , ""DB__62""
+       Req     :=""M___1.0""
+       MagNr   :=9998
+       Platz_Nr:=1
+       Mode    :=1
+       NDR     :=""M___1.1""
+       WZ_equal:=""M___1.6""
+       Error   :=""M___1.2""
+       Warning :=""M___1.7""
+       State   :=MW250
+
+      O     ""M___1.1""
+      O     ""M___1.2""
+      R     ""M___1.0""
+
+Hinweis:
+Aufruf des FB92 erfolgt im zyklischen Teil des PLC-Anwenderprogramms, wobei
+während des Aufrufs kein Datentausch der Werkzeugverwaltung erfolgen
+sollte (FC 8).
+V1.0 Absturz FB6, wenn FB92+FB91 gleichzeitig aufgerufen werden. Ursache unklar
+V1.1 Variable (NC_VAR) in Instanz-DB62 vereinbart
+";""
+"$Revision: 1.42 $
+$Date: 2008/03/04 10:40:19CET $
+$Author: schmoelp $
+------------------ Kette_Tx Werkzeug vorbereiten ----------------
+erstellt: 1.2.2000 AB
+geändert: 27.06.01 AB
+   --> Aufruf Wzbruch- Erkennung 
+geändert: 18.07.02 FUH
+   --> Werkzeug vorbereiten in Zwischenspeicher
+
+Version: vorläufig
+
+Konfiguration:
+
+Wechsler mit Doppelgreifer (Holer und Bringer)
+     1:1 Tausch ist Standard ($TC_MAMP2) Bit 15 = 1
+     --> wandern der Werkzeuge über Magazine ist möglich
+
+Eingangsparameter:
+    E_EN_1zu1_Uebergross : 0: übergrosse werkzeuge können nicht 1:1 getauscht 
+                              werden
+                           1: auch übergrosse werkzeuge können 1:1 getauscht 
+                              werden
+
+    E_Nr_Bereitst_Platz  :Zwischenspeicher-Nr. des Bereitstellungsplatzes
+                           0: kein Bereitstellen
+                           2: Greifer 1
+                           3: Greifer 2
+                           4: Bereitstellungsplatz
+
+    E_Mag1_Fertig: Positonier-Anforderung an Mag1 fertig -> Quit Txx   
+    E_Mag2_Fertig: Positonier-Anforderung an Mag2 fertig <-- i.V   
+   
+    E_WZ_abgelegt_in_Mag   : Wz aus ZwSp wieder in Mag abgelegt bei Txx
+    E_Bereitstellen_Fertig : Bereitstellen in Zwischenspeicher fertig
+";"$Revision: 1.42 $
+$Date: 2008/03/04 10:40:19CET $
+$Author: schmoelp $
+------------------ Kette_Tx Werkzeug vorbereiten ----------------
+erstellt: 1.2.2000 AB
+geändert: 27.06.01 AB
+   --> Aufruf Wzbruch- Erkennung 
+geändert: 18.07.02 FUH
+   --> Werkzeug vorbereiten in Zwischenspeicher
+
+Version: vorläufig
+
+Konfiguration:
+
+Wechsler mit Doppelgreifer (Holer und Bringer)
+     1:1 Tausch ist Standard ($TC_MAMP2) Bit 15 = 1
+     --> wandern der Werkzeuge über Magazine ist möglich
+
+Eingangsparameter:
+    E_EN_1zu1_Uebergross : 0: übergrosse werkzeuge können nicht 1:1 getauscht 
+                              werden
+                           1: auch übergrosse werkzeuge können 1:1 getauscht 
+                              werden
+
+    E_Nr_Bereitst_Platz  :Zwischenspeicher-Nr. des Bereitstellungsplatzes
+                           0: kein Bereitstellen
+                           2: Greifer 1
+                           3: Greifer 2
+                           4: Bereitstellungsplatz
+
+    E_Mag1_Fertig: Positonier-Anforderung an Mag1 fertig -> Quit Txx   
+    E_Mag2_Fertig: Positonier-Anforderung an Mag2 fertig <-- i.V   
+   
+    E_WZ_abgelegt_in_Mag   : Wz aus ZwSp wieder in Mag abgelegt bei Txx
+    E_Bereitstellen_Fertig : Bereitstellen in Zwischenspeicher fertig
+";""
+"$Revision: 1.27 $
+$Date: 2008/02/15 11:33:21CET $
+$Author: rieds $
+";"$Revision: 1.27 $
+$Date: 2008/02/15 11:33:21CET $
+$Author: rieds $
+";""
+"$Revision: 1.13 $
+$Date: 2008/03/07 12:59:28CET $
+$Author: rieds $
+
+KSA_3
+";"$Revision: 1.13 $
+$Date: 2008/03/07 12:59:28CET $
+$Author: rieds $
+
+KSA_3
+";""
+"$Revision: 1.61 $
+$Date: 2008/03/04 15:21:49CET $
+$Author: riedlh $
+";"$Revision: 1.61 $
+$Date: 2008/03/04 15:21:49CET $
+$Author: riedlh $
+";""
+"$Revision: 1.5 $
+$Date: 2007/09/04 12:49:02CEST $
+$Author: riedlh $
+";"$Revision: 1.5 $
+$Date: 2007/09/04 12:49:02CEST $
+$Author: riedlh $
+";""
+"$Revision: 3.22 $
+$Date: 2008/03/04 17:07:20CET $
+$Author: riedlh $
+";"$Revision: 3.22 $
+$Date: 2008/03/04 17:07:20CET $
+$Author: riedlh $
+";""
+"$Revision: 1.236 $
+$Date: 2008/03/03 07:56:16CET $
+$Author: riedlh $
+";"$Revision: 1.236 $
+$Date: 2008/03/03 07:56:16CET $
+$Author: riedlh $
+";""
+"$Revision: 2.25 $
+$Date: 2008/03/04 17:06:22CET $
+$Author: riedlh $
+";"$Revision: 2.25 $
+$Date: 2008/03/04 17:06:22CET $
+$Author: riedlh $
+";""
+"$Revision: 1.6 $
+$Date: 2008/03/04 17:00:35CET $
+$Author: riedlh $
+";"$Revision: 1.6 $
+$Date: 2008/03/04 17:00:35CET $
+$Author: riedlh $
+";""
+"$Revision: 1.73 $
+$Date: 2008/03/04 17:19:16CET $
+$Author: riedlh $
+
+";"$Revision: 1.73 $
+$Date: 2008/03/04 17:19:16CET $
+$Author: riedlh $
+
+";""
+"$Revision: 1.7 $
+$Date: 2008/03/03 14:41:46CET $
+$Author: schmoelp $
+";"$Revision: 1.7 $
+$Date: 2008/03/03 14:41:46CET $
+$Author: schmoelp $
+";""
+"$Revision: 1.39 $
+$Date: 2008/03/06 13:06:47CET $
+$Author: schmoelp $
+
+27.03.04
+sja --> wegen MKS aus MSST/Achskreuz Baustein (FC112) rasugenommen, da dieser 
+allgemein verwaltet wird
+--> hier Maschinetypabhängige Tastenbehnadlung Reset Taste/Override/Achsanwahl 
+etc...
+";"$Revision: 1.39 $
+$Date: 2008/03/06 13:06:47CET $
+$Author: schmoelp $
+
+27.03.04
+sja --> wegen MKS aus MSST/Achskreuz Baustein (FC112) rasugenommen, da dieser 
+allgemein verwaltet wird
+--> hier Maschinetypabhängige Tastenbehnadlung Reset Taste/Override/Achsanwahl 
+etc...
+";""
+"$Revision: 1.6 $
+$Date: 2008/03/10 17:04:21CET $
+$Author: schmoelp $
+
+";"$Revision: 1.6 $
+$Date: 2008/03/10 17:04:21CET $
+$Author: schmoelp $
+
+";""
+"$Revision: 1.53 $
+$Date: 2008/03/11 10:08:21CET $
+$Author: schmoelp $
+";"$Revision: 1.53 $
+$Date: 2008/03/11 10:08:21CET $
+$Author: schmoelp $
+";""
+"$Revision: 4.24 $
+$Date: 2008/02/25 17:49:38CET $
+$Author: riedlh $
+";"$Revision: 4.24 $
+$Date: 2008/02/25 17:49:38CET $
+$Author: riedlh $
+";""
+"$Revision: 1.16 $
+$Date: 2008/03/17 11:19:50CET $
+$Author: hgc $
+";"$Revision: 1.16 $
+$Date: 2008/03/17 11:19:50CET $
+$Author: hgc $
+";""
+"$Revision: 1.42 $
+$Date: 2008/03/17 11:19:20CET $
+$Author: hgc $
+
+";"$Revision: 1.42 $
+$Date: 2008/03/17 11:19:20CET $
+$Author: hgc $
+
+";""
+"$Revision: 1.24 $
+$Date: 2008/03/18 13:02:38CET $
+$Author: hgc $
+
+
+Funktionsbeschreibung:
+
+    Abfrage: Achse vorhanden ? 
+    Aktivierung Meßsystem
+    Vorschubkorrekturschalter / Eilgang-Überlagerung aktivieren 
+
+    Achse: Nachführbetrieb 
+    Umschaltung OVR für Eilgang
+    Achse: ""Bremse lösen"" Übergabe-Signal bilden
+    Verzögerung bilden: Reglerfreigabe nach Bremse lüften
+    
+    Achse: Impulsfreigabe
+    Achse: Bremse lösen Verzögerung bilden 
+    Achse: Reglerfreigabe
+
+
+Achs Typ:
+    1 = Teilungsachse
+    2 = Positionierachse
+
+    Achse: Fehlermeldung //VS-SP-X,Reglersperre
+    Achse: //NC-Schnittstelle: Reglersperre
+    Achse: Servomodul-Überwachung  //NOT-AUS,Antrieb nicht bereit
+    Achse: Temperatur-Überwachung  //VS-SP-X,Motortemperatur zu hoch
+
+Logbuch:
+/V1.0 /23-05-00/ AB Schnittstellen geändert
+
+
+/V0.11/8-Mai-00/ BAG
+ o Eilgang-Überlagerung in Jog mit Eilgang-Override veränderbar aktiviert
+
+/V0.10/23-02-00/ BAG
+ o Schnittstelle erweitert: => Vorschubfreigabe für Antriebsoptimierungs-Tests 
+    E_Taste_Brems_Auf_Messen  // für Antriebsoptimierungs-Tests 
+
+/V0.9/17-02-00/ BAG
+ o Schnittstelle erweitert: E_Kanal1_E_Transform => Vorschubfreigabe
+
+/V0.8/15.12.99/ BAG
+- NST ""Achsen_Halt_von_aussen"" ergänzt
+- Vorschubkorrekturschalter / Eilgang-Überlagerung aktivieren 
+- Achse: Nachführbetrieb 
+
+V0.6 /22.10.99/ BAG
+- Modul Schnittstelle eingerichtet 
+
+22.12.99 / AB
+Fehler mit Quittiertaste rückgesetzt 
+";"$Revision: 1.24 $
+$Date: 2008/03/18 13:02:38CET $
+$Author: hgc $
+
+
+Funktionsbeschreibung:
+
+    Abfrage: Achse vorhanden ? 
+    Aktivierung Meßsystem
+    Vorschubkorrekturschalter / Eilgang-Überlagerung aktivieren 
+
+    Achse: Nachführbetrieb 
+    Umschaltung OVR für Eilgang
+    Achse: ""Bremse lösen"" Übergabe-Signal bilden
+    Verzögerung bilden: Reglerfreigabe nach Bremse lüften
+    
+    Achse: Impulsfreigabe
+    Achse: Bremse lösen Verzögerung bilden 
+    Achse: Reglerfreigabe
+
+
+Achs Typ:
+    1 = Teilungsachse
+    2 = Positionierachse
+
+    Achse: Fehlermeldung //VS-SP-X,Reglersperre
+    Achse: //NC-Schnittstelle: Reglersperre
+    Achse: Servomodul-Überwachung  //NOT-AUS,Antrieb nicht bereit
+    Achse: Temperatur-Überwachung  //VS-SP-X,Motortemperatur zu hoch
+
+Logbuch:
+/V1.0 /23-05-00/ AB Schnittstellen geändert
+
+
+/V0.11/8-Mai-00/ BAG
+ o Eilgang-Überlagerung in Jog mit Eilgang-Override veränderbar aktiviert
+
+/V0.10/23-02-00/ BAG
+ o Schnittstelle erweitert: => Vorschubfreigabe für Antriebsoptimierungs-Tests 
+    E_Taste_Brems_Auf_Messen  // für Antriebsoptimierungs-Tests 
+
+/V0.9/17-02-00/ BAG
+ o Schnittstelle erweitert: E_Kanal1_E_Transform => Vorschubfreigabe
+
+/V0.8/15.12.99/ BAG
+- NST ""Achsen_Halt_von_aussen"" ergänzt
+- Vorschubkorrekturschalter / Eilgang-Überlagerung aktivieren 
+- Achse: Nachführbetrieb 
+
+V0.6 /22.10.99/ BAG
+- Modul Schnittstelle eingerichtet 
+
+22.12.99 / AB
+Fehler mit Quittiertaste rückgesetzt 
+";""
+"$Revision: 1.11 $
+$Date: 2008/03/18 13:01:30CET $
+$Author: hgc $
+";"$Revision: 1.11 $
+$Date: 2008/03/18 13:01:30CET $
+$Author: hgc $
+";""
+"$Revision: 1.9 $
+$Date: 2008/03/18 13:01:11CET $
+$Author: hgc $
+";"$Revision: 1.9 $
+$Date: 2008/03/18 13:01:11CET $
+$Author: hgc $
+";""
+"$Revision: 1.20 $
+$Date: 2008/03/11 08:59:14CET $
+$Author: riedlh $
+";"$Revision: 1.20 $
+$Date: 2008/03/11 08:59:14CET $
+$Author: riedlh $
+";""
+"$Revision: 1.20 $
+$Date: 2008/03/19 08:29:20CET $
+$Author: hgc $
+
+";"$Revision: 1.20 $
+$Date: 2008/03/19 08:29:20CET $
+$Author: hgc $
+
+";""
+"$Revision: 1.7 $
+$Date: 2008/02/26 08:28:12CET $
+$Author: sth $
+
+
+Funktionesbeschreibung:
+Logbuch:
+V0.1 /30.01.00/ HS - Modul angelegt
+
+V0.2 /18.05.00/ SJA -Aufruf FC243 (Spaenefoerdere, Spulepistole)
+V0.3 /25.05.00/ SJA -Aufruf FC244 (M20)
+V0.4 /30.05.00/ SJA -Aufruf FC245 (M80-M89)  
+ 
+KNOW_HOW_PROTECT 
+ (falls angegeben, kann im generierten Block keine Änderungen mehr vorgenommen 
+werden)
+";"$Revision: 1.7 $
+$Date: 2008/02/26 08:28:12CET $
+$Author: sth $
+
+
+Funktionesbeschreibung:
+Logbuch:
+V0.1 /30.01.00/ HS - Modul angelegt
+
+V0.2 /18.05.00/ SJA -Aufruf FC243 (Spaenefoerdere, Spulepistole)
+V0.3 /25.05.00/ SJA -Aufruf FC244 (M20)
+V0.4 /30.05.00/ SJA -Aufruf FC245 (M80-M89)  
+ 
+KNOW_HOW_PROTECT 
+ (falls angegeben, kann im generierten Block keine Änderungen mehr vorgenommen 
+werden)
+";""
+"$Revision: 1.19 $
+$Date: 2008/03/19 15:16:34CET $
+$Author: hgc $
+
+Logbuch:
+
+V0.1 / 25.10.99 / SCH
+
+- Modul Erstellt
+ 
+";"$Revision: 1.19 $
+$Date: 2008/03/19 15:16:34CET $
+$Author: hgc $
+
+Logbuch:
+
+V0.1 / 25.10.99 / SCH
+
+- Modul Erstellt
+ 
+";""
+"$Revision: 1.19 $
+$Date: 2008/03/19 15:58:41CET $
+$Author: hgc $
+
+
+
+PLC-SPL Baustein für Solutionline DMx55-125x2
+
+Unterteilt in zwei Sicherheitsbereiche:
+1. BEREICH 1 (MASCHINE) (Arbeitsraumachsen/Palettenwechslerachse/ Mgazinachsen)
+bestehend aus Achse:     X Y Z B C SPI              PW            MAG1/MAG2 GR  
+
+2. BEREICH 2 (PS)     (Palettenspeicherachsen / Palettenwechslerachse)
+bestehend aus Achse:     DREHST/TRANSP/HUB              PW
+
+";"$Revision: 1.19 $
+$Date: 2008/03/19 15:58:41CET $
+$Author: hgc $
+
+
+
+PLC-SPL Baustein für Solutionline DMx55-125x2
+
+Unterteilt in zwei Sicherheitsbereiche:
+1. BEREICH 1 (MASCHINE) (Arbeitsraumachsen/Palettenwechslerachse/ Mgazinachsen)
+bestehend aus Achse:     X Y Z B C SPI              PW            MAG1/MAG2 GR  
+
+2. BEREICH 2 (PS)     (Palettenspeicherachsen / Palettenwechslerachse)
+bestehend aus Achse:     DREHST/TRANSP/HUB              PW
+
+";""
+"$Revision: 1.20 $
+$Date: 2008/03/19 12:19:04CET $
+$Author: rieds $
+";"$Revision: 1.20 $
+$Date: 2008/03/19 12:19:04CET $
+$Author: rieds $
+";""
+"$Revision: 1.21 $
+$Date: 2008/03/18 08:26:34CET $
+$Author: sja $
+
+ Funktionesbeschreibung:
+ M20x.0 = Rückmeldung FC9 (Aktiviere ASUP) activ 
+ M20x.1ASUP mit ASUP_Nr.1 aktivieren
+ M20x.2ASUP mit ASUP_Nr.2 aktivieren
+ M20x.3ASUP mit ASUP_Nr.3 aktivieren
+ M20x.4ASUP mit ASUP_Nr.4 aktivieren
+ M20x.5ASUP mit ASUP_Nr.5 aktivieren
+ M20x.6ASUP mit ASUP_Nr.6 aktivieren
+ M20x.7ASUP mit ASUP_Nr.7 aktivieren
+ Jedes Bit führt zu einer ASUB-Nr. im Baustein und wird über $A_DBB [x] 
+übertragen
+
+ Logbuch:
+
+ V0.1 /03.12.99
+ - Modul angelegt
+
+";"$Revision: 1.21 $
+$Date: 2008/03/18 08:26:34CET $
+$Author: sja $
+
+ Funktionesbeschreibung:
+ M20x.0 = Rückmeldung FC9 (Aktiviere ASUP) activ 
+ M20x.1ASUP mit ASUP_Nr.1 aktivieren
+ M20x.2ASUP mit ASUP_Nr.2 aktivieren
+ M20x.3ASUP mit ASUP_Nr.3 aktivieren
+ M20x.4ASUP mit ASUP_Nr.4 aktivieren
+ M20x.5ASUP mit ASUP_Nr.5 aktivieren
+ M20x.6ASUP mit ASUP_Nr.6 aktivieren
+ M20x.7ASUP mit ASUP_Nr.7 aktivieren
+ Jedes Bit führt zu einer ASUB-Nr. im Baustein und wird über $A_DBB [x] 
+übertragen
+
+ Logbuch:
+
+ V0.1 /03.12.99
+ - Modul angelegt
+
+";""
+"$Revision: 1.237 $
+$Date: 2008/03/17 14:16:08CET $
+$Author: boa $
+";"$Revision: 1.237 $
+$Date: 2008/03/17 14:16:08CET $
+$Author: boa $
+";""
+"$Revision: 1.35 $
+$Date: 2008/03/18 12:31:24CET $
+$Author: boa $
+$ProjectRevision: Last Checkpoint: 1.58 $
+
+";"$Revision: 1.35 $
+$Date: 2008/03/18 12:31:24CET $
+$Author: boa $
+$ProjectRevision: Last Checkpoint: 1.58 $
+
+";""
+"$Revision: 1.80 $
+$Date: 2008/03/11 15:54:36CET $
+$Author: riedlh $
+V0.2 31-07-00 SJA
+              --> umkonfiguriert auf 
+              M96, M97, M98
+
+              M96: Spänespülung, Werkstückreinigung AUS 
+              M97: Spänespülung EIN
+              M98: Werkstückreinigung EIN
+
+V0.1 01-07-00 SJA
+              Spaenespuelung und Werkstueckreinigung
+";"$Revision: 1.80 $
+$Date: 2008/03/11 15:54:36CET $
+$Author: riedlh $
+V0.2 31-07-00 SJA
+              --> umkonfiguriert auf 
+              M96, M97, M98
+
+              M96: Spänespülung, Werkstückreinigung AUS 
+              M97: Spänespülung EIN
+              M98: Werkstückreinigung EIN
+
+V0.1 01-07-00 SJA
+              Spaenespuelung und Werkstueckreinigung
+";""
+"$Revision: 1.17 $
+$Date: 2008/03/18 15:46:02CET $
+$Author: rieds $
+";"$Revision: 1.17 $
+$Date: 2008/03/18 15:46:02CET $
+$Author: rieds $
+";""
+"$Revision: 1.47 $
+$Date: 2008/03/18 15:50:54CET $
+$Author: rieds $
+
+";"$Revision: 1.47 $
+$Date: 2008/03/18 15:50:54CET $
+$Author: rieds $
+
+";""
+"$Revision: 1.33 $
+$Date: 2008/03/11 10:05:32CET $
+$Author: rieds $
+
+Rundspeicher RS4 / RS5 Rettungsfunktion
+=============================
+";"$Revision: 1.33 $
+$Date: 2008/03/11 10:05:32CET $
+$Author: rieds $
+
+Rundspeicher RS4 / RS5 Rettungsfunktion
+=============================
+";""
+"$Revision: 1.42 $
+$Date: 2008/03/10 08:18:37CET $
+$Author: boa $
+";"$Revision: 1.42 $
+$Date: 2008/03/10 08:18:37CET $
+$Author: boa $
+";""
+"$Revision: 1.10 $
+$Date: 2008/03/10 06:22:05CET $
+$Author: rieds $
+
+Logbuch:
+
+V0.1 / 18.01.2000 / SCH
+
+- Modul Erstellt
+
+";"$Revision: 1.10 $
+$Date: 2008/03/10 06:22:05CET $
+$Author: rieds $
+
+Logbuch:
+
+V0.1 / 18.01.2000 / SCH
+
+- Modul Erstellt
+
+";""
+"$Revision: 1.10 $
+$Date: 2008/03/03 11:26:13CET $
+$Author: kee $
+
+Logbuch:
+
+V0.1 / 18.01.2000 / SCH
+
+- Modul Erstellt
+";"$Revision: 1.10 $
+$Date: 2008/03/03 11:26:13CET $
+$Author: kee $
+
+Logbuch:
+
+V0.1 / 18.01.2000 / SCH
+
+- Modul Erstellt
+";""
+"$Revision: 1.9 $
+$Date: 2008/03/10 06:22:04CET $
+$Author: rieds $
+
+
+V0.1 / 18.01.2000 / SCH
+
+- Modul Erstellt
+";"$Revision: 1.9 $
+$Date: 2008/03/10 06:22:04CET $
+$Author: rieds $
+
+
+V0.1 / 18.01.2000 / SCH
+
+- Modul Erstellt
+";""
+"$Revision: 1.36 $
+$Date: 2008/03/18 13:35:15CET $
+$Author: riedlh $
+
+Beschreibung: 
+SOKO-Schnittstelle
+";"$Revision: 1.36 $
+$Date: 2008/03/18 13:35:15CET $
+$Author: riedlh $
+
+Beschreibung: 
+SOKO-Schnittstelle
+";""
+"$Revision: 1.14 $
+$Date: 2007/01/25 14:09:29CET $
+$Author: fuh $
+$ProjectRevision: Last Checkpoint: 1.32 $
+
+Logbuch:
+
+V0.1 SJA
+
+- Modul Erstellt
+
+
+
+";"$Revision: 1.14 $
+$Date: 2007/01/25 14:09:29CET $
+$Author: fuh $
+$ProjectRevision: Last Checkpoint: 1.32 $
+
+Logbuch:
+
+V0.1 SJA
+
+- Modul Erstellt
+
+
+
+";""
+"$Revision: 1.8 $
+$Date: 2008/03/18 14:58:47CET $
+$Author: sth $
+";"$Revision: 1.8 $
+$Date: 2008/03/18 14:58:47CET $
+$Author: sth $
+";""
+"$Revision: 1.15 $
+$Date: 2008/02/26 08:20:46CET $
+$Author: boa $
+$ProjectRevision: Last Checkpoint: 1.58 $
+
+Logbuch:
+
+V0.1 SJA
+
+- Modul Erstellt
+
+
+
+";"$Revision: 1.15 $
+$Date: 2008/02/26 08:20:46CET $
+$Author: boa $
+$ProjectRevision: Last Checkpoint: 1.58 $
+
+Logbuch:
+
+V0.1 SJA
+
+- Modul Erstellt
+
+
+
+";""
+"$Revision: 1.55 $
+$Date: 2008/03/17 09:47:31CET $
+$Author: sth $
+";"$Revision: 1.55 $
+$Date: 2008/03/17 09:47:31CET $
+$Author: sth $
+";""
+"$Revision: 4.26 $
+$Date: 2008/03/20 09:17:16CET $
+$Author: riedlh $
+";"$Revision: 4.26 $
+$Date: 2008/03/20 09:17:16CET $
+$Author: riedlh $
+";""
+"$Revision: 1.124 $
+$Date: 2008/03/19 16:14:23CET $
+$Author: schmoelp $
+";"$Revision: 1.124 $
+$Date: 2008/03/19 16:14:23CET $
+$Author: schmoelp $
+";""
+"$Revision: 2.26 $
+$Date: 2008/03/17 13:20:46CET $
+$Author: riedlh $
+";"$Revision: 2.26 $
+$Date: 2008/03/17 13:20:46CET $
+$Author: riedlh $
+";""
+"$Revision: 1.62 $
+$Date: 2008/03/20 16:00:17CET $
+$Author: boa $
+";"$Revision: 1.62 $
+$Date: 2008/03/20 16:00:17CET $
+$Author: boa $
+";""
+"$Revision: 1.46.1.3 $
+$Date: 2008/03/25 10:27:44CET $
+$Author: boa $
+
+";"$Revision: 1.46.1.3 $
+$Date: 2008/03/25 10:27:44CET $
+$Author: boa $
+
+";""
+"$Revision: 1.40 $
+$Date: 2008/01/29 15:55:22CET $
+$Author: hgc $
+";"$Revision: 1.40 $
+$Date: 2008/01/29 15:55:22CET $
+$Author: hgc $
+";""
+"$Revision: 1.5 $
+$Date: 2008/03/25 13:24:59CET $
+$Author: hgc $
+
+Baustein für Solutionline DMx55-125x2
+Zwangsdynamisierung Bereich 2 Palettenspeicher
+";"$Revision: 1.5 $
+$Date: 2008/03/25 13:24:59CET $
+$Author: hgc $
+
+Baustein für Solutionline DMx55-125x2
+Zwangsdynamisierung Bereich 2 Palettenspeicher
+";""
+"$Revision: 1.10 $
+$Date: 2008/03/25 13:47:10CET $
+$Author: hgc $
+";"$Revision: 1.10 $
+$Date: 2008/03/25 13:47:10CET $
+$Author: hgc $
+";""
+"$Revision: 1.301 $ 
+$Date: 2008/03/25 14:53:01CET $  
+$Author: hgc $   
+  
+DB für Fehlermeldung  
+==================================================
+Änderung: Datum / Abteilung / Name / Version x.y
+Änderung: 
+Änderung: 18.05.2005 / SPAC / slh / V0.2
+Änderung: 700506-700508, 701060-701115 (Komet) neu
+
+";"$Revision: 1.301 $ 
+$Date: 2008/03/25 14:53:01CET $  
+$Author: hgc $   
+  
+DB für Fehlermeldung  
+==================================================
+Änderung: Datum / Abteilung / Name / Version x.y
+Änderung: 
+Änderung: 18.05.2005 / SPAC / slh / V0.2
+Änderung: 700506-700508, 701060-701115 (Komet) neu
+
+";""
+"$Revision: 1.8 $
+$Date: 2008/02/20 07:13:58CET $
+$Author: riedlh $
+
+Ablauf Spannstelle entladen
+===========================
+";"$Revision: 1.8 $
+$Date: 2008/02/20 07:13:58CET $
+$Author: riedlh $
+
+Ablauf Spannstelle entladen
+===========================
+";""
+"$Revision: 1.7 $
+$Date: 2008/02/20 07:02:12CET $
+$Author: riedlh $
+
+Ablauf Spannstelle beladen
+==========================
+";"$Revision: 1.7 $
+$Date: 2008/02/20 07:02:12CET $
+$Author: riedlh $
+
+Ablauf Spannstelle beladen
+==========================
+";""
+"$Revision: 2.28 $
+$Date: 2008/03/20 11:39:12CET $
+$Author: riedlh $
+";"$Revision: 2.28 $
+$Date: 2008/03/20 11:39:12CET $
+$Author: riedlh $
+";""
+"$Revision: 1.80 $
+$Date: 2008/03/25 16:07:16CET $
+$Author: boa $
+";"$Revision: 1.80 $
+$Date: 2008/03/25 16:07:16CET $
+$Author: boa $
+";""
+"$Revision: 2.32 $
+$Date: 2008/03/20 09:34:55CET $
+$Author: riedlh $
+";"$Revision: 2.32 $
+$Date: 2008/03/20 09:34:55CET $
+$Author: riedlh $
+";""
+"$Revision: 1.7 $
+$Date: 2008/03/20 09:56:19CET $
+$Author: riedlh $
+";"$Revision: 1.7 $
+$Date: 2008/03/20 09:56:19CET $
+$Author: riedlh $
+";""
+"$Revision: 1.35 $
+$Date: 2008/02/22 16:30:30CET $
+$Author: riedlh $
+
+Roboter-Interface für PW-Maschinen
+==================================
+";"$Revision: 1.35 $
+$Date: 2008/02/22 16:30:30CET $
+$Author: riedlh $
+
+Roboter-Interface für PW-Maschinen
+==================================
+";""
+"$Revision: 1.11 $
+$Date: 2008/02/05 10:43:53CET $
+$Author: schmoelp $
+";"$Revision: 1.11 $
+$Date: 2008/02/05 10:43:53CET $
+$Author: schmoelp $
+";""
+"$Revision: 1.16 $
+$Date: 2008/02/06 09:21:23CET $
+$Author: rieds $
+";"$Revision: 1.16 $
+$Date: 2008/02/06 09:21:23CET $
+$Author: rieds $
+";""
+"$Revision: 1.6 $
+$Date: 2007/11/06 06:33:58CET $
+$Author: rieds $
+";"$Revision: 1.6 $
+$Date: 2007/11/06 06:33:58CET $
+$Author: rieds $
+";""
+"$Revision: 1.7 $
+$Date: 2008/03/26 09:53:18CET $
+$Author: rieds $
+";"$Revision: 1.7 $
+$Date: 2008/03/26 09:53:18CET $
+$Author: rieds $
+";""
+"$Revision: 1.24 $
+$Date: 2008/03/26 09:53:18CET $
+$Author: rieds $
+";"$Revision: 1.24 $
+$Date: 2008/03/26 09:53:18CET $
+$Author: rieds $
+";""
+"$Revision: 1.43 $
+$Date: 2008/03/27 10:56:54CET $
+$Author: hgc $
+
+";"$Revision: 1.43 $
+$Date: 2008/03/27 10:56:54CET $
+$Author: hgc $
+
+";""
+"$Revision: 1.54 $
+$Date: 2008/03/27 11:25:24CET $
+$Author: hgc $
+";"$Revision: 1.54 $
+$Date: 2008/03/27 11:25:24CET $
+$Author: hgc $
+";""
+"$Revision: 1.46.1.4 $
+$Date: 2008/03/27 13:58:07CET $
+$Author: hgc $
+
+";"$Revision: 1.46.1.4 $
+$Date: 2008/03/27 13:58:07CET $
+$Author: hgc $
+
+";""
+"$Revision: 1.81 $
+$Date: 2008/03/28 07:56:31CET $
+$Author: hgc $
+V0.2 31-07-00 SJA
+              --> umkonfiguriert auf 
+              M96, M97, M98
+
+              M96: Spänespülung, Werkstückreinigung AUS 
+              M97: Spänespülung EIN
+              M98: Werkstückreinigung EIN
+
+V0.1 01-07-00 SJA
+              Spaenespuelung und Werkstueckreinigung
+";"$Revision: 1.81 $
+$Date: 2008/03/28 07:56:31CET $
+$Author: hgc $
+V0.2 31-07-00 SJA
+              --> umkonfiguriert auf 
+              M96, M97, M98
+
+              M96: Spänespülung, Werkstückreinigung AUS 
+              M97: Spänespülung EIN
+              M98: Werkstückreinigung EIN
+
+V0.1 01-07-00 SJA
+              Spaenespuelung und Werkstueckreinigung
+";""
+"$Revision: 1.48 $
+$Date: 2008/03/28 09:52:25CET $
+$Author: hgc $
+
+";"$Revision: 1.48 $
+$Date: 2008/03/28 09:52:25CET $
+$Author: hgc $
+
+";""
+"$Revision: 1.20 $
+$Date: 2008/03/31 07:38:29CEST $
+$Author: hgc $
+
+
+
+PLC-SPL Baustein für Solutionline DMx55-125x2
+
+Unterteilt in zwei Sicherheitsbereiche:
+1. BEREICH 1 (MASCHINE) (Arbeitsraumachsen/Palettenwechslerachse/ Mgazinachsen)
+bestehend aus Achse:     X Y Z B C SPI              PW            MAG1/MAG2 GR  
+
+2. BEREICH 2 (PS)     (Palettenspeicherachsen / Palettenwechslerachse)
+bestehend aus Achse:     DREHST/TRANSP/HUB              PW
+
+";"$Revision: 1.20 $
+$Date: 2008/03/31 07:38:29CEST $
+$Author: hgc $
+
+
+
+PLC-SPL Baustein für Solutionline DMx55-125x2
+
+Unterteilt in zwei Sicherheitsbereiche:
+1. BEREICH 1 (MASCHINE) (Arbeitsraumachsen/Palettenwechslerachse/ Mgazinachsen)
+bestehend aus Achse:     X Y Z B C SPI              PW            MAG1/MAG2 GR  
+
+2. BEREICH 2 (PS)     (Palettenspeicherachsen / Palettenwechslerachse)
+bestehend aus Achse:     DREHST/TRANSP/HUB              PW
+
+";""
+"$Revision: 1.9 $
+$Date: 2008/04/01 10:54:42CEST $
+$Author: hgc $
+$ProjectRevision: Last Checkpoint: 1.6 $
+
+";"$Revision: 1.9 $
+$Date: 2008/04/01 10:54:42CEST $
+$Author: hgc $
+$ProjectRevision: Last Checkpoint: 1.6 $
+
+";""
+"$Revision: 1.13 $
+$Date: 2008/04/02 06:48:15CEST $
+$Author: hgc $
+$ProjectRevision: Last Checkpoint: 1.6 $
+";"$Revision: 1.13 $
+$Date: 2008/04/02 06:48:15CEST $
+$Author: hgc $
+$ProjectRevision: Last Checkpoint: 1.6 $
+";""
+"$Revision: 1.69 $
+$Date: 2008/04/02 13:45:44CEST $
+$Author: hgc $
+-------------------------------------------------------------------------------
+Änderung: Datum      / Abteilung / Name / Version x.y
+Änderung: 22.06.2006 /          / slh   / V0.2
+        :Wzw.Grundstlg.fahren eingepflegt; Lokaldaten laden/retten mit
+        :SFC20 BLKMOVE; Doppelwortzugriffe entfernt (Absolutadressen vermeiden)
+        :Quelle:FC_WZW_VMAG_STATUS.AWL vom 22.06.2006 10:29:25
+Änderung:           /          /        / V
+        :
+-------------------------------------------------------------------------------
+";"$Revision: 1.69 $
+$Date: 2008/04/02 13:45:44CEST $
+$Author: hgc $
+-------------------------------------------------------------------------------
+Änderung: Datum      / Abteilung / Name / Version x.y
+Änderung: 22.06.2006 /          / slh   / V0.2
+        :Wzw.Grundstlg.fahren eingepflegt; Lokaldaten laden/retten mit
+        :SFC20 BLKMOVE; Doppelwortzugriffe entfernt (Absolutadressen vermeiden)
+        :Quelle:FC_WZW_VMAG_STATUS.AWL vom 22.06.2006 10:29:25
+Änderung:           /          /        / V
+        :
+-------------------------------------------------------------------------------
+";""
+"$Revision: 1.50 $
+$Date: 2008/04/02 15:59:21CEST $
+$Author: hgc $
+
+erstellt: 14.02.2000 AB
+
+
+Der Baustein bedient die Signale im Kanal-DB 21..30
+Die Anforderungen werden aus dem DB65 entnommen
+
+NC-Stop an Satzwechsel       DBX    7.2 / Impuls      
+NC Startsperre               DBX    7.0 / statisch
+Vorschubsperre Achsen im Ka. DBX    6.0 / statisch  
+NC Einlesesperre             DBX    6.1 / statisch
+
+Es werden Impulsmerker erzeugt für 
+Reset-Taste
+Quittier-Taste
+Reset -oder Quittier-Taste
+
+Es werden Anforderungen erzeugt für
+
+NC-Stop                               durch Tastenbedienung
+Vorschub Halt Kanal                   durch Fehler 
+Spindel Halt Kanal                    durch Fehler
+Vorschub Halt Hauptachsen             durch Fehler oder Taste
+Vorschub Halt asznchr.Prozess1        durch Fehler
+Vorschub Halt asznchr.Prozess2        durch Fehler
+Vorschub Halt asznchr.Prozess3        durch Fehler
+Vorschub Halt asznchr.Prozess4        durch Fehler
+
+
+ 
+";"$Revision: 1.50 $
+$Date: 2008/04/02 15:59:21CEST $
+$Author: hgc $
+
+erstellt: 14.02.2000 AB
+
+
+Der Baustein bedient die Signale im Kanal-DB 21..30
+Die Anforderungen werden aus dem DB65 entnommen
+
+NC-Stop an Satzwechsel       DBX    7.2 / Impuls      
+NC Startsperre               DBX    7.0 / statisch
+Vorschubsperre Achsen im Ka. DBX    6.0 / statisch  
+NC Einlesesperre             DBX    6.1 / statisch
+
+Es werden Impulsmerker erzeugt für 
+Reset-Taste
+Quittier-Taste
+Reset -oder Quittier-Taste
+
+Es werden Anforderungen erzeugt für
+
+NC-Stop                               durch Tastenbedienung
+Vorschub Halt Kanal                   durch Fehler 
+Spindel Halt Kanal                    durch Fehler
+Vorschub Halt Hauptachsen             durch Fehler oder Taste
+Vorschub Halt asznchr.Prozess1        durch Fehler
+Vorschub Halt asznchr.Prozess2        durch Fehler
+Vorschub Halt asznchr.Prozess3        durch Fehler
+Vorschub Halt asznchr.Prozess4        durch Fehler
+
+
+ 
+";""
+"$Revision: 1.70 $
+$Date: 2008/04/02 13:58:28CEST $
+$Author: fuh $
+-------------------------------------------------------------------------------
+Änderung: Datum      / Abteilung / Name / Version x.y
+Änderung: 22.06.2006 /          / slh   / V0.2
+        :Wzw.Grundstlg.fahren eingepflegt; Lokaldaten laden/retten mit
+        :SFC20 BLKMOVE; Doppelwortzugriffe entfernt (Absolutadressen vermeiden)
+        :Quelle:FC_WZW_VMAG_STATUS.AWL vom 22.06.2006 10:29:25
+Änderung:           /          /        / V
+        :
+-------------------------------------------------------------------------------
+";"$Revision: 1.70 $
+$Date: 2008/04/02 13:58:28CEST $
+$Author: fuh $
+-------------------------------------------------------------------------------
+Änderung: Datum      / Abteilung / Name / Version x.y
+Änderung: 22.06.2006 /          / slh   / V0.2
+        :Wzw.Grundstlg.fahren eingepflegt; Lokaldaten laden/retten mit
+        :SFC20 BLKMOVE; Doppelwortzugriffe entfernt (Absolutadressen vermeiden)
+        :Quelle:FC_WZW_VMAG_STATUS.AWL vom 22.06.2006 10:29:25
+Änderung:           /          /        / V
+        :
+-------------------------------------------------------------------------------
+";""
+"$Revision: 1.43 $
+$Date: 2008/04/03 06:18:39CEST $
+$Author: hgc $
+------------------ Kette_Tx Werkzeug vorbereiten ----------------
+erstellt: 1.2.2000 AB
+geändert: 27.06.01 AB
+   --> Aufruf Wzbruch- Erkennung 
+geändert: 18.07.02 FUH
+   --> Werkzeug vorbereiten in Zwischenspeicher
+
+Version: vorläufig
+
+Konfiguration:
+
+Wechsler mit Doppelgreifer (Holer und Bringer)
+     1:1 Tausch ist Standard ($TC_MAMP2) Bit 15 = 1
+     --> wandern der Werkzeuge über Magazine ist möglich
+
+Eingangsparameter:
+    E_EN_1zu1_Uebergross : 0: übergrosse werkzeuge können nicht 1:1 getauscht 
+                              werden
+                           1: auch übergrosse werkzeuge können 1:1 getauscht 
+                              werden
+
+    E_Nr_Bereitst_Platz  :Zwischenspeicher-Nr. des Bereitstellungsplatzes
+                           0: kein Bereitstellen
+                           2: Greifer 1
+                           3: Greifer 2
+                           4: Bereitstellungsplatz
+
+    E_Mag1_Fertig: Positonier-Anforderung an Mag1 fertig -> Quit Txx   
+    E_Mag2_Fertig: Positonier-Anforderung an Mag2 fertig <-- i.V   
+   
+    E_WZ_abgelegt_in_Mag   : Wz aus ZwSp wieder in Mag abgelegt bei Txx
+    E_Bereitstellen_Fertig : Bereitstellen in Zwischenspeicher fertig
+";"$Revision: 1.43 $
+$Date: 2008/04/03 06:18:39CEST $
+$Author: hgc $
+------------------ Kette_Tx Werkzeug vorbereiten ----------------
+erstellt: 1.2.2000 AB
+geändert: 27.06.01 AB
+   --> Aufruf Wzbruch- Erkennung 
+geändert: 18.07.02 FUH
+   --> Werkzeug vorbereiten in Zwischenspeicher
+
+Version: vorläufig
+
+Konfiguration:
+
+Wechsler mit Doppelgreifer (Holer und Bringer)
+     1:1 Tausch ist Standard ($TC_MAMP2) Bit 15 = 1
+     --> wandern der Werkzeuge über Magazine ist möglich
+
+Eingangsparameter:
+    E_EN_1zu1_Uebergross : 0: übergrosse werkzeuge können nicht 1:1 getauscht 
+                              werden
+                           1: auch übergrosse werkzeuge können 1:1 getauscht 
+                              werden
+
+    E_Nr_Bereitst_Platz  :Zwischenspeicher-Nr. des Bereitstellungsplatzes
+                           0: kein Bereitstellen
+                           2: Greifer 1
+                           3: Greifer 2
+                           4: Bereitstellungsplatz
+
+    E_Mag1_Fertig: Positonier-Anforderung an Mag1 fertig -> Quit Txx   
+    E_Mag2_Fertig: Positonier-Anforderung an Mag2 fertig <-- i.V   
+   
+    E_WZ_abgelegt_in_Mag   : Wz aus ZwSp wieder in Mag abgelegt bei Txx
+    E_Bereitstellen_Fertig : Bereitstellen in Zwischenspeicher fertig
+";""
+"$Revision: 1.40 $
+$Date: 2008/04/03 06:27:33CEST $
+$Author: hgc $
+
+
+Funktionsbeschreibung:
+
+  hier werden Funktionskomponenten eingebunden,
+  die am Anfang vom Zyklus aufgerufen werden:
+        
+";"$Revision: 1.40 $
+$Date: 2008/04/03 06:27:33CEST $
+$Author: hgc $
+
+
+Funktionsbeschreibung:
+
+  hier werden Funktionskomponenten eingebunden,
+  die am Anfang vom Zyklus aufgerufen werden:
+        
+";""
+"$Revision: 1.21 $
+$Date: 2008/04/03 06:29:06CEST $
+$Author: hgc $
+
+";"$Revision: 1.21 $
+$Date: 2008/04/03 06:29:06CEST $
+$Author: hgc $
+
+";""
+"$Revision: 1.21 $
+$Date: 2008/04/03 11:05:11CEST $
+$Author: hgc $
+
+
+
+PLC-SPL Baustein für Solutionline DMx55-125x2
+
+Unterteilt in zwei Sicherheitsbereiche:
+1. BEREICH 1 (MASCHINE) (Arbeitsraumachsen/Palettenwechslerachse/ Mgazinachsen)
+bestehend aus Achse:     X Y Z B C SPI              PW            MAG1/MAG2 GR  
+
+2. BEREICH 2 (PS)     (Palettenspeicherachsen / Palettenwechslerachse)
+bestehend aus Achse:     DREHST/TRANSP/HUB              PW
+
+";"$Revision: 1.21 $
+$Date: 2008/04/03 11:05:11CEST $
+$Author: hgc $
+
+
+
+PLC-SPL Baustein für Solutionline DMx55-125x2
+
+Unterteilt in zwei Sicherheitsbereiche:
+1. BEREICH 1 (MASCHINE) (Arbeitsraumachsen/Palettenwechslerachse/ Mgazinachsen)
+bestehend aus Achse:     X Y Z B C SPI              PW            MAG1/MAG2 GR  
+
+2. BEREICH 2 (PS)     (Palettenspeicherachsen / Palettenwechslerachse)
+bestehend aus Achse:     DREHST/TRANSP/HUB              PW
+
+";""
+"$Revision: 1.4 $
+$Date: 2008/04/03 14:00:09CEST $
+$Author: wri $
+";"$Revision: 1.4 $
+$Date: 2008/04/03 14:00:09CEST $
+$Author: wri $
+";""
+"$Revision: 1.55 $
+$Date: 2008/04/03 14:09:26CEST $
+$Author: hgc $
+";"$Revision: 1.55 $
+$Date: 2008/04/03 14:09:26CEST $
+$Author: hgc $
+";""
+"$Revision: 1.18 $
+$Date: 2008/04/03 14:41:41CEST $
+$Author: hgc $
+";"$Revision: 1.18 $
+$Date: 2008/04/03 14:41:41CEST $
+$Author: hgc $
+";""
+"$Revision: 1.41 $
+$Date: 2008/04/04 07:37:45CEST $
+$Author: hgc $
+
+
+Funktionsbeschreibung:
+
+  hier werden Funktionskomponenten eingebunden,
+  die am Anfang vom Zyklus aufgerufen werden:
+        
+";"$Revision: 1.41 $
+$Date: 2008/04/04 07:37:45CEST $
+$Author: hgc $
+
+
+Funktionsbeschreibung:
+
+  hier werden Funktionskomponenten eingebunden,
+  die am Anfang vom Zyklus aufgerufen werden:
+        
+";""
+"$Revision: 1.44 $
+$Date: 2008/04/04 07:35:02CEST $
+$Author: hgc $
+------------------ Kette_Tx Werkzeug vorbereiten ----------------
+erstellt: 1.2.2000 AB
+geändert: 27.06.01 AB
+   --> Aufruf Wzbruch- Erkennung 
+geändert: 18.07.02 FUH
+   --> Werkzeug vorbereiten in Zwischenspeicher
+
+Version: vorläufig
+
+Konfiguration:
+
+Wechsler mit Doppelgreifer (Holer und Bringer)
+     1:1 Tausch ist Standard ($TC_MAMP2) Bit 15 = 1
+     --> wandern der Werkzeuge über Magazine ist möglich
+
+Eingangsparameter:
+    E_EN_1zu1_Uebergross : 0: übergrosse werkzeuge können nicht 1:1 getauscht 
+                              werden
+                           1: auch übergrosse werkzeuge können 1:1 getauscht 
+                              werden
+
+    E_Nr_Bereitst_Platz  :Zwischenspeicher-Nr. des Bereitstellungsplatzes
+                           0: kein Bereitstellen
+                           2: Greifer 1
+                           3: Greifer 2
+                           4: Bereitstellungsplatz
+
+    E_Mag1_Fertig: Positonier-Anforderung an Mag1 fertig -> Quit Txx   
+    E_Mag2_Fertig: Positonier-Anforderung an Mag2 fertig <-- i.V   
+   
+    E_WZ_abgelegt_in_Mag   : Wz aus ZwSp wieder in Mag abgelegt bei Txx
+    E_Bereitstellen_Fertig : Bereitstellen in Zwischenspeicher fertig
+";"$Revision: 1.44 $
+$Date: 2008/04/04 07:35:02CEST $
+$Author: hgc $
+------------------ Kette_Tx Werkzeug vorbereiten ----------------
+erstellt: 1.2.2000 AB
+geändert: 27.06.01 AB
+   --> Aufruf Wzbruch- Erkennung 
+geändert: 18.07.02 FUH
+   --> Werkzeug vorbereiten in Zwischenspeicher
+
+Version: vorläufig
+
+Konfiguration:
+
+Wechsler mit Doppelgreifer (Holer und Bringer)
+     1:1 Tausch ist Standard ($TC_MAMP2) Bit 15 = 1
+     --> wandern der Werkzeuge über Magazine ist möglich
+
+Eingangsparameter:
+    E_EN_1zu1_Uebergross : 0: übergrosse werkzeuge können nicht 1:1 getauscht 
+                              werden
+                           1: auch übergrosse werkzeuge können 1:1 getauscht 
+                              werden
+
+    E_Nr_Bereitst_Platz  :Zwischenspeicher-Nr. des Bereitstellungsplatzes
+                           0: kein Bereitstellen
+                           2: Greifer 1
+                           3: Greifer 2
+                           4: Bereitstellungsplatz
+
+    E_Mag1_Fertig: Positonier-Anforderung an Mag1 fertig -> Quit Txx   
+    E_Mag2_Fertig: Positonier-Anforderung an Mag2 fertig <-- i.V   
+   
+    E_WZ_abgelegt_in_Mag   : Wz aus ZwSp wieder in Mag abgelegt bei Txx
+    E_Bereitstellen_Fertig : Bereitstellen in Zwischenspeicher fertig
+";""
+"$Revision: 1.22 $
+$Date: 2008/04/04 07:32:38CEST $
+$Author: hgc $
+
+";"$Revision: 1.22 $
+$Date: 2008/04/04 07:32:38CEST $
+$Author: hgc $
+
+";""
+"$Revision: 1.10 $
+$Date: 2008/04/04 07:31:58CEST $
+$Author: hgc $
+
+";"$Revision: 1.10 $
+$Date: 2008/04/04 07:31:58CEST $
+$Author: hgc $
+
+";""
+"$Revision: 1.302 $ 
+$Date: 2008/04/03 13:23:33CEST $  
+$Author: sth $   
+  
+DB für Fehlermeldung  
+==================================================
+Änderung: Datum / Abteilung / Name / Version x.y
+Änderung: 
+Änderung: 18.05.2005 / SPAC / slh / V0.2
+Änderung: 700506-700508, 701060-701115 (Komet) neu
+
+";"$Revision: 1.302 $ 
+$Date: 2008/04/03 13:23:33CEST $  
+$Author: sth $   
+  
+DB für Fehlermeldung  
+==================================================
+Änderung: Datum / Abteilung / Name / Version x.y
+Änderung: 
+Änderung: 18.05.2005 / SPAC / slh / V0.2
+Änderung: 700506-700508, 701060-701115 (Komet) neu
+
+";""
+"$Revision: 1.303 $ 
+$Date: 2008/04/04 08:26:03CEST $  
+$Author: wri $   
+  
+DB für Fehlermeldung  
+==================================================
+Änderung: Datum / Abteilung / Name / Version x.y
+Änderung: 
+Änderung: 18.05.2005 / SPAC / slh / V0.2
+Änderung: 700506-700508, 701060-701115 (Komet) neu
+
+";"$Revision: 1.303 $ 
+$Date: 2008/04/04 08:26:03CEST $  
+$Author: wri $   
+  
+DB für Fehlermeldung  
+==================================================
+Änderung: Datum / Abteilung / Name / Version x.y
+Änderung: 
+Änderung: 18.05.2005 / SPAC / slh / V0.2
+Änderung: 700506-700508, 701060-701115 (Komet) neu
+
+";""
+"$Revision: 1.8 $
+$Date: 2008/04/04 09:18:40CEST $
+$Author: wri $
+
+";"$Revision: 1.8 $
+$Date: 2008/04/04 09:18:40CEST $
+$Author: wri $
+
+";""
+"$Revision: 3.23 $
+$Date: 2008/04/15 09:57:04CEST $
+$Author: riedlh $
+";"$Revision: 3.23 $
+$Date: 2008/04/15 09:57:04CEST $
+$Author: riedlh $
+";""
+"$Revision: 4.27 $
+$Date: 2008/04/15 09:58:10CEST $
+$Author: riedlh $
+";"$Revision: 4.27 $
+$Date: 2008/04/15 09:58:10CEST $
+$Author: riedlh $
+";""
+"$Revision: 2.34 $
+$Date: 2008/04/23 09:28:25CEST $
+$Author: riedlh $
+";"$Revision: 2.34 $
+$Date: 2008/04/23 09:28:25CEST $
+$Author: riedlh $
+";""
+"$Revision: 1.28 $
+$Date: 2008/04/23 15:00:06CEST $
+$Author: schmoelp $
+";"$Revision: 1.28 $
+$Date: 2008/04/23 15:00:06CEST $
+$Author: schmoelp $
+";""
+"$Revision: 1.245 $
+$Date: 2008/04/28 12:39:01CEST $
+$Author: riedlh $
+";"$Revision: 1.245 $
+$Date: 2008/04/28 12:39:01CEST $
+$Author: riedlh $
+";""
+"$Revision: 1.38 $
+$Date: 2008/04/23 12:27:22CEST $
+$Author: schmoelp $
+
+";"$Revision: 1.38 $
+$Date: 2008/04/23 12:27:22CEST $
+$Author: schmoelp $
+
+";""
+"$Revision: 1.19 $
+$Date: 2008/04/29 17:26:38CEST $
+$Author: schmoelp $
+";"$Revision: 1.19 $
+$Date: 2008/04/29 17:26:38CEST $
+$Author: schmoelp $
+";""
+"$Revision: 1.7 $
+$Date: 2008/04/29 17:48:45CEST $
+$Author: schmoelp $
+";"$Revision: 1.7 $
+$Date: 2008/04/29 17:48:45CEST $
+$Author: schmoelp $
+";""
+"$Revision: 1.56 $
+$Date: 2008/05/05 10:37:39CEST $
+$Author: hgc $
+";"$Revision: 1.56 $
+$Date: 2008/05/05 10:37:39CEST $
+$Author: hgc $
+";""
+"$Revision: 1.19 $
+$Date: 2008/05/06 07:35:51CEST $
+$Author: hgc $
+";"$Revision: 1.19 $
+$Date: 2008/05/06 07:35:51CEST $
+$Author: hgc $
+";""
+"$Revision: 1.17 $
+$Date: 2008/05/06 07:35:20CEST $
+$Author: hgc $
+";"$Revision: 1.17 $
+$Date: 2008/05/06 07:35:20CEST $
+$Author: hgc $
+";""
+"$Revision: 1.42 $
+$Date: 2008/05/06 08:51:56CEST $
+$Author: hgc $
+
+
+Funktionsbeschreibung:
+
+  hier werden Funktionskomponenten eingebunden,
+  die am Anfang vom Zyklus aufgerufen werden:
+        
+";"$Revision: 1.42 $
+$Date: 2008/05/06 08:51:56CEST $
+$Author: hgc $
+
+
+Funktionsbeschreibung:
+
+  hier werden Funktionskomponenten eingebunden,
+  die am Anfang vom Zyklus aufgerufen werden:
+        
+";""
+"$Revision: 1.45 $
+$Date: 2008/05/06 08:44:59CEST $
+$Author: hgc $
+------------------ Kette_Tx Werkzeug vorbereiten ----------------
+erstellt: 1.2.2000 AB
+geändert: 27.06.01 AB
+   --> Aufruf Wzbruch- Erkennung 
+geändert: 18.07.02 FUH
+   --> Werkzeug vorbereiten in Zwischenspeicher
+
+Version: vorläufig
+
+Konfiguration:
+
+Wechsler mit Doppelgreifer (Holer und Bringer)
+     1:1 Tausch ist Standard ($TC_MAMP2) Bit 15 = 1
+     --> wandern der Werkzeuge über Magazine ist möglich
+
+Eingangsparameter:
+    E_EN_1zu1_Uebergross : 0: übergrosse werkzeuge können nicht 1:1 getauscht 
+                              werden
+                           1: auch übergrosse werkzeuge können 1:1 getauscht 
+                              werden
+
+    E_Nr_Bereitst_Platz  :Zwischenspeicher-Nr. des Bereitstellungsplatzes
+                           0: kein Bereitstellen
+                           2: Greifer 1
+                           3: Greifer 2
+                           4: Bereitstellungsplatz
+
+    E_Mag1_Fertig: Positonier-Anforderung an Mag1 fertig -> Quit Txx   
+    E_Mag2_Fertig: Positonier-Anforderung an Mag2 fertig <-- i.V   
+   
+    E_WZ_abgelegt_in_Mag   : Wz aus ZwSp wieder in Mag abgelegt bei Txx
+    E_Bereitstellen_Fertig : Bereitstellen in Zwischenspeicher fertig
+";"$Revision: 1.45 $
+$Date: 2008/05/06 08:44:59CEST $
+$Author: hgc $
+------------------ Kette_Tx Werkzeug vorbereiten ----------------
+erstellt: 1.2.2000 AB
+geändert: 27.06.01 AB
+   --> Aufruf Wzbruch- Erkennung 
+geändert: 18.07.02 FUH
+   --> Werkzeug vorbereiten in Zwischenspeicher
+
+Version: vorläufig
+
+Konfiguration:
+
+Wechsler mit Doppelgreifer (Holer und Bringer)
+     1:1 Tausch ist Standard ($TC_MAMP2) Bit 15 = 1
+     --> wandern der Werkzeuge über Magazine ist möglich
+
+Eingangsparameter:
+    E_EN_1zu1_Uebergross : 0: übergrosse werkzeuge können nicht 1:1 getauscht 
+                              werden
+                           1: auch übergrosse werkzeuge können 1:1 getauscht 
+                              werden
+
+    E_Nr_Bereitst_Platz  :Zwischenspeicher-Nr. des Bereitstellungsplatzes
+                           0: kein Bereitstellen
+                           2: Greifer 1
+                           3: Greifer 2
+                           4: Bereitstellungsplatz
+
+    E_Mag1_Fertig: Positonier-Anforderung an Mag1 fertig -> Quit Txx   
+    E_Mag2_Fertig: Positonier-Anforderung an Mag2 fertig <-- i.V   
+   
+    E_WZ_abgelegt_in_Mag   : Wz aus ZwSp wieder in Mag abgelegt bei Txx
+    E_Bereitstellen_Fertig : Bereitstellen in Zwischenspeicher fertig
+";""
+"$Revision: 1.23 $
+$Date: 2008/05/06 08:01:33CEST $
+$Author: hgc $
+
+";"$Revision: 1.23 $
+$Date: 2008/05/06 08:01:33CEST $
+$Author: hgc $
+
+";""
+"$Revision: 1.72 $
+$Date: 2008/05/06 07:48:57CEST $
+$Author: hgc $
+-------------------------------------------------------------------------------
+Änderung: Datum      / Abteilung / Name / Version x.y
+Änderung: 22.06.2006 /          / slh   / V0.2
+        :Wzw.Grundstlg.fahren eingepflegt; Lokaldaten laden/retten mit
+        :SFC20 BLKMOVE; Doppelwortzugriffe entfernt (Absolutadressen vermeiden)
+        :Quelle:FC_WZW_VMAG_STATUS.AWL vom 22.06.2006 10:29:25
+Änderung:           /          /        / V
+        :
+-------------------------------------------------------------------------------
+";"$Revision: 1.72 $
+$Date: 2008/05/06 07:48:57CEST $
+$Author: hgc $
+-------------------------------------------------------------------------------
+Änderung: Datum      / Abteilung / Name / Version x.y
+Änderung: 22.06.2006 /          / slh   / V0.2
+        :Wzw.Grundstlg.fahren eingepflegt; Lokaldaten laden/retten mit
+        :SFC20 BLKMOVE; Doppelwortzugriffe entfernt (Absolutadressen vermeiden)
+        :Quelle:FC_WZW_VMAG_STATUS.AWL vom 22.06.2006 10:29:25
+Änderung:           /          /        / V
+        :
+-------------------------------------------------------------------------------
+";""
+"$Revision: 1.5 $
+$Date: 2008/05/06 13:30:24CEST $
+$Author: wri $
+";"$Revision: 1.5 $
+$Date: 2008/05/06 13:30:24CEST $
+$Author: wri $
+";""
+"$Revision: 1.43 $
+$Date: 2008/05/07 09:43:45CEST $
+$Author: hgc $
+
+
+Funktionsbeschreibung:
+
+  hier werden Funktionskomponenten eingebunden,
+  die am Anfang vom Zyklus aufgerufen werden:
+        
+";"$Revision: 1.43 $
+$Date: 2008/05/07 09:43:45CEST $
+$Author: hgc $
+
+
+Funktionsbeschreibung:
+
+  hier werden Funktionskomponenten eingebunden,
+  die am Anfang vom Zyklus aufgerufen werden:
+        
+";""
+"$Revision: 1.83 $
+$Date: 2008/05/07 13:54:12CEST $
+$Author: hgc $
+";"$Revision: 1.83 $
+$Date: 2008/05/07 13:54:12CEST $
+$Author: hgc $
+";""
+"$Revision: 1.8 $
+$Date: 2008/04/07 12:59:33CEST $
+$Author: sth $
+
+";"$Revision: 1.8 $
+$Date: 2008/04/07 12:59:33CEST $
+$Author: sth $
+
+";""
+"$Revision: 1.18 $
+$Date: 2008/05/08 07:24:48CEST $
+$Author: hgc $
+";"$Revision: 1.18 $
+$Date: 2008/05/08 07:24:48CEST $
+$Author: hgc $
+";""
+"$Revision: 1.14 $
+$Date: 2008/05/08 07:21:11CEST $
+$Author: hgc $
+$ProjectRevision: Last Checkpoint: 1.6 $
+";"$Revision: 1.14 $
+$Date: 2008/05/08 07:21:11CEST $
+$Author: hgc $
+$ProjectRevision: Last Checkpoint: 1.6 $
+";""
+"$Revision: 1.23 $
+$Date: 2008/05/08 10:08:39CEST $
+$Author: hgc $
+
+-------------------------- Einzel-Farbe ------------------------------------
+Rot (Statisch):
+Allgemeine Störung,die eine sofortige Handlung erfordert, gefahrbringender 
+Zustand, Fehler mit hoher Priorität, z. B.-  von Not-Halt,-  Spindel- und 
+Vorschub-Halt.
+Symbolischer Operand OX_AL_LM_RD(OX_GEN_SIGNALLAMP_RD)
+
+Gelb (Statisch):
+Maschineneingriff erforderlich,da eine der
+Fehlermeldung niedriger Priorität ansteht, z. B.
+-  Werkzeugbruch,
+Vorwarnungen für z.B.
+-  Wassermangel
+-  Maschine bekommt keine Werkstücke mehr (Werkstückmagazin leer) oder
+-  Werkstückablaufmagazin voll,
+-  Messwerkstück nicht i.O. (ausgeschleust).
+Symbolischer Operand OX_AL_LM_YE(OX_GEN_SIGNALLAMP_YE)
+
+Gelb (blinkend):
+Materialmangel an Stangennachschubeinrichtung (in Übereinstimmung mit 
+Konzern-Stangenladerschnittstelle)
+Symbolischer Operand OX_AL_LM_YE(OX_GEN_SIGNALLAMP_YE)
+
+Grün (Statisch):
+Normaler Zustand der Maschine, z. B.
+Maschine produziert im Automatikbetrieb (BA 1).
+Die grüne Leuchte leuchtet nicht bei angewählter BA2, BA3 und BA4 !
+Symbolischer Operand OX_AL_LM_GN(OX_GEN_SIGNALLAMP_GN)
+
+Blau (Statisch):
+Zustand an der Maschine, der eine Handlung durch den Bediener erfordert
+-  Freigabe Palettenwechsler am Rüstplatz oder
+-  Maschine ist im Einrichtbetrieb (BA 2) oder BA 3
+Symbolischer Operand OX_AL_LM_BU(OX_GEN_SIGNALLAMP_BU)
+
+Blau (Blinkend):
+Maschine erfordert generell eine Handlung durch den Bediener,BA4 angewählt ist.
+Symbolischer Operand OX_AL_LM_BU(OX_GEN_SIGNALLAMP_BU)
+
+------------------- Kombination von Farben -----------------------------------
+Lasermaschinen Grün (statisch) und Gelb (Statisch):
+Maschine arbeitet mit Laser.
+Symbolischer Operand OX_AL_LM_GN(OX_GEN_SIGNALLAMP_GN)
+Symbolischer Operand OX_AL_LM_YE(OX_GEN_SIGNALLAMP_YE)
+
+Grün (statisch) und Blau (Statisch): 
+Maschine ist voll funktionsfähig, es ist eine Bedienerhandlung 
+erforderlich,z.B. 
+-  Spezialwerkzeug manuell einlegen oder
+-  neues Programm starten, weil Maschine steht oder
+-  M00 / M01 ist aktiv.
+Symbolischer Operand OX_AL_LM_GN(OX_GEN_SIGNALLAMP_GN)
+Symbolischer Operand OX_AL_LM_BU(OX_GEN_SIGNALLAMP_BU)
+
+Grün (statisch),  Blau (Statisch) und Gelb (Statisch):
+Maschine ist voll funktionsfähig, es ist eine Bedienerhandlung erforderlich, z.B
+- Spezialwerkzeug manuell einlegen oder 
+- neues Programm starten und es ist eine Vorwarnung vorhanden,
+  z. B. Wassermangel.
+Symbolischer Operand OX_AL_LM_GN(OX_GEN_SIGNALLAMP_GN)
+Symbolischer Operand OX_AL_LM_BU(OX_GEN_SIGNALLAMP_BU)
+Symbolischer Operand OX_AL_LM_YE(OX_GEN_SIGNALLAMP_YE)
+";"$Revision: 1.23 $
+$Date: 2008/05/08 10:08:39CEST $
+$Author: hgc $
+
+-------------------------- Einzel-Farbe ------------------------------------
+Rot (Statisch):
+Allgemeine Störung,die eine sofortige Handlung erfordert, gefahrbringender 
+Zustand, Fehler mit hoher Priorität, z. B.-  von Not-Halt,-  Spindel- und 
+Vorschub-Halt.
+Symbolischer Operand OX_AL_LM_RD(OX_GEN_SIGNALLAMP_RD)
+
+Gelb (Statisch):
+Maschineneingriff erforderlich,da eine der
+Fehlermeldung niedriger Priorität ansteht, z. B.
+-  Werkzeugbruch,
+Vorwarnungen für z.B.
+-  Wassermangel
+-  Maschine bekommt keine Werkstücke mehr (Werkstückmagazin leer) oder
+-  Werkstückablaufmagazin voll,
+-  Messwerkstück nicht i.O. (ausgeschleust).
+Symbolischer Operand OX_AL_LM_YE(OX_GEN_SIGNALLAMP_YE)
+
+Gelb (blinkend):
+Materialmangel an Stangennachschubeinrichtung (in Übereinstimmung mit 
+Konzern-Stangenladerschnittstelle)
+Symbolischer Operand OX_AL_LM_YE(OX_GEN_SIGNALLAMP_YE)
+
+Grün (Statisch):
+Normaler Zustand der Maschine, z. B.
+Maschine produziert im Automatikbetrieb (BA 1).
+Die grüne Leuchte leuchtet nicht bei angewählter BA2, BA3 und BA4 !
+Symbolischer Operand OX_AL_LM_GN(OX_GEN_SIGNALLAMP_GN)
+
+Blau (Statisch):
+Zustand an der Maschine, der eine Handlung durch den Bediener erfordert
+-  Freigabe Palettenwechsler am Rüstplatz oder
+-  Maschine ist im Einrichtbetrieb (BA 2) oder BA 3
+Symbolischer Operand OX_AL_LM_BU(OX_GEN_SIGNALLAMP_BU)
+
+Blau (Blinkend):
+Maschine erfordert generell eine Handlung durch den Bediener,BA4 angewählt ist.
+Symbolischer Operand OX_AL_LM_BU(OX_GEN_SIGNALLAMP_BU)
+
+------------------- Kombination von Farben -----------------------------------
+Lasermaschinen Grün (statisch) und Gelb (Statisch):
+Maschine arbeitet mit Laser.
+Symbolischer Operand OX_AL_LM_GN(OX_GEN_SIGNALLAMP_GN)
+Symbolischer Operand OX_AL_LM_YE(OX_GEN_SIGNALLAMP_YE)
+
+Grün (statisch) und Blau (Statisch): 
+Maschine ist voll funktionsfähig, es ist eine Bedienerhandlung 
+erforderlich,z.B. 
+-  Spezialwerkzeug manuell einlegen oder
+-  neues Programm starten, weil Maschine steht oder
+-  M00 / M01 ist aktiv.
+Symbolischer Operand OX_AL_LM_GN(OX_GEN_SIGNALLAMP_GN)
+Symbolischer Operand OX_AL_LM_BU(OX_GEN_SIGNALLAMP_BU)
+
+Grün (statisch),  Blau (Statisch) und Gelb (Statisch):
+Maschine ist voll funktionsfähig, es ist eine Bedienerhandlung erforderlich, z.B
+- Spezialwerkzeug manuell einlegen oder 
+- neues Programm starten und es ist eine Vorwarnung vorhanden,
+  z. B. Wassermangel.
+Symbolischer Operand OX_AL_LM_GN(OX_GEN_SIGNALLAMP_GN)
+Symbolischer Operand OX_AL_LM_BU(OX_GEN_SIGNALLAMP_BU)
+Symbolischer Operand OX_AL_LM_YE(OX_GEN_SIGNALLAMP_YE)
+";""
+"$Revision: 1.46.1.5 $
+$Date: 2008/05/08 12:12:44CEST $
+$Author: kee $
+
+";"$Revision: 1.46.1.5 $
+$Date: 2008/05/08 12:12:44CEST $
+$Author: kee $
+
+";""
+"$Revision: 1.15 $
+$Date: 2008/05/08 13:01:46CEST $
+$Author: riedlh $
+";"$Revision: 1.15 $
+$Date: 2008/05/08 13:01:46CEST $
+$Author: riedlh $
+";""

@@ -1,0 +1,156 @@
+FUNCTION "FC_CIO_OEM" : VOID
+TITLE =
+//$Revision: 1.5 $
+//$Date: 2008/05/05 17:28:43CEST $
+//$Author: schmoelp $
+VERSION : 0.1
+
+
+VAR_TEMP
+  PalNr : INT ;	
+  TeileNr : DINT ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =************  SA Teilenummer Bosch Rexroth
+
+
+
+NETWORK
+TITLE =SA_TN: Eingabe Teile-Nr Rüstplatz Maschine
+
+      L     0; 
+      L     "DB_OEMDB2".Teile_Nr.RP_Maschine; 
+      <=D   ; 
+      SPB   ERPM; 
+
+      NEGD  ; 
+      T     #TeileNr; 
+
+      L     "DB_PAL_NR".Platz[1].Pal_Nr; // Paletten-Nr. Übergabeplatz 1
+      T     #PalNr; 
+
+      SPA   T_TL; 
+
+ERPM: NOP   0; 
+
+NETWORK
+TITLE =SA_TN: Eingabe Teile-Nr Rüstplatz 1 Palettenspeicher
+
+      L     0; 
+      L     "DB_OEMDB2".Teile_Nr.RP_Speicher; 
+      <=D   ; 
+      SPB   ERP1; 
+
+      NEGD  ; 
+      T     #TeileNr; 
+
+      L     "DB_PAL_NR".Platz[4].Pal_Nr; // Paletten-Nr. Rüstplatz Speicher
+      T     #PalNr; 
+
+      SPA   T_TL; 
+
+ERP1: NOP   0; 
+
+NETWORK
+TITLE =SA_TN: Übertrag der eingegebenen Teile-Nr in Liste Teile-Nr
+
+      SPA   ETTL; 
+
+T_TL: L     0; 
+      L     #PalNr; 
+      ==I   ; 
+      SPB   ETTL; 
+
+      L     -1; 
+      +I    ; 
+      L     32; 
+      *D    ; 
+      LAR1  ; 
+
+      L     #TeileNr; 
+      AUF   "DB_TEILE_NR"; 
+      T     DBD [AR1,P#0.0]; 
+
+ETTL: NOP   0; 
+
+NETWORK
+TITLE =SA_TN: Aktualisierung Anzeige Teile-Nr Maschinenplatz
+
+      L     0; 
+      L     "DB_PAL_NR".Platz[0].Pal_Nr; 
+      ==I   ; 
+      O(    ; 
+      L     99; 
+      >I    ; 
+      )     ; 
+      SPB   TMA; 
+
+      TAK   ; 
+      L     -1; 
+      +I    ; 
+      L     32; 
+      *D    ; 
+      LAR1  ; 
+
+      AUF   "DB_TEILE_NR"; 
+      L     DBD [AR1,P#0.0]; 
+
+TMA:  T     "DB_OEMDB2".Teile_Nr.Maschine; 
+
+NETWORK
+TITLE =SA_TN: Aktualisierung Anzeige Teile-Nr Rüstplatz Maschine
+
+      L     0; 
+      L     "DB_PAL_NR".Platz[1].Pal_Nr; 
+      ==I   ; 
+      O(    ; 
+      L     99; 
+      >I    ; 
+      )     ; 
+      SPB   TRPM; 
+
+      TAK   ; 
+      L     -1; 
+      +I    ; 
+      L     32; 
+      *D    ; 
+      LAR1  ; 
+
+      AUF   "DB_TEILE_NR"; 
+      L     DBD [AR1,P#0.0]; 
+
+TRPM: T     "DB_OEMDB2".Teile_Nr.RP_Maschine; 
+
+NETWORK
+TITLE =SA_TN: Aktualisierung Anzeige Teile-Nr Rüstplatz Speicher
+
+      L     0; 
+      L     "DB_PAL_NR".Platz[4].Pal_Nr; 
+      ==I   ; 
+      O(    ; 
+      L     99; 
+      >I    ; 
+      )     ; 
+      SPB   TRP1; 
+
+      TAK   ; 
+      L     -1; 
+      +I    ; 
+      L     32; 
+      *D    ; 
+      LAR1  ; 
+
+      AUF   "DB_TEILE_NR"; 
+      L     DBD [AR1,P#0.0]; 
+
+TRP1: T     "DB_OEMDB2".Teile_Nr.RP_Speicher; 
+
+NETWORK
+TITLE =Ausgabe an NC
+
+      L     "DB_OEMDB2".Teile_Nr.Maschine; 
+      T     "DB_NC_PLC".Teile_Nr; 
+
+END_FUNCTION
+

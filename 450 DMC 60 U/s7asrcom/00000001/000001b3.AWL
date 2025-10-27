@@ -1,0 +1,205 @@
+FUNCTION "FC_PS_MAIN" : VOID
+TITLE =
+//$Revision: 1.23 $
+//$Date: 2008/08/25 10:06:03CEST $
+//$Author: sth $
+VERSION : 0.0
+
+BEGIN
+NETWORK
+TITLE =Fehler löschen
+
+      U     "M_Ruecksetze_Fehler"; 
+      SPBN  M002; 
+      SET   ; 
+      R     "DB_FEHLERMELDUNG".VS_Halt_Async3._701720_TP_belegt_nichbe; 
+      R     "DB_FEHLERMELDUNG".VS_Halt_Async3._701750_SP_Hub_Unten_0; 
+      R     "DB_FEHLERMELDUNG".VS_Halt_Async3._701734_LS_Pal_ni_auf_Pl; 
+      R     "DB_FEHLERMELDUNG".VS_Halt_Async3._701735_LS_Pal_auf_Pl; 
+      R     "DB_FEHLERMELDUNG".VS_Halt_Async3._701736_LS_Auftr_abgel; 
+      R     "DB_FEHLERMELDUNG".VS_Halt_Async3._701722_RP_Tuer_offen; 
+      R     "DB_FEHLERMELDUNG".VS_Halt_Async3._701733_LS_Tel_ni_Grdst; 
+      R     "DB_FEHLERMELDUNG".VS_Halt_Async3._701756_SP_RPL_Pal_0; 
+      R     "DB_FEHLERMELDUNG".Meldung._702056_Ruestpl_Ueberg_0; 
+      R     "DB_FEHLERMELDUNG".MELDUNG2._701319_RP_nicht_geloest; 
+      R     "DB_FEHLERMELDUNG".MELDUNG3._700448_PAL_VERR_0; 
+      R     "DB_FEHLERMELDUNG".VS_Halt_Async4._701806_Pos_Ungueltig; 
+      R     "DB_FEHLERMELDUNG".VS_Halt_Async3._701754_SP_PW_GrdSt_0; 
+      R     "DB_FEHLERMELDUNG".VS_Halt_Async3._701755_SP_Ver_Ruepl_0; 
+      R     "DB_FEHLERMELDUNG".VS_Halt_Async3._701760_FRG_Drehbereich; 
+      R     "DB_FEHLERMELDUNG".Meldung4._702409_Freigabe_RPL_0; 
+      R     "DB_FEHLERMELDUNG".Meldung._702038_falsche_Eingabe; 
+      R     "DB_FEHLERMELDUNG".MELDUNG2._701328_Sonder_14; 
+
+// PW-Fehler
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700653_Hub_Unten_0Sig; 
+
+// Reset Meldungen wenn Ursache ok
+M002: U     "DB_HR".RPT.RS_RPL_FRG; 
+      R     "DB_FEHLERMELDUNG".Meldung4._702409_Freigabe_RPL_0; 
+
+      U     "DB_LSSchnittstelle".IX_Holen_laeuft; 
+      O     "DB_LSSchnittstelle".IX_Bringen_laeuft; 
+      R     "DB_FEHLERMELDUNG".Meldung._702038_falsche_Eingabe; 
+NETWORK
+TITLE =Abfrage Palettenspeichertyp
+// 5 = Anwahl RS4 große Ausführung 100,125
+// 6 = Anwahl RS4 kleine Ausführung 80
+// 7 = RS5 (Rundspeicher DMC55/65H DMU 60P2/U2)
+// 8 = RS10 (Rundspeicher DMC55/65H DMU 60P2/U2)
+      U(    ; 
+      O(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._016_ANWAHL_PALSPEICHER; 
+      L     5; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      U(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._016_ANWAHL_PALSPEICHER; 
+      L     6; 
+      ==I   ; 
+      )     ; 
+      =     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.RS4_AKTIV_DURCH_ANWAHL_6; 
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.RS4_AKTIV_DURCH_ANWAHL_6; 
+      )     ; 
+      )     ; 
+      =     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.RS4_AKTIV; 
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.RS4_AKTIV; 
+      O(    ; 
+      U(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._016_ANWAHL_PALSPEICHER; 
+      L     7; 
+      ==I   ; 
+      )     ; 
+      =     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.RS5_AKTIV; 
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.RS5_AKTIV; 
+      )     ; 
+      O(    ; 
+      U(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._016_ANWAHL_PALSPEICHER; 
+      L     8; 
+      ==I   ; 
+      )     ; 
+      =     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.RS10_AKTIV; 
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.RS10_AKTIV; 
+      )     ; 
+      SPBN  M001; 
+NETWORK
+TITLE =Rundspeicher ohne externe Steuerung
+
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.RS4_AKTIV_DURCH_ANWAHL_6; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.RS5_AKTIV; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.RS10_AKTIV; 
+      =     "M_RS4_80er"; 
+NETWORK
+TITLE =
+
+      U(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._016_ANWAHL_PALSPEICHER; 
+      L     5; 
+      ==I   ; 
+      )     ; 
+      U     "DB_PLC_MD_DB20".UDHex._31_Bit1_SOLUTIONLINE; 
+      =     "M_RS4_100_125er_Solution"; 
+NETWORK
+TITLE =Einrichten Palettenspeicher aktiv
+
+      U(    ; 
+      O     "DB_OEM".OEM_SpeEinrbildaktiv; 
+      O     "DB_OEM".OEM_SpeRettbildaktiv; 
+      O     "DB_OEM".OEM_SpeRettbildaktiv3; 
+      )     ; 
+      =     "M_RS_RETTUNG_AKTIV"; 
+      U     "M_RS_RETTUNG_AKTIV"; 
+      U     "DB_PLC_MD_DB20".UDHex._04_BIT4_EINRICHT_BETR; 
+      U     "M_Handbetrieb"; 
+      =     "M_RS_EINRICHTEN_AKTIV"; 
+NETWORK
+TITLE =Einrichten aktiv Flanke positiv
+
+      U     "M_RS_RETTUNG_AKTIV"; 
+      FP    "M_LS_FP_SKR"; 
+      =     "MX_POS_FL_SKR"; 
+NETWORK
+TITLE =Elektr.RPL angewählt ?
+
+      U     "DB_PLC_MD_DB20".UDHex._32_Bit0_RPL_Endlos; 
+      U(    ; 
+      U     "DB_PLC_MD_DB20".UDHex._32_Bit1_RPL_Erweit_Data; 
+      U     "M_RS4_80er"; 
+      O     "M_RS4_100_125er_Solution"; 
+      )     ; 
+      SPBN  kerp; 
+NETWORK
+TITLE =Ruestplatz Palettenspeichersystem Grundstellung bei elektr.RPL
+//Eingangsmerker I_PS_RPL_GST bei Anwahl von Elektr.RPL bilden, wenn RPL-Soll in 
+//0 
+//Grad und RPL-Ist in 0 Grad und Bit´s für Anwahl gesetzt sind
+      U(    ; 
+      L     "DB_ACHSE_RPL".MR_IstPosition; 
+      L     0.000000e+000; 
+      ==D   ; 
+      )     ; 
+      U(    ; 
+      L     "DB_ACHSE_RPL".MR_SollPosition; 
+      L     0.000000e+000; 
+      ==D   ; 
+      )     ; 
+      =     "I_PS_RPL_GST"; 
+NETWORK
+TITLE =Palettenspeicher RS4 / RS5 Rettungsfunktionen + Ablauf
+
+kerp: O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.RS4_AKTIV; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.RS5_AKTIV; 
+      =     L      0.0; 
+      U     L      0.0; 
+      SPBNB _001; 
+      CALL "FC_PS_RS4_5_SKR" ;
+_001: NOP   0; 
+      U     L      0.0; 
+      SPBNB _002; 
+      CALL "FC_PS_RS4_5_ABLAUF" ;
+_002: NOP   0; 
+NETWORK
+TITLE =Palettenspeicher RS10 Rettungsfunktionen + Ablauf
+
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.RS10_AKTIV; 
+      =     L      0.0; 
+      U     L      0.0; 
+      SPBNB _003; 
+      CALL "FC_PS_RS10_SKR" ;
+_003: NOP   0; 
+      U     L      0.0; 
+      SPBNB _004; 
+      CALL "FC_PS_RS10_ABLAUF" ;
+_004: NOP   0; 
+NETWORK
+TITLE =Palettenspeicher Positionen lesen
+
+      CALL "FC_PS_PosLesen" ;
+      NOP   0; 
+NETWORK
+TITLE =Aufruf: Programmanwahl Hauptmodul
+
+M001: CALL "FC_PRG_Anwahl_Main" ;
+      NOP   0; 
+NETWORK
+TITLE =Aufruf: Palettenverwaltung
+
+      CALL "FC_PS_PALVERWALTUNG" ;
+      NOP   0; 
+NETWORK
+TITLE ="DB_NC_PLC".Jobbetrieb
+
+      O     "MX_Jobbetrieb"; 
+      O     ; 
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.HASYS_FASTEMS; 
+      U(    ; 
+      O     "DB_SINRPC".Mode.FLR_unbemannt; 
+      O     "DB_SINRPC".Mode.FLR_bemannt; 
+      )     ; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.HASYS_FASREMS_V3X; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.HASYS_FASTEMS_V3X_RPC; 
+      =     "DB_NC_PLC".Jobbetrieb; 
+END_FUNCTION
+

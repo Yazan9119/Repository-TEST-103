@@ -1,0 +1,401 @@
+FUNCTION "FC_PS_PosLesen" : VOID
+TITLE =
+//$Revision: 1.6 $
+//$Date: 2007/07/16 13:14:40CEST $
+//$Author: riedlh $
+//
+{ S7_language := '7(1) Deutsch (Deutschland)  26.03.2008  08:00:15' }
+VERSION : 0.1
+
+
+VAR_TEMP
+  start_read : BOOL ;	
+  Error_FC21_read : BOOL ;	
+  ErrCode_FC21_read : INT ;	
+  T_Platz : INT ;	
+  T_X_POS : REAL ;	
+  T_Z_Pos : REAL ;	
+  T_Typ : BYTE ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =Lesen aus DM_SPLATZ - DM_RSK1
+
+      SET   ; 
+      S     "DB_DM_M_FUNKTION".MX_QuitPflicht[252]; 
+
+      U     "M_Reset_Taste"; 
+      SPBN  STRT; 
+      SET   ; 
+      R     #start_read; 
+      R     "DB_DM_M_FUNKTION".MX_Quitt[252]; 
+      R     "DB_DM_M_FUNKTION".MX_M[252]; 
+
+
+STRT: U     "DB_DM_M_FUNKTION".MX_M[252]; 
+      SPBN  MEND; 
+      L     0; 
+      T     "DB_NC_PLC".Adresse; 
+
+      SET   ; 
+      S     #start_read; 
+
+      CALL "FC_SIEM_PLC_NCK" (
+           Enable                   := #start_read,
+           Funct                    := B#16#3,
+           S7Var                    := "DB_NC_PLC".Daten1,
+           IVAR1                    := 16,
+           IVAR2                    := -1,
+           Error                    := #Error_FC21_read,
+           ErrCode                  := #ErrCode_FC21_read);
+
+      SET   ; 
+      S     #start_read; 
+
+      CALL "FC_SIEM_PLC_NCK" (
+           Enable                   := #start_read,
+           Funct                    := B#16#3,
+           S7Var                    := "DB_NC_PLC".Adresse,
+           IVAR1                    := 24,
+           IVAR2                    := -1,
+           Error                    := #Error_FC21_read,
+           ErrCode                  := #ErrCode_FC21_read);
+      SET   ; 
+      R     #start_read; 
+NETWORK
+TITLE =RS5 oder RS10 angewählt ?
+
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.RS5_AKTIV; 
+      SPB   RS5; 
+
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.RS10_AKTIV; 
+      SPB   RS10; 
+NETWORK
+TITLE =RS4 Positionen eintragen
+
+      L     "DB_NC_PLC".Daten1; 
+      T     #T_X_POS; 
+
+      L     "DB_NC_PLC".Adresse; 
+      T     #T_Platz; 
+
+      L     #T_Platz; 
+      L     10; 
+      ==I   ; 
+      SPBN  E001; 
+
+      L     "DB_NC_PLC".Daten1; 
+      T     "DB_LS_POS".Transport_Gst; 
+      SPA   ENDE; 
+
+E001: L     #T_Platz; 
+      L     11; 
+      >=I   ; 
+      U(    ; 
+      L     #T_Platz; 
+      L     16; 
+      <=I   ; 
+      )     ; 
+      SPBN  E003; 
+
+      AUF   "DB_LS_POS"; 
+
+      L     #T_Platz; 
+      L     11; 
+      -D    ; 
+      L     4; 
+      *I    ; 
+      SLD   3; 
+      LAR1  ; 
+      L     14; 
+      SLD   3; 
+      +AR1  ; 
+
+      L     #T_X_POS; 
+      T     DBD [AR1,P#0.0]; // X-Position
+
+      L     #T_Platz; 
+      L     16; 
+      ==I   ; 
+      S     "DB_LS_POS".Daten_OK; 
+      SPA   ENDE; 
+
+E003: L     #T_Platz; 
+      L     2; 
+      >=I   ; 
+      U(    ; 
+      L     #T_Platz; 
+      L     7; 
+      <=I   ; 
+      )     ; 
+      SPBN  MEND; 
+
+      SET   ; 
+      R     "DB_LS_POS".Daten_OK; 
+
+      AUF   "DB_LS_POS"; 
+
+      L     #T_Platz; 
+      L     2; 
+      -D    ; 
+      L     4; 
+      *I    ; 
+      SLD   3; 
+      LAR1  ; 
+      L     46; 
+      SLD   3; 
+      +AR1  ; 
+
+      L     #T_X_POS; 
+      T     DBD [AR1,P#0.0]; // X-Position
+      SPA   ENDE; 
+NETWORK
+TITLE =RS5 Positionen eintragen
+
+RS5:  L     "DB_NC_PLC".Daten1; 
+      T     #T_X_POS; 
+
+      L     "DB_NC_PLC".Adresse; 
+      T     #T_Platz; 
+
+      L     #T_Platz; 
+      L     10; 
+      ==I   ; 
+      SPBN  E004; 
+
+      L     "DB_NC_PLC".Daten1; 
+      T     "DB_LS_POS".Transport_Gst; 
+      SPA   ENDE; 
+
+E004: L     #T_Platz; 
+      L     11; 
+      >=I   ; 
+      U(    ; 
+      L     #T_Platz; 
+      L     17; 
+      <=I   ; 
+      )     ; 
+      SPBN  E005; 
+
+      AUF   "DB_LS_POS"; 
+
+      L     #T_Platz; 
+      L     11; 
+      -D    ; 
+      L     4; 
+      *I    ; 
+      SLD   3; 
+      LAR1  ; 
+      L     14; 
+      SLD   3; 
+      +AR1  ; 
+
+      L     #T_X_POS; 
+      T     DBD [AR1,P#0.0]; // X-Position
+
+      L     #T_Platz; 
+      L     17; 
+      ==I   ; 
+      S     "DB_LS_POS".Daten_OK; 
+      SPA   ENDE; 
+
+E005: L     #T_Platz; 
+      L     2; 
+      >=I   ; 
+      U(    ; 
+      L     #T_Platz; 
+      L     8; 
+      <=I   ; 
+      )     ; 
+      SPBN  MEND; 
+
+      SET   ; 
+      R     "DB_LS_POS".Daten_OK; 
+
+      AUF   "DB_LS_POS"; 
+
+      L     #T_Platz; 
+      L     2; 
+      -D    ; 
+      L     4; 
+      *I    ; 
+      SLD   3; 
+      LAR1  ; 
+      L     46; 
+      SLD   3; 
+      +AR1  ; 
+
+      L     #T_X_POS; 
+      T     DBD [AR1,P#0.0]; // X-Position
+      SPA   ENDE; 
+NETWORK
+TITLE =RS10 Positionen eintragen
+
+RS10: L     "DB_NC_PLC".Daten1; 
+      T     #T_X_POS; 
+
+      L     "DB_NC_PLC".Adresse; 
+      T     #T_Platz; 
+
+      L     #T_Platz; 
+      L     18; 
+      >=I   ; 
+      SPB   OBEN; 
+
+// *** Rüstplatz / MaschPlatz / Speicherplatz 1-5 Untere Ebene ***
+      L     #T_Platz; 
+      L     10; 
+      ==I   ; 
+      SPBN  E006; 
+
+      L     "DB_NC_PLC".Daten1; 
+      T     "DB_LS_POS".Transport_Gst; 
+      SPA   ENDE; 
+
+// Transport 
+E006: L     #T_Platz; 
+      L     11; 
+      >=I   ; 
+      U(    ; 
+      L     #T_Platz; 
+      L     17; 
+      <=I   ; 
+      )     ; 
+      SPBN  E007; 
+
+      AUF   "DB_LS_POS"; 
+
+      L     #T_Platz; 
+      L     11; 
+      -D    ; 
+      L     4; 
+      *I    ; 
+      SLD   3; 
+      LAR1  ; 
+      L     14; 
+      SLD   3; 
+      +AR1  ; 
+      SPA   SCHR; 
+
+// Drehstation
+E007: L     #T_Platz; 
+      L     2; 
+      >=I   ; 
+      U(    ; 
+      L     #T_Platz; 
+      L     8; 
+      <=I   ; 
+      )     ; 
+      SPBN  MEND; 
+
+      SET   ; 
+      R     "DB_LS_POS".Daten_OK; 
+
+      AUF   "DB_LS_POS"; 
+
+      L     #T_Platz; 
+      L     2; 
+      -D    ; 
+      L     4; 
+      *I    ; 
+      SLD   3; 
+      LAR1  ; 
+      L     46; 
+      SLD   3; 
+      +AR1  ; 
+      SPA   SCHR; 
+
+// *** Speicherplatz 5-10 Obere Ebene ***
+
+// Transport 
+OBEN: L     #T_Platz; 
+      L     18; 
+      >=I   ; 
+      U(    ; 
+      L     #T_Platz; 
+      L     22; 
+      <=I   ; 
+      )     ; 
+      SPBN  E009; 
+
+      AUF   "DB_LS_POS"; 
+
+      L     #T_Platz; 
+      L     18; 
+      -D    ; 
+      L     4; 
+      *I    ; 
+      SLD   3; 
+      LAR1  ; 
+      L     80; 
+      SLD   3; 
+      +AR1  ; 
+      SPA   SCHR; 
+
+// Drehstation
+E009: L     #T_Platz; 
+      L     30; 
+      >=I   ; 
+      U(    ; 
+      L     #T_Platz; 
+      L     34; 
+      <=I   ; 
+      )     ; 
+      SPBN  HUB; 
+
+      AUF   "DB_LS_POS"; 
+
+      L     #T_Platz; 
+      L     30; 
+      -D    ; 
+      L     4; 
+      *I    ; 
+      SLD   3; 
+      LAR1  ; 
+      L     120; 
+      SLD   3; 
+      +AR1  ; 
+      SPA   SCHR; 
+
+// Hub
+HUB:  L     #T_Platz; 
+      L     40; 
+      >=I   ; 
+      U(    ; 
+      L     #T_Platz; 
+      L     43; 
+      <=I   ; 
+      )     ; 
+      SPBN  HUB; 
+
+      L     #T_Platz; 
+      L     43; 
+      ==I   ; 
+      S     "DB_LS_POS".Daten_OK; 
+
+      AUF   "DB_LS_POS"; 
+
+      L     #T_Platz; 
+      L     40; 
+      -D    ; 
+      L     4; 
+      *I    ; 
+      SLD   3; 
+      LAR1  ; 
+      L     160; 
+      SLD   3; 
+      +AR1  ; 
+
+SCHR: L     #T_X_POS; 
+      T     DBD [AR1,P#0.0]; // X-Position
+      SPA   ENDE; 
+NETWORK
+TITLE =Ende
+
+ENDE: U     "DB_DM_M_FUNKTION".MX_M[252]; 
+      S     "DB_DM_M_FUNKTION".MX_Quitt[252]; 
+      R     "DB_DM_M_FUNKTION".MX_M[252]; 
+
+MEND: NOP   0; 
+END_FUNCTION
+

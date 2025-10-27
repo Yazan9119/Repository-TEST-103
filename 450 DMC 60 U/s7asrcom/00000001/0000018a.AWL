@@ -1,0 +1,198 @@
+DATA_BLOCK "DB_PAL_NR"
+TITLE =
+//$Revision: 1.17 $
+//$Date: 2008/07/10 09:21:40CEST $
+//$Author: riedlh $
+//
+//
+VERSION : 0.0
+
+
+  STRUCT 	
+   Platz : ARRAY  [0 .. 16 ] OF //0:Maschine,1:Überpl1,2:Überpl2,3:Transportw,4:Ruepl,5-xx:Speicherpl 1 -- xx 
+   STRUCT 	
+    Pal_Nr : INT ;	//Paletten-Nr
+    TeiloWRS : BOOL ;	//0:Teil oder 1:Werkstueck
+    Spannhydraulik : BOOL ;	//Palette besitzt Spannhydraulik
+    Pal_schwer : BOOL ;	//Palette ist schwer (langsamer Palettenwechsel)
+    frei2 : BYTE ;	
+    Ordner_Name : STRING  [32 ];	
+    Prg_Name : STRING  [32 ];	
+    Status : BYTE ;	//0:kein Status, 1:Leerpalette, 2:Rohteil, 3:In Arbeit, 4:Fertigteil, 5:Störung
+    frei1 : BYTE ;	
+    Teilung : BYTE ;	//Teilung Rüstplatz-Achse: 0=endlos, 2=180Grad, 3=120Grad, 4=90Grad
+   END_STRUCT ;	
+  END_STRUCT ;	
+BEGIN
+   Platz[0].Pal_Nr := 0; 
+   Platz[0].TeiloWRS := FALSE; 
+   Platz[0].Spannhydraulik := FALSE; 
+   Platz[0].Pal_schwer := FALSE; 
+   Platz[0].frei2 := B#16#0; 
+   Platz[0].Ordner_Name := ''; 
+   Platz[0].Prg_Name := ''; 
+   Platz[0].Status := B#16#0; 
+   Platz[0].frei1 := B#16#0; 
+   Platz[0].Teilung := B#16#0; 
+   Platz[1].Pal_Nr := 0; 
+   Platz[1].TeiloWRS := FALSE; 
+   Platz[1].Spannhydraulik := FALSE; 
+   Platz[1].Pal_schwer := FALSE; 
+   Platz[1].frei2 := B#16#0; 
+   Platz[1].Ordner_Name := ''; 
+   Platz[1].Prg_Name := ''; 
+   Platz[1].Status := B#16#0; 
+   Platz[1].frei1 := B#16#0; 
+   Platz[1].Teilung := B#16#0; 
+   Platz[2].Pal_Nr := 0; 
+   Platz[2].TeiloWRS := FALSE; 
+   Platz[2].Spannhydraulik := FALSE; 
+   Platz[2].Pal_schwer := FALSE; 
+   Platz[2].frei2 := B#16#0; 
+   Platz[2].Ordner_Name := ''; 
+   Platz[2].Prg_Name := ''; 
+   Platz[2].Status := B#16#0; 
+   Platz[2].frei1 := B#16#0; 
+   Platz[2].Teilung := B#16#0; 
+   Platz[3].Pal_Nr := 0; 
+   Platz[3].TeiloWRS := FALSE; 
+   Platz[3].Spannhydraulik := FALSE; 
+   Platz[3].Pal_schwer := FALSE; 
+   Platz[3].frei2 := B#16#0; 
+   Platz[3].Ordner_Name := ''; 
+   Platz[3].Prg_Name := ''; 
+   Platz[3].Status := B#16#0; 
+   Platz[3].frei1 := B#16#0; 
+   Platz[3].Teilung := B#16#0; 
+   Platz[4].Pal_Nr := 0; 
+   Platz[4].TeiloWRS := FALSE; 
+   Platz[4].Spannhydraulik := FALSE; 
+   Platz[4].Pal_schwer := FALSE; 
+   Platz[4].frei2 := B#16#0; 
+   Platz[4].Ordner_Name := ''; 
+   Platz[4].Prg_Name := ''; 
+   Platz[4].Status := B#16#0; 
+   Platz[4].frei1 := B#16#0; 
+   Platz[4].Teilung := B#16#0; 
+   Platz[5].Pal_Nr := 0; 
+   Platz[5].TeiloWRS := FALSE; 
+   Platz[5].Spannhydraulik := FALSE; 
+   Platz[5].Pal_schwer := FALSE; 
+   Platz[5].frei2 := B#16#0; 
+   Platz[5].Ordner_Name := ''; 
+   Platz[5].Prg_Name := ''; 
+   Platz[5].Status := B#16#0; 
+   Platz[5].frei1 := B#16#0; 
+   Platz[5].Teilung := B#16#0; 
+   Platz[6].Pal_Nr := 0; 
+   Platz[6].TeiloWRS := FALSE; 
+   Platz[6].Spannhydraulik := FALSE; 
+   Platz[6].Pal_schwer := FALSE; 
+   Platz[6].frei2 := B#16#0; 
+   Platz[6].Ordner_Name := ''; 
+   Platz[6].Prg_Name := ''; 
+   Platz[6].Status := B#16#0; 
+   Platz[6].frei1 := B#16#0; 
+   Platz[6].Teilung := B#16#0; 
+   Platz[7].Pal_Nr := 0; 
+   Platz[7].TeiloWRS := FALSE; 
+   Platz[7].Spannhydraulik := FALSE; 
+   Platz[7].Pal_schwer := FALSE; 
+   Platz[7].frei2 := B#16#0; 
+   Platz[7].Ordner_Name := ''; 
+   Platz[7].Prg_Name := ''; 
+   Platz[7].Status := B#16#0; 
+   Platz[7].frei1 := B#16#0; 
+   Platz[7].Teilung := B#16#0; 
+   Platz[8].Pal_Nr := 0; 
+   Platz[8].TeiloWRS := FALSE; 
+   Platz[8].Spannhydraulik := FALSE; 
+   Platz[8].Pal_schwer := FALSE; 
+   Platz[8].frei2 := B#16#0; 
+   Platz[8].Ordner_Name := ''; 
+   Platz[8].Prg_Name := ''; 
+   Platz[8].Status := B#16#0; 
+   Platz[8].frei1 := B#16#0; 
+   Platz[8].Teilung := B#16#0; 
+   Platz[9].Pal_Nr := 0; 
+   Platz[9].TeiloWRS := FALSE; 
+   Platz[9].Spannhydraulik := FALSE; 
+   Platz[9].Pal_schwer := FALSE; 
+   Platz[9].frei2 := B#16#0; 
+   Platz[9].Ordner_Name := ''; 
+   Platz[9].Prg_Name := ''; 
+   Platz[9].Status := B#16#0; 
+   Platz[9].frei1 := B#16#0; 
+   Platz[9].Teilung := B#16#0; 
+   Platz[10].Pal_Nr := 0; 
+   Platz[10].TeiloWRS := FALSE; 
+   Platz[10].Spannhydraulik := FALSE; 
+   Platz[10].Pal_schwer := FALSE; 
+   Platz[10].frei2 := B#16#0; 
+   Platz[10].Ordner_Name := ''; 
+   Platz[10].Prg_Name := ''; 
+   Platz[10].Status := B#16#0; 
+   Platz[10].frei1 := B#16#0; 
+   Platz[10].Teilung := B#16#0; 
+   Platz[11].Pal_Nr := 0; 
+   Platz[11].TeiloWRS := FALSE; 
+   Platz[11].Spannhydraulik := FALSE; 
+   Platz[11].Pal_schwer := FALSE; 
+   Platz[11].frei2 := B#16#0; 
+   Platz[11].Ordner_Name := ''; 
+   Platz[11].Prg_Name := ''; 
+   Platz[11].Status := B#16#0; 
+   Platz[11].frei1 := B#16#0; 
+   Platz[11].Teilung := B#16#0; 
+   Platz[12].Pal_Nr := 0; 
+   Platz[12].TeiloWRS := FALSE; 
+   Platz[12].Spannhydraulik := FALSE; 
+   Platz[12].Pal_schwer := FALSE; 
+   Platz[12].frei2 := B#16#0; 
+   Platz[12].Ordner_Name := ''; 
+   Platz[12].Prg_Name := ''; 
+   Platz[12].Status := B#16#0; 
+   Platz[12].frei1 := B#16#0; 
+   Platz[12].Teilung := B#16#0; 
+   Platz[13].Pal_Nr := 0; 
+   Platz[13].TeiloWRS := FALSE; 
+   Platz[13].Spannhydraulik := FALSE; 
+   Platz[13].Pal_schwer := FALSE; 
+   Platz[13].frei2 := B#16#0; 
+   Platz[13].Ordner_Name := ''; 
+   Platz[13].Prg_Name := ''; 
+   Platz[13].Status := B#16#0; 
+   Platz[13].frei1 := B#16#0; 
+   Platz[13].Teilung := B#16#0; 
+   Platz[14].Pal_Nr := 0; 
+   Platz[14].TeiloWRS := FALSE; 
+   Platz[14].Spannhydraulik := FALSE; 
+   Platz[14].Pal_schwer := FALSE; 
+   Platz[14].frei2 := B#16#0; 
+   Platz[14].Ordner_Name := ''; 
+   Platz[14].Prg_Name := ''; 
+   Platz[14].Status := B#16#0; 
+   Platz[14].frei1 := B#16#0; 
+   Platz[14].Teilung := B#16#0; 
+   Platz[15].Pal_Nr := 0; 
+   Platz[15].TeiloWRS := FALSE; 
+   Platz[15].Spannhydraulik := FALSE; 
+   Platz[15].Pal_schwer := FALSE; 
+   Platz[15].frei2 := B#16#0; 
+   Platz[15].Ordner_Name := ''; 
+   Platz[15].Prg_Name := ''; 
+   Platz[15].Status := B#16#0; 
+   Platz[15].frei1 := B#16#0; 
+   Platz[15].Teilung := B#16#0; 
+   Platz[16].Pal_Nr := 0; 
+   Platz[16].TeiloWRS := FALSE; 
+   Platz[16].Spannhydraulik := FALSE; 
+   Platz[16].Pal_schwer := FALSE; 
+   Platz[16].frei2 := B#16#0; 
+   Platz[16].Ordner_Name := ''; 
+   Platz[16].Prg_Name := ''; 
+   Platz[16].Status := B#16#0; 
+   Platz[16].frei1 := B#16#0; 
+   Platz[16].Teilung := B#16#0; 
+END_DATA_BLOCK
+

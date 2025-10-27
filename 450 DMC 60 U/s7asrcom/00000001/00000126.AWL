@@ -1,0 +1,337 @@
+FUNCTION "FC_ACHSE_HAUPT" : VOID
+TITLE =
+//$Revision: 1.24 $
+//$Date: 2008/10/11 09:22:41CEST $
+//$Author: hgc $
+//
+//Baustein-Aufrufe Achsen
+//-------------------------------------------------------------------------------
+//Funktionsbeschreibung:
+//
+//    Abfrage: Achse vorhanden ? 
+//    Aktivierung Meßsystem
+//    Vorschubkorrekturschalter / Eilgang-Überlagerung aktivieren 
+//
+//    Achse: Nachführbetrieb 
+//    Umschaltung OVR für Eilgang
+//    Achse: "Bremse lösen" Übergabe-Signal bilden
+//    Verzögerung bilden: Reglerfreigabe nach Bremse lüften
+//    
+//    Achse: Impulsfreigabe
+//    Achse: Bremse lösen Verzögerung bilden 
+//    Achse: Reglerfreigabe
+//
+//Achs Typ:
+//    1 = Anzeige
+//    2 = Achse permanent geregelt
+//    3 = Achse mit Klemmung
+//    4 = Hilfsachse
+//
+//    Achse: Fehlermeldung //VS-SP-X,Reglersperre
+//    Achse: //NC-Schnittstelle: Reglersperre
+//    Achse: Servomodul-Überwachung  //NOT-AUS,Antrieb nicht bereit
+//    Achse: Temperatur-Überwachung  //VS-SP-X,Motortemperatur zu hoch
+//-------------------------------------------------------------------------------
+//Logbuch:
+///V1.1 /11.05.2005/Scheuenstuhl; parkende Achse, neu:EX_AxPark, Abwahl Meßsysteme
+///V1.0 /23-05-00/ AB Schnittstellen geändert
+///V0.11/8-Mai-00/ BAG
+// o Eilgang-Überlagerung in Jog mit Eilgang-Override veränderbar aktiviert
+///V0.10/23-02-00/ BAG
+// o Schnittstelle erweitert: => Vorschubfreigabe für Antriebsoptimierungs-Tests 
+//    E_Taste_Brems_Auf_Messen  // für Antriebsoptimierungs-Tests 
+///V0.9/17-02-00/ BAG
+// o Schnittstelle erweitert: E_Kanal1_E_Transform => Vorschubfreigabe
+///V0.8/15.12.99/ BAG
+//- NST "Achsen_Halt_von_aussen" ergänzt
+//- Vorschubkorrekturschalter / Eilgang-Überlagerung aktivieren 
+//- Achse: Nachführbetrieb 
+//V0.6 /22.10.99/ BAG
+//- Modul Schnittstelle eingerichtet 
+//22.12.99 / AB
+//Fehler mit Quittiertaste rückgesetzt 
+AUTHOR : BAG
+FAMILY : DM_Basis
+NAME : ACHSEN
+VERSION : 1.1
+
+
+VAR_INPUT
+  EX_EN : BOOL ;	//Modul-Freigabe
+  EX_UDHex_00_IB_Bit_Achse : BOOL ;	//PLC_MD_Achsen-Abwahl 1.Achse: 0=ein, 1=aus
+  EX_UDHex_01_Ax_Messystem : BOOL ;	//PLC_MD_Anwahl Messystem 1.Achse: 0=indirekt, 1=direkt
+  EX_Option_Safety : BOOL ;	//Maschine mit Safety 
+  EX_Safe_RF_aus : BOOL ;	//Bremsentest von Safety Integrated
+  EX_Safe_StopC_aktiv : BOOL ;	//Stop C aktiv --> Bremse öffnen
+  EX_Safe_StopA_aktiv : BOOL ;	//Stop A aktiv
+  EX_Safe_Teststop_laeuft : BOOL ;	//Teststop läuft
+  EX_Maschine_Ein : BOOL ;	//Antrieb Ein bei Maschine Ein
+  EX_Antrieb_Sperre : BOOL ;	//Antrieb gesperrt
+  EX_Freigabe_Regler : BOOL ;	//Freigabe Regler
+  EX_Leistung_steht_an : BOOL ;	//Leistung steht an in Betriebsarten
+  EX_GewSchn_Aktiv : BOOL ;	//Gewindeschneide Gesamt
+  EX_VSHalt_EinzelAchse : BOOL ;	//Achs-Vorschubsperre von aussen angefordert
+  EX_VSHalt_Gruppe : BOOL ;	//Vorschub Halt Hauptachsen
+  EX_VSHalt_Kanal : BOOL ;	//Vorschub Halt Kanal
+  EX_RefPkt_Achse : BOOL ;	//Referenzpunkt Achse
+  EX_Ax_E_MotOK_93x5 : BOOL ;	//Achse Drive-Ready
+  EX_Ax_E_MTempWarn_94x0 : BOOL ;	//Temperaturvorwarnung Motor
+  EX_Ax_E_Steht_61x4 : BOOL ;	//Achse Steht
+  EX_Ax_E_KTempWarn_94x1 : BOOL ;	//Temperaturvorwarnung Kühlkörper
+  EX_Ax_E_LageRegler_61x5 : BOOL ;	//Lageregler aktiv
+  EX_Ax_E_IntSperr_93x6 : BOOL ;	//Integrator-Drehzahlregler gesperrt
+  EX_Ax_E_ImpFrei_93x7 : BOOL ;	//Impulse freigegeben
+  EX_Ax_E_DrehzRegler_61x6 : BOOL ;	//Drehzahlregler aktiv
+  EX_Ax_E_StromRegler_61x7 : BOOL ;	//Stromregler aktiv
+  EX_Ax_E_FahrAF_61x0 : BOOL ;	//Fahranforderung für Antriebsoptimierungs-Tests 
+  EX_Ax_E_FBMinus_64x6 : BOOL ;	//Fahrbefehl Minus
+  EX_Ax_E_FBPlus_64x7 : BOOL ;	//Fahrbefehl Plus
+  EX_Eilgang_aktiv : BOOL ;	//Anforderung Eilgang
+  EX_Fehler_Quit : BOOL ;	//Taste Fehlerquittierung
+  EX_RefNeu_Sync : BOOL ;	//Taste Referenzpunkt neu Synchronisieren
+  EX_AxPark : BOOL ;	//Achse parken (=Abwahl Meßsystem1+2)
+  EB_Achs_Typ : BYTE ;	//Achstyp: 1=Anzeige, 2=Achse perm, 3=Achse mit Klemmung
+  ET_Timer_Ax_Freigabe : TIMER ;	//Timer Achs-Freigabe
+END_VAR
+VAR_IN_OUT
+  EAX_Ax_A_KorrW_1x7 : BOOL ;	//Korrektur wirksam
+  EAX_Ax_A_ReglerFrei_2x1 : BOOL ;	//Reglerfreigabe
+  EAX_Ax_A_ImpFrei_21x7 : BOOL ;	//Impulsfreigabe
+  EAX_Ax_A_VSSpHalt_4x3 : BOOL ;	//Vorschub/Spindel-Halt
+  EAX_Ax_A_ASpSperre_1x3 : BOOL ;	//Achsen-/Spindelsperre
+  EAX_A_A_NachfBetr_1x4 : BOOL ;	//Nachführbetrieb
+  EAX_Ax_A_LageMess1_1x5 : BOOL ;	//Lagemeßsystem 1
+  EAX_Ax_A_LageMess2_1x6 : BOOL ;	//Lagemeßsystem 2
+  EAX_Ax_A_EGUeberlag_4x5 : BOOL ;	//Eilgangüberlagerung 
+  EAX_Ax_A_RefVerzoeg_12x7 : BOOL ;	//Referenzverzögerung bei Motormessystem
+  EAX_AX_A_Sp1Syn_16x4 : BOOL ;	//Referenzpunkt neu synchronisieren
+  EAX_Alarm_Regler : BOOL ;	//Alarm Reglerfreigabe fehlt
+  EAX_Alarm_VSSP_Mot_Temp : BOOL ;	//Alarm Motortemperatur zu hoch
+  EAX_Alarm_VSSP_KK_Temp : BOOL ;	//Alarm Kühlkörpertemperatur zu hoch
+  EAX_Alarm_NA_MotOK : BOOL ;	//Alarm Achse nicht bereit
+  EAX_M_Bremse_oeffnen : BOOL ;	//Ausgang Bremse lüften
+END_VAR
+BEGIN
+NETWORK
+TITLE =Modul-Freigabe
+
+      UN    #EX_EN; 
+      BEB   ; 
+NETWORK
+TITLE =Fehler quittieren
+
+      U     #EX_Fehler_Quit; 
+      R     #EAX_Alarm_NA_MotOK; // NOT-AUS, Antrieb Achse nicht bereit
+      R     #EAX_Alarm_Regler; // NOT-AUS, Regler nicht bereit
+      R     #EAX_Alarm_VSSP_Mot_Temp; // Motortemperatur zu hoch
+      R     #EAX_Alarm_VSSP_KK_Temp; 
+NETWORK
+TITLE =Abfrage Achstyp
+
+      L     #EB_Achs_Typ; // Abfrage Achstyp
+      L     2; // >= 2 
+      >=I   ; 
+      SPBN  NOUE; 
+NETWORK
+TITLE =Alarm: Achse nicht bereit
+
+      U     #EX_Leistung_steht_an; 
+      UN    #EX_Antrieb_Sperre; 
+      UN    #EX_UDHex_00_IB_Bit_Achse; 
+      UN    #EX_Safe_StopA_aktiv; 
+      UN    #EX_Safe_Teststop_laeuft; 
+      U(    ; 
+      O     #EAX_Ax_A_LageMess1_1x5; 
+      O     #EAX_Ax_A_LageMess2_1x6; 
+      )     ; 
+      UN    #EX_Ax_E_MotOK_93x5; 
+      S     #EAX_Alarm_NA_MotOK; 
+NETWORK
+TITLE =Alarm: Reglerfreigabe fehlt
+
+      U     #EX_Leistung_steht_an; // Antriebe ein
+      UN    #EX_Antrieb_Sperre; // keine Antriebssperre
+      UN    #EX_UDHex_00_IB_Bit_Achse; // Achse ausblenden
+      U     #EAX_Ax_A_ReglerFrei_2x1; // und Achse ist ein
+      UN    #EX_Ax_E_FahrAF_61x0; // und keine Achseoptimierung
+      U(    ; 
+      ON    #EAX_Ax_A_VSSpHalt_4x3; 
+      O     ; 
+      U(    ; 
+      L     #EB_Achs_Typ; 
+      L     3; 
+      <>I   ; 
+      )     ; 
+      U(    ; 
+      L     #EB_Achs_Typ; 
+      L     4; 
+      <>I   ; 
+      )     ; 
+      )     ; 
+      U(    ; 
+      ON    #EX_Ax_E_LageRegler_61x5; 
+      ON    #EX_Ax_E_DrehzRegler_61x6; // Keine Reglerfreigabe
+      ON    #EX_Ax_E_ImpFrei_93x7; // Keine Impulsfreigabe
+      )     ; // DBX93.7 Impulse freigegeben
+      U(    ; 
+      O     #EX_Ax_E_FBMinus_64x6; 
+      O     #EX_Ax_E_FBPlus_64x7; // DBX64.6 Minus-Fahrbefehl 
+      O     #EX_GewSchn_Aktiv; // DBX64.7 Plus-Fahrbefehl 
+      )     ; 
+      S     #EAX_Alarm_Regler; 
+NETWORK
+TITLE =Alarm: Motortemperatur zu hoch / Kühlkörpertemperatur zu hoch
+
+      U     #EX_Leistung_steht_an; // Antriebe EIN
+      U(    ; 
+      O     #EX_Ax_E_FBMinus_64x6; // DBX64.6 Minus-Fahrbefehl 
+      O     #EX_Ax_E_FBPlus_64x7; // DBX64.7 Plus-Fahrbefehl 
+      O     #EX_GewSchn_Aktiv; 
+      )     ; 
+      =     L      0.0; 
+      U     L      0.0; // Temperaturvorwarnung Kühlkörper
+      U     #EX_Ax_E_MTempWarn_94x0; // Temperaturvorwarnung Motor
+      S     #EAX_Alarm_VSSP_Mot_Temp; 
+      U     L      0.0; // Motortemperatur zu hoch
+      U     #EX_Ax_E_KTempWarn_94x1; 
+      S     #EAX_Alarm_VSSP_KK_Temp; 
+NETWORK
+TITLE =Aktivierung Meßsystem 2
+//Direktes Messystem   
+NOUE: U     #EX_UDHex_01_Ax_Messystem; // PLC_MD_Anwahl Messystem 1.Achse: 0=indirekt, 1=direkt
+      UN    #EX_UDHex_00_IB_Bit_Achse; 
+      UN    #EX_AxPark; 
+      =     #EAX_Ax_A_LageMess2_1x6; // Meßsystem 2 aktiv    
+NETWORK
+TITLE =Aktivierung Meßsystem 1
+//Indirektes Messystem     (Default)
+      UN    #EX_UDHex_01_Ax_Messystem; // PLC_MD_Anwahl Messystem 1.Achse: 0=indirekt, 1=direkt
+      UN    #EX_UDHex_00_IB_Bit_Achse; 
+      UN    #EX_AxPark; 
+      =     #EAX_Ax_A_LageMess1_1x5; // Meßsystem 1 aktiv
+NETWORK
+TITLE =Achse: Nachführbetrieb
+//
+// Nachführbetrieb 
+//
+      L     #EB_Achs_Typ; // Achs-Typ = 1, Anzeige Achse
+      L     1; 
+      ==I   ; 
+      O     #EX_UDHex_00_IB_Bit_Achse; // Achse ausblenden (IB-Bit)             
+      UN(   ; 
+      L     #EB_Achs_Typ; // Achs-Typ = 1, Anzeige Achse
+      L     3; 
+      ==I   ; 
+      )     ; 
+      =     #EAX_Ax_A_ASpSperre_1x3; // Achsensperre
+      =     #EAX_A_A_NachfBetr_1x4; // Nachführbetrieb
+
+NETWORK
+TITLE =Referenzpunktverzögerung bei Motormessystem
+//Referenzpunktverzögerung
+//
+      U     #EX_RefPkt_Achse; 
+      =     #EAX_Ax_A_RefVerzoeg_12x7; 
+
+NETWORK
+TITLE =Referenzpunkt neu suchen (Nur bei Anzeige Achse)
+//Referenzpunkt neu suchen (Nur bei Anzeige Achse)
+//
+      L     #EB_Achs_Typ; // Achstyp = 1 (Anzeige)
+      L     1; 
+      ==I   ; 
+      SPBN  KOR; 
+
+
+NETWORK
+TITLE =Anzeige Achse Referenzpunkt neu synchronisieren
+
+      U     "DB_SIEM_BAG".E_REF; 
+      U     #EX_RefNeu_Sync; 
+      =     #EAX_AX_A_Sp1Syn_16x4; 
+NETWORK
+TITLE =Vorschubkorrekturschalter / Eilgang-Überlagerung aktivieren 
+//
+// Achsen-Korrektur auf BP-Tasten 
+//
+KOR:  SET   ; 
+      =     #EAX_Ax_A_KorrW_1x7; 
+
+// umrangieren in DB-AX DBB0 durch Grundprogramm
+
+NETWORK
+TITLE =Eilgangüberlagerung
+
+      U     #EX_Eilgang_aktiv; 
+      =     #EAX_Ax_A_EGUeberlag_4x5; 
+NETWORK
+TITLE =Impulsfreigabe
+
+      O     #EAX_Ax_A_ReglerFrei_2x1; // Reglerfreigabe 
+      O     #EX_Option_Safety; 
+      =     #EAX_Ax_A_ImpFrei_21x7; // Impulsfreigabe setzen 
+NETWORK
+TITLE = Achse: Reglerfreigabe DBX 2.1
+
+      U     #EX_Maschine_Ein; // Maschine EIN
+      UN    #EX_Antrieb_Sperre; // Keine Sperre vom Familien Modul
+      U     #EX_Freigabe_Regler; // und freigabe Regler (Klemmung)
+      UN    #EX_UDHex_00_IB_Bit_Achse; // Achse ausblenden (IB-Bit) = 0
+      U     #EX_Leistung_steht_an; // Leistung steht an
+      U(    ; // Achse angewählt
+      L     #EB_Achs_Typ; 
+      L     2; 
+      >=I   ; 
+      )     ; 
+      UN    #EX_Option_Safety; 
+      O     ; 
+      U     #EX_Option_Safety; // Sobald Safey vorhanden immer Reglerfreigabe schalten
+      UN    #EX_Safe_RF_aus; 
+      U     #EX_Freigabe_Regler; // und freigabe Regler (Klemmung)
+      =     #EAX_Ax_A_ReglerFrei_2x1; 
+NETWORK
+TITLE =Achse: "Bremse lösen" Übergabe-Signal bilden
+//Übergabe-Merker "Bremsen öffen", werden im Aufruf-Modul maschinenspezifisch 
+//zusammengefasst und auf die entsprechenden Ausgänge geschaltet.
+//
+      O(    ; 
+      UN    #EX_Ax_E_IntSperr_93x6; // DBX93.6 Integrator-Drehzahlregler gesperrt
+      U     #EX_Ax_E_LageRegler_61x5; // DBX61.5 Lageregelung aktiv
+      U     #EX_Ax_E_DrehzRegler_61x6; // DBX61.6 Drehzahlregler aktiv
+      U     #EAX_Ax_A_ReglerFrei_2x1; // DBX2.1  Reglerfreigabe aktiv
+      UN    #EX_Ax_E_FahrAF_61x0; // DBX 61.0 Fahranforderung Antriebstest
+      )     ; 
+      O(    ; 
+      U     #EX_Ax_E_FahrAF_61x0; // DBX 61.0 Fahranforderung Antriebstest
+      )     ; 
+      O(    ; 
+      U     #EX_Safe_StopC_aktiv; 
+      U     #EX_Ax_E_DrehzRegler_61x6; // DBX61.6 Drehzahlregler aktiv
+      U     #EX_Option_Safety; // Sobald Safey vorhanden immer Reglerfreigabe schalten
+      )     ; 
+      U     #EX_Ax_E_MotOK_93x5; // DBX93.5 Drive ready
+      U     #EX_Ax_E_ImpFrei_93x7; // DBX93.7 Impulse freigegeben
+      U     #EX_Ax_E_StromRegler_61x7; // DBX61.7 Stromregler aktiv
+      =     #EAX_M_Bremse_oeffnen; 
+NETWORK
+TITLE =Timer Achsfreigabe
+
+      U     #EAX_M_Bremse_oeffnen; 
+      L     S5T#500MS; 
+      SE    #ET_Timer_Ax_Freigabe; 
+      NOP   0; 
+      NOP   0; 
+      NOP   0; 
+      NOP   0; 
+NETWORK
+TITLE =Achse: Vorschub Halt  DBX 4.3
+
+      ON    #EAX_Ax_A_ReglerFrei_2x1; // "Achse".A_ReglerFrei   
+      ON    #ET_Timer_Ax_Freigabe; // 500ms nach Bremse auf
+      O     #EX_VSHalt_EinzelAchse; 
+      O     #EX_VSHalt_Gruppe; 
+      O     #EX_VSHalt_Kanal; 
+      =     #EAX_Ax_A_VSSpHalt_4x3; // "Achse".A_VSSpHalt 
+
+END_FUNCTION
+

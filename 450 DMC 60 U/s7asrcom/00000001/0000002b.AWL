@@ -1,0 +1,115 @@
+FUNCTION "FC_WZB_FSTRT" : VOID
+TITLE =
+//$Revision: 1.8 $
+//$Date: 2008/09/02 14:14:41CEST $
+//$Author: schmoelp $
+//WzBruchüberwachung Frühstart
+//________________________________________________________________________________
+//Erstellt: 24.01.2007 / SPAC_SLH
+//Quelle  : Neu
+//Bst.Info: WzBruch-Prüfung sofort nach WzGreifer drehen einleiten, nicht erst
+//        : beim Ablegen in das Magazin
+//        : 
+//Änderung: Datum     / Abteilung / Name  / Version x.y
+//Änderung:          /            /      / 
+//        : 
+//================================================================================
+AUTHOR : SPAC_slh
+VERSION : 0.1
+
+
+VAR_TEMP
+  LOp1 : BOOL ;	//lokaler Operationsmerker 1, Zwischenmerker
+  fpWDRdRdy : BOOL ;	//pos.Flanke "WzDat lesen ready"
+  GrMagWvh : BOOL ;	//Greifer an Magazinseite hat Werkzeug
+  OptMitWzb : BOOL ;	//Option: mit WzBruchkontrolle, aus DB20.UdInt10=Db20.dbw20
+END_VAR
+BEGIN
+NETWORK
+TITLE =pos.Flanke "WzDat lesen ready"
+
+      U     "Mx_WZdaten_lesen_ready"; 
+      FP    "DB_ALG".fk[0]; 
+      =     #fpWDRdRdy; 
+NETWORK
+TITLE =Option: mit WzBruch-Kontrolle, aus DB20.UdInt010
+
+      L     "DB_PLC_MD_DB20".UDInt._010_ANWAHL_WERZEUGBRUCH; 
+      L     0; 
+      >I    ; 
+      =     #OptMitWzb; 
+NETWORK
+TITLE =Greifer an Magazinseite hat ein Werkzeug
+
+      U     "M_WZGr1_belegt"; 
+      U     "M_WZW_Gre1_Pos_Mag"; 
+      O     ; 
+      U     "M_WZGr2_belegt"; 
+      U     "M_WZW_Gre1_Pos_Spi"; 
+      =     #GrMagWvh; 
+NETWORK
+TITLE =Anforderung WzBruch prüfen
+
+      U(    ; 
+      U     "DB_DM_M_FUNKTION".MX_M[276]; 
+      FN    "DB_ALG".fk[1]; 
+      O(    ; 
+      U     "DB_DM_M_FUNKTION".MX_M[277]; 
+      FN    "DB_ALG".fk[2]; 
+      )     ; 
+      )     ; 
+      U(    ; 
+      O     "M_WZW_Gre1_Pos_Mag"; 
+      O     "M_WZW_Gre1_Pos_Spi"; 
+      )     ; 
+      =     #LOp1; 
+NETWORK
+TITLE =Speicher: Anforderung WzBruch prüfen
+
+      U     #LOp1; 
+      S     "DB_ALG".x.RqPWzB; 
+      U(    ; 
+      ON    #GrMagWvh; 
+      O     "M_WZB_Anforderung"; 
+      ON    #OptMitWzb; 
+      )     ; 
+      R     "DB_ALG".x.RqPWzB; 
+      NOP   0; 
+NETWORK
+TITLE =Anforderung WzBruch prüfen
+
+      U     "DB_ALG".x.RqPWzB; 
+      U     "DB_PLC_MD_DB20".UDHex._20_Bit1_WZ_ni_ablegen; 
+      U     "M_WZ_Spanner_Zu"; 
+      U     #fpWDRdRdy; 
+      U     #GrMagWvh; 
+      U     "M_WZW_Hub_GrdSt"; 
+      =     #LOp1; 
+      U     #LOp1; 
+      S     "M_WZB_Anforderung"; 
+      S     "M_WZB_Messung"; 
+      R     "M_WZB_Ready"; 
+NETWORK
+TITLE =Eilgang-/VsSperre bis zu prüfendes Wz.auf Bruch geprüft ist
+
+      U     #LOp1; 
+      FP    "DB_ALG".fk[4]; 
+      U     "DI_WZ_BRUCH".SX_GRF_ANF; 
+      U     #OptMitWzb; 
+      =     L      1.0; 
+      U     L      1.0; 
+      U(    ; 
+      L     "DB_REMANENT".WZB_GREIFER; 
+      L     2; 
+      <>I   ; 
+      )     ; 
+      S     "MX_WZB_Ov_0"; 
+      U     L      1.0; 
+      U(    ; 
+      L     "DB_REMANENT".WZB_GREIFER; 
+      L     3; 
+      ==I   ; 
+      )     ; 
+      S     "MX_WZB_G0_Sperre"; 
+END_FUNCTION
+

@@ -1,0 +1,369 @@
+FUNCTION "FC_KMTL_KSA7" : VOID
+TITLE =
+//$Revision: 1.7 $
+//$Date: 2008/01/21 14:00:32CET $
+//$Author: boa $
+//$ProjectRevision: Last Checkpoint: 1.56 $
+//
+//KSA_3
+VERSION : 0.1
+
+
+VAR_INPUT
+  i_KSA7_OHNE_SPALTSIEB : BOOL ;	
+  i_I_KM_MAX_NIVEAU : BOOL ;	
+  i_I_KM_MIN_NIVEAU : BOOL ;	
+  i_I_KM_MIN_VOR_NIVEAU : BOOL ;	
+  i_I_D_KM_MAX_NIVEAU : BOOL ;	
+  i_I_D_KM_MIN_NIVEAU : BOOL ;	
+  i_I_D_KM_MIN_VOR_NIVEAU : BOOL ;	
+  i_I_KM_BTB_ALLE_PUMPEN : BOOL ;	
+  i_I_KM_BTB_PNOZ : BOOL ;	
+  i_I_KM_NEG_KSA_MELDUNG : BOOL ;	
+  i_I_KM_NEG_MSS_SSA : BOOL ;	
+  i_I_KM_NEG_MSS_KSA : BOOL ;	
+  i_I_CU_GAP_SCREEN_CL_UPP : BOOL ;	//Eingang Spaltsieb oben
+  i_I_CU_GAP_SCREEN_CL_LOW : BOOL ;	//Eingang Spaltsieb unten
+  i_I_CU_NEG_PRESS_MONITOR : BOOL ;	//Unterdruck IKZ
+  i_O_KM_Spuelpumpe_ein : BOOL ;	
+  i_O_KM_Pumpe_Dach : BOOL ;	
+  i_O_KM_Pumpe_Dach2 : BOOL ;	
+  i_O_KM_M8_Ein : BOOL ;	
+  i_O_KM_M7_Ein : BOOL ;	
+  i_Timer_max : TIMER ;	
+  i_Timer_min : TIMER ;	
+  i_Timer_vorw : TIMER ;	
+  i_Timer_vorw_reaktion : TIMER ;	
+  i_Timer_DS_Unterdruck : TIMER ;	//Druckschalter Unterdruck IKZ entprellt
+  i_Timer_Spaltsieb_Laufz : TIMER ;	//Überwachungszeit Spaltsieb-Zylinder
+  i_Counter_min_Intervall : COUNTER ;	
+  i_Counter_sec_Intervall : COUNTER ;	
+  i_Counter_Spaltsiebtakte : COUNTER ;	
+  i_O_SF_PUMPE_EIN : BOOL ;	
+END_VAR
+VAR_IN_OUT
+  io_M_Fehler_Kmtl_Anlage : BOOL ;	
+  io_M_Spuelung_unterdruek : BOOL ;	
+  io_Mel_max : BOOL ;	
+  io_Mel_min : BOOL ;	
+  io_Mel_Vorwarnung : BOOL ;	
+  io_Mel_BTB_PNOZ : BOOL ;	
+  io_Mel_KSA : BOOL ;	
+  io_SPVHLT : BOOL ;	
+  io_Mel_Schalter_Defekt : BOOL ;	
+  io_Mel_BTB_Alle_Pumpen : BOOL ;	
+  io_Temp_Meldung_VORW : BOOL ;	
+  io_War_Spaltsieb_Zylind : BOOL ;	
+  io_Mel_IKZ_Unterdruck : BOOL ;	
+  io_Spaltsieb_reinig_akt : BOOL ;	//Spaltsieb Reinigungsablauf aktivieren
+  io_Spaltsieb_gereinigt : BOOL ;	//Spaltsieb gereinigt (5x vor/zurück)
+  io_O_CU_GAP_SCREEN_CLEAN : BOOL ;	//Ausgang Spaltsieb einschalten (nach oben)
+END_VAR
+VAR_TEMP
+  t_Intervallbetrieb : BOOL ;	
+  t_Zaehltakt : BOOL ;	
+  t_Reset_Intervallbetrieb : BOOL ;	
+  t_Restwert_Spaltsiebtakt : WORD ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =KM: Ksa_3 Füllstand Vorwarnung
+//------ KSA_3 -- Bürener -------------------------------------------------------
+      U     "M_Ruecksetze_Fehler"; 
+      R     #io_Mel_max; 
+      R     #io_Mel_min; 
+      R     #io_Mel_Vorwarnung; 
+      R     #io_SPVHLT; 
+      R     #io_Mel_Schalter_Defekt; 
+      R     #io_Mel_BTB_Alle_Pumpen; 
+      R     #io_Mel_BTB_PNOZ; 
+      R     #io_Mel_KSA; 
+NETWORK
+TITLE =MA: Maschine Ein
+
+      UN    #i_I_KM_NEG_MSS_SSA; 
+      U     #i_KSA7_OHNE_SPALTSIEB; 
+      S     #io_Mel_KSA; 
+NETWORK
+TITLE =Anlage ohne IKZ und Spaltsieb vorhanden ?
+
+      U     #i_KSA7_OHNE_SPALTSIEB; 
+      SPB   OSPS; 
+NETWORK
+TITLE =Betriebsbereit von PNOZ
+
+      UN    #i_I_KM_BTB_ALLE_PUMPEN; 
+      U     #i_O_KM_M7_Ein; //Soll nur bei M7 angezeigt werden
+      S     #io_Mel_BTB_Alle_Pumpen; 
+
+      UN    #i_I_KM_BTB_PNOZ; 
+      U(    ; 
+      O     #i_O_KM_M7_Ein; 
+      O     #i_O_KM_M8_Ein; 
+      )     ; 
+      S     #io_Mel_BTB_PNOZ; 
+NETWORK
+TITLE =Motorschutzschalter
+
+      ON    #i_I_KM_NEG_KSA_MELDUNG; 
+      ON    #i_I_KM_NEG_MSS_KSA; 
+      S     #io_Mel_KSA; 
+NETWORK
+TITLE =KMTL: Fehler in Kühlmittelanlage
+//------ Füllstand Überwachung 
+//-------------------------------------------------------------------------
+//
+// -------  MAX -------------
+      U     #i_I_KM_MAX_NIVEAU; 
+      L     S5T#1S500MS; 
+      SE    #i_Timer_max; 
+
+      U     #i_Timer_max; 
+      S     #io_Mel_max; 
+
+//----- MIN -------------
+      U     #i_I_KM_MIN_NIVEAU; 
+      L     S5T#1S500MS; 
+      SE    #i_Timer_min; 
+
+      U     #i_Timer_min; 
+      S     #io_Mel_min; 
+
+// ----- Vorwarung -------------------------
+
+      U     #i_I_KM_MIN_VOR_NIVEAU; 
+      L     S5T#1S500MS; 
+      SE    #i_Timer_vorw; 
+
+      L     8192; // Zeitbasis 1s laden
+      L     "DB_PLC_MD_DB20".UDInt._158_KSA3_Fuellst_Vorw; // MD in BCD wandeln und mit Zeitbasis
+      ITB   ; // verodern
+      OW    ; 
+
+      U     #i_Timer_vorw; 
+      SE    #i_Timer_vorw_reaktion; 
+      S     #io_Mel_Vorwarnung; 
+
+      U     #i_Timer_vorw_reaktion; 
+      O     "M_G00_aktiv"; 
+      U     #i_I_KM_MIN_VOR_NIVEAU; 
+      UN(   ; 
+      L     "DB_PLC_MD_DB20".UDInt._158_KSA3_Fuellst_Vorw; //Wenn keine Zeit dann M8/M7 nicht abgeschaltet
+      L     0; 
+      ==I   ; 
+      )     ; 
+      S     #io_Temp_Meldung_VORW; 
+
+NETWORK
+TITLE = Diagnoseschalter Niveau
+//----- Diagnoseschalter Niveau 
+//--------------------------------------------------------------------------------
+//-----
+      ON    #i_I_D_KM_MAX_NIVEAU; 
+      ON    #i_I_D_KM_MIN_NIVEAU; 
+      ON    #i_I_D_KM_MIN_VOR_NIVEAU; 
+      S     #io_Mel_Schalter_Defekt; 
+NETWORK
+TITLE =Unterdruckschalter IKZ verzögert
+
+      U     #i_O_KM_M7_Ein; 
+      UN    #i_I_CU_NEG_PRESS_MONITOR; 
+      L     S5T#2S; 
+      SE    #i_Timer_DS_Unterdruck; 
+      NOP   0; 
+      NOP   0; 
+      NOP   0; 
+      NOP   0; 
+NETWORK
+TITLE =Meldung VSH-Hauptachsen: IKZ Unterdruck
+
+      U     "M_Programm_Aktiv"; 
+      U     #i_Timer_DS_Unterdruck; 
+      U(    ; 
+      O     "M_G00_aktiv"; 
+      O     "M_Hauptachsen_stehen"; 
+      )     ; 
+      S     #io_Mel_IKZ_Unterdruck; 
+      U(    ; 
+      O     #io_Spaltsieb_gereinigt; 
+      ON    "M_Programm_Aktiv"; 
+      )     ; 
+      R     #io_Mel_IKZ_Unterdruck; 
+      NOP   0; 
+NETWORK
+TITLE =Spaltsieb Intervallbetrieb angewählt ?
+//Spaltsieb
+//
+//
+      U(    ; 
+      O(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._129_KSA3_Zwangstakt_TPF; 
+      L     0; 
+      <=I   ; 
+      )     ; 
+      O     #io_Spaltsieb_reinig_akt; 
+      )     ; 
+      =     #t_Reset_Intervallbetrieb; 
+      U     #t_Reset_Intervallbetrieb; 
+      SPB   kint; 
+NETWORK
+TITLE =Spaltsieb Intervallzeit zählen
+//Spaltsieb
+//
+//
+      U     "M_Takt_1s"; 
+      U     "M_MA_Maschine_Ein"; 
+      UN    #io_Spaltsieb_reinig_akt; 
+      =     #t_Zaehltakt; 
+
+      L     C#60; 
+      UN    #i_Counter_sec_Intervall; 
+      U     #t_Zaehltakt; 
+      S     #i_Counter_sec_Intervall; 
+
+      L     "DB_PLC_MD_DB20".UDInt._129_KSA3_Zwangstakt_TPF; 
+      ITB   ; 
+      UN    #i_Counter_min_Intervall; 
+      U     #t_Zaehltakt; 
+      S     #i_Counter_min_Intervall; 
+
+      U     #t_Zaehltakt; 
+      ZR    #i_Counter_sec_Intervall; 
+
+      UN    #i_Counter_sec_Intervall; 
+      ZR    #i_Counter_min_Intervall; 
+
+      UN    #i_Counter_sec_Intervall; 
+      UN    #i_Counter_min_Intervall; 
+      U     #t_Zaehltakt; 
+      =     #t_Intervallbetrieb; 
+NETWORK
+TITLE =Reset Intervallbetrieb
+//Spaltsieb
+//
+//
+kint: U     #t_Reset_Intervallbetrieb; 
+      R     #t_Intervallbetrieb; 
+      R     #i_Counter_min_Intervall; 
+      R     #i_Counter_sec_Intervall; 
+NETWORK
+TITLE =Spaltsieb Reinigungsablauf aktivieren
+//Spaltsieb
+//
+//
+      U     "M_MA_Maschine_Ein"; 
+      U(    ; 
+      O     #i_Timer_DS_Unterdruck; 
+      O     #t_Intervallbetrieb; 
+      )     ; 
+      S     #io_Spaltsieb_reinig_akt; 
+      U     #io_Spaltsieb_gereinigt; 
+      R     #io_Spaltsieb_reinig_akt; 
+      NOP   0; 
+NETWORK
+TITLE =Spaltsiebtakte zählen (Es wird 5x pro Intervall gereinigt)
+//Spaltsieb
+//
+//
+      U     #io_Spaltsieb_reinig_akt; 
+      U     #i_I_CU_GAP_SCREEN_CL_UPP; 
+      ZR    #i_Counter_Spaltsiebtakte; 
+      BLD   101; 
+      U     #io_Spaltsieb_gereinigt; 
+      L     C#5; 
+      S     #i_Counter_Spaltsiebtakte; 
+      NOP   0; 
+      NOP   0; 
+      LC    #i_Counter_Spaltsiebtakte; 
+      T     #t_Restwert_Spaltsiebtakt; 
+      NOP   0; 
+NETWORK
+TITLE =Spaltsieb gereinigt
+//Spaltsieb
+//
+//
+      U(    ; 
+      L     #t_Restwert_Spaltsiebtakt; 
+      L     0; 
+      ==I   ; 
+      )     ; 
+      U     #i_I_CU_GAP_SCREEN_CL_LOW; 
+      =     #io_Spaltsieb_gereinigt; 
+NETWORK
+TITLE =Ausgang Spaltsieb einschalten (nach oben)
+//Spaltsieb
+//Die Bewegung des Zylinders nach unten erfolgt über Federkraft
+      U     #io_Spaltsieb_reinig_akt; 
+      U     #i_I_CU_GAP_SCREEN_CL_LOW; 
+      S     #io_O_CU_GAP_SCREEN_CLEAN; 
+      U     #i_I_CU_GAP_SCREEN_CL_UPP; 
+      R     #io_O_CU_GAP_SCREEN_CLEAN; 
+      NOP   0; 
+NETWORK
+TITLE =Spaltsieb Überwachungszeit Zylinder 
+//Spaltsieb
+//
+//
+      U     "M_MA_Maschine_Ein"; 
+      U(    ; 
+      U     #io_O_CU_GAP_SCREEN_CLEAN; 
+      UN    #i_I_CU_GAP_SCREEN_CL_UPP; 
+      O     ; 
+      UN    #io_O_CU_GAP_SCREEN_CLEAN; 
+      UN    #i_I_CU_GAP_SCREEN_CL_LOW; 
+      )     ; 
+      L     S5T#5S; 
+      SE    #i_Timer_Spaltsieb_Laufz; 
+      NOP   0; 
+      NOP   0; 
+      NOP   0; 
+      NOP   0; 
+NETWORK
+TITLE =Störung Endschalter Spaltsieb-Zylinder
+
+      O     #i_Timer_Spaltsieb_Laufz; 
+      O     ; 
+      U     #i_I_CU_GAP_SCREEN_CL_UPP; 
+      U     #i_I_CU_GAP_SCREEN_CL_LOW; 
+      =     #io_War_Spaltsieb_Zylind; 
+NETWORK
+TITLE =Auswertung Fehlerreaktion M8 M7
+// M7/M8 aktiv
+OSPS: U     #i_O_KM_M7_Ein; 
+      O     #i_O_KM_M8_Ein; 
+      O     #io_SPVHLT; 
+      SPBN  a01; 
+
+      U     #io_Mel_min; 
+      O     #io_Mel_max; 
+      O     #io_Temp_Meldung_VORW; 
+      O     #io_Mel_Schalter_Defekt; 
+      O     #io_Mel_BTB_Alle_Pumpen; 
+      O     #io_Mel_BTB_PNOZ; 
+      O     #io_Mel_KSA; 
+      S     #io_SPVHLT; 
+
+a01:  NOP   0; 
+
+
+NETWORK
+TITLE =Auswertung Fehlerreaktion M98 M97
+// M97/98 aktiv
+      U     #i_O_KM_Spuelpumpe_ein; 
+      O     #i_O_KM_Pumpe_Dach; 
+      O     #i_O_KM_Pumpe_Dach2; 
+      O     #io_M_Spuelung_unterdruek; 
+      SPBN  a02; 
+
+      U     #io_Mel_min; 
+      O     #io_Mel_max; 
+      O     #io_Mel_Vorwarnung; 
+      O     #io_Mel_Schalter_Defekt; 
+      O     #io_Mel_KSA; 
+      =     #io_M_Spuelung_unterdruek; 
+
+a02:  NOP   0; 
+
+
+END_FUNCTION
+

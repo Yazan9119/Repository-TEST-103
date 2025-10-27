@@ -1,0 +1,970 @@
+FUNCTION "FC_WZ_SPANNER" : VOID
+TITLE =
+//$Revision: 1.36 $
+//$Date: 2008/10/07 08:30:42CEST $
+//$Author: schmoelp $
+//Ablauf WZ-Spanner
+//
+//V0.1 / 18.02.2000 / SJA
+//- Modul erstellt
+//V0.2 //16.05.00 /SJA
+//- Softkeyrettung
+//V0.3 / 15.02.2007 / slh
+//- Fehler reset bei autom.Ww Grundstlg. fahren (wenn WzGrfStlg.
+// mit Wz nach Abbruch endgültiges Spannen verhindert, damit 
+// Spanner lösen bei aut.Gst.fahren möglich ist)
+AUTHOR : SJA
+FAMILY : DM_WZW
+VERSION : 0.3
+
+
+VAR_INPUT
+  E_Enabled : BOOL ;	//Modul Freigabe
+  E_Fehlermodulenabled : BOOL ;	//Fehlermodul freigabe
+  E_Blasluft_Freigabe_Aus : BOOL ;	//Blasluft ist nicht freigegeben
+  E_Spindel_orientiert : BOOL ;	//Spindel ist orientiert
+  E_M19_Fertig : BOOL ;	//orientierter Spindelhalt fertig
+  E_M19_aktiv : BOOL ;	//m19 aktiv
+  E_I_Loeseeinheit_Abgehob : BOOL ;	//Eingang Loeseeinheit WZSP abgehoben Typ 4
+  E_Vorsatzspindel : BOOL ;	//Vorsatzspindel
+  E_M3_Request : BOOL ;	
+  E_M4_Request : BOOL ;	
+  E_Rett_Spanner_oeffnen : BOOL ;	
+  E_Rett_Spanner_schliesse : BOOL ;	
+  E_Ta_NC_Start : BOOL ;	
+END_VAR
+VAR_TEMP
+  T_Spanner_Zu : BOOL ;	//Spanner ist zu
+  T_Spanner_Offen : BOOL ;	//Spanner ist offen
+  T_Permanent_Spannsignale : BOOL ;	//Permantene Überwachung 
+  T_Orient_Spannsignale : BOOL ;	//Bit fuer Sapnner zu bei nicht permanenten Spannern (Typ 0,1)
+  t_dummy : BOOL ;	
+  T_Spanner_Zu_Mit_WZ : BOOL ;	//Analoger WZ-Spanner geschlossen mit Werkzeug
+  T_Spanner_Zu_ohne_WZ : BOOL ;	//Analoger WZ-Spanner geschlossen ohne Werkzeug
+  SpaLoeGf : BOOL ;	//Spann.lös.bei aut.Gst.fahren wenn WzKegel das fertigspannen verhindert
+  T_OEM_WZW_2_3_Vertmag : BOOL ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =Modul enabled
+//Hier werden die 5 verschiedenen Spannertypen auskodiert, und deren Eingaenge 
+//gelesen.
+//
+//Bei einem unbekannten Typ wird ein Fehler ausgegeben.
+//
+      UN    #E_Enabled; // Modul freigabe
+      ON    "DB_FAMILIEN_MODUL".WZ_Spanner_1_Aktiv; 
+      O(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._009_ANWAHL_WZSPANNER; 
+      L     0; 
+      ==I   ; 
+      )     ; 
+      SPB   ENDE; // sonst Ende
+      R     #T_Orient_Spannsignale; // nicht permanenten Spanner auf/zu Bits abloeschen
+      R     #T_Permanent_Spannsignale; 
+      R     #t_dummy; 
+
+      UN    "I_AL_TASTER_WZ_SPA"; 
+      =     "I_Taster_WZ_Spanner"; 
+
+//---------------------------------------------------------------------------------
+// Ueberwachung ASI Modul
+
+      CALL "FC_UT_SLAVE_UEBERW" (
+           E_Slave_1                := "DB_SLAVE_DIAGNOSE".slave1A[25],
+           E_Slave_2                := FALSE,
+           E_Slave_3                := FALSE,
+           EA_Fehler_Slave_1        := "DB_FEHLERMELDUNG".Spi_VS_Halt._700301_Err_ASI_Slave_25,
+           EA_Fehler_Slave_2        := #t_dummy,
+           EA_Fehler_Slave_3        := #t_dummy,
+           EA_Fehler_Slave          := #t_dummy);
+
+//---------------------------------------------------------------------------------
+// Spannertyp = 0
+
+      L     "DB_FAMILIEN_MODUL".WZ_Spanner_1_Typ; // Typ 1 (Orientierungsendschalter)
+      L     0; 
+      ==I   ; 
+      SPBN  TY01; 
+      U     "M_WSP_in_Bewegung"; 
+      FP    "M_WZSP_Trigg"; 
+      S     "M_WZSP0_Move"; 
+
+      U     "M_WZSP0_Move"; 
+      SPBN  T001; 
+
+      U     "M_Takt_01s"; // Oeffnen mit 3 Sek.Zeitverzögerung
+      SPBN  T001; 
+      L     "MB_Counter_Verzoe_Oeffn"; // Erhöhen der Zeit bei Taktimpuls
+      INC   1; 
+      T     "MB_Counter_Verzoe_Oeffn"; 
+      L     30; 
+      >=I   ; 
+      R     "M_WZSP0_Move"; 
+
+T001: U     "O_AL_WZ_Spanner_Loesen"; 
+      O     "M_O_Anwahl_WZS_Man"; 
+      UN    "M_WZSP0_Move"; 
+      =     #T_Spanner_Offen; // nach 3 Sekunden Spanner auf Bit setzen
+
+      UN    #T_Spanner_Offen; 
+      UN    "M_WZSP0_Move"; 
+      =     #T_Spanner_Zu; // nach 3 Sekunden Spanner zu Bit setzen
+      SPA   MOD; 
+
+//---------------------------------------------------------------------------------
+// Spannertyp = 1
+
+TY01: L     "DB_FAMILIEN_MODUL".WZ_Spanner_1_Typ; // Typ 1 (Orientierungsendschalter)
+      L     1; 
+      ==I   ; 
+      SPBN  TY02; 
+      =     #T_Orient_Spannsignale; 
+
+      U     "I_WZ_SPA_gespannt"; // definitive Aussage über Zustand 
+      UN    "I_WZ_SPA_geloest"; // des Spanners möglich
+      =     #T_Spanner_Zu; // Spanner ist zu
+
+      U     "I_WZ_SPA_geloest"; 
+      UN    "I_WZ_SPA_gespannt"; 
+      =     #T_Spanner_Offen; // Typ 1 Spanner ist offen
+      SPA   MOD; 
+
+//---------------------------------------------------------------------------------
+// Spannertyp = 2
+
+TY02: L     "DB_FAMILIEN_MODUL".WZ_Spanner_1_Typ; 
+      L     2; // Spannertyp 2 
+      ==I   ; 
+      SPBN  TY03; 
+      =     #T_Permanent_Spannsignale; 
+      U     "I_WZ_SPA_gespannt"; // 2 Endschalter permanent vorhanden
+      UN    "I_WZ_SPA_geloest"; 
+      =     #T_Spanner_Zu; 
+
+      U     "I_WZ_SPA_geloest"; 
+      UN    "I_WZ_SPA_gespannt"; 
+      =     #T_Spanner_Offen; 
+      SPA   MOD; 
+
+//---------------------------------------------------------------------------------
+// Spannertyp = 3
+
+TY03: L     "DB_FAMILIEN_MODUL".WZ_Spanner_1_Typ; 
+      L     3; 
+      ==I   ; 
+      SPBN  TY04; 
+      =     #T_Permanent_Spannsignale; 
+      U     "I_WZ_SPA_gespannt"; // 3 Endschalter permanent
+      O     "I_WZ-Spanner_Gesp_mit_WZ"; 
+      UN    "I_WZ_SPA_geloest"; 
+      =     #T_Spanner_Zu; 
+
+      U     "I_WZ_SPA_geloest"; 
+      UN    "I_WZ_SPA_gespannt"; 
+      =     #T_Spanner_Offen; 
+      SPA   MOD; 
+
+//---------------------------------------------------------------------------------
+// Spannertyp = 4
+
+TY04: L     "DB_FAMILIEN_MODUL".WZ_Spanner_1_Typ; 
+      L     4; 
+      ==I   ; 
+      SPBN  FETY; 
+      =     #T_Permanent_Spannsignale; 
+
+      O     "I_WZ_SPA_gespannt"; 
+      O     "I_WZ-Spanner_Gesp_mit_WZ"; 
+      UN    "I_WZ_SPA_geloest"; 
+      U     #E_I_Loeseeinheit_Abgehob; 
+      =     #T_Spanner_Zu; 
+
+      U     "I_WZ_SPA_geloest"; 
+      UN    "I_WZ_SPA_gespannt"; 
+      UN    "I_WZ-Spanner_Gesp_mit_WZ"; 
+      =     #T_Spanner_Offen; 
+      SPA   MOD; 
+
+NETWORK
+TITLE =WZ-Spanner Analog
+// Spannertyp = 5
+// Spanner 2 Analog
+FETY: L     "DB_FAMILIEN_MODUL".WZ_Spanner_1_Typ; 
+      L     5; 
+      ==I   ; 
+      SPBN  BEER; 
+      =     #T_Permanent_Spannsignale; 
+
+      L     "I_SPI_WZ_SPA"; 
+      L     "DB_SPI_ANALOG".VSP_Gespannt_mit_WZ_AB; 
+      >=I   ; 
+      TAK   ; 
+      U(    ; 
+      L     "DB_SPI_ANALOG".VSP_Gespannt_mit_WZ_Bis; 
+      <=I   ; 
+      )     ; 
+      U     "I_SPI_WZ_SPA_UEBERW_ZUG"; 
+      =     #T_Spanner_Zu_Mit_WZ; 
+
+      L     "I_SPI_WZ_SPA"; 
+      L     "DB_SPI_ANALOG".VPS_Gespannt_ohne_WZ_AB; 
+      >=I   ; 
+      TAK   ; 
+      U(    ; 
+      L     "DB_SPI_ANALOG".VPS_Gespannt_ohne_WZ_Bis; 
+      <=I   ; 
+      )     ; 
+      U     "I_SPI_WZ_SPA_UEBERW_ZUG"; 
+      =     #T_Spanner_Zu_ohne_WZ; 
+
+      O     #T_Spanner_Zu_ohne_WZ; 
+      O     #T_Spanner_Zu_Mit_WZ; 
+      =     #T_Spanner_Zu; 
+      =     "M_WZ_SPA_gesp_Analog"; 
+      =     "I_WZ_SPA_gespannt"; 
+
+      L     "I_SPI_WZ_SPA"; 
+      L     "DB_SPI_ANALOG".VPS_Geloest_AB; 
+      >=I   ; 
+      TAK   ; 
+      U(    ; 
+      L     "DB_SPI_ANALOG".VPS_Geloest_Bis; 
+      <=I   ; 
+      )     ; 
+      =     #T_Spanner_Offen; 
+      =     "M_WZ_SPA_geloe_Analog"; 
+      =     "I_WZ_SPA_geloest"; 
+      SPA   MOD; 
+BEER: SET   ; 
+      =     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700725_WZSP_unguelt_typ; 
+
+NETWORK
+TITLE =Ablaufmodul
+//Hier werden die Anwahlmöglichkeiten für den Spanner behandelt.
+MOD:  O     "M_Fehler_Quit_Taste"; 
+      O     "M_Reset_Taste"; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700712_WZSP_Auf_Start; 
+
+//---(A)--- Aktionen bei aut.Gst.fahren des Wechslers slh, 15.02.2007 -----
+      UN    "M_WZW_Greifer_OK"; 
+      U     "m_vwgf_SpiLoe"; 
+      UN    #T_Spanner_Offen; 
+      UN    #T_Spanner_Zu; 
+      =     #SpaLoeGf; 
+
+      U     #SpaLoeGf; //wenn aut.WwGf...
+      U(    ; 
+      L     B#16#4; 
+      L     "MB_WZSP_SKZ_Ablaufmodul"; 
+      ==I   ; //...und Sk im 4.Sr (Wz.klemmt in Spindel)
+      )     ; 
+      SPBN  m001; 
+      L     B#16#0; //...dann Sk auf Sr0 setzen, damit Lösbefehl ausgeführt werden kann
+      T     "MB_WZSP_SKZ_Ablaufmodul"; 
+m001: NOP   0; 
+//---(A)-----------------------------------------------------------------
+
+
+      UN    "M_MA_Maschine_Ein"; // wenn Not-Aus
+      SPBN  mo00; // falls Maschine ein
+
+      R     "M_WZSP_Zeit_nach_NotAus"; // dann, Not-Aus Zeit Bit abgelaufen zurücksetzen
+      L     0; 
+      T     "MB_Counter_Verzoe_NotAus"; // Zeitzähler auf 0
+
+//-----------------------------------Softkeyrettung-----------------------------
+// bei der SKR wird bei verriegelter Türe direkt der WZS-Ausgang gesetzt (und nicht ins Ablaufmodul gesprungen)
+// bei offener Türe wird mit WZS-Auf die Freigabe des WZspanners gesetzt und man muss mit dem Bestätigungsschalter 
+// den Spanner lösen, hier wird ins Ablaufmodul gesprungen   SJA 16.05.00
+
+mo00: U(    ; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.WZW_VKETTE_OHNE_TPU; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.WZW_VKETTE_MIT_TPU; 
+      )     ; 
+      U(    ; 
+      O     "DB_OEM".OEM_WZW2_Rettbildaktiv; 
+      O     "DB_OEM".OEM_WZW3_Rettbildaktiv; 
+      )     ; 
+      =     #T_OEM_WZW_2_3_Vertmag; 
+
+      U(    ; // wenn Softkeyrettung aktiv
+      O     "DB_OEM".OEM_WZW_REttbildaktiv; 
+      O     #T_OEM_WZW_2_3_Vertmag; 
+      O     "DB_OEM".OEM_PS4_Rettbildaktiv; 
+      O     "DB_OEM".OEM_WZW_MagEinstellung; 
+      O     "DB_OEM".OEM_Winkelkopfrettaktiv; 
+      O     "DB_OEM".OEM_Winkelkopfrettaktiv2; 
+      )     ; 
+      L     S5T#2S; // Zeitverzögerung damit der WZ-Spanner beim umschalten  
+      SA    "Tv_OEM_Maskenumschaltung"; // in eine andere Maske offen bleibt 
+
+      U     "Tv_OEM_Maskenumschaltung"; 
+      U     "M_Handbetrieb"; // "DB_SIEM_BAG".E_JOG
+      SPBN  mo01; 
+      R     "M_Man_WZSP_Auf"; 
+      R     "M_Auto_WZSP_Auf"; // autom. Anforderung von WZW Modul
+      R     "M_WZSP_angewaehlt"; // Rücksetze WZS angewählt
+      R     "M_O_Anwahl_WZS_Man"; // Rücksetze Ausgang  Anwahl WZSP
+      L     0; // sobald SKR aktiv
+      T     "MB_WZSP_SKZ_Ablaufmodul"; // alle Anforderungen zuruecksetzen
+
+      U     #E_Rett_Spanner_oeffnen; 
+      S     "O_AL_WZ_Spanner_Loesen"; // setze Ausgang Spanner auf
+
+      U     #E_Rett_Spanner_schliesse; 
+      R     "O_AL_WZ_Spanner_Loesen"; // ruecksetze Anwahl
+      SPA   ENDE; // springe Ende Ablaufmodul
+
+//--------------------------Softkeyrettung ende-------------------------------------
+
+//--------------------------WZS Anwahl----------------------------------------------
+
+mo01: U     "I_DM_Ta_Anwahl_WZSp"; // Taste Bedienpult
+      FP    "M_WZSP_Trigg1"; // positive Flanke Anwahl WZspanner
+      SPBN  SPAN; 
+
+      U     "M_WZSP_angewaehlt"; // und nichtbereits angewaehlt
+      SPB   WZS1; 
+
+      U     "DB_PLC_MD_DB20".UDHex._08_BIT1_ANW_SPANNER; // Spanner im handbetrieb angewählt    
+      U(    ; 
+      UN    "I_AL_Kabine_zu"; // und Kabinentuere offen
+      O     "DB_PLC_MD_DB20".UDHex._04_BIT4_EINRICHT_BETR; // oder im Einrichtbetrieb 
+      )     ; 
+      O     "M_Man_WZSP_Auf"; // oder Spanner auf
+      U     "M_MA_Maschine_Ein"; // und Maschine ein !
+      S     "M_WZSP_angewaehlt"; // setze Anwahl
+      SPA   SPAN; 
+
+WZS1: U     "M_MA_Maschine_Ein"; // wenn er bereits angewaehlt und Maschine ein
+      R     "M_WZSP_angewaehlt"; // ruecksetze Anwahl (Toggle)
+
+SPAN: U     "M_WZSP_angewaehlt"; // und angewaehlt
+      U     #E_Ta_NC_Start; // oder NC-Start
+      O     ; // oder 
+      U     "I_AL_Kabine_zu"; // Kabinentuere zu
+      UN    "DB_PLC_MD_DB20".UDHex._04_BIT4_EINRICHT_BETR; // und nicht im Einrichtbetrieb 
+      R     "M_WZSP_angewaehlt"; // Ruecksetze Anwahl
+      R     "M_O_Anwahl_WZS_Man"; // Rücksetze Ausgang  Anwahl WZSP
+
+      U     "M_WZSP_angewaehlt"; 
+      =     "DM_LED_WZSpanner"; // Anwahl Taste LED schreiben
+
+//----------------------------------------------------------------------------------------
+// Reset: Anforderungen Ruecksetzen
+
+      U     "M_Reset_Taste"; // falls Reset ansteht
+      SPBN  SP00; // falls kein Reset ansteht in Schrittkette
+      R     "M_Man_WZSP_Auf"; 
+      R     "M_Auto_WZSP_Auf"; 
+      R     "M_WZSP_angewaehlt"; // Rücksetze WZS angewählt
+      R     "M_O_Anwahl_WZS_Man"; // Rücksetze Ausgang  Anwahl WZSP
+      R     "O_WZKegel_Blasluft"; // Blasluft setzen
+      SPA   ENDE; 
+
+NETWORK
+TITLE =Überwachung Spanner oeffnen
+
+NETWORK
+TITLE =Schritt 0  WZS ZU
+//Schritt 0:  der Spanner  ist geschlossen
+//
+//die drei Ereignisse
+//WZW von Hand
+//manueller WZW
+//automatischer WZW
+//werden überwacht und falls true in Schritt 1 gesprungen
+//
+//beim automatischen WZW wurde eine 500ms Zeitverzögerung nach Not-Aus eingebaut
+//(started mit positiver Flanke der Türverriegelung)
+//
+SP00: L     "MB_WZSP_SKZ_Ablaufmodul"; 
+      L     0; 
+      ==I   ; 
+      SPBN  SP01; 
+//------------------Aktion------------------------------------
+      S     "M_WZ_Spanner_Zu"; 
+      R     "O_AL_WZ_Spanner_Loesen"; // Werkzeugspanner nicht offen
+      R     "O_WZKegel_Blasluft"; // Blasluft aus
+      R     "M_WZSP_Spindel_sperren"; // Spindel Sperrung aufheben
+      R     "M_WZ_Spanner_Auf"; 
+      R     "M_WSP_in_Bewegung"; 
+
+//------------------Ereignis----------------------------------
+// a) WZW von Hand 
+// b) manueller WZW
+// c) WZW mit autom. Rückzug M6 (mit WZW)
+
+      U     "M_Fehler_WZSpanner"; // Sobald ein Fehler ansteht ans Ende
+      SPB   ENDE; 
+
+// a: WZW von Hand
+      U(    ; 
+      U     "M_Handbetrieb"; //Spanner wurde in manual geoeffnet?
+      O     "DB_CMM_PLC".CMM_OUT.cmm_mmc_activ; 
+      U(    ; 
+      UN    "I_AL_Kabine_zu"; // Tuere offen
+      O     "DB_PLC_MD_DB20".UDHex._04_BIT4_EINRICHT_BETR; // oder Einrichten
+      )     ; 
+      U     "DB_PLC_MD_DB20".UDHex._08_BIT1_ANW_SPANNER; // Spanner im handbetrieb angewählt    
+      )     ; // WZW von Hand
+      U     "M_MA_Maschine_Ein"; // Steuerspannung
+      U     "M_Hauptspindel_steht"; // Spindel steht
+      U     "M_WZSP_angewaehlt"; // Anwahltaste Freigabe WZS angewewaehlt
+      U     "M_Hauptachsen_stehen"; 
+      UN    "DB_SIEM_KANAL_1".E_ChanActive; 
+      UN    "DB_FEHLERMELDUNG".Meldung._702003_MBHG_aktiv; 
+      SPB   s00a; 
+
+// b: manuell
+      U     "M_MA_Maschine_Ein"; // Steuerspannung Ein
+      U     "M_Hauptspindel_steht"; // Spindel steht
+      U     "M_Man_WZSP_Auf"; // Anforderung manuell. WZW
+      U     "M_WZSP_angewaehlt"; // Und Anwahl WZS
+      SPB   s00a; 
+
+// c:    WZW mit autom. Rückzug M6 (mit WZW)
+      U     "I_AL_Kabine_Verriegelt"; // wenn Kabinentueren verriegelt
+      FP    "M_WZSP_Trigg_TuerZu"; 
+      S     "M_WZSP_Zeit_nach_NotAus"; 
+
+      U     "M_WZSP_Zeit_nach_NotAus"; // und Zeit nach Not-Aus noch nicht abgelaufen
+      SPBN  sau1; 
+      U     "M_Takt_01s"; // Oeffnen mit 500 mSek.Zeitverzögerung
+      SPBN  sau1; 
+      L     "MB_Counter_Verzoe_NotAus"; // Erhöhen der Zeit bei Taktimpuls
+      INC   1; 
+      T     "MB_Counter_Verzoe_NotAus"; 
+      L     20; 
+      >=I   ; 
+      R     "M_WZSP_Zeit_nach_NotAus"; 
+
+sau1: U     "M_Hauptspindel_steht"; // Spindel steht
+      U     "M_Auto_WZSP_Auf"; // m6 von WZW-Modul
+      U     "I_AL_Kabine_Verriegelt"; // Tueren verriegelt
+      UN    "M_WZSP_Zeit_nach_NotAus"; // Zeit abgelaufen
+      U     "M_MA_Maschine_Ein"; // und Steuerspannung
+      SPBN  ENDE; 
+
+s00a: U     #T_Permanent_Spannsignale; // Abfrage der Signale wenn WZW Aktiv oder
+      O     #T_Orient_Spannsignale; // oder nur bei Orientierung
+      O     "M_WZW_Aktiv"; // oder WZW aktiv
+      SPBN  s00b; 
+      O     #T_Spanner_Zu; // wenn Spanner zu ist
+      O     #SpaLoeGf; 
+      SPBN  ENDE; 
+
+s00b: L     1; // in Schritt 1
+      T     "MB_WZSP_SKZ_Ablaufmodul"; 
+      L     0; 
+      T     "MB_Counter_Verzoe_NotAus"; // Zeitzähler zurück auf null
+      R     #T_Orient_Spannsignale; // ruecksetze gesetzes Spannerzu-bit (da es fuer nicht permanente
+      SPA   ENDE; // Spannertypen einfach gesetzt wurde, wenn in Schritt 0)
+
+NETWORK
+TITLE =Schritt 1  Move
+//Schritt 1: Spanner ist in Bewegung
+//
+//bei automatischem M6 Request wird der Spanner geoeffnet , das Bewegungsbit 
+//gesetzt und in Schritt 2 gesprungen 
+//
+//bei manuellem wird der WZS Anwahl Ausgang gesetzt, sowie das Bewegungsbit
+//
+SP01: L     "MB_WZSP_SKZ_Ablaufmodul"; 
+      L     1; 
+      ==I   ; 
+      SPBN  SP02; 
+//------------------Aktion------------------------------------
+      UN    #E_M19_Fertig; // orientierter Spindelhalt nicht fertig
+      UN    #E_Spindel_orientiert; // Spindel nicht orientiert
+      S     "M_WZSP_Spindel_sperren"; // Spindel sperren
+      U     "M_Auto_WZSP_Auf"; // bei automat. WZW
+      SPBN  man; 
+      S     "O_AL_WZ_Spanner_Loesen"; // Spanner sofort oeffnen 
+      S     "M_WSP_in_Bewegung"; // setze Bewegungsbit Spanner geht auf
+      SPB   s01a; 
+
+//------------------Ereignis----------------------------------
+
+man:  U     "M_MA_Maschine_Ein"; // manuelles oeffnen des Spanners 
+      U     "M_Hauptspindel_steht"; // nur bei Maschine ein und Spindel steht
+      SPBN  ENDE; 
+
+      U     "I_AL_Kabine_Verriegelt"; // wenn Tuere Verriegelt
+      UN    "DB_PLC_MD_DB20".UDHex._04_BIT4_EINRICHT_BETR; // und nicht Einrichtbetrieb 
+      UN    "M_Man_WZSP_Auf"; // und nicht Anforderung manuelles wechseln
+      ON    "M_WZSP_angewaehlt"; // wird nochmals gedrueckt (Anwahl wieder weg)
+      O     #E_Ta_NC_Start; 
+      SPBN  sm01; 
+      R     "M_O_Anwahl_WZS_Man"; // setze Ausgang 'Anwahl WZS'
+      L     0; // dann zurück zum Start 
+      T     "MB_WZSP_SKZ_Ablaufmodul"; // d.h. Schritt 0
+      SPA   ENDE; 
+
+sm01: UN    "I_AL_Kabine_Verriegelt"; // Tuere offen
+      UN    "I_AL_Kabine_zu"; // 
+      O(    ; 
+      U     "DB_PLC_MD_DB20".UDHex._04_BIT4_EINRICHT_BETR; // Einrichtbetrieb
+      UN    "I_Taster_WZ_Spanner"; // und Schalter betätigt// sonst fällt Werkzeug aus Spindel!!!!
+      )     ; 
+      U     "M_WZSP_angewaehlt"; // un die Anwahl
+      UN    "DB_FEHLERMELDUNG".Meldung._702003_MBHG_aktiv; 
+      =     "M_O_Anwahl_WZS_Man"; // setze Ausgang 'Anwahl WZS'
+
+//neu***********************************************
+      U     "I_Taster_WZ_Spanner"; 
+      UN    #T_Spanner_Offen; 
+      O(    ; 
+      UN    "I_Taster_WZ_Spanner"; 
+      UN    #T_Spanner_Zu; 
+      )     ; 
+      =     "M_WSP_in_Bewegung"; 
+
+      U     #T_Spanner_Offen; 
+      =     "M_WZ_Spanner_Auf"; 
+      U     #T_Spanner_Zu; 
+      =     "M_WZ_Spanner_Zu"; 
+      SPA   ENDE; 
+//**************************************************
+//      U     "I_Taster_WZ_Spanner"       // und Schalter betätigt
+//      ON    "M_O_Anwahl_WZS_Man"
+//      SPB   ENDE
+
+//      SET   
+//      S     "M_WSP_in_Bewegung"         // setze Bewegungsbit Spanner geht auf
+
+s01a: L     2; // in Schritt 2
+      T     "MB_WZSP_SKZ_Ablaufmodul"; 
+NETWORK
+TITLE =Schritt 2  (Move)
+//Schritt 2: Spanner ist in Bewegunf
+//
+//bei automatischem M6 Request wird in Schritt 3 verzweigt
+//permant Überwachung -> direkt in Schritt3
+//keine permanente Überwachung -> 3 Sekunden verzögert in Schritt 3
+//
+//wurde der Bestaetigungsschlater wieder losgelassen (Signal = 1)
+//-> zurück in Schritt 1 
+//-> sonst Verzoegert oder nicht Verzoegert in Schritt 3
+//
+SP02: L     "MB_WZSP_SKZ_Ablaufmodul"; 
+      L     2; 
+      ==I   ; 
+      SPBN  SP03; 
+//------------------Aktion------------------------------------
+
+      U     "M_Auto_WZSP_Auf"; // bei m6 Req von WZW Modul
+      SPB   s02a; 
+
+      U     "I_Taster_WZ_Spanner"; // Spanner schliessen
+      SPBN  s02a; // d.h. wieder losgelassen
+      R     "M_WSP_in_Bewegung"; // Bewegungsbit ruecksetzen
+      L     1; // zurueck in Schritt 1
+      T     "MB_WZSP_SKZ_Ablaufmodul"; 
+      SPA   ENDE; 
+
+//--------------------------------Ereignis----------------------------------
+//Abfrage WZ-Spanner geloest nur bei angewaehltem WZW und Ablauf autom. WZW
+
+s02a: U     #T_Spanner_Offen; 
+      U(    ; 
+      O     #T_Permanent_Spannsignale; 
+      O     #T_Orient_Spannsignale; 
+      )     ; 
+      SPBN  ENDE; 
+      R     "M_WSP_in_Bewegung"; // Bewegungsbit zurücksetzen
+      L     3; // in Schritt 3
+      T     "MB_WZSP_SKZ_Ablaufmodul"; // SKZ erhöhen
+
+NETWORK
+TITLE =Schritt 3 (WZS offen)
+//Schritt 3: Spanner ist offen
+//
+//bei automatischem M6 Request und Tuere zu 
+//WZS oeffnen, rueckmeldung Spanner offen geben
+//
+//bei Tuere zu, kein Einrichtbetrieb, Blasluft_freigabe, Blasluftausgang setzen
+//
+//bei NC_Start oder M19 oder M6  Fehler setzen WZS offen und STart!
+//
+//bei manual Betrieb o Teach in un Spanner angewaehlt und kein manuelles m6 Req
+//und kein Auto Request
+//
+//   -> Maschine ein und Bestaetigungsschalter oder (Tuere zu und kein 
+//   Einrichtbetrieb) -> Schritt 4 (WZS schliessen), sonst Ende
+//
+//bei Manuellem M6 Request und Bestaetigungsschalter
+//
+//   -> Schritt 4
+//
+//bei AutoM6 Request zu null, oder M6 Request zu null oder Tuere auf
+//oder Maschine Aus oder Einrichtbetrieb aus 
+//   -> Schritt 4
+//
+//sonst Ende
+SP03: L     "MB_WZSP_SKZ_Ablaufmodul"; 
+      L     3; 
+      ==I   ; 
+      SPBN  SP04; 
+//------------------Aktion------------------------------------------
+      S     "M_WZ_Spanner_Auf"; 
+      R     "M_WZ_Spanner_Zu"; 
+
+      U     "M_Auto_WZSP_Auf"; // bei autom. WZW Ausgang
+      U     "I_AL_Kabine_zu"; // nur bei geschlossener Tür
+      UN    "M_Reset_Taste"; // und kein REset 
+      U     "M_MA_Maschine_Ein"; // und Steuerspannung ein
+      S     "O_AL_WZ_Spanner_Loesen"; // WZ-Spanner oeffnen
+
+// Blasluft Kegel ausblasen
+      U     "I_AL_Kabine_zu"; // Kabinentueren geschlossen
+      UN    "DB_PLC_MD_DB20".UDHex._04_BIT4_EINRICHT_BETR; // kein einrichtbetrieb
+      UN    #E_Blasluft_Freigabe_Aus; // Blasluft freigegeben
+      U     "M_MA_Maschine_Ein"; 
+      =     "O_WZKegel_Blasluft"; // Blasluft setzen
+
+// WZ-Spanner ist geöffnet! 
+// Fehlerausgabe bei NC-Start mit offenem Spanner ausserhalb m19,m6 
+// in Fehlermodul?!
+
+      U     #E_Ta_NC_Start; 
+      UN    #E_M19_aktiv; 
+      UN    "M_WZW_Aktiv"; 
+      UN    "M_WiKo_Wechsel_aktiv"; 
+      UN    #E_Vorsatzspindel; 
+      SPBN  s030; 
+      =     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700712_WZSP_Auf_Start; 
+      SPA   ENDE; 
+
+//------------------Ereignis----------------------------------
+
+//--------------------Spanner in Handbetrieb geoeffnet---------------
+s030: U     "M_Handbetrieb"; //Spanner wurde in manual geoeffnet?
+      O     "DB_CMM_PLC".CMM_OUT.cmm_mmc_activ; 
+      ON    "M_Hauptachsen_stehen"; 
+      O     "DB_SIEM_KANAL_1".E_ChanActive; 
+      U     "DB_PLC_MD_DB20".UDHex._08_BIT1_ANW_SPANNER; 
+      UN    "M_Man_WZSP_Auf"; 
+      UN    "M_Auto_WZSP_Auf"; 
+      SPBN  s03a; // spanner wurde nicht manell geoeffent
+
+      U     "M_MA_Maschine_Ein"; // im manual Betrieb wurde die 
+      U(    ; 
+      U     "I_Taster_WZ_Spanner"; // Taste wieder gedrueckt oder
+      O(    ; 
+      U     "I_AL_Kabine_zu"; // die Tuere wird geschlossen
+      UN    "DB_PLC_MD_DB20".UDHex._04_BIT4_EINRICHT_BETR; // (nicht im Einrichtbetrieb)
+      )     ; 
+      )     ; 
+      SPB   s03c; // in Schritt 4 evtl mit Zeitverzögerung 
+      SPA   ENDE; // sonst Modulende
+
+//----------------------Spanner mit M6 geoeffnet----------------------
+s03a: U     "M_Man_WZSP_Auf"; // Spanner wurde mit M6 geoeffnet
+      SPBN  s03b; // sonst in Auto-Abfrage
+      U     "I_Taster_WZ_Spanner"; // Spanner schließen
+      SPB   s03c; // d.h. Taster wieder losgelassen
+      SPA   ENDE; // sonst modulende
+
+//------------------Spanner im automatischen WZW geoeffnet------------
+s03b: UN    "M_Auto_WZSP_Auf"; // Requests werden 0-Signal
+      UN    "M_Man_WZSP_Auf"; 
+      ON    "I_AL_Kabine_Verriegelt"; // Kabinentuere offen
+      ON    "M_MA_Maschine_Ein"; // Not-Aus steht an
+      ON(   ; 
+      U     "I_AL_Kabine_zu"; // Kabinentuere zu
+      O     "DB_PLC_MD_DB20".UDHex._04_BIT4_EINRICHT_BETR; // Tuere mit MD Einricht bruecken
+      )     ; 
+      SPBN  s03d; 
+      SPA   s03c; 
+
+//----------------- Reset ------------
+s03d: O     "M_Reset_Taste"; // bei Reset Spanner schliessen auch in Schritt 4
+      SPBN  ENDE; 
+
+//----------------------- in Schritt 4 ---------------------------------
+s03c: L     4; 
+      T     "MB_WZSP_SKZ_Ablaufmodul"; 
+NETWORK
+TITLE =Schritt 4 - Move
+
+SP04: L     "MB_WZSP_SKZ_Ablaufmodul"; 
+      L     4; 
+      ==I   ; 
+      SPBN  ENDE; 
+//------------------Aktion-----------------------------------------
+      R     "O_AL_WZ_Spanner_Loesen"; 
+      R     "O_WZKegel_Blasluft"; 
+      R     "M_O_Anwahl_WZS_Man"; // Rücksetze Ausgang  Anwahl WZSP
+      S     "M_WSP_in_Bewegung"; 
+
+//------------------Ereignis---------------------------------------
+
+      UN    #T_Permanent_Spannsignale; 
+      UN    #T_Orient_Spannsignale; 
+      O     #T_Spanner_Zu; 
+      SPBN  ENDE; 
+      R     "M_WSP_in_Bewegung"; 
+      L     0; 
+      T     "MB_WZSP_SKZ_Ablaufmodul"; 
+NETWORK
+TITLE =Ablaufmodul Ende
+
+ENDE: U     "M_O_Anwahl_WZS_Man"; 
+      UN    "I_Taster_WZ_Spanner"; 
+      =     "M_Tast_Man_WZSp"; 
+NETWORK
+TITLE =Fehlermodul
+
+      UN    #E_Fehlermodulenabled; 
+      SPB   FEND; 
+      U     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700737_WZS_Gesp_nicht_1; 
+      U     #SpaLoeGf; 
+      O     "M_Reset_Taste"; 
+      O     "M_Fehler_Quit_Taste"; 
+      SPBN  mod; 
+      R     "M_Fehler_WZSpanner"; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._701005_KEIN_WZ_IN_SPI; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700723_WZSP_keine_geg_1; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700722_WZSP_Loese_0S; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700737_WZS_Gesp_nicht_1; 
+      R     "M_WZSP_entprellt"; 
+mod:  U     "M_MA_Maschine_Ein"; // falls Steuerspannung aus
+      SPB   F001; 
+// bei Not-Aus Zeiten anhalten; Spanner zu in Ablaufmodul; Fehler bleiben stehen
+      SPA   FEND; // bei Not-Aus keine Ueberwachung
+NETWORK
+TITLE =Ueberwachung notwendig/moeglich?
+
+F001: L     DB65.DBW   18; // wenn WZW-angewaehlt
+      L     0; 
+      >I    ; 
+      U     "M_WZW_Aktiv"; // autom. WZW aktiv
+      U(    ; 
+      O     #E_M19_Fertig; 
+      O     #E_Spindel_orientiert; 
+      )     ; 
+      O     #T_Permanent_Spannsignale; // oder permannte Ueberwachung (Typ 2-4)
+      SPB   UEB1; // dann springe in Ueberwachung
+      R     "M_WZSP_Verriegelung"; // sonst ... Ruecksetze WZ-Spanner Verriegelung
+//evtle Fehler abloeschen
+      SPA   FEND; // springe direkt in Fehlerende
+NETWORK
+TITLE =Ueberwachung
+
+UEB1: U     "DB_PLC_MD_DB20".UDHex._04_BIT4_EINRICHT_BETR; // Einrichtbetrieb
+      U     "DB_NC_PLC".MANWZW_NC_Aktiv; // im Ablauf manueller WZW
+      O     "M_O_Anwahl_WZS_Man"; // wird der Spanner manuell geloest
+      SPBN  ueb2; 
+      U     "I_Taster_WZ_Spanner"; // und Spanner wird ueber Taster   geoeffnet 
+      FP    "M_WZSP_Trigger_oeffnen"; 
+      SPB   TIME; // entprellen (Schritt 2)
+
+      U     "I_Taster_WZ_Spanner"; // und Spanner wird ueber Taster geschlossen
+      FN    "M_WZSP_Trigger_schliess"; 
+      SPBN  FU00; // entprellen (Schritt 2)
+      SPA   TIME; 
+
+ueb2: U     "O_AL_WZ_Spanner_Loesen"; 
+      FP    "M_WZSP_Trigger_oeffnen"; 
+      SPB   TIME; 
+
+      U     "O_AL_WZ_Spanner_Loesen"; 
+      FN    "M_WZSP_Trigger_schliess"; 
+      SPBN  FU00; 
+
+TIME: U     #E_Vorsatzspindel; 
+      L     S5T#20S; // 20 Sekunden Verzoegerung
+      SPB   timb; 
+      L     S5T#5S; // 5 Sekunden Verzoegerung
+timb: SET   ; 
+      SV    "Tv_Wzsp_Verzoegerung"; 
+      CLR   ; 
+      SV    "Tv_Wzsp_Verzoegerung"; 
+      SPA   FEND; 
+
+NETWORK
+TITLE =WSP: Startbit z. Anstoss von Verzoegerungszeit
+
+FU00: U     "I_Taster_WZ_Spanner"; // ja, dann nach Tasteneingang abfragen (1->nicht betätigt)
+      UN    "O_AL_WZ_Spanner_Loesen"; // nicht manuell gelöst,  dann WZS Ausgang abfragen
+      UN    #T_Spanner_Zu; 
+      L     S5T#4S; 
+      SE    "TE_SPA_schlies_Taste"; 
+
+      U     #T_Spanner_Zu; 
+      R     "TE_SPA_schlies_Taste"; 
+
+      U     "O_AL_WZ_Spanner_Loesen"; // Ueberwachung Spanner offen
+      UN(   ; 
+      U     "DB_OEM".OEM_WZW_REttbildaktiv; // bei keiner Softkeyrettung und Ausgang 
+      O     "DB_OEM".OEM_WZW_MagEinstellung; 
+      O     "DB_OEM".OEM_WZW2_Rettbildaktiv; 
+      O     "DB_OEM".OEM_WZW3_Rettbildaktiv; 
+      O     "DB_OEM".OEM_Winkelkopfrettaktiv2; 
+      U     "M_Handbetrieb"; // "DB_SIEM_BAG".E_JOG
+      )     ; 
+      O(    ; 
+      U     "DB_OEM".OEM_WZW_REttbildaktiv; // bei SKR aktiv
+      O     "DB_OEM".OEM_WZW_MagEinstellung; 
+      O     "DB_OEM".OEM_WZW2_Rettbildaktiv; 
+      O     "DB_OEM".OEM_WZW3_Rettbildaktiv; 
+      O     "DB_OEM".OEM_Winkelkopfrettaktiv2; 
+      U     "M_Handbetrieb"; // "DB_SIEM_BAG".E_JOG
+      U     "O_AL_WZ_Spanner_Loesen"; // Ausgang 
+      U     "I_AL_Kabine_Verriegelt"; // Tuere verriegelt
+      )     ; 
+      O(    ; 
+      U     "DB_OEM".OEM_WZW_REttbildaktiv; // bei SKR aktiv
+      O     "DB_OEM".OEM_WZW_MagEinstellung; 
+      O     "DB_OEM".OEM_WZW2_Rettbildaktiv; 
+      O     "DB_OEM".OEM_WZW3_Rettbildaktiv; 
+      O     "DB_OEM".OEM_Winkelkopfrettaktiv2; 
+      U     "M_Handbetrieb"; // "DB_SIEM_BAG".E_JOG
+      UN    "I_AL_Kabine_zu"; // Kabinentuere offen
+      UN    "I_Taster_WZ_Spanner"; // Bestaetigungsschalter gedrueckt
+      )     ; 
+      O(    ; 
+      U     "M_O_Anwahl_WZS_Man"; // Spanner automatisch oder 
+      UN    "I_Taster_WZ_Spanner"; // manuell offen
+      )     ; 
+      UN    #T_Spanner_Offen; // und er ist nicht offen
+      L     S5T#2S; 
+      SE    "Te_Spanner_nicht_geloest"; 
+
+      U     #T_Spanner_Offen; 
+      R     "Te_Spanner_nicht_geloest"; 
+
+//------------------------------Aktion--------------------------------------
+      SET   ; 
+      R     "M_WZSP_Timer_Start"; // Timer start bit zurücksetzen
+
+//------------------------------Ereignis-----------------------------------
+// Abfrage, ob Spanner geloest oder gespannt, abhaengig vom Ausgang und
+// abgelaufenem Timer
+      U     "M_O_Anwahl_WZS_Man"; // wird Spanner manuell geloest?
+      SPBN  hhhh; // nein -> zu WZS Ausgang abfragen
+      U     "I_Taster_WZ_Spanner"; // ja, dann nach Tasteneingang abfragen (1->nicht betätigt)
+      SPBN  abf; 
+hhhh: U     "O_AL_WZ_Spanner_Loesen"; // nicht manuell gelöst,  dann WZS Ausgang abfragen
+      SPB   abf; 
+      U     #T_Spanner_Zu; // checken ob WZS zu
+      SPB   abf; // wenn nicht geschlossen, springe zu Abfrage, ob Spanner offen 
+      U     "TE_SPA_schlies_Taste"; //"Tv_Wzsp_Verzoegerung"
+      UN    "m_vwgf_SpiLoe"; //slh, 15.02.2007: Alarm unterdrücken bei autGf.wenn WzGrfStlg.mit Wz nach Abbruch endgültiges Spannen verhindert
+      SPBN  abf; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700737_WZS_Gesp_nicht_1; 
+      S     "M_Fehler_WZSpanner"; 
+      R     "M_WZSP_entprellt"; 
+      SPA   beid; 
+
+abf:  U     "O_AL_WZ_Spanner_Loesen"; // Ueberwachung Spanner offen
+      UN(   ; 
+      U     "DB_OEM".OEM_WZW_REttbildaktiv; // bei keiner Softkeyrettung und Ausgang 
+      O     "DB_OEM".OEM_WZW_MagEinstellung; 
+      O     "DB_OEM".OEM_WZW2_Rettbildaktiv; 
+      O     "DB_OEM".OEM_WZW3_Rettbildaktiv; 
+      O     "DB_OEM".OEM_Winkelkopfrettaktiv2; 
+      U     "M_Handbetrieb"; // "DB_SIEM_BAG".E_JOG
+      )     ; 
+      O(    ; 
+      U     "DB_OEM".OEM_WZW_REttbildaktiv; // bei SKR aktiv
+      O     "DB_OEM".OEM_WZW_MagEinstellung; 
+      O     "DB_OEM".OEM_WZW2_Rettbildaktiv; 
+      O     "DB_OEM".OEM_WZW3_Rettbildaktiv; 
+      O     "DB_OEM".OEM_Winkelkopfrettaktiv2; 
+      U     "M_Handbetrieb"; // "DB_SIEM_BAG".E_JOG
+      U     "O_AL_WZ_Spanner_Loesen"; // Ausgang 
+      U     "I_AL_Kabine_Verriegelt"; // Tuere verriegelt
+      )     ; 
+      O(    ; 
+      U     "DB_OEM".OEM_WZW_REttbildaktiv; // bei SKR aktiv
+      O     "DB_OEM".OEM_WZW_MagEinstellung; 
+      O     "DB_OEM".OEM_WZW2_Rettbildaktiv; 
+      O     "DB_OEM".OEM_WZW3_Rettbildaktiv; 
+      O     "DB_OEM".OEM_Winkelkopfrettaktiv2; 
+      U     "M_Handbetrieb"; // "DB_SIEM_BAG".E_JOG
+      UN    "I_AL_Kabine_zu"; // Kabinentuere offen
+      UN    "I_Taster_WZ_Spanner"; // Bestaetigungsschalter gedrueckt
+      )     ; 
+      O(    ; 
+      U     "M_O_Anwahl_WZS_Man"; // Spanner automatisch oder 
+      UN    "I_Taster_WZ_Spanner"; // manuell offen
+      )     ; 
+      UN    #T_Spanner_Offen; // und er ist nicht offen
+      SPBN  beid; // sonst in beid
+      UN    "Te_Spanner_nicht_geloest"; //  "Tv_Wzsp_Verzoegerung"      // Zeit abgelauSPINann Fehler ausgeben
+      SPB   beid; // sonst beide Siganle 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700722_WZSP_Loese_0S; // bei Fehler WZS nicht offen
+      S     "M_Fehler_WZSpanner"; 
+      R     "M_WZSP_entprellt"; 
+      SPB   SPIN; // direkt in ERR
+beid: U     #T_Spanner_Offen; 
+      R     "Tv_Wzsp_Verzoegerung"; 
+
+      U     #T_Spanner_Offen; 
+      U     #T_Spanner_Zu; 
+      SPBN  c00; 
+      L     "MB_WZSP_beide_As_1"; 
+      INC   1; 
+      T     "MB_WZSP_beide_As_1"; 
+      SPA   uebw; 
+c00:  L     0; 
+      T     "MB_WZSP_beide_As_1"; 
+      CLR   ; 
+      =     "M_WZSP_Verriegelung"; 
+
+uebw: U     #T_Spanner_Offen; 
+      U     #T_Spanner_Zu; 
+      U(    ; 
+      L     "MB_WZSP_beide_As_1"; 
+      L     4; 
+      >I    ; 
+      )     ; 
+      SPBN  SPIN; 
+      S     "M_WZSP_Verriegelung"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700723_WZSP_keine_geg_1; 
+      S     "M_Fehler_WZSpanner"; 
+      R     "M_WZSP_entprellt"; 
+      SPA   SPIN; 
+NETWORK
+TITLE =Spindellauf ueberwachen
+//bei Typ 3 und 4 darf die Spindel nicht laufen, wenn Spanner geöffnet ist
+//(Typ 4 Loeseeinheit muss abgehoben sein)
+SPIN: U     #E_M3_Request; // wenn Spindellauf
+      O     #E_M4_Request; 
+      UN    #E_M19_aktiv; // und M19 ist nicht aktiv
+      UN    "M_WZW_Aktiv"; 
+      SPBN  FEND; 
+
+      L     "DB_FAMILIEN_MODUL".WZ_Spanner_1_Typ; 
+      L     3; 
+      >=I   ; // wenn Typ 3 oder 4  
+      SPBN  FEND; 
+      ==I   ; 
+      SPBN  fty4; 
+
+      U     "I_WZ_SPA_gespannt"; 
+      UN    "I_WZ-Spanner_Gesp_O_WZ"; 
+      SPB   FEND; // dann Spindellauf erlaubt
+      SPA   fehl; 
+
+fty4: U     "I_WZ_SPA_gespannt"; //Typ 4
+      UN    "I_WZ-Spanner_Gesp_mit_WZ"; 
+      UN    "I_WZ_SPA_geloest"; 
+      U     #E_I_Loeseeinheit_Abgehob; 
+      SPB   FEND; // dann Spindellauf erlaubt
+
+fehl: SET   ; 
+      =     "M_WZSP_Spindel_sperren"; // Spindel anhalten bit setzen
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._701005_KEIN_WZ_IN_SPI; 
+      =     "M_Fehler_WZSpanner"; // ein Spindelfehler steht an Bit setzen
+      SPA   FEND; 
+NETWORK
+TITLE =Fehlermodul ende
+
+FEND: BEA   ; //Fehlermodul ende
+
+END_FUNCTION
+

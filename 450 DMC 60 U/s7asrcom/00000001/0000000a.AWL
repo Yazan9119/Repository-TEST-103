@@ -1,0 +1,512 @@
+TYPE "UDT_DBS_ACHSEN"
+TITLE =
+//$Revision: 1.2 $
+//$Date: 2008/06/11 06:08:51CEST $
+//$Author: hgc $
+
+//   DB_Achsen
+
+
+
+  STRUCT 	
+   A_FD_OR : BYTE ;	//Feedrate override
+   A_DriveEnable : BOOL ;	//Drive test movement enable
+   A_AckFixedStop : BOOL ;	//Acknowledge fixed stop reached
+   A_SensorFixedStop : BOOL ;	//Sensor fixed stop
+   A_ASpDisable : BOOL ;	//Axis/spindle disable
+   A_Follow_upMode : BOOL ;	//Follow-up mode
+   A_PosMeas1 : BOOL ;	//Position measuring system 1
+   A_PosMeas2 : BOOL ;	//Position measuring system 2
+   A_ORactive : BOOL ;	//Override active
+   A_SWCam : BOOL ;	//SW cam activation
+   A_ContrEnable : BOOL ;	//Controller enable
+   A_DelDTGSpReset : BOOL ;	//Delete distance to go/Spindle-Reset
+   A_Clamp : BOOL ;	//Clamping in progress
+   A_RefVal1 : BOOL ;	//Reference point value 1
+   A_RefVal2 : BOOL ;	//Reference point value 2
+   A_RefVal3 : BOOL ;	//Reference point value 3
+   A_RefVal4 : BOOL ;	//Reference point value 4
+   A_ExtZO : BOOL ;	//Import external ZO
+   A_EnabTravFixedStop : BOOL ;	//Enable travel to fixed stop
+   A_FixedFD1 : BOOL ;	//Activate fixed feed 1
+   A_FixedFD2 : BOOL ;	//Activate fixed feed 2
+   A_FixedFD3 : BOOL ;	//Activate fixed feed 3
+   A_FixedFD4 : BOOL ;	//Activate fixed feed 4
+   A_VelocSpeedLimit : BOOL ;	//Velocity/spindle speed limitation
+   A_PrgtestAxRel : BOOL ;	// Program test axis/spindle release
+   A_HW1 : BOOL ;	//Activate handwheel 1
+   A_HW2 : BOOL ;	//Activate handwheel 2
+   A_HW3 : BOOL ;	//Activate handwheel 3
+   A_FDSpStop : BOOL ;	//Feed stop/spindle stop
+   A_Disable : BOOL ;	//Traversing key disable
+   A_RapidTrOR : BOOL ;	//Rapid traverse override
+   A_Minus : BOOL ;	//Traversing key minus
+   A_Plus : BOOL ;	//Traversing key plus
+   A_INC1 : BOOL ;	//INC1
+   A_INC10 : BOOL ;	//INC10
+   A_INC100 : BOOL ;	//INC100
+   A_INC1000 : BOOL ;	//INC1000
+   A_INC10000 : BOOL ;	//INC10000
+   A_INCVar : BOOL ;	//INC variable
+   A_OEMAxis : BYTE ;	//OEM axis signals
+   f7 : BYTE ;	
+   A_NCASpChanA : BOOL ;	//Assign NC axis/spindle channel A
+   A_NCASpChanB : BOOL ;	//Assign NC axis/spindle channel B
+   A_NCASpChanC : BOOL ;	//Assign NC axis/spindle channel C
+   A_NCASpChanD : BOOL ;	//Assign NC axis/spindle channel D
+   A_NCASpStrobe : BOOL ;	//Activation of assignment with pos. edge
+   f8_5 : BOOL ;	
+   f8_6 : BOOL ;	
+   A_PLCASp : BOOL ;	//Request PLC axis/spindle
+   A_Para_A : BOOL ;	//Parameter block servo A
+   A_Para_B : BOOL ;	//Parameter block servo B 
+   A_Para_C : BOOL ;	//Parameter block servo C 
+   A_LockParSetDef : BOOL ;	//Lock parameter set definition from NC
+   f9_4 : BOOL ;	
+   f9_5 : BOOL ;	
+   f9_6 : BOOL ;	
+   f9_7 : BOOL ;	
+   A_REPOSDelay : BOOL ;	//REPOS DELAY
+   f10_1 : BOOL ;	
+   f10_2 : BOOL ;	
+   f10_3 : BOOL ;	
+   f10_4 : BOOL ;	
+   f10_5 : BOOL ;	
+   f10_6 : BOOL ;	
+   f10_7 : BOOL ;	
+   A_StartBrakeTest : BOOL ;	// Start brake test
+   f11_1 : BOOL ;	
+   f11_2 : BOOL ;	
+   f11_3 : BOOL ;	
+   f11_4 : BOOL ;	
+   f11_5 : BOOL ;	
+   f11_6 : BOOL ;	
+   f11_7 : BOOL ;	
+   A_HWLimitMinus : BOOL ;	//Hardware limit switch minus
+   A_HWLimitPlus : BOOL ;	//Hardware limit switch plus
+   A_SWLimit2Minus : BOOL ;	//2nd software limit switch minus
+   A_SWLimit2Plus : BOOL ;	//2nd software limit switch plus
+   A_ModuloLimitEn : BOOL ;	// Modulo limit enabled
+   f12_5 : BOOL ;	
+   f12_6 : BOOL ;	
+   A_DelayRef : BOOL ;	//Delay reference point approach
+   f13 : BYTE ;	
+   f14 : INT ;	
+   A_ActGearA : BOOL ;	//Actual gear stage A
+   A_ActGearB : BOOL ;	//Actual gear stage B
+   A_ActGearC : BOOL ;	//Actual gear stage C
+   A_GearChangeOv : BOOL ;	//Gear has changed over
+   A_Sp1Syn : BOOL ;	//Re-synchronize spindle 1
+   A_Sp2Syn : BOOL ;	//Re-synchronize spindle 2
+   A_NoMonitorGear : BOOL ;	//No monitoring when changing gear
+   A_DeleteS : BOOL ;	//Delete S value
+   A_FD_ORSp : BOOL ;	//Feedrate override for spindle valid
+   f17_1 : BOOL ;	
+   f17_2 : BOOL ;	
+   f17_3 : BOOL ;	
+   A_Sp1SynP : BOOL ;	//Re-synchronize spindle 1 f. positioning
+   A_Sp2SynP : BOOL ;	//Re-synchronize spindle 2 f. positioning
+   A_M3M4Inv : BOOL ;	//Invert M3/M4
+   f17_7 : BOOL ;	
+   f18_0 : BOOL ;	
+   f18_1 : BOOL ;	
+   f18_2 : BOOL ;	
+   f18_3 : BOOL ;	
+   A_OscilPLC : BOOL ;	//Oscillation via PLC
+   A_OscilSpeed : BOOL ;	//enable Oscillation
+   A_SetRotDirectRight : BOOL ;	//Setpoint osci. direct. right
+   A_SetRotDirectLeft : BOOL ;	//Setpoint osci. direct. left
+   A_SpOR : BYTE ;	//Spindle override
+   A_UFSwOv : BOOL ;	//Run-up switchover U/F operation
+   A_RUEncQuStop : BOOL ;	//Run-up encoder quick stop
+   A_Tlimit2 : BOOL ;	//Torque limit 2
+   A_SpeedSetpSmooth : BOOL ;	//Speed setpoint smoothing
+   f20_4 : BOOL ;	
+   A_HoldBrakeToOpen : BOOL ;	// holding brake open   
+   f20_6 : BOOL ;	
+   f20_7 : BOOL ;	
+   A_ParA : BOOL ;	//Parameter set selection A
+   A_ParB : BOOL ;	//Parameter set selection B
+   A_ParC : BOOL ;	//Parameter set selection C
+   A_MotA : BOOL ;	//Motor selection A
+   A_MotB : BOOL ;	//Motor selection B
+   A_MotOK : BOOL ;	//Motor selected
+   A_IntegratDisable : BOOL ;	//n controller integrator disable
+   A_PulseEnable : BOOL ;	//Pulse enable
+   A_SG_SBH : BOOL ;	//Deselection SG/SBH
+   A_SBH : BOOL ;	//Deselection of safe standstill
+   f22_2 : BOOL ;	
+   A_SGselect0 : BOOL ;	//Selection SG bit 0
+   A_SGselect1 : BOOL ;	//Selection SG bit 1
+   f22_5 : BOOL ;	
+   f22_6 : BOOL ;	
+   f22_7 : BOOL ;	
+   A_Transmiss0 : BOOL ;	//Selection Transmission bit 0
+   A_Transmiss1 : BOOL ;	//Selection Transmission bit 1
+   A_Transmiss2 : BOOL ;	//Selection Transmission bit 2
+   f23_3 : BOOL ;	
+   A_SE : BOOL ;	//Selection SE
+   A_BrakeToClose : BOOL ;	// Sinamics: Brake to close
+   f23_6 : BOOL ;	
+   A_TestStop : BOOL ;	//Activate test stop
+   A_RotationMonit : BOOL ;	// Stepper motor: Rotation monitoring
+   A_ControlAx : BOOL ;	// Control Axis
+   f24_2 : BOOL ;	
+   f24_3 : BOOL ;	
+   A_TorqComp : BOOL ;	// Torque compensation
+   A_ChangSetpOutAss0 : BOOL ;	// Bit value for CTRLOUT_changed - Change setpoint output assignment
+   A_ChangSetpOutAss1 : BOOL ;	// Bit value for CTRLOUT_changed - Change setpoint output assignment
+   A_MS : BOOL ;	//Master / Slave On
+   f25 : BYTE ;	
+   f26_0 : BOOL ;	
+   f26_1 : BOOL ;	
+   f26_2 : BOOL ;	
+   A_CompContr : BOOL ;	//Compensation controller On
+   A_FollowAxOv : BOOL ;	//Enable following axis override 
+   f26_5 : BOOL ;	
+   f26_6 : BOOL ;	
+   f26_7 : BOOL ;	
+   A_DEPMCS : BOOL ;	// Resume: DEPMCS
+   A_DEPBCS : BOOL ;	// Resume: DEPBCS
+   A_Corr : BOOL ;	// Resume: Corr
+   A_HIAxMove : BOOL ;	// Resume: HIAxMove
+   A_StopDEPMCS : BOOL ;	// Stop: DEPMCS
+   A_StopDEPBCS : BOOL ;	// Stop: DEPBCS
+   A_StopCorr : BOOL ;	// Stop: Corr
+   A_StopHIAxMove : BOOL ;	// Stop: HIAxMove   
+   A_OscillAxExtRev : BOOL ;	// OscillAxExtReversal
+   A_AxReset : BOOL ;	// AXRESET
+   A_AxResume : BOOL ;	// AXRESUME
+   A_SetRP : BOOL ;	//Set reversal point
+   A_ChangeRP : BOOL ;	//Change reversal point
+   A_StopRP : BOOL ;	//Stop at next reversal point
+   A_Stop : BOOL ;	//Stop
+   A_PLCAxis : BOOL ;	//PLC checks axis
+   f29_0 : BOOL ;	
+   f29_1 : BOOL ;	
+   f29_2 : BOOL ;	
+   f29_3 : BOOL ;	
+   A_StartGantSynRun : BOOL ;	//Start gantry synchronization run
+   A_NoAutoSync : BOOL ;	//No auto sync
+   f29_6 : BOOL ;	
+   f29_7 : BOOL ;	
+   A_StopSpindle : BOOL ;	//Stop spindle
+   A_StartCW : BOOL ;	//Start spindle Clockwise
+   A_StartCCW : BOOL ;	//Start spindle Counterclockwise
+   A_AutoGearStep : BOOL ;	//Autom. gear step change
+   A_PosSpindle : BOOL ;	//Position spindle
+   f30_5 : BOOL ;	
+   f30_6 : BOOL ;	
+   f30_7 : BOOL ;	
+   f31_0 : BOOL ;	
+   f31_1 : BOOL ;	
+   f31_2 : BOOL ;	
+   f31_3 : BOOL ;	
+   A_Resynchronize : BOOL ;	// Resynchronize
+   A_DisSync : BOOL ;	// Disable synchronization
+   A_Tracksync : BOOL ;	// Track synchronism
+   f31_7 : BOOL ;	
+   f32_0 : BOOL ;	
+   f32_1 : BOOL ;	
+   A_extStopA : BOOL ;	//Deselection external Stop A
+   A_extStopC : BOOL ;	//Deselection external Stop C
+   A_extStopD : BOOL ;	//Deselection external Stop D
+   A_extStopE : BOOL ;	//Deselection external Stop E
+   f32_6 : BOOL ;	
+   f32_7 : BOOL ;	
+   f33_0 : BOOL ;	
+   f33_1 : BOOL ;	
+   f33_2 : BOOL ;	
+   f33_3 : BOOL ;	
+   A_SGcorr_0 : BOOL ;	//Selection SG-correction Bit 0
+   A_SGcorr_1 : BOOL ;	//Selection SG-correction Bit 1
+   A_SGcorr_2 : BOOL ;	//Selection SG-correction Bit 2
+   A_SGcorr_3 : BOOL ;	//Selection SG-correction Bit 3
+   f34 : ARRAY  [34 .. 55 ] OF BYTE ;	
+   A_FeedDriveCAxEng : BOOL ;	// Seperate feed drive as C axis engaged
+   A_SpSpeedDisp : BOOL ;	// Spindle speed display
+   A_SpInsideClamp : BOOL ;	// Spindle inside clamping
+   f56_3 : BOOL ;	
+   f56_4 : BOOL ;	
+   f56_5 : BOOL ;	
+   f56_6 : BOOL ;	
+   f56_7 : BOOL ;	
+   f57 : BYTE ;	
+   f58 : WORD ;	// FC18: internal 
+   E_SpNA : BOOL ;	//Spindle/no axis
+   E_NCU_Link : BOOL ;	//NCU_link active axis
+   E_EncodFreq1 : BOOL ;	//Encoder limit frequency 1 exceeded
+   E_EncodFreq2 : BOOL ;	//Encoder limit frequency 2 exceeded
+   E_RefSyn1 : BOOL ;	//Referenced/synchronized 1
+   E_RefSyn2 : BOOL ;	//Referenced/synchronized 2
+   E_ExactCoarse : BOOL ;	//Position reached with exact stop coarse
+   E_ExactFine : BOOL ;	//Position reached with exact stop fine
+   E_TravRequ : BOOL ;	//Travel request
+   E_AxialAlarm : BOOL ;	// Axial alarm
+   E_AxisReady : BOOL ;	//Axis ready
+   E_Follow_upMode : BOOL ;	//Follow-up mode active
+   E_Stat : BOOL ;	//Axis/spindle stationary (n<nmin)
+   E_PositContr : BOOL ;	//Position controller active
+   E_SpeedContr : BOOL ;	//Speed controller active
+   E_CurrentContr : BOOL ;	//Current controller active
+   E_SWCam : BOOL ;	//Software cams active
+   E_HWOverlay : BOOL ;	//Handwheel overlay active
+   E_RevFD : BOOL ;	//Revolutional feedrate active
+   E_MeasAct : BOOL ;	//Measuring active
+   E_ActTravFStop : BOOL ;	//Activate travel to fixed stop
+   E_FixedStop : BOOL ;	//Fixed stop reached
+   E_ForceFixedStop : BOOL ;	// Force fixed stop limited
+   E_AxContainerRot : BOOL ;	// Axis container rotation active
+   E_AxReset : BOOL ;	// Axis reset done
+   E_PLCCtrlAx : BOOL ;	// PLCcontrolled axis
+   E_AxStop : BOOL ;	// Axis stop active
+   E_AxSpDisable : BOOL ;	// Axis/spindle disable active
+   E_StopDEPMCS : BOOL ;	// stop DEPMCS active
+   E_StopDEPBCS : BOOL ;	// stop DEPBCS active
+   E_StopCorr : BOOL ;	// stop Corr active
+   E_StopHIAxMove : BOOL ;	// Stop HIAxMove active
+   E_HW1 : BOOL ;	//Handwheel 1 active
+   E_HW2 : BOOL ;	//Handwheel 2 active
+   E_HW3 : BOOL ;	//Handwheel 3 active
+   f64_3 : BOOL ;	
+   E_TReqMinus : BOOL ;	// Travel request minus
+   E_TReqPlus : BOOL ;	// Travel request plus
+   E_TCMinus : BOOL ;	//Traverse command minus
+   E_TCPlus : BOOL ;	//Traverse command plus
+   E_INC1 : BOOL ;	//INC1
+   E_INC10 : BOOL ;	//INC10
+   E_INC100 : BOOL ;	//INC100
+   E_INC1000 : BOOL ;	//INC1000
+   E_INC10000 : BOOL ;	//INC10000
+   E_INCVar : BOOL ;	//INC variable
+   f65_6 : BOOL ;	
+   f65_7 : BOOL ;	
+   E_OEMAxis : BYTE ;	//OEM axis signals
+   f67 : BYTE ;	
+   E_NCASpChanA : BOOL ;	//NC axis/spindle in channel A
+   E_NCASpChanB : BOOL ;	//NC axis/spindle in channel B
+   E_NCASpChanC : BOOL ;	//NC axis/spindle in channel C
+   E_NCASpChanD : BOOL ;	//NC axis/spindle in channel D
+   E_PLCType : BOOL ;	//New type requested by PLC
+   E_ChPoss : BOOL ;	//Change axis possible
+   E_NeutrASp : BOOL ;	//Neutral axis/spindle
+   E_PLCASp : BOOL ;	//PLC axis/spindle
+   E_ParS_A : BOOL ;	//Parameter block servo A
+   E_ParS_B : BOOL ;	//Parameter block servo B 
+   E_ParS_C : BOOL ;	//Parameter block servo C 
+   E_ReposSh : BOOL ;	// Repos shift
+   E_ReposShValid : BOOL ;	// Repos shift valid
+   E_ReposDelayQuit : BOOL ;	// Repos delay quit
+   f70_3 : BOOL ;	
+   f70_4 : BOOL ;	
+   f70_5 : BOOL ;	
+   f70_6 : BOOL ;	
+   f70_7 : BOOL ;	
+   E_BrakeTest : BOOL ;	// Brake test active
+   f71_1 : BOOL ;	
+   f71_2 : BOOL ;	
+   f71_3 : BOOL ;	
+   f71_4 : BOOL ;	
+   f71_5 : BOOL ;	
+   f71_6 : BOOL ;	
+   E_PLCAxDedic : BOOL ;	// PLC Axis dedicated
+   E_MMC_REPOSDelay : BOOL ;	//MMC REPOS DELAY
+   f72_1 : BOOL ;	
+   f72_2 : BOOL ;	
+   f72_3 : BOOL ;	
+   f72_4 : BOOL ;	
+   f72_5 : BOOL ;	
+   f72_6 : BOOL ;	
+   f72_7 : BOOL ;	
+   f73 : BYTE ;	
+   f74_0 : BOOL ;	
+   f74_1 : BOOL ;	
+   f74_2 : BOOL ;	
+   f74_3 : BOOL ;	
+   E_ModLimEnAct : BOOL ;	// Modulo limit enabled active
+   f74_5 : BOOL ;	
+   f74_6 : BOOL ;	
+   f74_7 : BOOL ;	
+   f75 : BYTE ;	
+   E_ScratchPulse : BOOL ;	//Scratch pulse
+   f76_1 : BOOL ;	
+   f76_2 : BOOL ;	
+   f76_3 : BOOL ;	
+   E_PathAxis : BOOL ;	// Path axis
+   E_PosAxis : BOOL ;	//Positioning axis
+   E_IndexAxisPos : BOOL ;	//Indexing axis in position
+   E_CurvePos : BOOL ;	//Curve axis in position
+   E_CollCheckRedSpeed : BOOL ;	//reduced speed of Collisions Check
+   f77_1 : BOOL ;	
+   f77_2 : BOOL ;	
+   f77_3 : BOOL ;	
+   f77_4 : BOOL ;	
+   f77_5 : BOOL ;	
+   f77_6 : BOOL ;	
+   f77_7 : BOOL ;	
+   E_FPosAxis : REAL ;	//F function (REAL format) for positioning axes
+   E_SetpGearA : BOOL ;	//Setpoint gear stage A
+   E_SetpGearB : BOOL ;	//Setpoint gear stage B
+   E_SetpGearC : BOOL ;	//Setpoint gear stage C
+   E_GearChange : BOOL ;	//Gear changeover
+   f82_4 : BOOL ;	
+   f82_5 : BOOL ;	
+   f82_6 : BOOL ;	
+   f82_7 : BOOL ;	
+   E_SpeedLimit : BOOL ;	//Speed limit exceeded
+   E_SetSpeedLimit : BOOL ;	//Setpoint speed limited
+   E_SetSpeedIncreased : BOOL ;	//Setpoint speed increased
+   E_GeoMonit : BOOL ;	//Geometry monitoring
+   E_SupportAreaViol : BOOL ;	//Support area limits violated
+   E_SetRange : BOOL ;	//Spindle in setpoint range
+   E_SpeedMonit : BOOL ;	//Speed monitoring
+   E_ActRotRight : BOOL ;	//Actual rotation direction right
+   E_ConstCuttSpeed : BOOL ;	//Const. cutting speed active
+   E_SUG : BOOL ;	//SUG active (grinding wheel surface speed)
+   E_CLG : BOOL ;	//CLG active
+   E_Tapping : BOOL ;	//Tapping without compensating chuck
+   E_SyncMode : BOOL ;	//Synchronous mode spindle active
+   E_PosMode : BOOL ;	//Positioning mode spindle active
+   E_OscillMode : BOOL ;	//Oscillation mode spindle active
+   E_ContrMode : BOOL ;	//Control mode spindle active
+   f85_0 : BOOL ;	
+   f85_1 : BOOL ;	
+   f85_2 : BOOL ;	
+   f85_3 : BOOL ;	
+   f85_4 : BOOL ;	
+   E_SpInPosition : BOOL ;	// Spindle in position
+   f85_6 : BOOL ;	
+   f85_7 : BOOL ;	
+   E_MFunct : INT ;	//M function (INT) for spindle
+   E_SFunct : REAL ;	//S function (REAL) for spindle
+   E_SetUpMode : BOOL ;	//Set-up mode active
+   E_RUEncDisabl : BOOL ;	//Run-up encoder disable active
+   E_Tlimit2 : BOOL ;	//Torque limit 2 active
+   E_SpeedSetpSmooth : BOOL ;	//Speed setpoint smoothing active
+   E_RLIact : BOOL ;	// RLI active
+   E_HoldBrakeOpened : BOOL ;	// holding brake opened
+   E_EarthFaultDetec : BOOL ;	// earth-fault detection
+   f92_7 : BOOL ;	
+   E_ParA : BOOL ;	//Active parameter set A
+   E_ParB : BOOL ;	//Active parameter set B
+   E_ParC : BOOL ;	//Active parameter set C
+   E_MotA : BOOL ;	//Active motor A
+   E_MotB : BOOL ;	//Active motor B
+   E_MotOK : BOOL ;	//Drive ready
+   E_IntegratDisable : BOOL ;	//n controller integrator disabled
+   E_PulseEnable : BOOL ;	//Pulses enabled
+   E_MTempWarn : BOOL ;	//Temperature prewarning motor
+   E_HTempWarn : BOOL ;	//Temperature prewarning heat sink
+   E_RUComplete : BOOL ;	//Ramp-up complete
+   E_MdMdx : BOOL ;	//Md<Mdx
+   E_NactNmin : BOOL ;	//nact<nmin
+   E_NactNx : BOOL ;	//nact<nx
+   E_NactNset : BOOL ;	//nact<nset
+   E_Message : BOOL ;	//Variable message function
+   E_UDClessAlThreshold : BOOL ;	//UDC-link < alarm threshold
+   E_RetractVolt : BOOL ;	// Fall short of retract voltage
+   E_Generator : BOOL ;	// Generator active
+   E_MinGeneratorVolt : BOOL ;	// Fall short of min. generator voltage
+   E_SpeedThreshold : BOOL ;	// Speed threshold star/delta
+   f95_5 : BOOL ;	
+   f95_6 : BOOL ;	
+   E_PowerSecI2TLimit : BOOL ;	// Power Section I2T limit
+   E_SpindleMonit : BOOL ;	//Error spindle monitoring
+   E_AxisCtrl : BOOL ;	// Axis control active
+   E_MSFine : BOOL ;	// Master/Slave fine
+   E_MSCoarse : BOOL ;	// Master/Slave coarse
+   E_MSCompContr : BOOL ;	// Master/Slave Compensation controller activ
+   E_BitValCtrlOutChang0 : BOOL ;	// Bit value for CTRLOUT_changed 0:  Change setpoint output assignment
+   E_BitValCtrlOutChang1 : BOOL ;	// Bit value for CTRLOUT_changed 1:  Change setpoint output assignment   
+   E_MS : BOOL ;	//Master/ slave active
+   f97 : BYTE ;	
+   E_SyncronFine : BOOL ;	//Synchronism fine
+   E_SyncronCoarse : BOOL ;	//Synchronism coarse
+   E_ActValCoupling : BOOL ;	//Actual value coupling
+   f98_3 : BOOL ;	
+   E_OverlayMotion : BOOL ;	//Overlaid motion
+   E_SWL : BOOL ;	//Speed warning limit reached
+   E_AWL : BOOL ;	//Acceleration warning limit reached
+   E_EmRetr : BOOL ;	//Emergency retraction active
+   E_MasterSp : BOOL ;	//Master spindle
+   E_SlaveSp : BOOL ;	//Slave spindle
+   f99_2 : BOOL ;	
+   E_AxisAccel : BOOL ;	//Axis accelerated
+   E_Sync : BOOL ;	//Synchronization active
+   E_MSR : BOOL ;	//Max speed reached
+   E_MAR : BOOL ;	//Max acceleration reached
+   E_EmRetrEnabl : BOOL ;	//Emergency retraction enabled
+   f100_0 : BOOL ;	
+   f100_1 : BOOL ;	
+   E_OscillAxExtRev : BOOL ;	// OscillAxExt Reversal active
+   E_StopOscill : BOOL ;	//Oscillation cannot start
+   E_ErrorOscill : BOOL ;	//Error during oscillation
+   E_SparkOut : BOOL ;	//Spark-out active
+   E_OscillMotion : BOOL ;	//Oscillation motion active
+   E_Oscill : BOOL ;	//Oscillation active
+   f101_0 : BOOL ;	
+   f101_1 : BOOL ;	
+   E_GantCOLimit : BOOL ;	//Gantry cut-off limit exceeded
+   E_GantWarn : BOOL ;	//Gantry warning limit exceeded
+   E_SynRunStart : BOOL ;	//Synchronization run ready to start
+   E_GantGroupSyn : BOOL ;	//Gantry grouping is synchronous
+   E_GantLeadAxis : BOOL ;	//Gantry leading axis
+   E_GantAxis : BOOL ;	//Gantry axis
+   f102 : INT ;	
+   E_AIAxis : ARRAY  [1 .. 31 ] OF BOOL ;	//Active infeed axis[1..31]
+   E_SG_SBH : BOOL ;	//Active SG/SBH
+   E_ErrLifeS_CRC : BOOL ;	// Error lifesign or CRC-error
+   E_ImpdelNCK : BOOL ;	//Delete pulses NCK
+   r108_3 : BOOL ;	
+   r108_4 : BOOL ;	
+   r108_5 : BOOL ;	
+   E_SE2 : BOOL ;	//SE 2 active
+   E_SRef : BOOL ;	//Axis safely referenced
+   E_SN1Plus : BOOL ;	//Actual position > cam position SN1+
+   E_SN1Minus : BOOL ;	//Actual position > cam position SN1-
+   E_SN2Plus : BOOL ;	//Actual position > cam position SN2+
+   E_SN2Minus : BOOL ;	//Actual position > cam position SN2-
+   E_SN3Plus : BOOL ;	//Actual position > cam position SN3+
+   E_SN3Minus : BOOL ;	//Actual position > cam position SN3-
+   E_SN4Plus : BOOL ;	//Actual position > cam position SN4+
+   E_SN4Minus : BOOL ;	//Actual position > cam position SN4-
+   f110_0 : BOOL ;	
+   E_SBH : BOOL ;	//Active SBH
+   f110_2 : BOOL ;	
+   E_SG_0 : BOOL ;	//Active SG 0
+   E_SG_1 : BOOL ;	//Active SG 1
+   E_n_nx : BOOL ;	//n < nx
+   f110_6 : BOOL ;	
+   f110_7 : BOOL ;	
+   f111_0 : BOOL ;	
+   f111_1 : BOOL ;	
+   f111_2 : BOOL ;	
+   f111_3 : BOOL ;	
+   E_StopAB : BOOL ;	//Stop A/B active
+   E_StopC : BOOL ;	//Stop C active
+   E_StopD : BOOL ;	//Stop D active
+   E_StopE : BOOL ;	//Stop E active
+   E_CamRangeTr1 : BYTE ;	//Cam Range for Cam Track 1
+   E_CamRangeTr2 : BYTE ;	//Cam Range for Cam Track 2
+   E_CamRangeTr3 : BYTE ;	//Cam Range for Cam Track 3
+   E_CamRangeTr4 : BYTE ;	//Cam Range for Cam Track 4
+   f116 : BYTE ;	
+   E_CamTrack1 : BOOL ;	//Cam Track 1
+   E_CamTrack2 : BOOL ;	//Cam Track 2
+   E_CamTrack3 : BOOL ;	//Cam Track 3
+   E_CamTrack4 : BOOL ;	//Cam Track 4
+   f117_4 : BOOL ;	
+   f117_5 : BOOL ;	
+   f117_6 : BOOL ;	
+   f117_7 : BOOL ;	
+   E_CamRangeBitTr1 : ARRAY  [0 .. 14 ] OF //Cam Range Bits for Cam Track 1
+   BOOL ;	
+   E_CamRangeBitTr2 : ARRAY  [0 .. 14 ] OF //Cam Range Bits for Cam Track 2
+   BOOL ;	
+   E_CamRangeBitTr3 : ARRAY  [0 .. 14 ] OF //Cam Range Bits for Cam Track 3
+   BOOL ;	
+   E_CamRangeBitTr4 : ARRAY  [0 .. 14 ] OF //Cam Range Bits for Cam Track 4
+   BOOL ;	
+  END_STRUCT ;	
+END_TYPE
+

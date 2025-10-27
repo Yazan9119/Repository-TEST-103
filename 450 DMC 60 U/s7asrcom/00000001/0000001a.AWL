@@ -1,0 +1,2262 @@
+FUNCTION "FC_WZW_VMAG_STATUS" : VOID
+TITLE =
+//$Revision: 1.88 $
+//$Date: 2008/09/19 08:40:30CEST $
+//$Author: hgc $
+//-------------------------------------------------------------------------------
+//Änderung: Datum      / Abteilung / Name / Version x.y
+//Änderung: 22.06.2006 /          / slh   / V0.2
+//        :Wzw.Grundstlg.fahren eingepflegt; Lokaldaten laden/retten mit
+//        :SFC20 BLKMOVE; Doppelwortzugriffe entfernt (Absolutadressen vermeiden)
+//        :Quelle:FC_WZW_VMAG_STATUS.AWL vom 22.06.2006 10:29:25
+//Änderung:           /          /        / V
+//        :
+//-------------------------------------------------------------------------------
+{ S7_language := '7(1) Deutsch (Deutschland)  02.04.2008  06:49:23' }
+VERSION : 0.2
+
+
+VAR_INPUT
+  E_Enabled : BOOL ;	
+  E_TastGf : BOOL ;	//Taste Wzw Grundstlg.fahren
+  E_MSSTst_NC_Start : BOOL ;	
+END_VAR
+VAR_TEMP
+  tb_bewegungsnummer : INT ;	
+  tx_Tuere_Frg : BOOL ;	
+  tx_wzsp_zu : BOOL ;	
+  tx_frg_wzsp : BOOL ;	
+  tx_wz_spa_geloest : BOOL ;	
+  tx_wz_spa_gespannt : BOOL ;	
+  tx_Y_WP : BOOL ;	
+  tx_YAx_faehrt : BOOL ;	
+  tx_frg_reset : BOOL ;	
+  t_hand_klappe_auf : BOOL ;	
+  t_hand_klappe_zu : BOOL ;	
+  t_Frg_Mag_fahren : BOOL ;	
+  tx_Frg_von_Y_2nd_SWlim : BOOL ;	
+  t_Frg_Greifer_drehen : BOOL ;	
+  s : "UDT_VWWZ_0";	
+  svAr1 : DWORD ;	
+  Meld : STRUCT 	
+   noChRset : BOOL ;	//WzwGf:Kanal 1 muss im Resetzustand sein
+   noChAkt : BOOL ;	//WzwGf:Kanal 1 darf nicht aktiv sein
+   WwGfRdy : BOOL ;	//Wzw.bereits in Grundstlg.
+   noRett : BOOL ;	//kein autom.WzwGf. bei aktivem Rettungsbild
+   noWwBew : BOOL ;	//kein autom.WzwGf.:Wzw.wurde im Einrichten bewegt
+   MaTypNiO : BOOL ;	//kein autom.WzwGf.:MaschTyp muss nnn sein (SwCam X-ArbRaum)!
+   ax6 : BOOL ;	
+   ax7 : BOOL ;	
+   XnoWwPos : BOOL ;	//X-Achse nicht in WzwPos
+   noSpiGL : BOOL ;	//Spindel nicht gelöst
+   TpuNoTR : BOOL ;	//Tpu nicht in Transfer=Übergabe-/nahmepos.des GrfWz
+   TpuNoMag : BOOL ;	//Tpu nicht bei Magazin
+   TpuNoRTool : BOOL ;	//Tpu nicht Stlg.release Tool (hinten)
+   TpuNoGTool : BOOL ;	//Tpu nicht Stlg.get Tool (vorn Wz aufnehmen)
+   noTuerAuf : BOOL ;	//WzTür (Klappe) nicht offen
+   GrNoStlg : BOOL ;	//WzGrf.weder bei Spi.noch bei Magazin
+   XnoArbRaum : BOOL ;	//X ni.im Arbeitsraum
+   cx1 : BOOL ;	
+   cx_2 : BOOL ;	
+   cx_3 : BOOL ;	
+   cx_4 : BOOL ;	
+   cx_5 : BOOL ;	
+   cx_6 : BOOL ;	
+   cx_7 : BOOL ;	
+   dx : BOOL ;	
+   dx_1 : BOOL ;	
+   dx_2 : BOOL ;	
+   dx_3 : BOOL ;	
+   dx_4 : BOOL ;	
+   dx_5 : BOOL ;	
+   dx_6 : BOOL ;	
+   dx_7 : BOOL ;	
+  END_STRUCT ;	
+  LPTMD0 : BYTE ;	//Anzahl leere ZwiSpPlätze bei gespeichertem WzZwiSp
+  LP_akt : BYTE ;	//Anzahl leere ZwiSpPlätze bei aktuellem WzZwiSp
+  loopctr : BYTE ;	
+  WertInt : INT ;	//Zwischenspeicher für Integerwert
+  LOp0 : BOOL ;	//lokaler Operationsmerker 0, Zwischenmerker
+  LOp1 : BOOL ;	//lokaler Operationsmerker 1, Zwischenmerker
+  LOp2 : BOOL ;	//lokaler Operationsmerker 2, Zwischenmerker
+  Fa : BOOL ;	//Freigabe Ausgänge
+  Srw : BOOL ;	//Schrittwechsel
+  SKw : BOOL ;	//Schrittkette weiterschalten
+  nK0 : BOOL ;	//Schrittkette im Sr.0 bzw.kein Sr gesetzt
+  DKons : BOOL ;	//TM-Daten konsistent (aktu ZwiSp==gespeicherter ZwiSp)
+  TNrSpi0 : BOOL ;	//TNr.von Spindel = 0
+  FpSpiGs : BOOL ;	//pos.Flanke:Spindel gespannt
+  noWasch : BOOL ;	//Waschen abgewählt(aus Db20.dbw24 Wert0=aus)
+  noBruKtr : BOOL ;	//Bruchkontrolle abgewählt(aus Db20.dbw20 Wert0=aus)
+  MaTy3070 : BOOL ;	//"DB_PLC_MD_DB20".UDInt._000_STANDORT_MASCHTYP 3070
+  MaTy3071 : BOOL ;	//"DB_PLC_MD_DB20".UDInt._000_STANDORT_MASCHTYP 3071
+  WzwGst : BOOL ;	//Werkzeugwechsel in Grundstlg.
+  TpuGstTrf : BOOL ;	//Tpu in Gst oder Transferstlg.
+  noVorAbl : BOOL ;	//bei letztem WzwReset war kein Wz. Vorbereiten oder Ablegen aktiv
+  TpuNoRlGT : BOOL ;	//Tpu weder Stlg.release noch get Tool
+  TpuNoMgTr : BOOL ;	//Tpu weder Magazin- noch Transferstlg.
+  FpUGrSTpu : BOOL ;	//pos.Flanke umspeichern von Grf.nach Spi&Tpu
+  t_SWLimit2_Wechsler : BOOL ;	
+  t_SWLimit2_Kabine : BOOL ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =WZW: Reset aller Module des WZW
+// 
+      U     "M_WZW_Aktiv"; 
+      R     "M_WZW_Reset_Module"; 
+
+      O     "M_WZW_Prozess_Aktiv"; // Prozess Aktiv und
+      O     "M_WZW_Err"; // Fehler
+      ON    "M_WZW_Grdst"; 
+      O     "DB_NC_PLC".WZW_NC_Aktiv; 
+      O     "M_Handbetrieb"; 
+      U     "M_Reset_Taste"; // oder Reset
+      O     "M_3_ter_OB1_Zyklus"; // Initialisierung
+      S     "M_WZW_Reset"; // Merker Reset setzen
+
+      UN    "M_VERTIKALKETTE"; 
+      ON    #E_Enabled; // Modul freigegeben
+      BEB   ; 
+
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.MASCHTYP_3060_AKTIV; 
+      =     "M_CU_Aktiv"; 
+NETWORK
+TITLE =Y-Wechselposition
+
+      U     "M_CU_Aktiv"; 
+      U     "DB_SIEM_NCK".E_SWCamPlus[2]; 
+      U     "DB_SIEM_NCK".E_SWCamMinus[2]; 
+      O     ; 
+      UN    "M_CU_Aktiv"; 
+      UN    "DB_SIEM_NCK".E_SWCamPlus[14]; 
+      UN    "DB_SIEM_NCK".E_SWCamMinus[14]; 
+      =     "I_WW_Y_inWWPos"; 
+NETWORK
+TITLE =Freigabe von Y-Achse zum Umschalten auf 2 Softwareendschalter
+
+      O     "I_WW_Y_inWWPos"; 
+      O     ; 
+      U     "DB_PLC_MD_DB20".UDHex._04_BIT4_EINRICHT_BETR; 
+      U     "M_Handbetrieb"; 
+      U     "DB_OEM".OEM_WZW2_Rettbildaktiv; 
+      =     #tx_Frg_von_Y_2nd_SWlim; 
+NETWORK
+TITLE =2nd software limit switch plus
+//    
+      U(    ; 
+      U(    ; 
+      UN    "M_CU_Aktiv"; 
+      U(    ; 
+      O     "DB_OEM".OEM_WZW2_Rettbildaktiv; 
+      O     "DB_OEM".OEM_WZW3_Rettbildaktiv; 
+      )     ; 
+      O     ; 
+      U     "M_CU_Aktiv"; 
+      U(    ; 
+      O     "DB_OEM".OEM_WZW5_Rettbildaktiv; 
+      O     "DB_OEM".OEM_WZW_MagEinstellung; 
+      )     ; 
+      O     "DB_OEM".OEM_WZW_REttbildaktiv; 
+      O     "DB_OEM".OEM_WZW6_Rettbildaktiv; 
+      O     "DB_OEM".OEM_PW2_Rettbildaktiv; 
+      O     "DB_OEM".OEM_Winkelkopfrettaktiv; 
+      )     ; 
+      U     "M_Handbetrieb"; // "DB_SIEM_BAG".E_JOG
+      O     "m_wwgf_XArbRaum"; 
+      )     ; 
+      U     "I_WW_1_Klappe_auf"; 
+      UN    "I_WW_1_Klappe_zu"; 
+      U     #tx_Frg_von_Y_2nd_SWlim; 
+      O     "M_WZW_Aktiv"; 
+      O     "M_PW_Aktiv"; 
+      O     "Mx_X_ACHSE_WZW_POS"; 
+      O(    ; 
+      U     "TMSpindleIF".IF[1].Perform; 
+      O     "DB_NC_PLC".NC_WZW_SPOS; 
+      UN    "TMSpindleIF".IF[1].T0; 
+      UN(   ; 
+      L     "DB_GREIFER_DATEN".TNR_Spindel; 
+      L     0; 
+      ==I   ; 
+      U     "TMSpindleIF".IF[1].ManTIn; 
+      )     ; 
+      UN(   ; 
+      L     "DB_GREIFER_DATEN".TNR_Spindel; 
+      L     0; 
+      <>I   ; 
+      U     "TMSpindleIF".IF[1].ManTOut; 
+      )     ; 
+      )     ; 
+      =     #t_SWLimit2_Wechsler; 
+
+
+      U(    ; 
+      O     "M_Einrichtbetrieb"; 
+      O     "M_3Te_Betriebsart"; 
+      O     "M_4Te_Betriebsart"; 
+      )     ; 
+      UN    "M_Spritz_Tuer_Zu"; 
+      =     #t_SWLimit2_Kabine; 
+
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.MASCHTYP_3071_AKTIV; 
+      SPBN  T071; 
+
+      U     #t_SWLimit2_Kabine; 
+      =     "DB_ACHSE1_X".A_SWLimit2Minus; 
+
+      U     #t_SWLimit2_Wechsler; 
+      =     "DB_ACHSE1_X".A_SWLimit2Plus; 
+
+      SPA   ETYP; 
+
+T071: U     #t_SWLimit2_Wechsler; 
+      =     "DB_ACHSE1_X".A_SWLimit2Minus; 
+
+      U     #t_SWLimit2_Kabine; 
+      =     "DB_ACHSE1_X".A_SWLimit2Plus; 
+
+ETYP: NOP   0; 
+
+NETWORK
+TITLE =Vorschubsperre X-Achse Werkzeugwechsler
+
+      U(    ; 
+      UN    "I_WW_Y_inWWPos"; 
+      UN    "M_WZW_Aktiv"; 
+      UN    "M_PW_Aktiv"; 
+      ON    "I_WW_1_Klappe_auf"; 
+      O     "I_WW_1_Klappe_zu"; 
+      )     ; 
+      UN    "M_WW_X_imArbeitsraum"; 
+      UN    "DB_PLC_MD_DB20".UDHex._04_BIT4_EINRICHT_BETR; 
+      =     "DB_WW".VSP_X_Wechsler; 
+NETWORK
+TITLE =_701303 Vorschubsperre X Werkzeugwechsler
+
+      U     "DB_WW".VSP_X_Wechsler; 
+      UN    "DB_ACHSE1_X".E_ExactFine; 
+      =     "DB_FEHLERMELDUNG".MELDUNG2._701303; 
+NETWORK
+TITLE =Vorschubsperre Y-Achse Werkzeugwechsler
+
+      UN    "M_WZW_Aktiv"; 
+      UN    "M_PW_Aktiv"; 
+      UN    "M_WW_X_imArbeitsraum"; 
+      UN    "DB_PLC_MD_DB20".UDHex._04_BIT4_EINRICHT_BETR; 
+      =     "DB_WW".VSP_Y_Wechsler; 
+NETWORK
+TITLE =701304 "MEL, Vorschubsperre Y Werkzeugwechsler"
+
+      U     "DB_WW".VSP_Y_Wechsler; 
+      UN    "DB_ACHSE2_Y".E_ExactFine; 
+      =     "DB_FEHLERMELDUNG".MELDUNG2._701304; 
+NETWORK
+TITLE =Einrichten
+
+      UN    "M_CU_Aktiv"; 
+      SPB   ds01; 
+
+      U     "DB_OEM".OEM_WZW_MagEinstellung; 
+      U     "M_Handbetrieb"; // JOG
+      U     "DB_PLC_MD_DB20".UDHex._04_BIT4_EINRICHT_BETR; 
+      =     #t_Frg_Greifer_drehen; 
+
+      U     #t_Frg_Greifer_drehen; 
+      U     "DB_EINRICHTFUNKTION".Bewegung_205_Minus; 
+      =     "DB_Achs11_VMAG_Greifer".MX_FahrAnf_Plus; 
+
+      U     #t_Frg_Greifer_drehen; 
+      U     "DB_EINRICHTFUNKTION".Bewegung_205_Plus; 
+      =     "DB_Achs11_VMAG_Greifer".MX_FahrAnf_Minus; 
+NETWORK
+TITLE =
+
+      U     "DB_OEM".OEM_WZW_MagEinstellung; 
+      U     "M_Handbetrieb"; // JOG
+      U     "DB_PLC_MD_DB20".UDHex._04_BIT4_EINRICHT_BETR; 
+      U(    ; 
+      O     "I_TM_TPU_RELEASE_TOOL"; 
+      O     "I_TM_TPU_TRANSFERPOS"; 
+      )     ; 
+      =     #t_Frg_Mag_fahren; 
+      SPBN  _dse; 
+
+      U     #t_Frg_Mag_fahren; 
+      U     "DB_EINRICHTFUNKTION".Bewegung_206_Minus; 
+      =     "DB_ACHS7_WZM".MX_FahrAnf_Plus; 
+
+      U     #t_Frg_Mag_fahren; 
+      U     "DB_EINRICHTFUNKTION".Bewegung_206_Plus; 
+      =     "DB_ACHS7_WZM".MX_FahrAnf_Minus; 
+      SPA   _dse; 
+NETWORK
+TITLE =
+
+ds01: U     "DB_OEM".OEM_WZW3_Rettbildaktiv; 
+      U     "M_Handbetrieb"; // JOG
+      U     "DB_PLC_MD_DB20".UDHex._04_BIT4_EINRICHT_BETR; 
+      =     #t_Frg_Greifer_drehen; 
+
+      U     #t_Frg_Greifer_drehen; 
+      U     "DB_EINRICHTFUNKTION".Bewegung_59_Minus; 
+      =     "DB_Achs11_VMAG_Greifer".MX_FahrAnf_Minus; 
+
+      U     #t_Frg_Greifer_drehen; 
+      U     "DB_EINRICHTFUNKTION".Bewegung_59_Plus; 
+      =     "DB_Achs11_VMAG_Greifer".MX_FahrAnf_Plus; 
+NETWORK
+TITLE =
+
+      U     "DB_OEM".OEM_WZW3_Rettbildaktiv; 
+      U     "M_Handbetrieb"; // JOG
+      U     "DB_PLC_MD_DB20".UDHex._04_BIT4_EINRICHT_BETR; 
+      U(    ; 
+      O     "I_TM_TPU_RELEASE_TOOL"; 
+      O     "I_TM_TPU_TRANSFERPOS"; 
+      )     ; 
+      =     #t_Frg_Mag_fahren; 
+      SPBN  _dse; 
+
+      U     #t_Frg_Mag_fahren; 
+      U     "DB_EINRICHTFUNKTION".Bewegung_58_Minus; 
+      =     "DB_ACHS7_WZM".MX_FahrAnf_Minus; 
+
+      U     #t_Frg_Mag_fahren; 
+      U     "DB_EINRICHTFUNKTION".Bewegung_58_Plus; 
+      =     "DB_ACHS7_WZM".MX_FahrAnf_Plus; 
+
+_dse: NOP   0; 
+NETWORK
+TITLE =WZV: Request Greiferdaten lesen
+
+      U     "M_CU_Aktiv"; 
+      SPBN  n4a; 
+
+      UN    "Mx_Werkzeugdaten_lesen"; 
+      S     "Mx_Werkzeugdaten_lesen"; 
+
+//RESET: Lesen_1: TNR
+//  SET: Lesen_2: WZ_Option und max.SpindelDrehzahl
+      U     "Mx_WZdaten_lesen_ready"; 
+      O     "Mx_Wzdaten_lesen_error"; 
+      R     "Mx_Werkzeugdaten_lesen"; 
+      S     "REQ_WZDat_Lesen_2"; 
+
+      O     "M_1_ter_OB1_Zyklus"; 
+      O     "M_2_ter_OB1_Zyklus"; 
+      O     "M_3_ter_OB1_Zyklus"; 
+      R     "Mx_Werkzeugdaten_lesen"; 
+      R     "REQ_WZDat_Lesen_2"; 
+
+      CALL "FB_SIEM_GET" , "DI_GREIFER_DAT_LESEN" (
+           Req                      := "Mx_Werkzeugdaten_lesen",
+           NumVar                   := 5,
+           Addr1                    := "DB_GREIFER_DATEN".T1_TP_placeData11_9998,
+           Addr2                    := "DB_GREIFER_DATEN".T1_TP_placeData19_9998,
+           Addr3                    := "DB_GREIFER_DATEN".T1_TP_placeData3_9998,
+           Addr4                    := "DB_GREIFER_DATEN".T1_TP_placeData4_9998,
+           Addr5                    := "DB_TOOL_DATA".C1_SSP_actSpeed1_2,
+           Error                    := "Mx_Wzdaten_lesen_error",
+           NDR                      := "Mx_WZdaten_lesen_ready",
+           RD1                      := "DB_GREIFER_DATEN".TNR_Gr1,
+           RD2                      := "DB_GREIFER_DATEN".TNR_Gr2,
+           RD3                      := "DB_GREIFER_DATEN".TNR_Spindel,
+           RD4                      := "DB_GREIFER_DATEN".TNR_TPU,
+           RD5                      := "DB_TOOL_DATA".Spindel_Ist_Drehzahl);
+
+
+      L     "DB_GREIFER_DATEN".TNR_Spindel; 
+      L     0; 
+      ==I   ; 
+      O     "NDR_WZDat_Lesen_2"; 
+      O     "ERROR_WZDat_Lesen_2"; 
+      R     "REQ_WZDat_Lesen_2"; 
+
+
+      CALL "FB_SIEM_GET" , "DI_GREIFER_DAT_LESEN2" (
+           Req                      := "REQ_WZDat_Lesen_2",
+           NumVar                   := 2,
+           Addr1                    := "DB_TOOL_DATA".ToolOEMDATA,
+           Column1                  := W#16#7,
+           Line1                    := "DB_GREIFER_DATEN".TNR_Spindel,
+           Addr2                    := "DB_TOOL_DATA".ToolOEMDATA,
+           Column2                  := W#16#2,
+           Line2                    := "DB_GREIFER_DATEN".TNR_Spindel,
+           Error                    := "ERROR_WZDat_Lesen_2",
+           NDR                      := "NDR_WZDat_Lesen_2",
+           RD1                      := "DB_TOOL_DATA".SpWZ_Option,
+           RD2                      := "DB_TOOL_DATA".Spindeldrehzahl_max);
+
+n4a:  NOP   0; 
+NETWORK
+TITLE =Merker ob ein WZ im Greifer ist
+//Meldung WZ im Greifer wird ausgegeben
+      L     "DB_GREIFER_DATEN".TNR_Spindel; 
+      L     0; 
+      <>I   ; 
+      =     "M_SPI_belegt"; 
+
+      L     "DB_GREIFER_DATEN".TNR_Gr1; 
+      L     0; 
+      <>I   ; 
+      =     "M_WZGr1_belegt"; 
+
+      L     "DB_GREIFER_DATEN".TNR_Gr2; 
+      L     0; 
+      <>I   ; 
+      =     "M_WZGr2_belegt"; 
+
+      L     "DB_GREIFER_DATEN".TNR_TPU; 
+      L     0; 
+      <>I   ; 
+      =     "M_TPU_belegt"; 
+
+      O     "M_WZGr1_belegt"; 
+      O     "M_WZGr2_belegt"; 
+      =     "DB_REMANENT".WZ_Im_Greifer; 
+NETWORK
+TITLE =Alarm: Werkzeuggreifer belegt
+
+      U     "M_Fehler_Quit_Taste"; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700815_WZ_Im_Greifer; 
+      U(    ; 
+      U     "M_WZW_Gre1_Pos_Spi"; 
+      U     "M_WZGr1_belegt"; 
+      O     ; 
+      U     "M_WZW_Gre1_Pos_Mag"; 
+      U     "M_WZGr2_belegt"; 
+      )     ; 
+      U(    ; 
+      U     #E_MSSTst_NC_Start; 
+      UN    "M_Programm_Aktiv_Kanal_1"; 
+      UN    "M_Handbetrieb"; 
+      U     "M_WW_X_imArbeitsraum"; 
+      O     "M_PF_RF_X_Arbeitsraum"; 
+      O     "M_PF_RF_X_WW_Pos"; 
+      )     ; 
+      UN    "DB_PLC_MD_DB20".UDHex._04_BIT4_EINRICHT_BETR; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700815_WZ_Im_Greifer; 
+      NOP   0; 
+NETWORK
+TITLE =Werkzeugwechsler aktiv 
+
+      O     "M_WZW_Vorber_laeuft"; 
+      O     "M_WZW_Ausw"; 
+      =     "DB_FEHLERMELDUNG".Meldung._702146_WZW_aktiv; 
+NETWORK
+TITLE =Freigaben WZ-Vorbereiten und WZ-Ablegen
+
+      U     "I_TM_TPU_RELEASE_TOOL"; 
+      U     "I_TM_TPU_MAGAZINPOS"; 
+      U     "I_TM_MAG_TOOL_LOCK"; 
+      =     "M_Frg_WZ_vorbereiten"; 
+
+      U     "I_TM_TPU_GET_TOOL"; 
+      U     "I_TM_TPU_TRANSFERPOS"; 
+      U     "I_TM_MAG_TOOL_LOCK"; 
+      =     "M_Frg_WZ_ablegen"; 
+NETWORK
+TITLE =WZW: Greifer 1 Position Magazin
+//Endlagen an NC melden
+//Greifer 1 Richtung Magazin
+      U     "M_WZW_Gre1_Pos_Mag"; 
+      =     "DB_NC_PLC".WZW_Grei2_SPi; 
+
+//Greifer 2 Richtung Magazin
+      U     "M_WZW_Gre1_Pos_Spi"; 
+      =     "DB_NC_PLC".WZW_Grei1_SPi; 
+
+//Greifer Grundstellung
+      U     "M_WZW_Gre1_Pos_Mag"; 
+      X     "M_WZW_Gre1_Pos_Spi"; 
+      =     "M_WZW_Greifer_OK"; 
+
+//Werkzeugwechslertüre
+      U     "I_WW_1_Klappe_auf"; 
+      UN    "I_WW_1_Klappe_zu"; 
+      =     "DB_NC_PLC".WZW_Tuere_offen; 
+
+
+//Positionen der Transporteinheit(TPU) auswerten
+//TPU ist auf Werkzeugkegel gefahren
+      UN    "I_TM_TPU_RELEASE_TOOL"; 
+      U     "I_TM_TPU_GET_TOOL"; 
+      =     "M_TM_TPU_GET_TOOL"; 
+
+//TPU ist auf Grundstellung gefahren
+      U     "I_TM_TPU_RELEASE_TOOL"; 
+      UN    "I_TM_TPU_GET_TOOL"; 
+      =     "M_TM_TPU_RELEASE_TOOL"; 
+
+//TPU ist zur Übergabeposition gefahren
+      U     "I_TM_TPU_TRANSFERPOS"; 
+      UN    "I_TM_TPU_MAGAZINPOS"; 
+      =     "M_TM_TPU_TRANSFERPOS"; 
+
+//TPU ist zur Magazinpostition gefahren
+      UN    "I_TM_TPU_TRANSFERPOS"; 
+      U     "I_TM_TPU_MAGAZINPOS"; 
+      =     "M_TM_TPU_MAGAZINPOS"; 
+
+
+//Positionen der Werkzeugverriegelung auswerten
+//Werkzeug an Magazinposition ist entriegelt
+      U     "I_TM_MAG_TOOL_UNLOCK"; 
+      UN    "I_TM_MAG_TOOL_LOCK"; 
+      =     "M_TM_MAG_TOOL_UNLOCK"; 
+
+//Werkzeug an Magazinposition ist verriegelt
+      UN    "I_TM_MAG_TOOL_UNLOCK"; 
+      U     "I_TM_MAG_TOOL_LOCK"; 
+      =     "M_TM_MAG_TOOL_LOCK"; 
+
+//Werkzeug am Rüstplatz ist entriegelt
+      U     "I_TM_TLOAD_TOOL_UNLOCK"; 
+      UN    "I_TM_TLOAD_TOOL_LOCK"; 
+      =     "M_TM_TLOAD_TOOL_UNLOCK"; 
+
+//Werkzeug am Rüstplatz ist verriegelt
+      UN    "I_TM_TLOAD_TOOL_UNLOCK"; 
+      U     "I_TM_TLOAD_TOOL_LOCK"; 
+      =     "M_TM_TLOAD_TOOL_LOCK"; 
+
+//TPU an Übergabe
+      U     "I_TM_TPU_TRANSFERPOS"; 
+      U     "I_TM_TPU_GET_TOOL"; 
+      L     S5T#100MS; 
+      SA    "Ta_TPU_UEB_ENTPR"; 
+      U     "Ta_TPU_UEB_ENTPR"; 
+      =     "DB_NC_PLC".WZW_TPU_in_Uebergabe; 
+
+//Freigabe TPU in Rettung bei Einrichtbit                    
+      U     "DB_PLC_MD_DB20".UDHex._04_BIT4_EINRICHT_BETR; 
+      =     "DB_NC_PLC".Zusatz.PLC_an_NC.Einrichtbit; 
+
+//WZ-Spannerzustände an NC
+      U     "M_WZ_Spanner_Auf"; 
+      UN    "M_WZ_Spanner_Zu"; 
+      =     "DB_NC_PLC".WZW_Spanner_Auf; 
+
+      U     "M_WZ_Spanner_Zu"; 
+      =     "DB_NC_PLC".WZW_Spanner_Zu; 
+
+
+      U     "M_WZW_Vorber_laeuft"; 
+      O     "M_WZW_Ausw"; 
+      O     "DB_DM_M_FUNKTION".MX_M[283]; 
+      O     "DB_DM_M_FUNKTION".MX_M[284]; 
+      O(    ; 
+      U     "DI_TM_T_BEFEHL".Req_Tx; 
+      O(    ; 
+      L     "MB_SKZ_VERTMAG_WZW"; 
+      L     0; 
+      <>I   ; 
+      )     ; 
+      )     ; 
+      L     S5T#500MS; 
+      SA    "Ta_WZW_Aktiv"; 
+      U     "Ta_WZW_Aktiv"; 
+      =     "DB_NC_PLC".WZW_PLC_Aktiv; // "DB_NCPlc_DB70".WZW_310
+
+//T-Funktionsersetzung sperren solange WZ-Vorbereitung läuft
+      U     "M_WZW_Vorber_laeuft"; 
+      =     "DB_NC_PLC".WZW_Vorbereiten_aktiv; 
+
+      U     "M_WZW_Ausw"; 
+      O     "DB_DM_M_FUNKTION".MX_M[283]; 
+      O     "DB_DM_M_FUNKTION".MX_M[284]; 
+      =     "DB_NC_PLC".WZW_Ablegen_aktiv; 
+
+      U     "TMSpindleIF".IFNo[1]; 
+      U     "TMSpindleIF".IF[1].Prepare; 
+      O     ; 
+      U     "M_MAG_Laeuft"; 
+      UN    "DB_NC_PLC".WZW_WZ_Vorbereitet; 
+      O     "M_WZW_Vorber_laeuft"; 
+      L     S5T#300MS; 
+      SA    "Ta_T_Prepare_aktiv"; 
+      U     "Ta_T_Prepare_aktiv"; 
+
+      =     "DB_NC_PLC".WZW_T_Prepare_aktiv; 
+
+//Abspeicher der Bereitstellungsnummer für WZV
+      U     "M_WZW_Gre1_Pos_Mag"; 
+      SPBN  A01; 
+      L     2; 
+      T     "MW_Nr_Bereitst"; 
+      SPA   A02; 
+
+A01:  U     "M_WZW_Gre1_Pos_Spi"; 
+      SPBN  A02; 
+      L     3; 
+      T     "MW_Nr_Bereitst"; 
+
+//Informationen für Regalmagazin (Greiferpositionen)
+A02:  NOP   0; 
+NETWORK
+TITLE =X-Achse im Arbeitsraum
+
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.MASCHTYP_3071_AKTIV; 
+      UN    "DB_SIEM_NCK".E_SWCamPlus[15]; 
+      O     ; 
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.MASCHTYP_3070_AKTIV; 
+      U     "DB_SIEM_NCK".E_SWCamPlus[15]; 
+      O     ; 
+      U     "M_CU_Aktiv"; 
+      U     "DB_SIEM_NCK".E_SWCamMinus[1]; 
+      =     "M_WW_X_imArbeitsraum"; 
+NETWORK
+TITLE =Rettungsmenü Werkzeugwechsler      1(CS)
+//****************** Zeile 1 ***********************************************  
+//
+//****************** Zeile 2 ***********************************************
+//
+//****************** Zeile 3 ***********************************************
+//
+//****************** Zeile 4 ***********************************************
+//Klappe öffnen/schliessen wird im FC_WZW_VERT_MAG bearbeitet
+//
+//****************** Zeile 5 ***********************************************
+//Werkzeugspanner
+      U     "M_CU_Aktiv"; 
+      SPBN  cs02; 
+      L     191; 
+      T     #tb_bewegungsnummer; 
+      SPA   cs5e; 
+
+cs02: L     5; 
+      T     #tb_bewegungsnummer; 
+
+cs5e: UN    "O_AL_WZ_Spanner_Loesen"; 
+      =     #tx_wzsp_zu; 
+
+      U     "M_Leistung_Steht_an"; 
+      U     "M_Handbetrieb"; // "DB_SIEM_BAG".E_JOG
+      =     #tx_frg_wzsp; 
+
+      U     "I_WZ_SPA_geloest"; 
+      =     #tx_wz_spa_geloest; 
+
+      U     "I_WZ_SPA_gespannt"; 
+      O     "I_WZ-Spanner_Gesp_mit_WZ"; 
+      =     #tx_wz_spa_gespannt; 
+
+      CALL "FC_HMI_IO_TO_TLINE" (
+           Freigabe_AST_Hand        := #tx_frg_wzsp,
+           Freigabe_GST_Hand        := #tx_frg_wzsp,
+           Endlage_AST              := #tx_wz_spa_geloest,
+           Endlage_GST              := #tx_wz_spa_gespannt,
+           Ventil_AST               := "O_AL_WZ_Spanner_Loesen",
+           Ventil_GST               := #tx_wzsp_zu,
+           Bewegungsnummer          := #tb_bewegungsnummer);
+
+//****************** Zeile 6 ***********************************************
+//Greifer drehen wird im FC_WZW_VERT_MAG bearbeitet
+
+NETWORK
+TITLE =Rettungsmenü Werkzeugwechsler 5(CU) 2(CS)
+//****************** Zeile 1 ***********************************************
+//
+//
+//****************** Zeile 2 ***********************************************
+//X-Achse
+      UN    "M_CU_Aktiv"; 
+      SPB   BNZ2; 
+
+      L     176; 
+      T     #tb_bewegungsnummer; 
+
+      CALL "FC_HMI_IO_TO_TLINE" (
+           Freigabe_AST_Hand        := "DB_VWWZ".gd0.Frg_Hand_X_zur_WW_Pos,
+           Freigabe_GST_Hand        := "DB_VWWZ".gd0.Frg_Hand_X_zum_Arbeitsr,
+           Endlage_AST              := "Mx_X_ACHSE_WZW_POS",
+           Endlage_GST              := "M_WW_X_imArbeitsraum",
+           Ventil_AST               := "DB_ACHSE1_X".E_TCPlus,
+           Ventil_GST               := "DB_ACHSE1_X".E_TCMinus,
+           Bewegungsnummer          := #tb_bewegungsnummer);
+
+      SPA   E_Z2; 
+
+BNZ2: L     14; 
+      T     #tb_bewegungsnummer; 
+
+      CALL "FC_HMI_IO_TO_TLINE" (
+           Freigabe_AST_Hand        := "DB_VWWZ".gd0.Frg_Hand_X_zum_Arbeitsr,
+           Freigabe_GST_Hand        := "DB_VWWZ".gd0.Frg_Hand_X_zur_WW_Pos,
+           Endlage_AST              := "M_WW_X_imArbeitsraum",
+           Endlage_GST              := "Mx_X_ACHSE_WZW_POS",
+           Ventil_AST               := "DB_ACHSE1_X".E_TCMinus,
+           Ventil_GST               := "DB_ACHSE1_X".E_TCPlus,
+           Bewegungsnummer          := #tb_bewegungsnummer);
+
+E_Z2: NOP   0; 
+
+//****************** Zeile 3 ***********************************************
+//Vertikal-Achse
+
+      U     "DB_ACHSE2_Y".E_TCPlus; 
+      O     "DB_ACHSE2_Y".E_TCMinus; 
+      =     #tx_YAx_faehrt; 
+
+      UN    "M_CU_Aktiv"; 
+      SPB   BNZ3; 
+
+      L     177; 
+      T     #tb_bewegungsnummer; 
+
+      CALL "FC_HMI_IO_TO_TLINE" (
+           Freigabe_AST_Hand        := "DB_VWWZ".gd0.Frg_Hand_Y_zur_WW_Pos,
+           Freigabe_GST_Hand        := "DB_VWWZ".gd0.Frg_Hand_Y_zur_WW_Pos,
+           Endlage_AST              := "m_null",
+           Endlage_GST              := "I_WW_Y_inWWPos",
+           Ventil_AST               := #tx_YAx_faehrt,
+           Ventil_GST               := #tx_YAx_faehrt,
+           Bewegungsnummer          := #tb_bewegungsnummer);
+
+      SPA   E_Z3; 
+
+
+BNZ3: L     15; 
+      T     #tb_bewegungsnummer; 
+
+      CALL "FC_HMI_IO_TO_TLINE" (
+           Freigabe_AST_Hand        := "DB_VWWZ".gd0.Frg_Hand_Y_zur_WW_Pos,
+           Freigabe_GST_Hand        := "DB_VWWZ".gd0.Frg_Hand_Y_zur_WW_Pos,
+           Endlage_AST              := "I_WW_Y_inWWPos",
+           Endlage_GST              := "m_null",
+           Ventil_AST               := #tx_YAx_faehrt,
+           Ventil_GST               := #tx_YAx_faehrt,
+           Bewegungsnummer          := #tb_bewegungsnummer);
+
+E_Z3: NOP   0; 
+
+//****************** Zeile 4 ***********************************************
+//Spindel
+
+      U     "DB_SIEM_NCK".E_SWCamPlus[16]; 
+      =     "M_Sp_in_M19Pos"; 
+
+      L     16; 
+
+      UN    "M_CU_Aktiv"; 
+      SPB   BNZ4; 
+
+      L     178; 
+BNZ4: T     #tb_bewegungsnummer; 
+
+      CALL "FC_HMI_IO_TO_TLINE" (
+           Freigabe_AST_Hand        := FALSE,
+           Freigabe_GST_Hand        := "DB_VWWZ".gd0.Frg_Hand_SPI_zur_WW_Pos,
+           Endlage_AST              := FALSE,
+           Endlage_GST              := "M_Sp_in_M19Pos",
+           Ventil_AST               := FALSE,
+           Ventil_GST               := FALSE,
+           Bewegungsnummer          := #tb_bewegungsnummer);
+
+//****************** Zeile 5 ***********************************************
+//Reset WZW
+      U     "M_Handbetrieb"; // "DB_SIEM_BAG".E_JOG
+      =     #tx_frg_reset; 
+
+      L     17; 
+
+      UN    "M_CU_Aktiv"; 
+      SPB   BNZ5; 
+
+      L     179; 
+BNZ5: T     #tb_bewegungsnummer; 
+
+      CALL "FC_HMI_IO_TO_TLINE" (
+           Freigabe_AST_Hand        := FALSE,
+           Freigabe_GST_Hand        := #tx_frg_reset,
+           Endlage_AST              := FALSE,
+           Endlage_GST              := FALSE,
+           Ventil_AST               := FALSE,
+           Ventil_GST               := "DB_OEM".WZW_Reset,
+           Bewegungsnummer          := #tb_bewegungsnummer);
+
+//****************** Zeile 6 ***********************************************
+//Werkzeuge überprüft
+
+      L     18; 
+
+      UN    "M_CU_Aktiv"; 
+      SPB   BNZ6; 
+
+      L     180; 
+BNZ6: T     #tb_bewegungsnummer; 
+
+      CALL "FC_HMI_IO_TO_TLINE" (
+           Freigabe_AST_Hand        := FALSE,
+           Freigabe_GST_Hand        := "M_Handbetrieb",// "DB_SIEM_BAG".E_JOG
+           Endlage_AST              := FALSE,
+           Endlage_GST              := FALSE,
+           Ventil_AST               := FALSE,
+           Ventil_GST               := "DB_OEM".WZ_ueberprueft,
+           Bewegungsnummer          := #tb_bewegungsnummer);
+
+NETWORK
+TITLE =Rettungsmenü Werkzeugwechsler 6
+//****************** Zeile 1 ***********************************************
+//
+//****************** Zeile 2 ***********************************************
+//Transporteinheit auf Werkzeugkegel und zurück wird im FC_WZW_VERT_MAG bearbeitet
+//
+//****************** Zeile 3 ***********************************************
+//Transporteinheit zur Übergabeposition und zurück wird im FC_WZW_VERT_MAG 
+//bearbeitet
+//
+//****************** Zeile 4 ***********************************************
+//Werkzeug im Magazin verriegeln und entriegeln wird im FC_WZW_VERT_MAG 
+//bearbeitet 
+//
+//****************** Zeile 5 ***********************************************
+//Anzeige PIN_LOCK
+      CALL "FC_HMI_IO_TO_TLINE" (
+           Freigabe_AST_Hand        := FALSE,
+           Freigabe_GST_Hand        := FALSE,
+           Endlage_AST              := "I_TM_TLOAD_PIN_LOCK",
+           Endlage_GST              := "I_TM_MAG_PIN_LOCK",
+           Ventil_AST               := FALSE,
+           Ventil_GST               := FALSE,
+           Bewegungsnummer          := 95);
+
+//****************** Zeile 6 ***********************************************
+//Werkzeug am Rüstplatz verriegeln und entriegeln wird im FC_WZW_VERT_MAG bearbeitet 
+NETWORK
+TITLE =Rettungsmenü Werkzeugwechsler 7 (CU)
+//****************** Zeile 1 ***********************************************
+//8te Achse
+//
+      U     "M_CU_Aktiv"; 
+      SPBN  EW7U; 
+
+      CALL "FC_HMI_IO_TO_TLINE" (
+           Freigabe_AST_Hand        := #t_Frg_Greifer_drehen,
+           Freigabe_GST_Hand        := #t_Frg_Greifer_drehen,
+           Endlage_AST              := FALSE,
+           Endlage_GST              := FALSE,
+           Ventil_AST               := "DB_ACHSE8".E_TCPlus,
+           Ventil_GST               := "DB_ACHSE8".E_TCMinus,
+           Bewegungsnummer          := 205);
+
+//****************** Zeile 2 ***********************************************
+//Magazin Achse
+
+      CALL "FC_HMI_IO_TO_TLINE" (
+           Freigabe_AST_Hand        := #t_Frg_Mag_fahren,
+           Freigabe_GST_Hand        := #t_Frg_Mag_fahren,
+           Endlage_AST              := FALSE,
+           Endlage_GST              := FALSE,
+           Ventil_AST               := "DB_ACHSE7".E_TCPlus,
+           Ventil_GST               := "DB_ACHSE7".E_TCMinus,
+           Bewegungsnummer          := 206);
+
+//****************** Zeile 3 ***********************************************
+//Magazinklappe oeffnen/schliessen
+
+      U     "DB_EINRICHTFUNKTION".Bewegung_207_Minus; 
+      =     #t_hand_klappe_auf; 
+
+      U     "DB_EINRICHTFUNKTION".Bewegung_207_Plus; 
+      =     #t_hand_klappe_zu; 
+
+
+      CALL "FC_HMI_IO_TO_TLINE" (
+           Freigabe_AST_Hand        := "M_Handbetrieb",// "DB_SIEM_BAG".E_JOG
+           Freigabe_GST_Hand        := "M_Handbetrieb",// "DB_SIEM_BAG".E_JOG
+           Endlage_AST              := "I_WW_1_Klappe_auf",
+           Endlage_GST              := "I_WW_1_Klappe_zu",
+           Ventil_AST               := #t_hand_klappe_auf,
+           Ventil_GST               := #t_hand_klappe_zu,
+           Bewegungsnummer          := 207);
+
+//****************** Zeile 4 ***********************************************
+
+//****************** Zeile 5 ***********************************************
+
+//****************** Zeile 6 ***********************************************
+
+
+
+EW7U: NOP   0; 
+
+NETWORK
+TITLE =Rettungsmenü Werkzeugwechsler 3 bei CS
+//
+//
+      UN    "M_CU_Aktiv"; 
+      SPBN  EW3S; 
+//****************** Zeile 1 ***********************************************
+
+//****************** Zeile 2 ***********************************************
+
+//****************** Zeile 3 ***********************************************
+
+//****************** Zeile 4 ***********************************************
+//Magazin Achse
+      CALL "FC_HMI_IO_TO_TLINE" (
+           Freigabe_AST_Hand        := #t_Frg_Mag_fahren,
+           Freigabe_GST_Hand        := #t_Frg_Mag_fahren,
+           Endlage_AST              := FALSE,
+           Endlage_GST              := FALSE,
+           Ventil_AST               := "DB_ACHSE7".E_TCMinus,
+           Ventil_GST               := "DB_ACHSE7".E_TCPlus,
+           Bewegungsnummer          := 58);
+
+//****************** Zeile 5 ***********************************************
+//14te Achse
+
+      CALL "FC_HMI_IO_TO_TLINE" (
+           Freigabe_AST_Hand        := #t_Frg_Greifer_drehen,
+           Freigabe_GST_Hand        := #t_Frg_Greifer_drehen,
+           Endlage_AST              := FALSE,
+           Endlage_GST              := FALSE,
+           Ventil_AST               := "DB_ACHSE14".E_TCMinus,
+           Ventil_GST               := "DB_ACHSE14".E_TCPlus,
+           Bewegungsnummer          := 59);
+
+//****************** Zeile 6 ***********************************************
+
+EW3S: NOP   0; 
+
+NETWORK
+TITLE =WZW: Grundstellung
+
+      U     "M_TM_TPU_RELEASE_TOOL"; 
+      U     "M_TM_TPU_MAGAZINPOS"; 
+      U     "M_TM_MAG_TOOL_LOCK"; 
+      U     "I_TM_MAG_PIN_LOCK"; 
+      U     "M_TM_TLOAD_TOOL_LOCK"; 
+      =     "M_WZW_Grdst"; 
+NETWORK
+TITLE =WZW: Transfer Stellung
+
+      U     "M_TM_TPU_TRANSFERPOS"; 
+      U     "M_TM_TPU_GET_TOOL"; 
+      U     "M_TM_MAG_TOOL_LOCK"; 
+      U     "I_TM_MAG_PIN_LOCK"; 
+      =     "M_WZW_Transfer_Stellung"; 
+NETWORK
+TITLE =WZW: OEM Grundstellung
+
+      U(    ; 
+      O     "M_WZW_Grdst"; 
+      O     "M_WZW_Transfer_Stellung"; 
+      )     ; 
+      U     "I_WW_1_Klappe_zu"; 
+      U     "M_WZW_Greifer_OK"; 
+      =     "DB_OEM".WZW_in_Grdst; 
+NETWORK
+TITLE =X-Achse auf Wechselpos, X-Achse ausserhalb von WZW-Klapee
+
+      U     "M_CU_Aktiv"; 
+      U     "DB_SIEM_NCK".E_SWCamPlus[0]; 
+      U     "DB_SIEM_NCK".E_SWCamMinus[0]; 
+      O     ; 
+      UN    "M_CU_Aktiv"; 
+      UN    "DB_SIEM_NCK".E_SWCamMinus[8]; 
+      UN    "DB_SIEM_NCK".E_SWCamPlus[8]; 
+      =     "Mx_X_ACHSE_WZW_POS"; 
+NETWORK
+TITLE =**** Automatisches Grundstellungsfahren ****
+//
+//
+//                         
+NETWORK
+TITLE =Lokaldaten laden 
+
+      CALL "BLKMOVE" (
+           SRCBLK                   := "DB_VWWZ".s,
+           RET_VAL                  := #WertInt,
+           DSTBLK                   := #s);
+      NOP   0; 
+NETWORK
+TITLE =Signale retten bei Flanke "Wz.vorbereitet" od."M_WZ_Rdy_Ablegen"
+
+      U     "Mx_WZdaten_lesen_ready"; 
+      FP    #s.fk[5]; 
+      U     #s.RqRdZSp; 
+      =     L     40.0; 
+      U     L     40.0; 
+      BLD   102; 
+      R     #s.RqRdZSp; 
+      U     L     40.0; 
+      SPBNB _001; 
+      L     "DB_GREIFER_DATEN".TNR_Gr1; 
+      T     "DB_VWWZ".TMD0.TNrGr1; 
+_001: NOP   0; 
+      U     L     40.0; 
+      SPBNB _002; 
+      L     "DB_GREIFER_DATEN".TNR_Gr2; 
+      T     "DB_VWWZ".TMD0.TnrGr2; 
+_002: NOP   0; 
+      U     L     40.0; 
+      SPBNB _003; 
+      L     "DB_GREIFER_DATEN".TNR_Spindel; 
+      T     "DB_VWWZ".TMD0.TNrSpi; 
+_003: NOP   0; 
+      U     L     40.0; 
+      SPBNB _004; 
+      L     "DB_GREIFER_DATEN".TNR_TPU; 
+      T     "DB_VWWZ".TMD0.TNrTpu; 
+_004: NOP   0; 
+
+NETWORK
+TITLE =
+
+      U     "DB_NC_PLC".WZW_WZ_Vorbereitet; 
+      FP    #s.fk[4]; 
+      S     #s.RqRdZSp; 
+
+NETWORK
+TITLE =
+
+      U     "M_WZ_Rdy_Ablegen"; 
+      FP    #s.fk[6]; 
+      O(    ; 
+      U     "DB_VWWZ".gd0.UspMTpuM; 
+      FP    #s.fk[3]; 
+      )     ; 
+      S     #s.RqRdZSp; 
+NETWORK
+TITLE =WzGrfStlg. bei Spindel lösen (nicht BaJog) speichern
+
+      U     "I_WZ_SPA_geloest"; 
+      FP    #s.fk[0]; 
+      UN    "M_Handbetrieb"; // "DB_SIEM_BAG".E_JOG
+      U     "M_Leistung_Steht_an"; 
+      UN    #s.SkStrt; 
+      U     "DB_VWWZ".gd0.FTMDsi; 
+      =     L     40.0; 
+      U     L     40.0; 
+      U     "M_WZW_Gre1_Pos_Spi"; 
+      S     "DB_VWWZ".gd0.g1Spi; 
+      R     "DB_VWWZ".gd0.g1Mag; 
+      U     L     40.0; 
+      U     "M_WZW_Gre1_Pos_Mag"; 
+      S     "DB_VWWZ".gd0.g1Mag; 
+      R     "DB_VWWZ".gd0.g1Spi; 
+
+NETWORK
+TITLE =pos.Flanke: Spindel gespannt
+
+      U     #tx_wz_spa_gespannt; 
+      FP    #s.fk[1]; 
+      =     #FpSpiGs; 
+NETWORK
+TITLE =Frg.TM-Daten bei WzwReset sichern & gerette Daten löschen
+
+      U     "TMSpindleIF".IFNo[1]; 
+      U     "TMSpindleIF".IF[1].Prepare; 
+      FP    #s.fk[8]; 
+      =     L     40.0; 
+      U     L     40.0; 
+      BLD   102; 
+      S     "DB_VWWZ".gd0.FTMDsi; 
+      U     L     40.0; 
+      SPBNB _005; 
+      L     0; 
+      T     #loopctr; 
+_005: NOP   0; 
+      U     L     40.0; 
+      SPBNB _006; 
+      CALL "FILL" (
+           BVAL                     := #loopctr,
+           RET_VAL                  := #WertInt,
+           BLK                      := "DB_VWWZ".TMDR);
+_006: NOP   0; 
+NETWORK
+TITLE =bei letztem WzwReset war kein Wz.Vorbereiten/Wz.Ablegen aktiv
+
+      UN    "DB_VWWZ".TMDR.VorbLft; 
+      UN    "DB_VWWZ".TMDR.AblLft; 
+      =     #noVorAbl; 
+NETWORK
+TITLE =Lokalvariable initialisieren
+
+      U     "m_eins"; 
+      =     L     40.0; 
+      U     L     40.0; 
+      BLD   102; 
+      R     #Srw; 
+      U     L     40.0; 
+      U(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._012_ANWAHL_WKZ_WASCHEN; 
+      L     0; 
+      ==I   ; 
+      )     ; 
+      =     #noWasch; 
+      U     L     40.0; 
+      U(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._010_ANWAHL_WERZEUGBRUCH; 
+      L     0; 
+      ==I   ; 
+      )     ; 
+      =     #noBruKtr; 
+      U     L     40.0; 
+      SPBNB _007; 
+      L     S5T#30S; 
+      T     #s.WTUe; 
+_007: NOP   0; 
+      U     L     40.0; 
+      UN    "I_TM_TPU_RELEASE_TOOL"; 
+      UN    "I_TM_TPU_GET_TOOL"; 
+      =     #TpuNoRlGT; 
+      U     L     40.0; 
+      UN    "I_TM_TPU_MAGAZINPOS"; 
+      UN    "I_TM_TPU_TRANSFERPOS"; 
+      =     #TpuNoMgTr; 
+NETWORK
+TITLE =WzWechsler wurde im Jog bewegt
+
+      U(    ; 
+      O     "DB_EINRICHTFUNKTION".Bewegung_191_Minus; 
+      O     "DB_EINRICHTFUNKTION".Bewegung_191_Plus; 
+      O     "DB_EINRICHTFUNKTION".Bewegung_197_Minus; 
+      O     "DB_EINRICHTFUNKTION".Bewegung_197_Plus; 
+      )     ; 
+      S     #s.wwJogBew; 
+      U     "TMSpindleIF".IFNo[1]; 
+      U     "TMSpindleIF".IF[1].Prepare; 
+      R     #s.wwJogBew; 
+      NOP   0; 
+NETWORK
+TITLE =Erfassung Anzahl Leerplätze gespeich+aktu Wz-Zwischenspeicher
+//---(1)--- Anzahl Leerplätze von gespeichertem ZwiSpeicher bei Flanke "Wz 
+//vorbereitet" ----
+      AUF   "DB_VWWZ"; 
+      LAR1  P#0.0; 
+      L     B#16#0; 
+      T     #LPTMD0; 
+      L     B#16#4; 
+s001: T     #loopctr; 
+      L     B#16#0; 
+      L     DBW [AR1,P#4.0]; 
+      <>I   ; 
+      SPB   s01a; 
+      L     #LPTMD0; 
+      +     1; 
+      T     #LPTMD0; 
+s01a: +AR1  P#2.0; 
+      L     #loopctr; 
+      LOOP  s001; 
+//---(1)------------------------------------------------------------------------------------
+//---(2)--- Anzahl Leerplätze von aktu. Zwischenspeicher -----------------------------------
+      AUF   "DB_GREIFER_DATEN"; 
+      LAR1  P#0.0; 
+      L     B#16#0; 
+      T     #LP_akt; 
+      L     B#16#3; 
+s002: T     #loopctr; 
+      L     B#16#0; 
+      L     DBW [AR1,P#30.0]; 
+      <>I   ; 
+      SPB   s02a; 
+      L     #LP_akt; 
+      +     1; 
+      T     #LP_akt; 
+s02a: +AR1  P#2.0; 
+      L     #loopctr; 
+      LOOP  s002; 
+      L     "DB_GREIFER_DATEN".TNR_TPU; 
+      L     B#16#0; 
+      <>I   ; 
+      SPB   ms02; 
+      L     #LP_akt; 
+      +     1; 
+      T     #LP_akt; 
+ms02: NOP   0; 
+//---(2)------------------------------------------------------------------------------------
+NETWORK
+TITLE =int.T-Nr.von aktu.ZwiSp.Gr1 war auch bei "Wz.vorbereitet" vh
+
+      U(    ; 
+      O(    ; 
+      L     "DB_GREIFER_DATEN".TNR_Gr1; 
+      L     "DB_VWWZ".TMD0.TNrGr1; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     "DB_GREIFER_DATEN".TNR_Gr1; 
+      L     "DB_VWWZ".TMD0.TnrGr2; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     "DB_GREIFER_DATEN".TNR_Gr1; 
+      L     "DB_VWWZ".TMD0.TNrSpi; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     "DB_GREIFER_DATEN".TNR_Gr1; 
+      L     "DB_VWWZ".TMD0.TNrTpu; 
+      ==I   ; 
+      )     ; 
+      )     ; 
+      U     "M_WZGr1_belegt"; 
+      ON    "M_WZGr1_belegt"; 
+      =     #LOp0; 
+NETWORK
+TITLE =int.T-Nr.von aktu.ZwiSp.Gr2 war auch bei "Wz.vorbereitet" vh
+
+      U(    ; 
+      O(    ; 
+      L     "DB_GREIFER_DATEN".TNR_Gr2; 
+      L     "DB_VWWZ".TMD0.TNrGr1; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     "DB_GREIFER_DATEN".TNR_Gr2; 
+      L     "DB_VWWZ".TMD0.TnrGr2; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     "DB_GREIFER_DATEN".TNR_Gr2; 
+      L     "DB_VWWZ".TMD0.TNrSpi; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     "DB_GREIFER_DATEN".TNR_Gr2; 
+      L     "DB_VWWZ".TMD0.TNrTpu; 
+      ==I   ; 
+      )     ; 
+      )     ; 
+      U     "M_WZGr2_belegt"; 
+      ON    "M_WZGr2_belegt"; 
+      =     #LOp1; 
+NETWORK
+TITLE =int.T-Nr.von aktu.ZwiSp.TPU war auch bei "Wz.vorbereitet" vh
+
+      U(    ; 
+      O(    ; 
+      L     "DB_GREIFER_DATEN".TNR_TPU; 
+      L     "DB_VWWZ".TMD0.TNrGr1; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     "DB_GREIFER_DATEN".TNR_TPU; 
+      L     "DB_VWWZ".TMD0.TnrGr2; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     "DB_GREIFER_DATEN".TNR_TPU; 
+      L     "DB_VWWZ".TMD0.TNrSpi; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     "DB_GREIFER_DATEN".TNR_TPU; 
+      L     "DB_VWWZ".TMD0.TNrTpu; 
+      ==I   ; 
+      )     ; 
+      )     ; 
+      U     "M_TPU_belegt"; 
+      ON    "M_TPU_belegt"; 
+      =     #LOp2; 
+NETWORK
+TITLE =WzZwiSpDaten konsistent
+//Die Daten dürfen seit dem letzten "DB_NC_PLC".WZW_WZ_Vorbereitet bzw.
+//"M_WZ_Rdy_Ablegen" nicht verändert worden sein, nur dann ist das ev. 
+//Umspeichern und somit das autom. Grundstellung fahren des Werkzeugwechslers 
+//erlaubt.
+      U(    ; 
+      U(    ; 
+      O(    ; 
+      L     "DB_GREIFER_DATEN".TNR_Spindel; 
+      L     "DB_VWWZ".TMD0.TNrGr1; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     "DB_GREIFER_DATEN".TNR_Spindel; 
+      L     "DB_VWWZ".TMD0.TnrGr2; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     "DB_GREIFER_DATEN".TNR_Spindel; 
+      L     "DB_VWWZ".TMD0.TNrSpi; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     "DB_GREIFER_DATEN".TNR_Spindel; 
+      L     "DB_VWWZ".TMD0.TNrTpu; 
+      ==I   ; 
+      )     ; 
+      )     ; 
+      U(    ; 
+      L     "DB_GREIFER_DATEN".TNR_Spindel; 
+      L     0; 
+      <>I   ; 
+      )     ; 
+      O(    ; 
+      U(    ; 
+      L     "DB_GREIFER_DATEN".TNR_Spindel; 
+      L     0; 
+      ==I   ; 
+      )     ; 
+      =     #TNrSpi0; 
+      U     #TNrSpi0; 
+      )     ; 
+      )     ; 
+      U     #LOp0; 
+      U     #LOp1; 
+      U     #LOp2; 
+      U(    ; 
+      L     #LPTMD0; 
+      L     #LP_akt; 
+      ==I   ; 
+      )     ; 
+      =     #DKons; 
+NETWORK
+TITLE =Schrittkette rücksetzen
+
+      UN    #s.SkStrt; 
+      UN    "M_Einzelsatz"; 
+      O     ; 
+      U     "M_Reset_Taste"; 
+      U     "M_Einzelsatz"; 
+      =     #LOp1; 
+NETWORK
+TITLE =wenn Bedingung erfüllt ... Schrittkette rücksetzen
+
+      UN    #LOp1; 
+      SPB   e002; 
+      TAR1  #svAr1; 
+      LAR1  P##s; 
+      L     0; 
+      T     LD [AR1,P#0.0]; 
+      LAR1  #svAr1; 
+e002: NOP   0; 
+NETWORK
+TITLE =Schrittkette im Sr0 bzw. kein Sr gesetzt
+
+      TAR1  #svAr1; 
+      LAR1  P##s; 
+      L     0; 
+      L     LD [AR1,P#0.0]; 
+      ==D   ; 
+      =     #nK0; 
+      LAR1  #svAr1; 
+NETWORK
+TITLE =Wzw in Grundstlg.
+
+      U(    ; 
+      U     "M_TM_TPU_RELEASE_TOOL"; 
+      U     "M_TM_TPU_MAGAZINPOS"; 
+      O     ; 
+      U     "M_TM_TPU_GET_TOOL"; 
+      U     "M_TM_TPU_TRANSFERPOS"; 
+      )     ; 
+      =     #TpuGstTrf; 
+      U     #TpuGstTrf; 
+      U     "M_TM_MAG_TOOL_LOCK"; 
+      U     "M_WZW_Greifer_OK"; 
+      U     "DB_ACHSE7".E_IndexAxisPos; 
+      U     "M_WW_X_imArbeitsraum"; 
+      U     "I_WW_1_Klappe_zu"; 
+      =     #WzwGst; 
+NETWORK
+TITLE =Start Wzw Grundstlg. fahren
+//"m_konstruktion": Wzw. wurde im Einr.bewegt
+      U(    ; 
+      UN    "DB_SIEM_KANAL_1".E_ChanActive; 
+      U     "DB_SIEM_KANAL_1".E_ChanReset; 
+      O     ; 
+      U     #s.SkStrt; 
+      U(    ; 
+      ON    "M_Einzelsatz"; 
+      ON    "T_wgfTWa"; 
+      )     ; 
+      UN    #nK0; 
+      )     ; 
+      U     #E_TastGf; 
+      =     #LOp1; 
+NETWORK
+TITLE =Start Wzw Grundstlg. fahren
+//"m_konstruktion": Wzw. wurde im Einr.bewegt
+      U     #LOp1; 
+      UN    #WzwGst; 
+      U     "M_Leistung_Steht_an"; 
+      UN    "DB_OEM".Einrichten_Aktiv; 
+      UN    #s.wwJogBew; 
+      U(    ; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.MASCHTYP_3070_AKTIV; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.MASCHTYP_3071_AKTIV; 
+      O     "M_CU_Aktiv"; 
+      )     ; 
+      =     #s.SkStrt; 
+      L     S5T#1S; 
+      SA    "Ta_wgfStrt"; 
+NETWORK
+TITLE =Reset Start der Wartezeit
+
+      U     "m_eins"; 
+      R     #s.TWaS; 
+NETWORK
+TITLE =Schrittkette weiterschalten
+
+      U     #s.SkStrt; 
+      =     #SKw; 
+NETWORK
+TITLE =Gf:Wzw Reset auslösen
+
+      U     #SKw; 
+      U     #nK0; 
+      S     #s.Sr.wwRset; 
+NETWORK
+TITLE =Gf:Spi.lösen, wenn GrfStlg.niO
+
+      U     #s.Sr.wwRset; 
+      UN    "DB_VWWZ".gd0.FTMDsi; 
+      U     #DKons; 
+      UN    "M_WZW_Greifer_OK"; 
+      U     "Mx_X_ACHSE_WZW_POS"; 
+      =     L     40.0; 
+      U     L     40.0; 
+      U     "T_wgfTWa"; 
+      U     #SKw; 
+      R     #s.Sr.wwRset; 
+      S     #s.Sr.SpiLoe; 
+      S     #Srw; 
+      U     L     40.0; 
+      BLD   102; 
+      S     #s.TWaS; 
+      U     L     40.0; 
+      SPBNB _008; 
+      L     S5T#100MS; 
+      T     #s.WTWa; 
+_008: NOP   0; 
+NETWORK
+TITLE =Gf:Gr1 --> Mag/Spi fahren
+
+      U     #s.Sr.SpiLoe; 
+      U     #tx_wz_spa_geloest; 
+      U     #DKons; 
+      UN    "M_WZW_Greifer_OK"; 
+      =     #LOp1; 
+NETWORK
+TITLE =Gf nach Einwechseln:Gr1 --> Mag/Spi fahren
+
+      U     #LOp1; 
+      =     L     40.0; 
+      U     L     40.0; 
+      U     "DB_VWWZ".gd0.g1Spi; 
+      =     L     40.1; 
+      U     L     40.1; 
+      U     "T_wgfTWa"; 
+      U     #SKw; 
+      R     #s.Sr.SpiLoe; 
+      S     #s.Sr.Gr1Mag; 
+      S     #Srw; 
+      U     L     40.1; 
+      BLD   102; 
+      S     #s.TWaS; 
+      U     L     40.1; 
+      SPBNB _009; 
+      L     S5T#100MS; 
+      T     #s.WTWa; 
+_009: NOP   0; 
+      U     L     40.0; 
+      U     "DB_VWWZ".gd0.g1Mag; 
+      =     L     40.1; 
+      U     L     40.1; 
+      U     "T_wgfTWa"; 
+      U     #SKw; 
+      R     #s.Sr.SpiLoe; 
+      S     #s.Sr.Gr1Spi; 
+      S     #Srw; 
+      U     L     40.1; 
+      BLD   102; 
+      S     #s.TWaS; 
+      U     L     40.1; 
+      SPBNB _00a; 
+      L     S5T#100MS; 
+      T     #s.WTWa; 
+_00a: NOP   0; 
+NETWORK
+TITLE =Gf nach Einwechseln:Spi.spannen
+
+      U(    ; 
+      U     #s.Sr.Gr1Mag; 
+      U     "M_WZW_Gre1_Pos_Mag"; 
+      O     ; 
+      U     #s.Sr.Gr1Spi; 
+      U     "M_WZW_Gre1_Pos_Spi"; 
+      O     ; 
+      U     #s.Sr.wwRset; 
+      UN    "DB_VWWZ".gd0.FTMDsi; 
+      U     "M_WZW_Greifer_OK"; 
+      UN    #tx_wz_spa_gespannt; 
+      )     ; 
+      U     #DKons; 
+      =     L     40.0; 
+      U     L     40.0; 
+      U     "T_wgfTWa"; 
+      U     #SKw; 
+      R     #s.Sr.Gr1Mag; 
+      R     #s.Sr.Gr1Spi; 
+      R     #s.Sr.wwRset; 
+      S     #s.Sr.SpiSpa; 
+      S     #Srw; 
+      U     L     40.0; 
+      BLD   102; 
+      S     #s.TWaS; 
+      U     L     40.0; 
+      SPBNB _00b; 
+      L     S5T#100MS; 
+      T     #s.WTWa; 
+_00b: NOP   0; 
+NETWORK
+TITLE =Gf nach Einwechseln:umspeichern wenn schon Grf.ok & Spi.gespannt
+
+      U     #s.Sr.wwRset; 
+      UN    "DB_VWWZ".gd0.FTMDsi; 
+      U     #tx_wz_spa_gespannt; 
+      U     "M_WZW_Greifer_OK"; 
+      U     #DKons; 
+      U(    ; 
+      O     "M_WZGr1_belegt"; 
+      O     "M_WZGr2_belegt"; 
+      )     ; 
+      =     L     40.0; 
+      U     L     40.0; 
+      U     "T_wgfTWa"; 
+      U     #SKw; 
+      R     #s.Sr.wwRset; 
+      S     #s.Sr.uGrSpiTpu; 
+      S     #Srw; 
+      U     L     40.0; 
+      BLD   102; 
+      S     #s.TWaS; 
+      U     L     40.0; 
+      SPBNB _00c; 
+      L     S5T#100MS; 
+      T     #s.WTWa; 
+_00c: NOP   0; 
+NETWORK
+TITLE =Gf:WzKegelreinigung Blasluft aus
+
+      U     #s.Sr.SpiSpa; 
+      U     #tx_wz_spa_gespannt; 
+      O     ; 
+      U(    ; 
+      U     #s.Sr.wwRset; 
+      UN    "DB_VWWZ".gd0.FTMDsi; 
+      U     #tx_wz_spa_gespannt; 
+      U     "M_WZW_Greifer_OK"; 
+      O     #s.Sr.uGrSpiTpu; 
+      )     ; 
+      UN    "M_WZGr1_belegt"; 
+      UN    "M_WZGr2_belegt"; 
+      =     L     40.0; 
+      U     L     40.0; 
+      U     "T_wgfTWa"; 
+      U     #SKw; 
+      R     #s.Sr.SpiSpa; 
+      R     #s.Sr.wwRset; 
+      R     #s.Sr.uGrSpiTpu; 
+      S     #s.Sr.ReinAus; 
+      S     #Srw; 
+      U     L     40.0; 
+      BLD   102; 
+      S     #s.TWaS; 
+      U     L     40.0; 
+      SPBNB _00d; 
+      L     S5T#100MS; 
+      T     #s.WTWa; 
+_00d: NOP   0; 
+NETWORK
+TITLE =Gf nach WzVorber: Tpu rück zur Gst (no release/get or Mg/get)
+
+      U     #s.Sr.ReinAus; 
+      UN    "O_TM_TPU_AIR_CLEANING"; 
+      U     "DB_VWWZ".TMDR.VorbLft; 
+      UN    #TpuGstTrf; 
+      U(    ; 
+      O     #TpuNoRlGT; 
+      O     ; 
+      U     "I_TM_TPU_MAGAZINPOS"; 
+      U     "M_TM_TPU_GET_TOOL"; 
+      )     ; 
+      U     #DKons; 
+      =     L     40.0; 
+      U     L     40.0; 
+      U     "T_wgfTWa"; 
+      U     #SKw; 
+      R     #s.Sr.ReinAus; 
+      S     #s.Sr.TpuRTool; 
+      S     #Srw; 
+      U     L     40.0; 
+      BLD   102; 
+      S     #s.TWaS; 
+      U     L     40.0; 
+      SPBNB _00e; 
+      L     S5T#100MS; 
+      T     #s.WTWa; 
+_00e: NOP   0; 
+NETWORK
+TITLE =Gf nach WzVorber: Tpu --> MagP (no Mag/TrfPos and release)
+
+      U     #s.Sr.TpuRTool; 
+      U     "M_TM_TPU_RELEASE_TOOL"; 
+      U     "DB_VWWZ".TMDR.VorbLft; 
+      UN    #TpuGstTrf; 
+      U     #TpuNoMgTr; 
+      U     #DKons; 
+      =     L     40.0; 
+      U     L     40.0; 
+      U     "T_wgfTWa"; 
+      U     #SKw; 
+      R     #s.Sr.TpuRTool; 
+      S     #s.Sr.TpuMagP; 
+      S     #Srw; 
+      U     L     40.0; 
+      BLD   102; 
+      S     #s.TWaS; 
+      U     L     40.0; 
+      SPBNB _00f; 
+      L     S5T#100MS; 
+      T     #s.WTWa; 
+_00f: NOP   0; 
+NETWORK
+TITLE =Gf nach WzVorber: Tpu --> TrfP (no Mag/TrfPos and get)
+
+      U     #s.Sr.ReinAus; 
+      UN    "O_TM_TPU_AIR_CLEANING"; 
+      U     "DB_VWWZ".TMDR.VorbLft; 
+      UN    #TpuGstTrf; 
+      U     "M_TM_TPU_GET_TOOL"; 
+      U     #TpuNoMgTr; 
+      U     #DKons; 
+      =     L     40.0; 
+      U     L     40.0; 
+      U     "T_wgfTWa"; 
+      U     #SKw; 
+      R     #s.Sr.ReinAus; 
+      S     #s.Sr.TpuTrP; 
+      S     #Srw; 
+      U     L     40.0; 
+      BLD   102; 
+      S     #s.TWaS; 
+      U     L     40.0; 
+      SPBNB _010; 
+      L     S5T#100MS; 
+      T     #s.WTWa; 
+_010: NOP   0; 
+NETWORK
+TITLE =Gf nach WzAbleg: Tpu --> TrfP (no Mag/TrfPos)
+
+      U     #s.Sr.ReinAus; 
+      UN    "O_TM_TPU_AIR_CLEANING"; 
+      U     "DB_VWWZ".TMDR.AblLft; 
+      UN    #TpuGstTrf; 
+      U     #TpuNoMgTr; 
+      U     #DKons; 
+      =     L     40.0; 
+      U     L     40.0; 
+      U     "T_wgfTWa"; 
+      U     #SKw; 
+      R     #s.Sr.ReinAus; 
+      S     #s.Sr.TpuTrP; 
+      S     #Srw; 
+      U     L     40.0; 
+      BLD   102; 
+      S     #s.TWaS; 
+      U     L     40.0; 
+      SPBNB _011; 
+      L     S5T#100MS; 
+      T     #s.WTWa; 
+_011: NOP   0; 
+NETWORK
+TITLE =Gf nach WzAbleg: Tpu --> getTool (no release/getTool)
+
+      U(    ; 
+      U     #s.Sr.ReinAus; 
+      UN    "O_TM_TPU_AIR_CLEANING"; 
+      O     #s.Sr.TpuTrP; 
+      )     ; 
+      U     "DB_VWWZ".TMDR.AblLft; 
+      UN    #TpuGstTrf; 
+      U     #TpuNoRlGT; 
+      U     #DKons; 
+      U     "M_TM_TPU_TRANSFERPOS"; 
+      =     L     40.0; 
+      U     L     40.0; 
+      U     "T_wgfTWa"; 
+      U     #SKw; 
+      R     #s.Sr.ReinAus; 
+      R     #s.Sr.TpuTrP; 
+      S     #s.Sr.TpuGTool; 
+      S     #Srw; 
+      U     L     40.0; 
+      BLD   102; 
+      S     #s.TWaS; 
+      U     L     40.0; 
+      SPBNB _012; 
+      L     S5T#100MS; 
+      T     #s.WTWa; 
+_012: NOP   0; 
+NETWORK
+TITLE =Gf nach WzAbleg:Wz am Mag.autom.WechsPl.verrieg(wenn TpuInMagP)
+
+      U     #s.Sr.ReinAus; 
+      UN    "O_TM_TPU_AIR_CLEANING"; 
+      U     "DB_VWWZ".TMDR.AblLft; 
+      UN    #TpuGstTrf; 
+      U     #DKons; 
+      U     "M_TM_TPU_MAGAZINPOS"; 
+      =     L     40.0; 
+      U     L     40.0; 
+      U     "T_wgfTWa"; 
+      U     #SKw; 
+      R     #s.Sr.ReinAus; 
+      S     #s.Sr.MagTLock2; 
+      S     #Srw; 
+      U     L     40.0; 
+      BLD   102; 
+      S     #s.TWaS; 
+      U     L     40.0; 
+      SPBNB _013; 
+      L     S5T#100MS; 
+      T     #s.WTWa; 
+_013: NOP   0; 
+NETWORK
+TITLE =Gf nach WzAbleg: Tpu --> releaseTool (wenn Tpu in MagPos)
+
+      U     #s.Sr.MagTLock2; 
+      U     "M_TM_MAG_TOOL_LOCK"; 
+      U     "DB_VWWZ".TMDR.AblLft; 
+      UN    #TpuGstTrf; 
+      U     #DKons; 
+      U     "M_TM_TPU_MAGAZINPOS"; 
+      =     L     40.0; 
+      U     L     40.0; 
+      U     "T_wgfTWa"; 
+      U     #SKw; 
+      =     L     40.1; 
+      U     L     40.1; 
+      BLD   102; 
+      R     #s.Sr.MagTLock2; 
+      U     L     40.1; 
+      BLD   102; 
+      S     #s.Sr.TpuRTool; 
+      U     L     40.1; 
+      BLD   102; 
+      S     #Srw; 
+      U     L     40.1; 
+      U     "M_TPU_belegt"; 
+      S     "M_Umsp_TPU_WST"; 
+      U     L     40.0; 
+      BLD   102; 
+      S     #s.TWaS; 
+      U     L     40.0; 
+      SPBNB _014; 
+      L     S5T#100MS; 
+      T     #s.WTWa; 
+_014: NOP   0; 
+NETWORK
+TITLE =Gf(kein WzVorberWzAbleg):Tpu --> releaseTool
+
+      U     #s.Sr.ReinAus; 
+      UN    "O_TM_TPU_AIR_CLEANING"; 
+      U     #noVorAbl; 
+      UN    #TpuGstTrf; 
+      =     L     40.0; 
+      U     L     40.0; 
+      U     "T_wgfTWa"; 
+      U     #SKw; 
+      R     #s.Sr.ReinAus; 
+      S     #s.Sr.TpuRTool; 
+      S     #Srw; 
+      U     L     40.0; 
+      BLD   102; 
+      S     #s.TWaS; 
+      U     L     40.0; 
+      SPBNB _015; 
+      L     S5T#100MS; 
+      T     #s.WTWa; 
+_015: NOP   0; 
+NETWORK
+TITLE =Gf(kein WzVorberWzAbleg):Tpu --> MagPos
+
+      U     #s.Sr.TpuRTool; 
+      U     "M_TM_TPU_RELEASE_TOOL"; 
+      U     #noVorAbl; 
+      =     L     40.0; 
+      U     L     40.0; 
+      U     "T_wgfTWa"; 
+      U     #SKw; 
+      R     #s.Sr.TpuRTool; 
+      S     #s.Sr.TpuMagP; 
+      S     #Srw; 
+      U     L     40.0; 
+      BLD   102; 
+      S     #s.TWaS; 
+      U     L     40.0; 
+      SPBNB _016; 
+      L     S5T#100MS; 
+      T     #s.WTWa; 
+_016: NOP   0; 
+NETWORK
+TITLE =Gf:Wz am Mag.autom.Wechselplatz verriegeln
+
+      U(    ; 
+      U     #s.Sr.ReinAus; 
+      UN    "O_TM_TPU_AIR_CLEANING"; 
+      O     ; 
+      U     #s.Sr.TpuRTool; 
+      U     "M_TM_TPU_RELEASE_TOOL"; 
+      O     ; 
+      U     #s.Sr.TpuGTool; 
+      U     "M_TM_TPU_GET_TOOL"; 
+      O     ; 
+      U     #s.Sr.TpuMagP; 
+      U     "M_TM_TPU_MAGAZINPOS"; 
+      O     ; 
+      U     #s.Sr.TpuTrP; 
+      U     "M_TM_TPU_TRANSFERPOS"; 
+      )     ; 
+      U     #TpuGstTrf; 
+      =     L     40.0; 
+      U     L     40.0; 
+      U     "T_wgfTWa"; 
+      U     #SKw; 
+      R     #s.Sr.ReinAus; 
+      R     #s.Sr.TpuRTool; 
+      R     #s.Sr.TpuGTool; 
+      R     #s.Sr.TpuMagP; 
+      R     #s.Sr.TpuTrP; 
+      S     #s.Sr.MagTLock; 
+      S     #Srw; 
+      U     L     40.0; 
+      BLD   102; 
+      S     #s.TWaS; 
+      U     L     40.0; 
+      SPBNB _017; 
+      L     S5T#100MS; 
+      T     #s.WTWa; 
+_017: NOP   0; 
+NETWORK
+TITLE =Gf: X-Achse zum Arbeitsraum
+
+      U     #s.Sr.MagTLock; 
+      U     "M_TM_MAG_TOOL_LOCK"; 
+      =     L     40.0; 
+      U     L     40.0; 
+      U     "T_wgfTWa"; 
+      U     #SKw; 
+      R     #s.Sr.MagTLock; 
+      S     #s.Sr.XArbRaum; 
+      S     #Srw; 
+      U     L     40.0; 
+      BLD   102; 
+      S     #s.TWaS; 
+      U     L     40.0; 
+      SPBNB _018; 
+      L     S5T#100MS; 
+      T     #s.WTWa; 
+_018: NOP   0; 
+NETWORK
+TITLE =Gf: Mag.Pos.anfahren
+
+      U     #s.Sr.XArbRaum; 
+      U     "M_WW_X_imArbeitsraum"; 
+      UN    "DB_ACHSE1_X".E_TCMinus; 
+      UN    "DB_ACHSE1_X".E_TCPlus; 
+      U     #SKw; 
+      R     #s.Sr.XArbRaum; 
+      S     #s.Sr.MagPos; 
+      S     #Srw; 
+NETWORK
+TITLE =Gf: Wzw-Tür schliessen
+
+      U     #s.Sr.MagPos; 
+      U     "DB_ACHSE7".E_IndexAxisPos; 
+      U     #SKw; 
+      =     L     40.0; 
+      U     L     40.0; 
+      BLD   102; 
+      R     #s.Sr.MagPos; 
+      U     L     40.0; 
+      BLD   102; 
+      S     #s.Sr.Tzu; 
+      U     L     40.0; 
+      BLD   102; 
+      S     #Srw; 
+      U     L     40.0; 
+      U     "m_null"; // Automatischer Reset gesperrt, da nicht immer richtig umgespeichert wird bei Grd-Fahrt
+      =     "DB_VWWZ".gd0.clrAlWwAbb; 
+NETWORK
+TITLE =Gf fertig, Ende SrKette
+
+      U     #s.Sr.Tzu; 
+      U     "I_WW_1_Klappe_zu"; 
+      UN    "I_WW_1_Klappe_auf"; 
+      =     L     40.0; 
+      U     L     40.0; 
+      U     "T_wgfTWa"; 
+      U     #SKw; 
+      R     #s.Sr.Tzu; 
+      S     #Srw; 
+      U     L     40.0; 
+      BLD   102; 
+      S     #s.TWaS; 
+      U     L     40.0; 
+      SPBNB _019; 
+      L     S5T#100MS; 
+      T     #s.WTWa; 
+_019: NOP   0; 
+NETWORK
+TITLE =Ansteuerung Wartezeit TWa
+//Verweilzeit zwischen den Schritten der Schrittkette
+//Die Zeitbasis wird jeweils über #WTWa übergeben! 
+      U     #s.TWaS; 
+      UN    #Srw; 
+      L     #s.WTWa; 
+      SE    "T_wgfTWa"; 
+NETWORK
+TITLE =Ansteuerung Überwachungszeit TUe
+//Verweilzeit zwischen den Schritten der Schrittkette
+//Die Zeitbasis wird jeweils über #WTWa übergeben! 
+      UN    #s.TWaS; 
+      UN    #Srw; 
+      U     #s.SkStrt; 
+      L     #s.WTUe; 
+      SE    "T_vwgfTUe"; 
+NETWORK
+TITLE =pos.Flanke:asynchr.Umspeichern von Grf.-> Spi&Tpu
+
+      U     #s.Sr.uGrSpiTpu; 
+      FP    #s.fk[7]; 
+      =     #FpUGrSTpu; 
+NETWORK
+TITLE =Befehlsausgabe (BefA):umspeichern Greifer 1 zur Spindel
+
+      U     "M_WZW_Gre1_Pos_Spi"; 
+      U     "M_WZGr1_belegt"; 
+      U     #TNrSpi0; 
+      U(    ; 
+      O     #FpSpiGs; 
+      O     #FpUGrSTpu; 
+      )     ; 
+      U     "Ta_wgfStrt"; 
+      O     "DI_TM_QUITT_FC8".Umsp_Gr1_Spdl; 
+      S     "M_Umsp_Gr1-Spdl"; 
+      R     "DI_TM_QUITT_FC8".Umsp_Gr1_Spdl; 
+NETWORK
+TITLE =BefA:umspeichern Greifer 2 zur Spindel
+
+      U     "M_WZW_Gre1_Pos_Mag"; 
+      U     "M_WZGr2_belegt"; 
+      U     #TNrSpi0; 
+      U(    ; 
+      O     #FpSpiGs; 
+      O     #FpUGrSTpu; 
+      )     ; 
+      U     "Ta_wgfStrt"; 
+      O     "DI_TM_QUITT_FC8".Umsp_Gr2_Spdl; 
+      S     "M_Umsp_Gr2-Spdl"; 
+      R     "DI_TM_QUITT_FC8".Umsp_Gr2_Spdl; 
+NETWORK
+TITLE =BefA:umspeichern Greifer [bei Tpu] zur Tpu
+
+      U(    ; 
+      O     #FpSpiGs; 
+      O     #FpUGrSTpu; 
+      )     ; 
+      U     "Ta_wgfStrt"; 
+      =     "m_vwgf_UpGrTpu"; 
+NETWORK
+TITLE =Befehlsausgabe (BefA):WzwRset auslösen
+
+      U     #s.Sr.wwRset; 
+      =     "m_wwgf_wwRset"; 
+NETWORK
+TITLE =gemeinsame Voraussetzungen Grf.drehen
+
+      U     "M_Leistung_Steht_an"; 
+      U     "I_WZ_SPA_geloest"; 
+      U     "I_WW_1_Klappe_auf"; 
+      U     "I_TM_TPU_TRANSFERPOS"; 
+      U     "I_TM_TPU_GET_TOOL"; 
+      U     "Mx_X_ACHSE_WZW_POS"; 
+      =     #LOp2; 
+NETWORK
+TITLE =BefA:Gr.1 zur Spindel fahren
+
+      U     #s.Sr.Gr1Spi; 
+      U     #LOp2; 
+      =     "m_wwgf_Gr1Spi"; 
+NETWORK
+TITLE =BefA:Gr.1 zum Magazin fahren
+
+      U     #s.Sr.Gr1Mag; 
+      U     #LOp2; 
+      =     "m_wwgf_Gr1Mag"; 
+NETWORK
+TITLE =BefA:Spindel lösen
+
+      U     #s.Sr.SpiLoe; 
+      U     "M_Leistung_Steht_an"; 
+      U     "I_TM_TPU_TRANSFERPOS"; 
+      U     "I_TM_TPU_GET_TOOL"; 
+      U     "Mx_X_ACHSE_WZW_POS"; 
+      =     "m_vwgf_SpiLoe"; 
+NETWORK
+TITLE =BefA:Spindel spannen
+
+      U     #s.Sr.SpiSpa; 
+      U     "M_Leistung_Steht_an"; 
+      U     "M_WZW_Greifer_OK"; 
+      UN    #tx_wz_spa_gespannt; 
+      =     "m_wwgf_SpiSpa"; 
+NETWORK
+TITLE =BefA:Tpu zurück zu Stlg.release Tool
+
+      U     #s.Sr.TpuRTool; 
+      U     "M_Leistung_Steht_an"; 
+      =     "m_vwgf_TpuRTool"; 
+NETWORK
+TITLE =BefA:Tpu vor zu Stlg.get Tool (Wz.aufnehmen)
+
+      U     #s.Sr.TpuGTool; 
+      U     "M_Leistung_Steht_an"; 
+      U(    ; 
+      O     "M_WZW_Greifer_OK"; 
+      O     ; 
+      U     "M_TM_TPU_MAGAZINPOS"; 
+      UN    "M_MAG_Laeuft"; 
+      )     ; 
+      =     "m_vwgf_TpuGTool"; 
+NETWORK
+TITLE =BefA:Tpu Stlg.Magazin anfahren
+
+      U     #s.Sr.TpuMagP; 
+      U     "M_Leistung_Steht_an"; 
+      U     "M_TM_TPU_RELEASE_TOOL"; 
+      =     "m_vwgf_TpuMagP"; 
+NETWORK
+TITLE =BefA:Tpu Transferstlg.(Übergabe-/nahme) anfahren
+
+      U     #s.Sr.TpuTrP; 
+      U     "M_Leistung_Steht_an"; 
+      U(    ; 
+      O     "M_WZW_Greifer_OK"; 
+      O     "M_TM_TPU_RELEASE_TOOL"; 
+      )     ; 
+      =     "m_vwgf_TpuTrP"; 
+NETWORK
+TITLE =BefA:WzKegelreinigung ausschalten
+
+      U     #s.Sr.ReinAus; 
+      =     "m_wwgf_ReinGf"; 
+NETWORK
+TITLE =BefA:Wz am Magazin autom.Wechselplatz verriegeln
+
+      U(    ; 
+      O     #s.Sr.MagTLock2; 
+      O     #s.Sr.MagTLock; 
+      )     ; 
+      U     "M_Leistung_Steht_an"; 
+      =     "m_vwgf_MagTLock"; 
+NETWORK
+TITLE =BefA:X-Achse freifahren zum Arbeitsraum
+
+      U     #s.Sr.XArbRaum; 
+      U     "M_Leistung_Steht_an"; 
+      =     "m_wwgf_XArbRaum"; 
+NETWORK
+TITLE =Magazin positionieren gestartet
+
+      U(    ; 
+      O     "DB_ACHSE7".E_TCPlus; 
+      O     "DB_ACHSE7".E_TCMinus; 
+      )     ; 
+      U(    ; 
+      O     #s.Sr.MagPos; 
+      O     "M_WZW_MAG_START_N_RESET"; 
+      )     ; 
+      S     #s.MagPAkt; 
+      UN    #s.Sr.MagPos; 
+      UN    "M_WZW_MAG_START_N_RESET"; 
+      R     #s.MagPAkt; 
+      NOP   0; 
+NETWORK
+TITLE =BefA:Mag.Pos.anfahren
+
+      U(    ; 
+      O     #s.Sr.MagPos; 
+      O     "M_WZW_MAG_START_N_RESET"; 
+      )     ; 
+      U(    ; 
+      O     "I_TM_TPU_RELEASE_TOOL"; 
+      O     "I_TM_TPU_TRANSFERPOS"; 
+      )     ; 
+      UN    "M_AUTO_TPU_GET_TOOL"; 
+      U(    ; 
+      U     "I_TM_MAG_PIN_LOCK"; 
+      U     "I_TM_TLOAD_PIN_LOCK"; 
+      ON    "DB_ACHSE7".E_IndexAxisPos; 
+      )     ; 
+      U     "M_TM_MAG_TOOL_LOCK"; 
+      U     "M_TM_TLOAD_TOOL_LOCK"; 
+      =     #LOp1; 
+NETWORK
+TITLE =BefA:Mag.Pos.anfahren
+
+      U     #LOp1; 
+      U     "M_Leistung_Steht_an"; 
+      UN    "DB_ACHSE7".E_IndexAxisPos; 
+      UN    #s.MagPAkt; 
+      =     "m_wwgf_RqMagPos"; 
+NETWORK
+TITLE =BefA:Wzw-Tür schliessen
+
+      U     #s.Sr.Tzu; 
+      U     "M_Leistung_Steht_an"; 
+      U     "M_WW_X_imArbeitsraum"; 
+      =     "m_wwgf_Tzu"; 
+NETWORK
+TITLE =BefA:Halt Asup
+
+      UN    "DB_ASUP_MACHINE".Start_Asup; 
+      R     "m_vwgf_stpAsup1"; 
+      UN    "m_wwgf_XArbRaum"; 
+      UN    "m_wwgf_Gr1Spi"; 
+      UN    "m_wwgf_Gr1Mag"; 
+      UN    #E_TastGf; 
+      FP    #s.fk[2]; 
+      S     "m_vwgf_stpAsup1"; 
+      NOP   0; 
+NETWORK
+TITLE =Bedienungshinweise
+
+      U     #E_TastGf; 
+      =     L     37.0; 
+      U     L     37.0; 
+      UN    #s.SkStrt; 
+      =     L     39.1; 
+      U     L     39.1; 
+      U     "DB_SIEM_KANAL_1".E_ChanActive; 
+      =     #Meld.noChAkt; 
+      U     L     37.1; 
+      UN    "DB_SIEM_KANAL_1".E_ChanReset; 
+      =     #Meld.noChRset; 
+      U     L     37.0; 
+      U     #WzwGst; 
+      =     #Meld.WwGfRdy; 
+      U     L     37.0; 
+      U     "DB_OEM".Einrichten_Aktiv; 
+      =     #Meld.noRett; 
+      U     L     37.0; 
+      U     #s.wwJogBew; 
+      =     #Meld.noWwBew; 
+      U     L     37.0; 
+      UN    "DB_CONFIG".ANWAHL_DURCH_USER_DATA.MASCHTYP_3070_AKTIV; 
+      UN    "DB_CONFIG".ANWAHL_DURCH_USER_DATA.MASCHTYP_3071_AKTIV; 
+      UN    "M_CU_Aktiv"; 
+      =     #Meld.MaTypNiO; 
+NETWORK
+TITLE =Anzeige fehlende Weiterschaltbedingung(Wsb):X ni.in WzWechsPos
+
+      U     "T_vwgfTUe"; 
+      U(    ; 
+      U     #s.Sr.SpiLoe; 
+      UN    #tx_wz_spa_geloest; 
+      O     #s.Sr.Gr1Spi; 
+      O     #s.Sr.Gr1Mag; 
+      )     ; 
+      UN    "Mx_X_ACHSE_WZW_POS"; 
+      =     #Meld.XnoWwPos; 
+NETWORK
+TITLE =Anzeige fehlende Wsb:Spindel nicht gelöst
+
+      U     "T_vwgfTUe"; 
+      U(    ; 
+      U     #s.Sr.SpiLoe; 
+      U     "Mx_X_ACHSE_WZW_POS"; 
+      U     "I_TM_TPU_TRANSFERPOS"; 
+      U     "I_TM_TPU_GET_TOOL"; 
+      O     #s.Sr.Gr1Spi; 
+      O     #s.Sr.Gr1Mag; 
+      )     ; 
+      UN    #tx_wz_spa_geloest; 
+      =     #Meld.noSpiGL; 
+NETWORK
+TITLE =Anzeige fehlende Wsb:Tpu nicht in Transferpos.
+
+      U     "T_vwgfTUe"; 
+      U(    ; 
+      U     #s.Sr.SpiLoe; 
+      UN    #tx_wz_spa_geloest; 
+      O     #s.Sr.Gr1Spi; 
+      O     #s.Sr.Gr1Mag; 
+      )     ; 
+      UN    "I_TM_TPU_TRANSFERPOS"; 
+      =     #Meld.TpuNoTR; 
+NETWORK
+TITLE =Anzeige fehlende Wsb:Tpu nicht bei Magazin
+
+      U     "T_vwgfTUe"; 
+      U     "m_null"; 
+      =     #Meld.TpuNoMag; 
+NETWORK
+TITLE =Anzeige fehlende Wsb:Tpu nicht Stlg.release Tool (hinten)
+
+      U     "T_vwgfTUe"; 
+      U     #s.Sr.TpuMagP; 
+      UN    "M_TM_TPU_RELEASE_TOOL"; 
+      =     #Meld.TpuNoRTool; 
+NETWORK
+TITLE =Anzeige fehlende Wsb:Tpu nicht Stlg.get Tool (vorn Wz aufnehmen)
+
+      U     "T_vwgfTUe"; 
+      U(    ; 
+      U     #s.Sr.SpiLoe; 
+      UN    #tx_wz_spa_geloest; 
+      O     #s.Sr.Gr1Spi; 
+      O     #s.Sr.Gr1Mag; 
+      )     ; 
+      UN    "I_TM_TPU_GET_TOOL"; 
+      =     #Meld.TpuNoGTool; 
+NETWORK
+TITLE =Anzeige fehlende Wsb:WzTür (Klappe)nicht auf
+
+      U     "T_vwgfTUe"; 
+      U(    ; 
+      O     #s.Sr.Gr1Spi; 
+      O     #s.Sr.Gr1Mag; 
+      )     ; 
+      UN    "I_WW_1_Klappe_auf"; 
+      =     #Meld.noTuerAuf; 
+NETWORK
+TITLE =Anzeige fehlende Wsb:WzGrf.hat keine Stlg.
+
+      U     "T_vwgfTUe"; 
+      U(    ; 
+      O     #s.Sr.SpiSpa; 
+      O     ; 
+      U     #s.Sr.TpuGTool; 
+      UN    "M_TM_TPU_MAGAZINPOS"; 
+      O     ; 
+      U     #s.Sr.TpuTrP; 
+      UN    "M_TM_TPU_RELEASE_TOOL"; 
+      )     ; 
+      UN    "M_WZW_Greifer_OK"; 
+      =     #Meld.GrNoStlg; 
+NETWORK
+TITLE =Anzeige fehlende Weiterschaltbedingung(Wsb):X ni.im Arbeitsraum
+
+      U     "T_vwgfTUe"; 
+      U     #s.Sr.Tzu; 
+      UN    "M_WW_X_imArbeitsraum"; 
+      =     #Meld.XnoArbRaum; 
+NETWORK
+TITLE =Lokaldaten retten
+
+      CALL "BLKMOVE" (
+           SRCBLK                   := #s,
+           RET_VAL                  := #WertInt,
+           DSTBLK                   := "DB_VWWZ".s);
+      NOP   0; 
+END_FUNCTION
+

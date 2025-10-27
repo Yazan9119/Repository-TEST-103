@@ -1,0 +1,117 @@
+FUNCTION "FC_TEMP_PT100" : VOID
+TITLE =
+//$Revision: 1.4.1.2 $
+//$Date: 2008/04/09 16:13:07CEST $
+//$Author: sth $
+//
+AUTHOR : JW
+FAMILY : DMG
+VERSION : 0.1
+
+
+VAR_INPUT
+  enable : BOOL ;	
+  in_addr : INT ;	
+  grenzwert : REAL ;	
+  Messimpuls : BOOL ;	
+END_VAR
+VAR_OUTPUT
+  fehler_Nennwert : BOOL ;	
+  fehler_Grenzwert : BOOL ;	
+  messwert_akt : REAL ;	
+END_VAR
+VAR_TEMP
+  wert : REAL ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =löschen
+
+      SET   ; 
+      R     #fehler_Nennwert; 
+      R     #fehler_Grenzwert; 
+
+NETWORK
+TITLE =Messwertauswertung 
+//// Messwertdarstellung:
+////(Baugruppendaten Referenzhandbuch Kapitel 4.1 / S.131)
+//Standard// > 1000°         Überlauf       7FFFh         / 32767d
+//Standard//   1000....850,1 Übersteuerung  2710h...2135h /  1000d... 8501d  
+//
+//Standard//    850....-200  Nennbereich    2134h...F830h /  8500d...-2000d
+//
+//Standard//   -200,1..-243  Untersteuerung F82Fh...F682h /  2000d...-2430d
+//Standard// < 243           Unterlauf      8000h         /-32768d
+//
+//Klima// > 1000°         Überlauf       7FFFh         / 32767d
+//Klima//   1000....850,1 Übersteuerung  3C8Ch...32C9h /  1000d... 8501d  
+//
+//Klima//    850....-200  Nennbereich    32C8h...D120h /  8500d...-2000d
+//
+//Klima//   -200,1..-243  Untersteuerung D11Fh...C75Ch /  2000d...-2430d
+//Klima// < 243           Unterlauf      8000h         /-32768d
+//
+//
+////>> 60° = 600d
+//
+////Diagnose mit SFC59  Referenzhandbuch Systemsoftware Kapitel 7.7 / S.113
+////                  + Baugruppendaten Referenzhandbuch Anhang B / S.323
+//
+      U     #enable; 
+      U     #Messimpuls; 
+      SPB   Mess; 
+      BEA   ; 
+
+Mess: L     #in_addr; 
+      DTR   ; 
+      T     #wert; 
+
+      L     #in_addr; 
+      L     W#16#7FFF; //Überlauf/Unterlauf
+      >=D   ; 
+      SPB   fehl; 
+      TAK   ; 
+      L     W#16#3C8C; //Übersteuerbereich std.2135
+      >=D   ; 
+      SPBN  u1; 
+      TAK   ; 
+      L     W#16#32C9; //std.2710
+      <=D   ; 
+      SPB   fehl; 
+u1:   TAK   ; 
+      L     W#16#D11F; //Untersteuerbereich std.F682 
+      >=D   ; 
+      SPBN  u2; 
+      TAK   ; 
+      L     W#16#C75C; //std.F82F
+      <=D   ; 
+      SPB   fehl; 
+
+u2:   U     "DB_PLC_MD_DB20".UDHex._44_Bit7_Kalib_Pt100; 
+      SPB   c01; 
+      L     #wert; 
+      L     1.000000e+001; //10 bei Standard
+      /R    ; 
+      T     #messwert_akt; 
+      SPA   gr1; 
+
+c01:  L     #wert; 
+      L     1.000000e+002; //100 bei Klima
+      /R    ; 
+      T     #messwert_akt; 
+      SPA   gr1; 
+
+
+gr1:  L     #grenzwert; //Grenzwertvorgabe  [xy.z °C]
+      L     #messwert_akt; 
+      <R    ; 
+      S     #fehler_Grenzwert; 
+      SPA   END; 
+
+fehl: SET   ; 
+      S     #fehler_Nennwert; 
+      L     0; 
+      T     #messwert_akt; 
+END:  BEA   ; 
+END_FUNCTION
+

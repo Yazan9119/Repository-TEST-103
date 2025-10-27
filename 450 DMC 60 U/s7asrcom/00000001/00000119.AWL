@@ -1,0 +1,419 @@
+FUNCTION "FC_ACHS_12" : VOID
+TITLE =
+//$Revision: 1.19 $
+//$Date: 2008/10/11 09:25:19CEST $
+//$Author: hgc $
+VERSION : 0.1
+
+
+VAR_TEMP
+  U : STRUCT 	//Signale von/an U-Achse
+   Leistung : BOOL ;	//anNc U-Achse:Leistung steht an
+   parken : BOOL ;	//anNc U-Achse:Achse parken(=Abwahl Meßsysteme)
+   x_2 : BOOL ;	
+   x_3 : BOOL ;	
+   x_4 : BOOL ;	
+   x_5 : BOOL ;	
+   x_6 : BOOL ;	
+   x_7 : BOOL ;	
+   x_8 : BOOL ;	
+   x_9 : BOOL ;	
+   x_10 : BOOL ;	
+   x_11 : BOOL ;	
+   x_12 : BOOL ;	
+   x_13 : BOOL ;	
+   x_14 : BOOL ;	
+   x_15 : BOOL ;	
+   Frg_Regler : BOOL ;	
+   FB_Minus : BOOL ;	
+   FB_Plus : BOOL ;	
+  END_STRUCT ;	
+  TX_DUMMY : BOOL ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =Auswahl Komet oder Mapal
+//Auswahl
+      U     "DB_PLC_MD_DB20".UDHex._56_Bit0_Auswahl_U_Achse; 
+      SPB   Map; 
+NETWORK
+TITLE =12-Achse: Aktivierung Softwarenocken nachdem Achse referiert ist
+
+      UN    "DB_PLC_MD_DB20".UDHex._03_BIT3_ACHSE12_MESSYST; 
+      U     "DB_ACHSE12".E_RefSyn1; 
+      O     ; 
+      U     "DB_PLC_MD_DB20".UDHex._03_BIT3_ACHSE12_MESSYST; 
+      U     "DB_ACHSE12".E_RefSyn2; 
+      =     "DB_ACHSE12".A_SWCam; 
+NETWORK
+TITLE =Clear TX_DUMMY
+
+      U     "m_null"; 
+      =     #TX_DUMMY; 
+NETWORK
+TITLE =Reset Fehler "Keine max. Drehzahl definiert"
+
+      U     "M_Ruecksetze_Fehler"; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._701044_Kein_Smax_prog; 
+NETWORK
+TITLE =Leistung steht an
+
+      U     "M_Leistung_Steht_an"; 
+      U     "I_WK_BTB"; 
+      =     #U.Leistung; 
+NETWORK
+TITLE =Kommando Minus
+
+      U     #U.Leistung; 
+      U     "DB_ACHSE12".E_TCMinus; 
+      =     #U.FB_Minus; 
+NETWORK
+TITLE =Kommando Plus
+
+      U     #U.Leistung; 
+      U     "DB_ACHSE12".E_TCMinus; 
+      =     #U.FB_Plus; 
+NETWORK
+TITLE =Achse parken
+
+      UN    "I_WK_BTB"; 
+      =     #U.parken; 
+NETWORK
+TITLE =12.Achse, Komet U-Achse: Aufruf FC_ACHSE_HAUPT
+
+      CALL "FC_ACHSE_HAUPT" (
+           EX_EN                    := TRUE,
+           EX_UDHex_00_IB_Bit_Achse := "DB_PLC_MD_DB20".UDHex._01_BIT3_ACHSE12_AUSBLEN,
+           EX_UDHex_01_Ax_Messystem := "DB_PLC_MD_DB20".UDHex._03_BIT3_ACHSE12_MESSYST,
+           EX_Option_Safety         := "O_INFEED_ENABLE_NCU",// Bei Solutionline bleibt RF und ImpFrg für 3 Sek. nach Not-Aus anstehen
+           EX_Safe_RF_aus           := FALSE,
+           EX_Safe_StopC_aktiv      := FALSE,
+           EX_Safe_StopA_aktiv      := "DB_ACHSE12".E_StopAB,
+           EX_Safe_Teststop_laeuft  := "DB_SPL".IPLC_ZD_GR1_RUN,
+           EX_Maschine_Ein          := "M_MA_Maschine_Ein",
+           EX_Antrieb_Sperre        := "DB_FAMILIEN_MODUL".Achssperre_extern.E_Ax_12,//#U.Antrieb_Sperre
+           EX_Freigabe_Regler       := TRUE,
+           EX_Leistung_steht_an     := #U.Leistung,
+           EX_GewSchn_Aktiv         := "m_null",
+           EX_VSHalt_EinzelAchse    := "DB_FAMILIEN_MODUL".Gesamt.A_Vorschub_Halt_12_Achse,
+           EX_VSHalt_Gruppe         := "M_Vorschub_Halt_Haupt",
+           EX_VSHalt_Kanal          := "DB_FAMILIEN_MODUL".Gesamt.A_Vorschub_Halt_Kanal,
+           EX_RefPkt_Achse          := "I_WK_REF",
+           EX_Ax_E_MotOK_93x5       := "DB_ACHSE12".E_MotOK,
+           EX_Ax_E_MTempWarn_94x0   := "m_null",
+           EX_Ax_E_Steht_61x4       := "DB_ACHSE12".E_Stat,
+           EX_Ax_E_KTempWarn_94x1   := "DB_ACHSE12".E_HTempWarn,
+           EX_Ax_E_LageRegler_61x5  := "DB_ACHSE12".E_PositContr,
+           EX_Ax_E_IntSperr_93x6    := "DB_ACHSE12".E_IntegratDisable,
+           EX_Ax_E_ImpFrei_93x7     := "DB_ACHSE12".E_PulseEnable,
+           EX_Ax_E_DrehzRegler_61x6 := "DB_ACHSE12".E_SpeedContr,
+           EX_Ax_E_StromRegler_61x7 := "DB_ACHSE12".E_CurrentContr,
+           EX_Ax_E_FahrAF_61x0      := "DB_ACHSE12".E_TravRequ,
+           EX_Ax_E_FBMinus_64x6     := #U.FB_Minus,//"DB_ACHSE12".E_TCMinus
+           EX_Ax_E_FBPlus_64x7      := #U.FB_Plus,//"DB_ACHSE12".E_TCPlus
+           EX_Eilgang_aktiv         := "M_Anf_Eilgang",
+           EX_Fehler_Quit           := "M_Ruecksetze_Fehler",
+           EX_RefNeu_Sync           := FALSE,
+           EX_AxPark                := #U.parken,
+           EB_Achs_Typ              := B#16#2,
+           ET_Timer_Ax_Freigabe     := "Te_AX12_BremseLoes",
+           EAX_Ax_A_KorrW_1x7       := "DB_ACHSE12".A_ORactive,
+           EAX_Ax_A_ReglerFrei_2x1  := "DB_ACHSE12".A_ContrEnable,
+           EAX_Ax_A_ImpFrei_21x7    := "DB_ACHSE12".A_PulseEnable,
+           EAX_Ax_A_VSSpHalt_4x3    := "DB_ACHSE12".A_FDSpStop,
+           EAX_Ax_A_ASpSperre_1x3   := "DB_ACHSE12".A_ASpDisable,
+           EAX_A_A_NachfBetr_1x4    := "DB_ACHSE12".A_Follow_upMode,
+           EAX_Ax_A_LageMess1_1x5   := "DB_ACHSE12".A_PosMeas1,
+           EAX_Ax_A_LageMess2_1x6   := "DB_ACHSE12".A_PosMeas2,
+           EAX_Ax_A_EGUeberlag_4x5  := "DB_ACHSE12".A_RapidTrOR,
+           EAX_Ax_A_RefVerzoeg_12x7 := "DB_ACHSE12".A_DelayRef,
+           EAX_AX_A_Sp1Syn_16x4     := "DB_ACHSE12".A_Sp1Syn,
+           EAX_Alarm_Regler         := "DB_FEHLERMELDUNG".Spi_VS_Halt._700127_12_IMP_REGFRG_0S,
+           EAX_Alarm_VSSP_Mot_Temp  := "DB_FEHLERMELDUNG".Spi_VS_Halt._700139_12_TEMP_ZU_HOCH,
+           EAX_Alarm_VSSP_KK_Temp   := "DB_FEHLERMELDUNG".Spi_VS_Halt1._510202_12_KK_TEMP_ZH,
+           EAX_Alarm_NA_MotOK       := "DB_FEHLERMELDUNG".Spi_VS_Halt3._701143_12_DR_READY_0,
+           EAX_M_Bremse_oeffnen     := #TX_DUMMY);
+
+NETWORK
+TITLE =Schnittstelle zu Komet
+
+      UN    "DB_ACHSE12".E_RefSyn1; 
+      SPBN  n15a; 
+      L     21; 
+      T     "DB_ACHSE12".A_FD_OR; 
+n15a: NOP   0; 
+
+//---(1)--- Achsendlage ----------------------------------------------
+      U     "I_WK_ENDSCHALTER_PLUS"; 
+      =     "DB_ACHSE12".A_HWLimitPlus; 
+      U     "I_WK_ENDSCHALTER_MINUS"; 
+      =     "DB_ACHSE12".A_HWLimitMinus; 
+
+//---(2)----U-Achse in Spindel----------------------------------------
+      L     "DB_TOOL_DATA".SpWZ_Option; 
+      L     1.000000e+000; 
+      ==R   ; 
+      UN(   ; 
+      L     "DB_GREIFER_DATEN".TNR_Spindel; 
+      L     0; 
+      ==I   ; 
+      )     ; 
+      =     "m_UiSpi"; 
+      =     "O_WK_KOPF_ANGEBAUT"; 
+
+//---(3)-----Notbetrieb-----------------------------------------------
+      U     "M_Reset_Taste"; 
+      R     "DB_ANWENDER_SOFTKEY".U_Achse_Notbetrieb; 
+
+      U     "DB_ANWENDER_SOFTKEY".U_Achse_Notbetrieb; 
+      =     "m_UNotBt"; 
+
+//---(4)-----Reglerfreigabe-------------------------------------------
+      U     "DB_ACHSE12".A_ContrEnable; 
+      =     "O_WK_REG_FREIGABE"; 
+
+
+//---(5)-----U-Achse aktivieren über Taste Bedienpult-----------------
+      U     E      4.3; 
+      U     "M_Handbetrieb"; 
+      U     "m_UiSpi"; 
+      U     "DB_SIEM_KANAL_1".E_ChanReset; 
+      FP    "M_FP_U_NotBetr"; 
+      S     "Start_ASUP_Machine_Nr.4"; 
+
+//---(6)-----Verfahrbereichsumschaltung sperren, wenn U-Achse aktiv ---
+      U     "I_WK_BTB"; 
+      =     "DB_NC_PLC".Komet_UAchse_aktiv; 
+
+//---(7)--- Schnittstelle zu Komet -----------------------------------
+      CALL "FB_KOMET_U_ACHSE" , "DI_KOMET_U_ACHSE" (
+           iEnable                  := "m_eins",
+           iAlrm2e0                 := "I_WK_ALARMCODE_BIT_0",//Alarmcode Bit 0
+           iAlrm2e1                 := "I_WK_ALARMCODE_BIT_1",//Alarmcode Bit 1
+           iAlrm2e2                 := "I_WK_ALARMCODE_BIT_2",//Alarmcode Bit 2
+           iAlrm2e3                 := "I_WK_ALARMCODE_BIT_3",//Alarmcode Bit 3
+           iAlarm0                  := "I_WK_NEG_ALARM",//Alarmmeldung L-Aktiv
+           iBusy0                   := "I_WK_NEG_WZ_AKTIV",//Werkzeug beschäftigt L-Aktiv
+           iReady                   := "I_WK_WZ_BTB",//System bereit
+           iRef                     := "I_WK_REF",//Referenznocken
+           iAxRdy                   := "I_WK_BTB",//Achse bereit
+           iLimPos                  := "I_WK_ENDSCHALTER_PLUS",//Vorendschalter positiv
+           iLimNeg                  := "I_WK_ENDSCHALTER_MINUS",//Vorendschalter negativ
+           iNotBtr                  := "m_UNotBt",//Notbetrieb anwählen
+           iUAxISp                  := "m_UiSpi",//U-Achse in Spindel
+           iNcAxbb                  := "DB_ACHSE12".E_PositContr,
+           iChDb                    := "DB_SIEM_KANAL_1",
+           oSpWzw                   := "m_WzwSpUAx",
+           oKWzISp                  := "DB_FEHLERMELDUNG".MELDUNG3._700506_U_Axis_not_i_SPI,
+           oKNAxAkt                 := "DB_FEHLERMELDUNG".MELDUNG3._700507_U_Axis_Emergency,
+           oWtWzAkt                 := "DB_FEHLERMELDUNG".MELDUNG3._700508_U_Axis_wait_acti,
+           ioAlWord                 := DB102.DBW   88,
+           ioNotBtr                 := "O_WK_NOTACHSBETRIEB",
+           ioCmdAx                  := "O_WK_ACHSBETRIEB",
+           ioAlq                    := "O_WK_QUIT_ALARM",
+           ioFbb                    := "DB_FEHLERMELDUNG".VS_Halt_Haupt._701060_U_Axis_not_ready,
+           ioFUnklar                := "DB_FEHLERMELDUNG".VS_Halt_Haupt._701061_U_Axis_Cmd_error,
+           ioFLzCmd                 := "DB_FEHLERMELDUNG".VS_Halt_Haupt._701062_U_Axis_timeout,
+           ioFNoRdy                 := "DB_FEHLERMELDUNG".VS_Halt_Haupt._701063_U_Axis_Acknl_Rea,
+           ioLesesp                 := "m_LSpUAx");
+//---(2)--------------------------------------------------------------
+
+      U     "m_UiSpi"; 
+      U     "I_WK_BTB"; 
+      U(    ; 
+      L     "DB_TOOL_DATA".Spindeldrehzahl_max; 
+      L     0.000000e+000; 
+      ==R   ; 
+      )     ; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._701044_Kein_Smax_prog; 
+
+      U     "m_UNotBt"; 
+      =     "DB_FEHLERMELDUNG".MELDUNG3._700527_U_Achs_Notbetr; 
+
+      U     "DB_NC_PLC".WZW_NC_Aktiv; 
+      R     "DB_FEHLERMELDUNG".MELDUNG3._700508_U_Axis_wait_acti; 
+      BEB   ; 
+
+
+NETWORK
+TITLE =12-Achse: Aktivierung Softwarenocken nachdem Achse referenziert 
+//Ab hier Mapal.
+Map:  UN    "DB_PLC_MD_DB20".UDHex._03_BIT3_ACHSE12_MESSYST; 
+      U     "DB_ACHSE12".E_RefSyn1; 
+      O     ; 
+      U     "DB_PLC_MD_DB20".UDHex._03_BIT3_ACHSE12_MESSYST; 
+      U     "DB_ACHSE12".E_RefSyn2; 
+      =     "DB_ACHSE12".A_SWCam; 
+NETWORK
+TITLE =Clear TX_DUMMY
+
+      U     "m_null"; 
+      =     #TX_DUMMY; 
+NETWORK
+TITLE =Referenzpunktsignal Mapal
+
+      U     "I_U_AXIS_REF_SIGNAL"; 
+      =     "DB_ACHSE12".A_DelayRef; 
+NETWORK
+TITLE =Leistung steht an
+//Mapal
+      U     "M_Leistung_Steht_an"; 
+      U     "I_U_AXIS_READY"; 
+      =     #U.Leistung; 
+NETWORK
+TITLE =Achse parken
+
+      UN    "I_U_AXIS_READY"; 
+      =     #U.parken; 
+NETWORK
+TITLE =Kommando Minus
+
+      U     #U.Leistung; 
+      U     "DB_ACHSE12".E_TCMinus; 
+      =     #U.FB_Minus; 
+NETWORK
+TITLE =Kommando Plus
+
+      U     #U.Leistung; 
+      U     "DB_ACHSE12".E_TCPlus; 
+      =     #U.FB_Plus; 
+NETWORK
+TITLE =12.Achse, Mapal U-Achse: Aufruf FC_ACHSE_HAUPT
+
+      CALL "FC_ACHSE_HAUPT" (
+           EX_EN                    := TRUE,
+           EX_UDHex_00_IB_Bit_Achse := "DB_PLC_MD_DB20".UDHex._01_BIT3_ACHSE12_AUSBLEN,
+           EX_UDHex_01_Ax_Messystem := "DB_PLC_MD_DB20".UDHex._03_BIT3_ACHSE12_MESSYST,
+           EX_Option_Safety         := "O_INFEED_ENABLE_NCU",// Bei Solutionline bleibt RF und ImpFrg für 3 Sek. nach Not-Aus anstehen
+           EX_Safe_RF_aus           := FALSE,
+           EX_Safe_StopC_aktiv      := FALSE,
+           EX_Safe_StopA_aktiv      := "DB_ACHSE12".E_StopAB,
+           EX_Safe_Teststop_laeuft  := "DB_SPL".IPLC_ZD_GR1_RUN,
+           EX_Maschine_Ein          := "M_MA_Maschine_Ein",
+           EX_Antrieb_Sperre        := "DB_FAMILIEN_MODUL".Achssperre_extern.E_Ax_12,//#U.Antrieb_Sperre
+           EX_Freigabe_Regler       := TRUE,
+           EX_Leistung_steht_an     := #U.Leistung,
+           EX_GewSchn_Aktiv         := "m_null",
+           EX_VSHalt_EinzelAchse    := "DB_FAMILIEN_MODUL".Gesamt.A_Vorschub_Halt_12_Achse,
+           EX_VSHalt_Gruppe         := "M_Vorschub_Halt_Haupt",
+           EX_VSHalt_Kanal          := "DB_FAMILIEN_MODUL".Gesamt.A_Vorschub_Halt_Kanal,
+           EX_RefPkt_Achse          := "I_U_AXIS_REF_SIGNAL",
+           EX_Ax_E_MotOK_93x5       := "DB_ACHSE12".E_MotOK,
+           EX_Ax_E_MTempWarn_94x0   := "m_null",
+           EX_Ax_E_Steht_61x4       := "DB_ACHSE12".E_Stat,
+           EX_Ax_E_KTempWarn_94x1   := "DB_ACHSE12".E_HTempWarn,
+           EX_Ax_E_LageRegler_61x5  := "DB_ACHSE12".E_PositContr,
+           EX_Ax_E_IntSperr_93x6    := "DB_ACHSE12".E_IntegratDisable,
+           EX_Ax_E_ImpFrei_93x7     := "DB_ACHSE12".E_PulseEnable,
+           EX_Ax_E_DrehzRegler_61x6 := "DB_ACHSE12".E_SpeedContr,
+           EX_Ax_E_StromRegler_61x7 := "DB_ACHSE12".E_CurrentContr,
+           EX_Ax_E_FahrAF_61x0      := "DB_ACHSE12".E_TravRequ,
+           EX_Ax_E_FBMinus_64x6     := #U.FB_Minus,//"DB_ACHSE12".E_TCMinus
+           EX_Ax_E_FBPlus_64x7      := #U.FB_Plus,//"DB_ACHSE12".E_TCPlus
+           EX_Eilgang_aktiv         := "M_Anf_Eilgang",
+           EX_Fehler_Quit           := "M_Ruecksetze_Fehler",
+           EX_RefNeu_Sync           := FALSE,
+           EX_AxPark                := #U.parken,
+           EB_Achs_Typ              := B#16#2,
+           ET_Timer_Ax_Freigabe     := "Te_AX12_BremseLoes",
+           EAX_Ax_A_KorrW_1x7       := "DB_ACHSE12".A_ORactive,
+           EAX_Ax_A_ReglerFrei_2x1  := "DB_ACHSE12".A_ContrEnable,
+           EAX_Ax_A_ImpFrei_21x7    := "DB_ACHSE12".A_PulseEnable,
+           EAX_Ax_A_VSSpHalt_4x3    := "DB_ACHSE12".A_FDSpStop,
+           EAX_Ax_A_ASpSperre_1x3   := "DB_ACHSE12".A_ASpDisable,
+           EAX_A_A_NachfBetr_1x4    := "DB_ACHSE12".A_Follow_upMode,
+           EAX_Ax_A_LageMess1_1x5   := "DB_ACHSE12".A_PosMeas1,
+           EAX_Ax_A_LageMess2_1x6   := "DB_ACHSE12".A_PosMeas2,
+           EAX_Ax_A_EGUeberlag_4x5  := "DB_ACHSE12".A_RapidTrOR,
+           EAX_Ax_A_RefVerzoeg_12x7 := "DB_ACHSE12".A_DelayRef,
+           EAX_AX_A_Sp1Syn_16x4     := "DB_ACHSE12".A_Sp1Syn,
+           EAX_Alarm_Regler         := "DB_FEHLERMELDUNG".Spi_VS_Halt._700127_12_IMP_REGFRG_0S,
+           EAX_Alarm_VSSP_Mot_Temp  := "DB_FEHLERMELDUNG".Spi_VS_Halt._700139_12_TEMP_ZU_HOCH,
+           EAX_Alarm_VSSP_KK_Temp   := "DB_FEHLERMELDUNG".Spi_VS_Halt1._510202_12_KK_TEMP_ZH,
+           EAX_Alarm_NA_MotOK       := "DB_FEHLERMELDUNG".Spi_VS_Halt3._701143_12_DR_READY_0,
+           EAX_M_Bremse_oeffnen     := #TX_DUMMY);
+
+NETWORK
+TITLE =Schnittstelle zu Mapal
+//---(1)--- Achsendlage ----------------------------------------------
+      U(    ; 
+      O     "DB_ACHSE12".E_RefSyn1; 
+      O     "DB_ACHSE12".E_RefSyn2; 
+      )     ; 
+      U     "I_U_AXIS_SWITCH_MAX"; 
+      =     "DB_ACHSE12".A_HWLimitPlus; 
+
+      U(    ; 
+      O     "DB_ACHSE12".E_RefSyn1; 
+      O     "DB_ACHSE12".E_RefSyn2; 
+      )     ; 
+      U     "I_U_AXIS_SWITCH_MIN"; 
+      =     "DB_ACHSE12".A_HWLimitMinus; 
+
+//---(2)----U-Achse in Spindel----------------------------------------
+      L     "DB_TOOL_DATA".SpWZ_Option; 
+      L     1.000000e+000; 
+      ==R   ; 
+      UN(   ; 
+      L     "DB_GREIFER_DATEN".TNR_Spindel; 
+      L     0; 
+      ==I   ; 
+      )     ; 
+      =     "m_UiSpi"; 
+
+//---(3)-----Verfahrbereichsumschaltung sperren, wenn U-Achse aktiv ---
+      U     "I_U_AXIS_READY"; 
+      =     "DB_NC_PLC".Komet_UAchse_aktiv; 
+
+//---(4)--- Schnittstelle zu Mapal ------------------------------------
+      CALL "FB_MAPAL_U_ACHSE" , "DI_MAPAL_U_ACHSE" (
+           i_enable                 := "m_eins",
+           i_switch_MAX             := "I_U_AXIS_SWITCH_MAX",
+           i_switch_MIN             := "I_U_AXIS_SWITCH_MIN",
+           i_ref_signal             := "I_U_AXIS_REF_SIGNAL",
+           i_ready                  := "I_U_AXIS_READY",
+           i_axis_error             := "I_U_AXIS_ERROR",
+           i_axis_ok                := "I_U_AXIS_OK",
+           i_u_axis_in_spindle      := "m_UiSpi",
+           o_axis_tool_on           := "O_U_AXIS_TOOL_ON",
+           o_ref_start              := "O_U_AXIS_REF_SIGNAL",
+           o_enable_rotor           := "O_U_AXIS_ENABLE_ROTOR",
+           o_quit_reset             := "O_U_AXIS_QUIT",
+           o_feed_stop              := "DB_ACHSE12".A_FDSpStop,
+           o_read_in_lock           := "DB_FAMILIEN_MODUL".Gesamt.A_Einlesesperre,
+           o_enable_axis            := "DB_ACHSE12".A_ContrEnable);
+
+//---(5)--- Meldungen -------------------------------------------------
+      U     "O_U_AXIS_TOOL_ON"; 
+      UN    "I_U_AXIS_READY"; 
+      =     "DB_FEHLERMELDUNG".Einlesesperre._700562_U_Axis_not_Ready; 
+
+      U     "DB_DM_M_FUNKTION".MX_M[144]; 
+      UN    "m_UiSpi"; 
+      =     "DB_FEHLERMELDUNG".MELDUNG3._700506_U_Axis_not_i_SPI; 
+
+      U     "m_UiSpi"; 
+      UN    "DB_DM_M_FUNKTION".MX_M[144]; 
+      =     "DB_FEHLERMELDUNG".MELDUNG3._700508_U_Axis_wait_acti; 
+
+//---(6)--- Fehlermeldungen -------------------------------------------
+      U     "m_UiSpi"; 
+      U     "I_U_AXIS_READY"; 
+      U(    ; 
+      L     "DB_TOOL_DATA".Spindeldrehzahl_max; 
+      L     0.000000e+000; 
+      ==R   ; 
+      )     ; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._701044_Kein_Smax_prog; 
+
+      UN    "I_U_AXIS_OK"; 
+      U     "I_U_AXIS_ERROR"; 
+      S     "DB_FEHLERMELDUNG".VS_Halt_Haupt._701112_U_Axis_general_e; 
+
+//---(7)--- Fehlermeldungen rücksetzen --------------------------------
+      U     "M_Ruecksetze_Fehler"; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._701044_Kein_Smax_prog; 
+      R     "DB_FEHLERMELDUNG".VS_Halt_Haupt._701112_U_Axis_general_e; 
+
+END_FUNCTION
+

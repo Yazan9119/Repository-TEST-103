@@ -1,0 +1,503 @@
+FUNCTION "FC_TM_VERWALTUNG" : VOID
+TITLE =
+//$Revision: 1.23 $
+//$Date: 2008/09/03 13:48:49CEST $
+//$Author: fuh $
+//
+//Werkzeugverwaltung Main
+//Änderung: Datum     / Abteilung / Name  / Version x.y
+//Änderung: 05.06.2007 /          / slh   / 
+//        : Wz.umsetzen mit Bewegung
+//Änderung:          /            /      / 
+//        : 
+VERSION : 0.1
+
+
+VAR_TEMP
+  dummy : BOOL ;	
+  dummy1 : BOOL ;	
+  T_Vorbereiten_Quit : BOOL ;	
+  T_Error_FB2 : BOOL ;	
+  T_Done_FB2 : BOOL ;	
+  WZW_laeuft : BOOL ;	
+  T_Umsp_Spdl_Mag : BOOL ;	
+  T_Umsp_Mag_Gr1 : BOOL ;	
+  T_Umsp_Mag_Gr2 : BOOL ;	
+  T_Umsp_Spdl_GR1 : BOOL ;	
+  T_Umsp_Spdl_GR2 : BOOL ;	
+  T_Umsp_Gr1_Spdl : BOOL ;	
+  T_Umsp_Gr2_Spdl : BOOL ;	
+  T_Be_Entladen_Abbruch : BOOL ;	
+  T_TIN_Lampe : BOOL ;	
+  T_TOUT_Lampe : BOOL ;	
+  RsFbTBef : BOOL ;	//Reset FB_TM_T_Befehl
+END_VAR
+BEGIN
+NETWORK
+TITLE =WZV: Be.-Entladen aktiv
+
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.WZW_RAD_MIT_ZYLINDER; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.WZW_RAD_MIT_ACHSE; 
+      BEB   ; 
+      O     "M_Ruecksetze_Fehler"; 
+      O     "I_WM_WZ_entnehmen"; 
+      =     #T_Be_Entladen_Abbruch; 
+
+//Wenn Omron-Regal angewählt dann Verwaltung überspringen
+      U     "M_WZM_Regal_angewaehlt"; 
+      SPB   omr; 
+
+      O     "Tv_Maschine_ein_aus"; 
+      O     "DB_OEM".WZW_Reset; 
+      O(    ; 
+      U     "M_Reset_Taste"; 
+      U(    ; 
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.MAG_RAD; 
+      O     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700701_WZ_UGP_nicht_0S; 
+      )     ; 
+      )     ; 
+      O     "m_wwgf_wwRset"; 
+      =     "M_Reset_WZW"; 
+
+
+      U     "Ta_WZW_Aktiv"; 
+      =     #WZW_laeuft; 
+
+      CALL "FC_TM_BE_ENTLADEN" (
+           E_EN                     := TRUE,
+           E_Mag_belegt             := "M_MAG_Laeuft",
+           E_WZW_laeuft             := #WZW_laeuft,
+           E_TIN                    := "I_WM_WZ_einlegen",
+           E_TOUT                   := #T_Be_Entladen_Abbruch,
+           E_Quittierplicht         := "DB_PLC_MD_DB20".UDHex._08_BIT2_Quit_Beladen,
+           E_Blinktakt              := "m_takt_1sec.",
+           Laenge_Mag               := "DB_PLC_MD_DB20".UDInt._120_ANZAHL_MAG_PLAETZE,
+           Offset_Belade            := "DB_PLC_MD_DB20".UDInt._122_RUESTPOSITION,
+           EA_SKZ                   := "M_SKZ_Be_Entladen",
+           A_Anf_Magazin            := "MX_TMMAG_Anforderung",
+           EA_Done_Magazin          := "MX_TMMAG_Fertig",
+           A_Lampe_TIN_Quit         := #T_TIN_Lampe,
+           A_Lampe_TOUT_Abbruch     := #T_TOUT_Lampe,
+           A_Position               := "MW_MAG_TMMP_Anforderung");
+
+      L     "M_SKZ_Be_Entladen"; 
+      L     0; 
+      <>I   ; 
+      =     "MX_BeEntladen_Aktiv"; // Beladen - Entladen aktiv
+      =     "DB_NC_PLC".WZWBe_entladen_aktiv; 
+
+      O(    ; 
+      U     "m_takt_0,4sec."; 
+      U     "DB_TDS".S_Lampe_T_OUT_schnell; // Fehler bei Beladen über TDS     
+      )     ; 
+      O     #T_TIN_Lampe; // Blinken bei Anforderung Quitt
+      O(    ; 
+      UN    "MX_TDS_Aktiv"; 
+      UN    "M_MAG_Laeuft"; 
+      UN    "M_WZW_Aktiv"; 
+      UN    "DB_NC_PLC".WZWBe_entladen_aktiv; //"MX_BeEntladen_Aktiv"
+      )     ; 
+      =     "O_WM_WZ_STAT_einlegen"; 
+
+      O(    ; 
+      U     "m_takt_0,4sec."; 
+      U     "DB_TDS".S_Lampe_T_IN_schnell; // Fehler bei Beladen über TDS     
+      )     ; 
+      O     #T_TOUT_Lampe; // Blinken bei Anforderung Quitt
+      O(    ; 
+      UN    "MX_TDS_Aktiv"; 
+      UN    "M_MAG_Laeuft"; 
+      UN    "M_WZW_Aktiv"; 
+      UN    "DB_NC_PLC".WZWBe_entladen_aktiv; //"MX_BeEntladen_Aktiv"
+      )     ; 
+      =     "O_WM_WZ_STAT_entnehmen"; 
+
+      U     "DB_DM_M_FUNKTION".MX_M[283]; 
+      O     "DB_DM_M_FUNKTION".MX_M[284]; 
+      O     "Mx_WZ_Ablegen_Rettung"; 
+      =     #dummy; 
+
+      O     "M_Reset_WZW"; 
+      O     "m_RsTm_reload"; 
+      =     #RsFbTBef; 
+
+//--------------------------------------------------------------------
+      CALL "FB_TM_T_BEFEHL" , "DI_TM_T_BEFEHL" (
+           E_EN_Zwsp_nach_Mag       := TRUE,
+           E_EN_1zu1_Uebergross     := TRUE,
+           E_Reset_Taste            := #RsFbTBef,
+           E_Nr_Bereitst_Platz      := "MW_Nr_Bereitst",
+           E_M6_aktiv               := "M_M6_aktiv",
+           E_Bereitstellen_aktiv    := "M_WZW_Vorber_laeuft",
+           E_Ablegen_aktiv          := "M_WZW_Ausw",
+           E_Sperre_T_Befehl        := "M_Sperre_TBef_FB193",
+           E_Ready_Ablegen          := "M_WZ_Rdy_Ablegen",
+           E_Ready_Bereitstellen    := "M_WZV_Bereitst_Fertig",
+           E_Req_Ablegen_ZwSp       := #dummy,
+           E_M1P_Ist                := "MW_MAG_MP_Ist",
+           A_Req_Mag1               := "MX_TMAG_Anforderung",
+           A_Req_Ablegen            := "M_Req_Ablegen_WZ",
+           A_Req_Bereitstellen      := "M_WZV_Vorber_Req",
+           A_Quit_Bereitstellen     := "M_WZV_Quit_Bereitst",
+           EA_M1P_Soll              := "MW_MAG_TMP_Anforderung",
+           EA_Ready_Mag1            := "MX_TMAG_Fertig",
+           EA_UeberGrWz             := "DI_TM_QUITT_FC8".GrWz,
+           EA_neuesWzWechselst      := "DI_TM_QUITT_FC8".neuesWzWechselSt,
+           EA_Mag_load_M6           := "DB_NC_PLC".Magazin_Load,
+           EA_Loc_load_M6           := "DB_NC_PLC".Magazin_Platz_Load,
+           EA_Mag_unload_M6         := "DB_NC_PLC".Magazin_Unload,
+           EA_Loc_unload_M6         := "DB_NC_PLC".Magazin_Platz_Unload,
+           EA_Anf_load_M6           := "DB_NC_PLC".WZW_WZ_Einwechseln,
+           EA_Anf_unload_M6         := "DB_NC_PLC".WZW_WZ_Auswechseln,
+           EA_Anf_change_M6         := "DB_NC_PLC".WZW_WZ_Vollwechsel,
+           EA_Anf_unload_load_M6    := "DB_NC_PLC".WZW_WZ_AUS_EINWechseln,
+           EA_Anf_HWZ_load_M6       := "DB_NC_PLC".WZW_WZ_Hand_Ein,
+           EA_ANF_HWZ_unload_M6     := "DB_NC_PLC".WZW_WZ_Hand_Aus,
+           EA_Wz_equal_alt_neu      := "M_WZ_equal_alt_neu");
+
+      L     "DI_TM_T_BEFEHL".Schritt_Tx; 
+      L     "DI_TM_T_BEFEHL".Schritt; 
+      OW    ; 
+      L     B#16#0; 
+      ==I   ; 
+      =     "m_TmTBefSr0"; 
+
+      SPA   kor; 
+
+omr:  O     "Tv_Maschine_ein_aus"; 
+      O     "DB_OEM".WZW_Reset; 
+      O     "m_wwgf_wwRset"; 
+      =     "M_Reset_WZW"; 
+      =     "DB_SCHNITTST_OMRON".OW_WMR_CNC_0.WZW_Reset; 
+
+//--ablegen in Magazin
+
+kor:  O     "DB_DM_M_FUNKTION".MX_M[230]; 
+      O     "DB_DM_M_FUNKTION".MX_M[244]; //Gr2->Mag
+      O     "DB_DM_M_FUNKTION".MX_M[245]; 
+      O     "DB_DM_M_FUNKTION".MX_M[232]; //Spi->Gr 2
+      O     "DB_DM_M_FUNKTION".MX_M[286]; //Spi->Gr 1
+      O     "M_Umsp_Spdl_Gr2"; 
+      O     "M_Umsp_Spdl_Gr1"; 
+      SPBN  M001; 
+      L     1; 
+      T     "DI_TM_QUITT_FC8".MagazinNr; 
+      SPA   M002; 
+
+//--holen aus Magazin
+
+M001: O     "DB_DM_M_FUNKTION".MX_M[220]; 
+      O     "DB_DM_M_FUNKTION".MX_M[221]; 
+      O     "DB_DM_M_FUNKTION".MX_M[223]; 
+      O     "DB_DM_M_FUNKTION".MX_M[225]; 
+      O     "M_Umsp_Gr2-Mag"; 
+      O     "M_Umsp_Gr1-Mag"; 
+      O     "M_Umsp_Mag-Gr1"; 
+      O     "M_Umsp_Mag-Gr2"; 
+      SPBN  M002; 
+      L     1; 
+      T     "DI_TM_QUITT_FC8".MagazinNr; 
+M002: NOP   0; 
+
+
+//      L     "MW_MAG_MP_Ist"             // Istpos Magazin
+      L     "MW_MAG_MP_Soll"; // 6.6.00 AB wg. Fehler in MW166
+      T     "DI_TM_QUITT_FC8".IstPosMag[1]; // Istpos Quittieren
+
+      O     "M_Umsp_Aus_Spindel"; 
+      O     "DB_DM_M_FUNKTION".MX_M[230]; 
+      O     "M_Umsp_Spdl-Mag"; 
+      =     "M_WZV_Spi_Mag"; 
+
+      O     "M_Umsp_in_Spindel"; 
+      O     "DB_DM_M_FUNKTION".MX_M[220]; 
+      =     "M_WZV_Mag_Spi"; 
+
+      U     "M_Umsp_Gr1-Mag"; 
+      =     "M_WZV_Gr1_Mag"; // Anstoss Gr1->Mag
+
+      O     "M_Umsp_Gr2-Mag"; 
+//      O     "DB_DM_M_Funktion".MX_M[244]
+      =     "M_WZV_Gr2_Mag"; // Anstoss Gr2->Mag
+
+      O     "M_Umsp_Mag-Gr1"; 
+      O     "DB_DM_M_FUNKTION".MX_M[221]; 
+      =     #T_Umsp_Mag_Gr1; 
+
+      U     "M_Umsp_Mag-Gr2"; // 09.04.02: FUH
+      =     #T_Umsp_Mag_Gr2; 
+
+      U     "M_Umsp_Mag-Gr1"; 
+      R     "M_Umsp_Mag-Gr1"; 
+
+      U     "M_Umsp_Mag-Gr2"; // 09.04.02: FUH
+      R     "M_Umsp_Mag-Gr2"; 
+
+      U     "DB_DM_M_FUNKTION".MX_M[241]; // 13.01.02: SCH
+      O     "M_Umsp_Gr1-Spdl"; 
+      =     #T_Umsp_Gr1_Spdl; 
+
+      U     "DB_DM_M_FUNKTION".MX_M[285]; // 09.04.02: FUH
+      O     "M_Umsp_Gr2-Spdl"; 
+      =     #T_Umsp_Gr2_Spdl; 
+
+      U     "DB_DM_M_FUNKTION".MX_M[286]; // 09.04.02: FUH
+      O     "M_Umsp_Spdl_Gr1"; 
+      =     #T_Umsp_Spdl_GR1; 
+
+      U     "DB_DM_M_FUNKTION".MX_M[232]; 
+      O     "M_Umsp_Spdl_Gr2"; 
+      =     #T_Umsp_Spdl_GR2; 
+
+      U     "M_WZM_Regal_angewaehlt"; 
+      U     "DB_PLC_MD_DB20".UDHex._07_BIT7_Siemens_Regal; 
+      SPBN  kr0f; 
+
+      U     "DB_DM_M_FUNKTION".MX_M[241]; 
+      FP    "M_FP_Umspeichern"; 
+      SPBN  kr01; 
+      L     "DB_GREIFER_DATEN".TNR_Gr1; 
+      T     "DB_COMM_WZREGAL".WG_Auftrag_WZ_Nr[26]; //Greifer 1 in Spindel
+      S     "DB_COMM_WZREGAL".Kommando[26].Request; 
+      R     "DB_COMM_WZREGAL".Kommando[26].Pos_Quitt; 
+      R     "DB_COMM_WZREGAL".Kommando[26].Neg_Quitt; 
+      SPA   kr0e; 
+
+kr01: U     "DB_DM_M_FUNKTION".MX_M[285]; 
+      FP    "M_FP_Umspeichern2"; 
+      SPBN  kr02; 
+      L     "DB_GREIFER_DATEN".TNR_Gr2; 
+      T     "DB_COMM_WZREGAL".WG_Auftrag_WZ_Nr[28]; //Greifer 2 in Spindel
+      S     "DB_COMM_WZREGAL".Kommando[28].Request; 
+      R     "DB_COMM_WZREGAL".Kommando[28].Pos_Quitt; 
+      R     "DB_COMM_WZREGAL".Kommando[28].Neg_Quitt; 
+      SPA   kr0e; 
+
+kr02: U     "DB_DM_M_FUNKTION".MX_M[286]; 
+      FP    "M_FP_Umspeichern3"; 
+      SPBN  kr03; 
+      L     "DB_GREIFER_DATEN".TNR_Spindel; 
+      T     "DB_COMM_WZREGAL".WG_Auftrag_WZ_Nr[27]; //Spindel in Greifer 1
+      S     "DB_COMM_WZREGAL".Kommando[27].Request; 
+      R     "DB_COMM_WZREGAL".Kommando[27].Pos_Quitt; 
+      R     "DB_COMM_WZREGAL".Kommando[27].Neg_Quitt; 
+      SPA   kr0e; 
+
+kr03: U     "DB_DM_M_FUNKTION".MX_M[232]; 
+      FP    "M_FP_Umspeichern4"; 
+      SPBN  kr0e; 
+      L     "DB_GREIFER_DATEN".TNR_Spindel; 
+      T     "DB_COMM_WZREGAL".WG_Auftrag_WZ_Nr[29]; //Spindel in Greifer 2
+      S     "DB_COMM_WZREGAL".Kommando[29].Request; 
+      R     "DB_COMM_WZREGAL".Kommando[29].Pos_Quitt; 
+      R     "DB_COMM_WZREGAL".Kommando[29].Neg_Quitt; 
+
+
+kr0e: U     "DB_COMM_WZREGAL".Kommando[26].Neg_Quitt; 
+      O     "DB_COMM_WZREGAL".Kommando[27].Neg_Quitt; 
+      O     "DB_COMM_WZREGAL".Kommando[28].Neg_Quitt; 
+      O     "DB_COMM_WZREGAL".Kommando[29].Neg_Quitt; 
+      S     "DB_FEHLERMELDUNG".VS_Halt_Async4._701827_Neg_Quitt_Auftra; 
+
+
+
+kr0f: U     "M_WZV_Spi_Mag"; // von Manuellem WZW
+      O     "M_Umsp_Spdl-Mag"; // von autom WZW
+      =     #T_Umsp_Spdl_Mag; 
+
+      U     "M_Umsp_Spdl_Gr1"; // 09.04.02: FUH
+      R     "M_Umsp_Spdl_Gr1"; 
+
+      U     "M_Umsp_Spdl_Gr2"; 
+      R     "M_Umsp_Spdl_Gr2"; 
+
+      U     "M_Umsp_Gr1-Spdl"; 
+      R     "M_Umsp_Gr1-Spdl"; 
+
+      U     "M_Umsp_Gr2-Spdl"; // 09.04.02: FUH
+      R     "M_Umsp_Gr2-Spdl"; 
+
+// Meldung -- Wz.Daten kontrollieren bei Abbruch
+//---(1)--- Grf.bei Mag.hat keine T-Nr. ------------------------------
+      U     "M_WZW_Gre1_Pos_Mag"; 
+      UN    "M_WZGr1_belegt"; 
+      O     ; 
+      U     "M_WZW_Gre1_Pos_Spi"; 
+      UN    "M_WZGr2_belegt"; 
+      =     #dummy1; 
+//---(1)--------------------------------------------------------------
+
+      U(    ; 
+      O     "M_RESET_WZV"; 
+      O     "M_Reset_WZW"; 
+      )     ; 
+      U     "DB_NC_PLC".WZW_NC_Aktiv; 
+      UN    "M_WZW_Vorber_laeuft"; 
+      UN    "M_WZW_Ausw"; 
+      O     ; 
+      U     "m_wwgf_SkStrt"; 
+      U     "M_WZM_Regal_angewaehlt"; 
+      U     "M_WZW_Hub_Magazin"; 
+      U(    ; 
+      U     "DB_WWZ".TMDR.VorbLft; 
+      U     "DB_SCHNITTST_OMRON".IW_WMR_CNC_0.Greifer_in_Vorposition; 
+      U     "DB_SCHNITTST_OMRON".IW_WMR_CNC_0.Greifer_offen; 
+      U     #dummy1; 
+      O     ; 
+      UN    "DB_WWZ".TMDR.VorbLft; 
+      U     "DB_SCHNITTST_OMRON".IW_WMR_CNC_0.Greifer_in_Wechselpos; 
+      U     "DB_SCHNITTST_OMRON".IW_WMR_CNC_0.Greifer_offen; 
+      U     #dummy1; 
+      )     ; 
+      S     "DB_FEHLERMELDUNG".Warnung._701857_Err_WZV_Abbruch; 
+
+      U     "M_Fehler_Quit_Taste"; 
+      U     "M_WZW_Grdst"; 
+      R     "M_WZW_Prozess_Aktiv"; 
+      R     "DB_OEM".WZ_ueberprueft; 
+
+      U     "DB_OEM".WZ_ueberprueft; 
+      R     "DB_FEHLERMELDUNG".Warnung._701857_Err_WZV_Abbruch; 
+
+
+
+      U     "M_WZM_Regal_angewaehlt"; 
+      SPBN  komr; 
+      U     "M_TPrepare_Quit"; 
+      =     #T_Vorbereiten_Quit; 
+      SPA   quit; 
+
+komr: U     "DB_NC_PLC".WZW_WZ_Vorbereitet; 
+//      O     "M_TPrepare_Quit"
+      =     #T_Vorbereiten_Quit; 
+
+//Eingefügt für Satzsuchlauf 16.07.2003
+      U(    ; 
+      U(    ; 
+      L     "TMSpindleIF".IF[1].SMag; 
+      L     9998; 
+      ==I   ; 
+      )     ; 
+      U(    ; 
+      L     "TMSpindleIF".IF[1].SLoc; 
+      L     1; 
+      )     ; 
+      U(    ; 
+      L     "TMSpindleIF".IF[1].TMag; 
+      L     0; 
+      ==I   ; 
+      )     ; 
+      U(    ; 
+      L     "TMSpindleIF".IF[1].TLoc; 
+      L     0; 
+      ==I   ; 
+      )     ; 
+      )     ; 
+      O(    ; 
+      L     "TMSpindleIF".IF[1].SMag; 
+      L     2; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     "TMSpindleIF".IF[1].TMag; 
+      L     2; 
+      ==I   ; 
+      U     "TMSpindleIF".IF[1].T0; 
+      )     ; 
+      U     "TMSpindleIF".IF[1].Prepare; 
+      =     "MX_FP_W_Prep"; 
+
+quit: NOP   0; 
+
+      CALL "FC_TM_SS_QUIT_PLC" (
+           E_Quit                   := "M_RESET_WZV",
+           E_Beladen_Magazin_end    := "M_WZV_Beladen_ende",
+           E_Entladen_Magazin_end   := "M_WZV_Entladen_ende",
+           E_Positionieren_end      := "M_WZV_Positionieren",
+           E_Beladen_Spindel_end    := TRUE,
+           E_Entladen_Spindel_end   := "DB_NC_PLC".WZW_WZW_Beendet,
+           E_Beladen_TDS_end        := FALSE,
+           E_Entladen_TDS_end       := FALSE,
+           E_Wechsel_Vorber_end     := #T_Vorbereiten_Quit,
+           E_Umsp_Wst_Gr1           := #T_Umsp_Mag_Gr1,
+           E_Umsp_Wst_Gr2           := #T_Umsp_Mag_Gr2,
+           E_Umsp_Gr_TPU            := FALSE,
+           E_Umsp_Wst_TPU           := FALSE,
+           E_Umsp_Wst_Spindel       := "M_WZV_Mag_Spi",
+           E_Umsp_Gr2_Wst           := "M_WZV_Gr2_Mag",
+           E_Umsp_TPU_Wst           := FALSE,
+           E_Umsp_TPU_Gr            := FALSE,
+           E_Umsp_BStP1_Gr1         := FALSE,
+           E_Umsp_Spi_Gr1           := #T_Umsp_Spdl_GR1,
+           E_Umsp_Gr2_Spi           := #T_Umsp_Gr2_Spdl,
+           E_Umsp_Gr1_Spindel       := #T_Umsp_Gr1_Spdl,
+           E_Umsp_Spindel_Gr2       := #T_Umsp_Spdl_GR2,
+           E_WW_Spindel_Mag         := #T_Umsp_Spdl_Mag,
+           E_Umsp_Gr1_Wst           := "M_WZV_Gr1_Mag",
+           E_Abbruch_Be_entladen    := "M_WZV_Entladen_Abbruch",
+           E_FC8_ErrQuitt           := "M_Fehler_Quit_Taste",
+           E_USortAkt               := "DI_TM_T_BEFEHL".USortAkt,
+           E_ANF_HWZ_unload_M6      := "DI_TM_T_BEFEHL".EA_ANF_HWZ_unload_M6,
+           E_Nr_Bereitst_Platz      := "DI_TM_T_BEFEHL".E_Nr_Bereitst_Platz,
+           EA_Fehler_FC8            := "DB_FEHLERMELDUNG".Warnung._701853_Quittung_WZW);
+
+
+      U     "M_TPrepare_Quit"; 
+      U     #T_Vorbereiten_Quit; 
+      UN    "DB_NC_PLC".WZW_T_Prepare_aktiv; 
+      R     "M_TPrepare_Quit"; 
+
+//14.04.2003 FUH: Hier eingefügt wegen Überlesen von Umspeicherungen
+      U     "M_Umsp_Gr2-Mag"; 
+      U     "M_WZV_Gr2_Mag"; //xxxxxx
+      R     "M_Umsp_Gr2-Mag"; 
+
+      U     "M_Umsp_Gr1-Mag"; 
+      U     "M_WZV_Gr1_Mag"; //xxxxxx
+      R     "M_Umsp_Gr1-Mag"; 
+
+// direkt Umspeichern von Spindel in Magazin 
+      U     "M_Umsp_Spdl-Mag"; //  wird in FC192 rueckgesetzt
+      R     "M_Umsp_Spdl-Mag"; 
+
+      U     "m_QuRld_move"; //slh, 05.06.2007
+      R     "m_QuRld_move"; 
+
+      U(    ; // 24.07.02 FUH: Kette Tx aktiv
+      L     "DI_TM_T_BEFEHL".Schritt; 
+      L     0; 
+      <>I   ; 
+      )     ; 
+      O(    ; 
+      L     "DI_TM_T_BEFEHL".Schritt_Tx; 
+      L     0; 
+      <>I   ; 
+      )     ; 
+      O(    ; 
+      L     "DI_WZV_ABL_REGAL".Schritt; 
+      L     0; 
+      <>I   ; 
+      )     ; 
+      O     "M_WZW_VORG_AUSWERTUNG"; 
+      O     "DB_NC_PLC".WZWBe_entladen_aktiv; //"MX_BeEntladen_Aktiv"
+      =     "DB_NC_PLC".WZW_T_Aktiv; 
+
+      CLR   ; 
+      =     "DB_DM_M_FUNKTION".MX_M[220]; 
+      =     "DB_DM_M_FUNKTION".MX_M[221]; 
+      =     "DB_DM_M_FUNKTION".MX_M[223]; 
+      =     "DB_DM_M_FUNKTION".MX_M[225]; 
+      =     "DB_DM_M_FUNKTION".MX_M[230]; 
+      =     "DB_DM_M_FUNKTION".MX_M[232]; 
+      =     "DB_DM_M_FUNKTION".MX_M[241]; 
+      =     "DB_DM_M_FUNKTION".MX_M[244]; 
+      =     "DB_DM_M_FUNKTION".MX_M[245]; 
+      =     "DB_DM_M_FUNKTION".MX_M[285]; // 09.04.02: FUH
+      =     "DB_DM_M_FUNKTION".MX_M[286]; // 09.04.02: FUH
+
+// letzten 5 Quittierungen mitschreiben
+
+      CALL "FB_TM_QTEST" , "DI_TM_QTEST" ;
+
+END_FUNCTION
+

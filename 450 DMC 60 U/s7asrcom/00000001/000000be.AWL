@@ -1,0 +1,783 @@
+FUNCTION "FC_MAG_VERWALTUNG" : VOID
+TITLE =
+//$Revision: 1.53 $
+//$Date: 2008/10/13 14:02:56CEST $
+//$Author: hgc $
+VERSION : 0.1
+
+
+VAR_TEMP
+  temp_MagPlaetze_Haelfte : WORD ;	//Haelfte der Magazinplaetze
+  TW_Mag_Ist : WORD ;	
+  TR_Grad : REAL ;	
+  TR_IstPos : REAL ;	
+  NDR_FB192 : BOOL ;	
+  Wz_equal_FB192 : BOOL ;	
+  Error_FB192 : BOOL ;	
+  Warning_FB192 : BOOL ;	
+  State_FB192 : WORD ;	
+  T_WZM_Taste_Links : BOOL ;	
+  T_WZM_Taste_Rechts : BOOL ;	
+  T_Ext_Taster_WZM_Links : BOOL ;	
+  T_Ext_Taster_WZM_Rechts : BOOL ;	
+  T_WZW_Rettaktiv : BOOL ;	
+  Mag_positionieren_laeuft : BOOL ;	
+  Bild_MAGEinstellung : BOOL ;	
+  T_BHG_Mag_links : BOOL ;	
+  T_BHG_Mag_rechts : BOOL ;	
+  E_Sperre_entriegeln : BOOL ;	//Sperre Fenster Werkzeugbestückung entriegeln
+  E_WZW_PLC_aktiv : BOOL ;	//Werkzeugwechsel M6 aktiv -> Beladeklappe entriegeln gesperrt
+  E_MAG_Laeuft : BOOL ;	//Magazin läuft aktiv -> Beladeklappe entriegeln gesperrt
+  TX_RAD_MAGAZIN : BOOL ;	
+  TX_FRG_FC_GR_MAG : BOOL ;	
+  TX_PUMPE_INTERVALL_ABGEL : BOOL ;	//Hebepumpe Intervall abgelaufen
+  TX_PUMPE_AUS : BOOL ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =Anwahl Magazintyp
+
+      U     "m_eins"; 
+      =     L     18.0; 
+      U     L     18.0; 
+      U(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._014_ANWAHL_MAGAZIN; 
+      L     1; 
+      ==I   ; 
+      )     ; 
+      =     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.MAG_KETTE_GETAKTET; 
+      U     L     18.0; 
+      U(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._014_ANWAHL_MAGAZIN; 
+      L     2; 
+      ==I   ; 
+      )     ; 
+      =     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.MAG_KETTE_GEREGELT; 
+      U     L     18.0; 
+      U(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._014_ANWAHL_MAGAZIN; 
+      L     4; 
+      ==I   ; 
+      )     ; 
+      =     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.MAG_RAD; 
+      U     L     18.0; 
+      U(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._014_ANWAHL_MAGAZIN; 
+      L     6; 
+      ==I   ; 
+      )     ; 
+      =     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.MAG_KETTE_MASTER_SLAVE; 
+      U     L     18.0; 
+      U(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._014_ANWAHL_MAGAZIN; 
+      L     0; 
+      <>I   ; 
+      )     ; 
+      =     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.MAG_ANGEWAEHLT; 
+      U     L     18.0; 
+      U     "DB_PLC_MD_DB20".UDHex._48_Bit0_Wiko_Mag; 
+      =     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.MAG_mit_Wiko; 
+NETWORK
+TITLE =Hälfte der Magazinplätze ermitteln
+
+      U(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._120_ANZAHL_MAG_PLAETZE; 
+      L     0; 
+      >I    ; 
+      )     ; 
+      SPBNB _001; 
+      L     "DB_PLC_MD_DB20".UDInt._120_ANZAHL_MAG_PLAETZE; 
+      L     2; 
+      /D    ; 
+      T     #temp_MagPlaetze_Haelfte; 
+_001: NOP   0; 
+NETWORK
+TITLE =Werkzeugwechsel in Grundstellung -> Freigabe an Magazin
+// Horizontalkette
+      U(    ; 
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.WZW_HORIZONTALE_KETTE; // WZ Verriegelung und Grundstellung
+      U     "I_WW_Rueck_hlt_GST"; 
+      UN    "I_WW_Rueck_hlt_AUSGEF"; 
+      UN    "M_WZW_Hub_Mag_req"; 
+      U(    ; 
+      U     "I_WW_POS_FRG_WZM"; 
+      U     "M_WZW_Hub_GrdSt_req"; 
+      UN    "M_FI_WW_POS_FRG_WZM"; 
+      UN    "M_WZGr1_belegt"; 
+      UN    "M_WZGr2_belegt"; 
+      U     "M_WZW_Greifer_OK"; 
+      O     "M_WZW_Hub_GrdSt"; 
+
+// Rad
+      )     ; 
+      O     ; 
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.MAG_RAD; 
+      U     "I_WM_WZ_ZYL_CLAMP"; 
+      U(    ; 
+      O     "I_WW_Rein_in_GST"; 
+      ON    "DB_WZV".AB_HSK; 
+
+// Vertikalkette mit TPU
+      )     ; 
+      O     ; 
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.WZW_VKETTE_MIT_TPU; 
+      U(    ; 
+      U     "I_TM_TPU_RELEASE_TOOL"; 
+      U     "I_TM_TPU_MAGAZINPOS"; 
+      O     "I_TM_TPU_TRANSFERPOS"; 
+      )     ; 
+      UN    "M_AUTO_TPU_GET_TOOL"; 
+      U     "M_TM_MAG_TOOL_LOCK"; 
+      U     "M_TM_TLOAD_TOOL_LOCK"; 
+      U(    ; 
+      U     "I_TM_MAG_PIN_LOCK"; 
+      U     "I_TM_TLOAD_PIN_LOCK"; 
+      UN    "Te_Pin_Ruest_Lock"; 
+      ON    "DB_ACHSE7".E_IndexAxisPos; 
+      )     ; 
+      O     ; 
+
+// Vertikalkette ohne TPU
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.WZW_VKETTE_OHNE_TPU; 
+      U     "M_TM_MAG_TOOL_LOCK"; 
+      U     "M_TM_TLOAD_TOOL_LOCK"; 
+      UN    "M_WZW_Hub_Mag_req"; 
+      U(    ; 
+      U     "I_WW_POS_FRG_WZM"; 
+      U     "M_WZW_Hub_GrdSt_req"; 
+      U     "DB_Achs11_VMAG_Greifer".MX_Greifer_eingefahren; 
+      UN    "M_FI_WW_POS_FRG_WZM"; 
+      O     ; 
+      U     "DB_PLC_MD_DB20".UDHex._04_BIT4_EINRICHT_BETR; 
+      U(    ; 
+      L     "DB_REMANENT".A7_INDEX_ASIGN_POS_TAB; 
+      L     0; 
+      ==I   ; 
+      )     ; 
+      U(    ; 
+      O     "DB_EINRICHTFUNKTION".Bewegung_58_Plus; 
+      O     "DB_EINRICHTFUNKTION".Bewegung_58_Minus; 
+      )     ; 
+      O     "M_WZW_Hub_GrdSt"; 
+      )     ; 
+      )     ; 
+      UN    "M_Freigab_ZD_WZW"; 
+      =     "M_WZW_FRG_AN_MAG"; 
+NETWORK
+TITLE =Keine Grundstellung Werkzeugwechsler (siehe Rettung)
+//WARNUNG
+      U(    ; 
+      O     "I_MSST_WM_Taste_links"; 
+      O     "I_MSST_WM_Taste_Rechts"; 
+      O     "I_WM_Taste_links"; 
+      O     "I_WM_Taste_rechts"; 
+      O     "M_BHG_Mag_links"; 
+      O     "M_BHG_Mag_rechts"; 
+      )     ; 
+      UN    "DB_WZV".MAG_Hub_ausfahren; 
+      U(    ; 
+      ON    "O_TM_TLOAD_TOOL_LOCK"; 
+      O     "M_TM_TLOAD_TOOL_LOCK"; 
+      )     ; 
+      UN    "Te_Pin_Ruest_Lock"; 
+      UN    "M_WZW_FRG_AN_MAG"; 
+      S     "DB_FEHLERMELDUNG".WARNUNG4._702327_KEINE_GRD_WZW; 
+      U     "M_Ruecksetze_Fehler"; 
+      R     "DB_FEHLERMELDUNG".WARNUNG4._702327_KEINE_GRD_WZW; 
+      NOP   0; 
+NETWORK
+TITLE =Magazin positionieren läuft 
+
+      O(    ; 
+      L     1; 
+      L     "MB_SKZ_Abl_Mag1"; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     3; 
+      L     "MB_SKZ_Abl_Mag1"; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     4; 
+      L     "MB_SKZ_Abl_Mag1"; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     5; 
+      L     "MB_SKZ_Abl_Mag1"; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     6; 
+      L     "MB_SKZ_Abl_Mag1"; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     10; 
+      L     "MB_SKZ_Abl_Mag1"; 
+      ==I   ; 
+      )     ; 
+      =     #Mag_positionieren_laeuft; 
+NETWORK
+TITLE =MAG-Fahrtasten links/rechts deaktivieren bei aktivem Magazin
+
+      U(    ; 
+      O     "I_MSST_WM_Taste_links"; 
+      O     "I_MSST_WM_Taste_Rechts"; 
+      O     "I_WM_Taste_links"; 
+      O     "I_WM_Taste_rechts"; 
+      O     "M_BHG_Mag_links"; 
+      O     "M_BHG_Mag_rechts"; 
+      O     "DB_ACHS7_WZM".MX_Anf_Positionieren; 
+      O     "m_wwgf_RqMagPos"; 
+      )     ; 
+      U(    ; 
+      O     "M_MAG_Teller_Taste_dreh"; 
+      ON    "DB_CONFIG".ANWAHL_DURCH_USER_DATA.MAG_RAD; 
+      )     ; 
+      UN    "M_MAG_Anforderung"; 
+      UN    "MX_TMAG_Anforderung"; 
+      UN    "MX_TMMAG_Anforderung"; 
+      U     "M_WZW_FRG_AN_MAG"; 
+      UN    "DB_FEHLERMELDUNG".Meldung._702146_WZW_aktiv; 
+      UN    "Ta_WZW_Aktiv"; 
+      UN    "DB_NC_PLC".WZW_PLC_Aktiv; 
+      U(    ; 
+      ON    #Mag_positionieren_laeuft; 
+      ON    "M_MAG_Ref_Gefunden"; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.MAG_KETTE_GETAKTET; 
+      )     ; 
+      SPBN  n1b; 
+NETWORK
+TITLE =MSST: MAG-Fahrtaste links
+
+      U     "I_MSST_WM_Taste_links"; 
+      =     #T_WZM_Taste_Links; 
+NETWORK
+TITLE =MSST: MAG-Fahrtaste rechts
+
+      O     "I_MSST_WM_Taste_Rechts"; 
+      O     "m_wwgf_RqMagPos"; 
+      =     #T_WZM_Taste_Rechts; 
+NETWORK
+TITLE =Knebeltaster: MAG-Fahrtaste links
+
+      U     "I_WM_Taste_links"; 
+      =     #T_Ext_Taster_WZM_Links; 
+NETWORK
+TITLE =Knebeltaster: MAG-Fahrtaste rechts
+
+      U     "I_WM_Taste_rechts"; 
+      =     #T_Ext_Taster_WZM_Rechts; 
+NETWORK
+TITLE =BHG: MAG-Fahrtaste links
+
+      U     "M_BHG_Mag_links"; 
+      =     #T_BHG_Mag_links; 
+NETWORK
+TITLE =BHG: MAG-Fahrtaste rechts
+
+      U     "M_BHG_Mag_rechts"; 
+      =     #T_BHG_Mag_rechts; 
+NETWORK
+TITLE =Sprung nach Rettung aktiv
+
+      SPA   n1c; 
+NETWORK
+TITLE =MAG-Fahrtasten links/rechts deaktivieren
+
+n1b:  CLR   ; 
+      =     #T_WZM_Taste_Links; 
+      =     #T_WZM_Taste_Rechts; 
+      =     #T_Ext_Taster_WZM_Links; 
+      =     #T_Ext_Taster_WZM_Rechts; 
+      =     #T_BHG_Mag_links; 
+      =     #T_BHG_Mag_rechts; 
+NETWORK
+TITLE =Werkzeugwechsel Rettung aktiv
+
+n1c:  U     "DB_OEM".OEM_WZW_REttbildaktiv; 
+      U     "M_Handbetrieb"; // "DB_SIEM_BAG".E_JOG
+      =     #T_WZW_Rettaktiv; 
+NETWORK
+TITLE =Sperre entriegeln, wenn Hubzylinder nicht in Grundstellung
+
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.WZW_RAD_MIT_ZYLINDER; 
+      UN    "I_WW_1_ZYL_GST"; 
+      =     #E_Sperre_entriegeln; 
+NETWORK
+TITLE =Werkzeugwechsel/Mag läuft -> Türe entriegeln gesperrt !
+//Bei Magazinstörung (Asynch 1 oder 4) und stehenden Magazinachse erfolgt 
+//Freigabe 
+//zum entriegeln der Beladeklappe
+      UN    "M_Vorschub_Halt_Asyn1"; 
+      UN    "M_Vorschub_Halt_Asyn4"; 
+      O     ; 
+      UN    "DB_ACHSE7".E_n_nx; 
+      U     "DB_SIEM_STARTUP".ActivAxis[7]; 
+      O     ; 
+      UN    "DB_ACHSE8".E_n_nx; 
+      U     "DB_SIEM_STARTUP".ActivAxis[8]; 
+      O     ; 
+      UN    "DB_ACHSE14".E_n_nx; 
+      U     "DB_SIEM_STARTUP".ActivAxis[14]; 
+      =     L     18.0; 
+      U     L     18.0; 
+      U     "DB_NC_PLC".WZW_PLC_Aktiv; 
+      =     #E_WZW_PLC_aktiv; 
+      U     L     18.0; 
+      U     "M_MAG_Laeuft"; 
+      =     #E_MAG_Laeuft; 
+NETWORK
+TITLE =Aufruf Magazin Hauptmodul
+
+      CALL "FC_MAG_HAUPT_ZH" (
+           E_Enabled                := TRUE,
+           E_Maschine_ein           := "M_MA_Maschine_Ein",
+           E_Reset                  := "M_Reset_WZW",
+           E_RettFunkt_Aktiv        := #T_WZW_Rettaktiv,
+           E_Mag_laeuft             := #E_MAG_Laeuft,//"M_MAG_Laeuft"
+           E_FehlerQuitt            := "M_Fehler_Quit_Taste",
+           E_MD_Anwahl_Magazin      := "DB_PLC_MD_DB20".UDInt._014_ANWAHL_MAGAZIN,
+           E_MD_MAG_ZH_Ueb          := "DB_PLC_MD_DB20".UDInt._125_MAG_ZH_UEB_ZEIT,
+           E_M6_Funktion_Aktiv      := #E_WZW_PLC_aktiv,// "DB_NC_PLC".WZW_PLC_Aktiv
+           E_T_Funktion_Aktiv       := "DB_NC_PLC".WZW_T_Aktiv,
+           E_TDS_WRT_REQ            := FALSE,
+           E_Wzw_Grundstg           := "M_WZW_FRG_AN_MAG",
+           E_Tool_in_Wzw            := FALSE,
+           E_I_Ext_EnergieFRG_WZM   := "I_WM_Energiefreigabe",
+           E_I_Mag_Ta_Zweihand      := "I_WM_ZUSTIMMTASTE",
+           E_I_Mag_Tuer_zu          := "I_WM_Beladung_zu",
+           E_I_Fenst_WZ_Mag_entrieg := "I_WM_TAS_Beladung_auf",
+           E_Ta_Magazin_links       := #T_WZM_Taste_Links,
+           E_Ta_Magazin_rechts      := #T_WZM_Taste_Rechts,
+           E_I_Ext_Tast_WZM_Links   := #T_Ext_Taster_WZM_Links,
+           E_I_Ext_Tast_WZM_Rechts  := #T_Ext_Taster_WZM_Rechts,
+           E_Ta_HCU_Mag_links       := #T_BHG_Mag_links,
+           E_Ta_HCU_Mag_rechts      := #T_BHG_Mag_rechts,
+           E_Magazin_Sperre         := "M_Magazin_Sperre",
+           E_Sperre_entriegeln      := #E_Sperre_entriegeln,
+           E_MD_Mag_Groesse         := "DB_PLC_MD_DB20".UDInt._120_ANZAHL_MAG_PLAETZE,
+           E_Mag_Haelfte            := #temp_MagPlaetze_Haelfte,
+           E_MP_Ist                 := "MW_MAG_MP_Ist",
+           EA_Mag_Anforderung       := "M_MAG_Anforderung",
+           EA_Mag_Fertig            := "M_MAG_Fertig",
+           EA_TMag_Anforderung      := "MX_TMAG_Anforderung",
+           EA_TMAG_Fertig           := "MX_TMAG_Fertig",
+           EA_TMMag_Anforderung     := "MX_TMMAG_Anforderung",
+           EA_TMMAg_Fertig          := "MX_TMMAG_Fertig",
+           EA_MAG_Start             := "M_MAG_Start",
+           EA_Mag_Fehler            := "M_MAG_Fehler",
+           EA_Mag_Freigabe          := "M_MAG_Freigabe",
+           EA_Cmd_Links             := "M_MAG_Links_Fahren",
+           EA_Cmd_Rechts            := "M_MAG_Rechts_Fahren",
+           EA_Mag_Ref_Gefunden      := "M_MAG_Ref_Gefunden",
+           EA_Trigger_Ref_Found     := "M_MAG_Trigg_Ref_Gefunden",
+           EA_Trigger_Tuer_Ver      := "M_MAG_Trigg_Tuer_Ver",
+           EA_Trigger_SKR           := "M_MAG_Trigg_SKR",
+           EA_Mag_Inposition        := "M_MAG_In_Position",
+           EA_Mag_Stop              := "M_MAG_Stop",
+           EA_Man_Mag_Rechts        := "M_MAG_Manuell_Rechts",
+           EA_Man_Mag_Links         := "M_MAG_Manuell_Links",
+           EA_Fehler_Energfreigabe  := "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700661_MAG_Energiefrei,
+           EA_Warnung_Energfreigabe := "DB_FEHLERMELDUNG".VS_Halt_Async1._701555_MAG_Energiefrei,
+           EA_Warnung_Tuer_offen    := "DB_FEHLERMELDUNG".VS_Halt_Async1._701556_MAG_Tuer_offen,
+           EA_Fehler_Zweihandbed    := "DB_FEHLERMELDUNG".VS_Halt_Async1._701622_Fehler_MAG_ZH,
+           EA_SKZ_Mag               := "B_MAG_SKZ_Magazin",
+           EA_SKZ_Unterbrechung     := "B_MAG_SKZ_Unterbrechung",
+           EA_Anforderung           := "MB_Mag_Anforderung",
+           EA_Ext_FRG_Magazin       := "O_WM_Freigabe_re_li",//neue Eingabestation
+           EA_O_WZ_Tuer_oeff_moegl  := "O_WM_Beladung_entr_auf",
+           EA_MAG_Taste_Zweihand_FP := "MX_Mag_Trigg4",
+           EA_MAG_Taste_li_re_FP    := "MX_Mag_Trigg5",
+           EA_MP_Anforderung        := "MW_MAG_MP_Anforderung",
+           EA_TMP_Anforderung       := "MW_MAG_TMP_Anforderung",
+           EA_TMMP_Anforderung      := "MW_MAG_TMMP_Anforderung",
+           EA_MP_Soll               := "MW_MAG_MP_Soll");
+
+
+NETWORK
+TITLE =Getaktetes Magazin vorhanden ?
+
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.MAG_KETTE_GETAKTET; 
+      SPBN  kget; 
+NETWORK
+TITLE =Aufruf getaktetes Magazin
+
+      CALL "FC_GT_MAG_STAT" (
+           E_Enable                 := TRUE,
+           E_T_Funktion_Aktiv       := "M_WZW_Err",
+           E_M6_Funktion_Aktiv      := "M_WZW_Aktiv",
+           E_Maschine_Ein           := "M_MA_Maschine_Ein",
+           E_NetzEin                := "M_3_ter_OB1_Zyklus",
+           E_Reset                  := "M_Reset_Taste",
+           E_FehlerQuitt            := "M_Fehler_Quit_Taste",
+           E_RettFunkt_Aktiv        := "DB_OEM".OEM_WZW_REttbildaktiv,//"DB_EINRICHTFUNKTION".Bewegung_17_Plus
+           E_MD_Anwahl_Magazin      := "DB_PLC_MD_DB20".UDInt._014_ANWAHL_MAGAZIN,
+           E_Anzahl_Mag_Plaetze     := "DB_PLC_MD_DB20".UDInt._120_ANZAHL_MAG_PLAETZE,
+           EA_Mag_Kalibriert        := "M_Mag_Kalibriert",
+           EA_Mag_Ref_Gefunden      := "M_MAG_Ref_Gefunden",
+           EA_Mag_Inposition        := "M_Mag_Inposition",
+           EA_Mag_Freigabe          := "M_MAG_Freigabe",
+           EA_Mag_Laeuft            := "M_MAG_Laeuft",
+           EA_Mag_Fehler            := "M_MAG_Fehler",
+           EA_Mag_Stop              := "M_MAG_Stop",
+           EA_W_UngueltigeZaehlImp  := "DB_FEHLERMELDUNG".VS_Halt_Async1._701548_Ungueltige_Zaehl,
+           EA_Ungueltige_ZaehlImp   := "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700729_Ungueltige_Zaehl,
+           EA_W_Kein_Referenzimpuls := "DB_FEHLERMELDUNG".VS_Halt_Async1._701549_Kein_ReferenzImp,
+           EA_Kein_ReferenzImpuls   := "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700730_Kein_RefImpuls,
+           EA_W_Mag_Ungl_Ref_Imp1   := "DB_FEHLERMELDUNG".VS_Halt_Async1._701550_Mag_Ungl_Ref_Imp,
+           EA_Mag_Ungl_Ref_Imp1     := "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700731_Ung_Ref_Imp_1,
+           EA_W_ZaehlImp_bei_Absch0 := "DB_FEHLERMELDUNG".VS_Halt_Async1._701551_ZaehlImp_bei_Abs,
+           EA_ZaehlImp_bei_Absch_0  := "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700732_ZaehlI_bei_Ab_0,
+           EA_W_Kein_RefPunkt       := "DB_FEHLERMELDUNG".VS_Halt_Async1._701552_Kein_RefPunkt,
+           EA_Kein_RefPunkt         := "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700733_Kein_RefPunkt,
+           EA_W_Mag_Kein_Wechsel_ZI := "DB_FEHLERMELDUNG".VS_Halt_Async1._701553_Kein_Wechsel_ZIm,
+           EA_Mag_Kein_Wechsel_ZImp := "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700734_Kein_Wechsel_ZI,
+           EA_SKR_Trigg             := "M_GT_MAG_Trigg1",
+           EA_MAG_Fehler_Nr         := "MB_Mag_Fehler_Nr",
+           EA_SKZ_Tout              := "MB_SKZ_TOut_Mag1",
+           EA_SKZ_Kal               := "MB_SKZ_Kal_Mag1",
+           EA_SKZ_Abl               := "MB_SKZ_Abl_Mag1",
+           EA_Kal_Zaehler           := "MB_Kal_Zaehler",
+           EA_MP_Ist                := "MW_MAG_MP_Ist",
+           EA_Mag_Plaetze_verfahren := "MW_Mag_Plaetze_verfahren");
+
+NETWORK
+TITLE =Reset M-Funktion 289
+
+kget: U     "DB_DM_M_FUNKTION".MX_M[289]; 
+      R     "DB_DM_M_FUNKTION".MX_M[289]; 
+NETWORK
+TITLE =Magazinposition ermitteln für TDS BALLUFF
+// Lesen Magazinposition
+      U     "M_Ruecksetze_Fehler"; 
+      R     "DB_FEHLERMELDUNG".Meldung._702106_Kein_Ref_Punkt; 
+
+      U     "MX_Lesen_MagPos"; 
+      SPBN  LS01; 
+
+// Geregeltes Magazin
+
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.MAG_KETTE_GEREGELT; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.MAG_KETTE_MASTER_SLAVE; 
+      SPBN  LS05; 
+
+// zuerst Lesen
+
+      U     "M_MAG_Laeuft"; 
+      SPB   LS01; 
+
+      SET   ; 
+      =     "DB_ACHS7_WZM".MX_Ax_Position_Lesen; 
+
+      U     "M_Axpos_lesen_ready"; 
+      SPBN  LS01; 
+
+      SET   ; 
+      R     "DB_ACHS7_WZM".MX_Ax_Position_Lesen; 
+
+// Sobald gelesen
+
+      L     360; 
+      L     "DB_PLC_MD_DB20".UDInt._120_ANZAHL_MAG_PLAETZE; 
+      /D    ; 
+      DTR   ; 
+      T     #TR_Grad; 
+
+      L     "DB_ACHS7_WZM".MR_IstPosition; 
+      L     0; 
+      >=R   ; 
+      TAK   ; 
+      SPB   xx1; 
+      L     3.600000e+002; 
+      +R    ; 
+xx1:  RND   ; 
+      L     360; 
+      MOD   ; 
+      DTR   ; 
+
+// Nachkommastellen
+
+      L     #TR_Grad; 
+      +R    ; 
+      T     #TR_IstPos; 
+
+      L     #TR_Grad; 
+      /R    ; 
+      T     #TR_IstPos; 
+      RND   ; 
+      T     #TW_Mag_Ist; 
+      SPA   LS06; 
+
+// Getaktetes Magazin
+
+LS05: L     "MW_MAG_MP_Ist"; 
+      T     #TW_Mag_Ist; 
+
+LS06: U     "M_MAG_Ref_Gefunden"; 
+      O(    ; 
+      L     #TW_Mag_Ist; 
+      L     0; 
+      >I    ; 
+      )     ; 
+      SPB   LS04; 
+      SET   ; 
+      S     "DB_FEHLERMELDUNG".Meldung._702106_Kein_Ref_Punkt; 
+
+LS04: L     #TW_Mag_Ist; 
+      L     "DB_PLC_MD_DB20".UDInt._122_RUESTPOSITION; 
+      <I    ; 
+      SPB   LS02; 
+
+      L     #TW_Mag_Ist; 
+      L     "DB_PLC_MD_DB20".UDInt._122_RUESTPOSITION; 
+      -I    ; 
+      T     "DB_TDS".Platz_Nr; 
+      SPA   LS03; 
+
+LS02: L     #TW_Mag_Ist; 
+      L     "DB_PLC_MD_DB20".UDInt._120_ANZAHL_MAG_PLAETZE; 
+      +I    ; 
+      L     "DB_PLC_MD_DB20".UDInt._122_RUESTPOSITION; 
+
+// Geregeltes Magazin
+
+      -I    ; 
+      T     "DB_TDS".Platz_Nr; 
+
+LS03: SET   ; 
+      S     "MX_RDY_Lesen_MagPos"; 
+      R     "MX_Lesen_MagPos"; 
+
+LS01: NOP   0; 
+
+NETWORK
+TITLE =Geregeltes Magazin vorhanden ?
+
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.MAG_KETTE_GEREGELT; 
+      O(    ; 
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.MAG_RAD; 
+      =     #TX_RAD_MAGAZIN; 
+      U     #TX_RAD_MAGAZIN; 
+      )     ; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.MAG_KETTE_MASTER_SLAVE; 
+      SPBN  M001; 
+NETWORK
+TITLE =Magazinachse Leistung aktiv
+
+      U(    ; 
+      O(    ; 
+      UN    "DB_PLC_MD_DB20".UDHex._31_Bit1_SOLUTIONLINE; 
+      U     "I_WM_Energiefreigabe"; 
+      L     S5T#500MS; 
+      SA    "Ta_WM_Energiefreigabe"; 
+      NOP   0; 
+      NOP   0; 
+      NOP   0; 
+      U     "Ta_WM_Energiefreigabe"; 
+      )     ; 
+      O     "DB_PLC_MD_DB20".UDHex._31_Bit1_SOLUTIONLINE; 
+      )     ; 
+      U     "M_Leistung_Steht_an"; 
+      =     L     18.0; 
+      U     L     18.0; 
+      BLD   102; 
+      =     "DB_ACHS7_WZM".MX_Ax_Leistung_Aktiv; 
+      U     L     18.0; 
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.MAG_KETTE_MASTER_SLAVE; 
+      =     "DB_ACHS13_WZM_Gantry".MX_Ax_Leistung_Aktiv; 
+NETWORK
+TITLE =Magazinachse Referenzpunkt gefunden
+
+      U     "DB_ACHS7_WZM".MX_Achs_Referiert; 
+      =     "M_MAG_Ref_Gefunden"; 
+NETWORK
+TITLE =autom.Wzw.Grundstlg.fahren: SrKette auf Sr.12 setzen
+
+      U     "m_wwgf_RqMagPos"; 
+      UN    "DB_VWWZ".s.MagPAkt; 
+      U     "M_MAG_Manuell_Rechts"; 
+      U(    ; 
+      L     0; 
+      L     "MB_SKZ_Abl_Mag1"; 
+      ==I   ; 
+      )     ; 
+      SPBNB _002; 
+      L     12; 
+      T     "MB_SKZ_Abl_Mag1"; 
+_002: NOP   0; 
+NETWORK
+TITLE =Freigabe für FC_GR_MAG
+//Bei Radmagazin wird im Handbetrieb vom FC_WMT_POSITIONIEREN aus verfahren
+      ON    "M_Handbetrieb"; 
+      ON    #TX_RAD_MAGAZIN; 
+      ON    "I_WM_Beladung_zu"; 
+      =     #TX_FRG_FC_GR_MAG; 
+NETWORK
+TITLE =Aufruf geregeltes Magazin
+
+      CALL "FC_GR_MAG" (
+           EX_Enable                := #TX_FRG_FC_GR_MAG,
+           EX_Maschine_Ein          := "M_MA_Maschine_Ein",
+           EX_Mag_Tuer_Zu           := "I_WM_Beladung_zu",
+           EX_Mag_Links_Drehen      := "M_MAG_Manuell_Links",
+           EX_Mag_Rechts_Drehen     := "M_MAG_Manuell_Rechts",
+           EX_Ax_RefPunkt_gefunden  := "DB_ACHS7_WZM".MX_Achs_Referiert,
+           EX_Ax_InBewegung         := "DB_ACHS7_WZM".MX_Achse_Faehrt,
+           EX_Ax_Fehler_Pos         := "DB_ACHS7_WZM".MX_Fehler_Positionieren,
+           EX_Ax_Pos_lesen_ready    := "M_Axpos_lesen_ready",
+           EX_Ax_Pos_lesen_error    := "M_Axpos_read_error",
+           EX_MD_Anwahl_Magazin     := "DB_PLC_MD_DB20".UDInt._014_ANWAHL_MAGAZIN,
+           EAX_Mag_Start            := "M_MAG_Freigabe",
+           EAX_Mag_Laeuft           := "M_MAG_Laeuft",
+           EAX_Mag_Fehler           := "M_MAG_Fehler",
+           EAX_Mag_Stop             := "M_MAG_Stop",
+           EAX_Ax_Plus_FahrAnf      := "DB_ACHS7_WZM".MX_FahrAnf_Plus,
+           EAX_Ax_Minus_FahrAnf     := "DB_ACHS7_WZM".MX_FahrAnf_Minus,
+           EAX_Ax_Abbruch_FahrAnf   := "DB_ACHS7_WZM".MX_Abbruch_Positionieren,
+           EAX_Ax_Anforderung       := "DB_ACHS7_WZM".MX_Anf_Positionieren,
+           EAX_Ax_Rueckmeldung      := "DB_ACHS7_WZM".MX_Rueck_Positionieren,
+           EAX_Fehler_Mag_Pos       := "DB_FEHLERMELDUNG".VS_Halt_Async1._701548_Ungueltige_Zaehl,
+           EAX_Kein_RefPunkt        := "DB_FEHLERMELDUNG".VS_Halt_Async1._701552_Kein_RefPunkt,
+           EAB_SKZ_Abl              := "MB_SKZ_Abl_Mag1",
+           EAW_MP_Ist               := "MW_MAG_MP_Ist",
+           EAW_MP_Soll              := "MW_MAG_MP_Soll",
+           EAR_Ax_SollPos           := "DB_ACHS7_WZM".MR_SollPosition,
+           EAR_AX_IstPos            := "DB_ACHS7_WZM".MR_IstPosition);
+
+
+M001: NOP   0; 
+
+
+NETWORK
+TITLE =HEBEPUMPE WERKZEUGMAGAZIN: vorhanden ?
+
+      UN    "DB_PLC_MD_DB20".UDHex._20_Bit6_MAG_MIT_PUMPE; 
+      SPB   ENDE; 
+NETWORK
+TITLE =HEBEPUMPE WERKZEUGMAGAZIN: Motorschutzschalter ausgelöst
+
+      U     "M_Ruecksetze_Fehler"; 
+      R     "DB_FEHLERMELDUNG".WARNUNG4._702326_MSS_HEBEPUMP_WZW; 
+      UN    "I_TM_PUMP_MPS"; 
+      S     "DB_FEHLERMELDUNG".WARNUNG4._702326_MSS_HEBEPUMP_WZW; 
+      NOP   0; 
+NETWORK
+TITLE =HEBEPUMPE WERKZEUGMAGAZIN: Pumpe ausgeschaltet
+
+      UN    "O_TM_PUMP"; 
+      =     #TX_PUMPE_AUS; 
+NETWORK
+TITLE =HEBEPUMPE WERKZEUGMAGAZIN: HMI Rettungsanzeige
+
+      U     "m_null"; 
+      =     L     18.0; 
+      BLD   103; 
+      U     "m_null"; 
+      =     L     18.1; 
+      BLD   103; 
+      U     "O_TM_PUMP"; 
+      =     L     18.2; 
+      BLD   103; 
+      U     #TX_PUMPE_AUS; 
+      =     L     18.3; 
+      BLD   103; 
+      U     "O_TM_PUMP"; 
+      =     L     18.4; 
+      BLD   103; 
+      U     #TX_PUMPE_AUS; 
+      =     L     18.5; 
+      BLD   103; 
+      CALL "FC_HMI_IO_TO_TLINE" (
+           Freigabe_AST_Hand        := L     18.0,
+           Freigabe_GST_Hand        := L     18.1,
+           Endlage_AST              := L     18.2,
+           Endlage_GST              := L     18.3,
+           Ventil_AST               := L     18.4,
+           Ventil_GST               := L     18.5,
+           Bewegungsnummer          := 91);
+      NOP   0; 
+NETWORK
+TITLE =HEBEPUMPE WERKZEUGMAGAZIN: Intervall abgelaufen
+
+      L     "DB_REMANENT".WZW_Restzeit_hebepumpe; 
+      L     0; 
+      ==D   ; 
+      =     #TX_PUMPE_INTERVALL_ABGEL; 
+NETWORK
+TITLE =HEBEPUMPE WERKZEUGMAGAZIN: Pumpe einschalten
+
+      U(    ; 
+      U     #TX_PUMPE_INTERVALL_ABGEL; 
+      U     "M_MA_Maschine_Ein"; 
+      L     S5T#5M; 
+      SV    "T_WZW_HEBEPUMPE_EIN"; 
+      NOP   0; 
+      NOP   0; 
+      NOP   0; 
+      U     "T_WZW_HEBEPUMPE_EIN"; 
+      )     ; 
+      UN    "DB_FEHLERMELDUNG".WARNUNG4._702326_MSS_HEBEPUMP_WZW; 
+      =     "O_TM_PUMP"; 
+NETWORK
+TITLE =HEBEPUMPE WERKZEUGMAGAZIN: Intervallbetrieb
+// Bei Wertänderung im Rettungsmenü Restwert rücksetzen
+      L     "DB_REMANENT".WZW_Intervall_hebepumpe; 
+      L     "DB_REMANENT".WZW_altwert_hebepumpe; 
+      ==I   ; 
+      SPB   anf; 
+
+      L     0; 
+      T     "DB_REMANENT".WZW_Restzeit_hebepumpe; 
+
+      L     "DB_REMANENT".WZW_Intervall_hebepumpe; 
+      T     "DB_REMANENT".WZW_altwert_hebepumpe; 
+
+// bei Eintrag 0 -> Intervallzeit auf 4h setzen
+anf:  L     "DB_REMANENT".WZW_Intervall_hebepumpe; 
+      L     0; 
+      ==I   ; 
+      SPBN  m000; 
+
+      L     240; // Minuten
+      T     "DB_REMANENT".WZW_Intervall_hebepumpe; 
+
+// Intervallzeit begrenzen auf max. 24h
+m000: L     "DB_REMANENT".WZW_Intervall_hebepumpe; 
+      L     1440; 
+      >I    ; 
+      SPBN  m001; 
+
+      L     1440; // Minuten
+      T     "DB_REMANENT".WZW_Intervall_hebepumpe; 
+
+// Restzeit erneut setzen
+m001: U     #TX_PUMPE_INTERVALL_ABGEL; 
+      UN    "O_TM_PUMP"; 
+      SPBN  m002; 
+
+      L     "DB_REMANENT".WZW_Intervall_hebepumpe; 
+      ITD   ; // *60 um Minuten in Sekunden zu wandeln
+      L     60; 
+      *I    ; 
+      T     "DB_REMANENT".WZW_Restzeit_hebepumpe; 
+
+// Zaehler um 1 dekrementieren
+m002: U     "M_Takt_1s"; // Taktmerker 1s
+      U     "M_MA_Maschine_Ein"; // nur wenn Maschine Ein ist
+      UN    "O_TM_PUMP"; 
+      SPBN  ENDE; 
+
+      L     "DB_REMANENT".WZW_Restzeit_hebepumpe; 
+      L     1; 
+      -D    ; 
+      T     "DB_REMANENT".WZW_Restzeit_hebepumpe; 
+NETWORK
+TITLE =Bausteinende
+
+ENDE: NOP   0; 
+
+END_FUNCTION
+

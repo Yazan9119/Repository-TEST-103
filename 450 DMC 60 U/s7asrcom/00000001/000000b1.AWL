@@ -1,0 +1,81 @@
+FUNCTION "FC_MA_PNEUMATIK_EIN" : VOID
+TITLE =
+//$Revision: 1.8 $
+//$Date: 2008/04/07 12:59:33CEST $
+//$Author: sth $
+//
+{ S7_language := '7(1) Deutsch (Deutschland)  03.04.2008  10:15:41' }
+VERSION : 0.1
+
+BEGIN
+NETWORK
+TITLE =Pneumatik ein abfallverzögert (Nachlaufzeit)
+
+      U     "M_MA_Maschine_Ein"; 
+      L     S5T#10M; 
+      SA    "Ta_Systemdruck"; 
+NETWORK
+TITLE =Pneumatik ein
+
+      U     "Ta_Systemdruck"; 
+      U(    ; 
+      O     "m_hmi_pro_PNEU_ein_gesp"; 
+      ON    "DB_PLC_MD_DB20".UDHex._31_Bit0_TL2000_Projekt; 
+      )     ; 
+      UN    "DB_FEHLERMELDUNG".NotAus._700015_Feierabend; 
+      =     "O_AL_Druckluft_ein"; 
+NETWORK
+TITLE =Abfrage Diagnoseeingang Pneumatik
+
+      UN    "I_GEN_CAIR_PRE_OK_D"; 
+      U     "M_MA_Maschine_Ein"; 
+      =     "DB_FEHLERMELDUNG".WARNUNG3._700332_D_AL_DRUCKLUFT; 
+NETWORK
+TITLE =Überwachung Pneumatik-Druck
+//Änderung am 03.04.08 sth 
+//Ist kein Pneumatikdruck vorhanden muss beim nächsten G0-Satz
+//ein Spi VS Halt ausglöst werden da sämtliche Sperrlüfte benötigt werden. 
+//vorher:"DB_FEHLERMELDUNG".Warnung._701911_Pneumatik_0Sig
+//
+      U(    ; 
+      U     "O_AL_Druckluft_ein"; 
+      UN    "I_AL_Druckluft_OK"; 
+      L     S5T#500MS; 
+      SE    "Te_Verz_DL_Ueberw"; 
+      NOP   0; 
+      NOP   0; 
+      NOP   0; 
+      U     "Te_Verz_DL_Ueberw"; 
+      )     ; 
+      U     "TE_MASCHINE_EIN"; 
+      S     "DB_FEHLERMELDUNG".Warnung._701911_Pneumatik_0Sig; 
+      U     "M_Ruecksetze_Fehler"; 
+      R     "DB_FEHLERMELDUNG".Warnung._701911_Pneumatik_0Sig; 
+      NOP   0; 
+NETWORK
+TITLE =Störung: Pneumatikdruck 0 Signal 
+//Überwachung aktiv bei zweistufigem Getriebe und Stern-Dreieck
+//Änderung am 03.04.08 sth 
+//Ist kein Pneumatikdruck vorhanden muss beim nächsten G0-Satz
+//ein Spi VS Halt ausglöst werden da sämtliche Sperrlüfte benötigt werden. 
+//vorher:"DB_FEHLERMELDUNG".Warnung._701911_Pneumatik_0Sig
+//jetzt : auch "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700711_Pneumatik_Drk_0S
+
+      U(    ; 
+      UN    "I_AL_Druckluft_OK"; 
+      U(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._006_ANWAHL_GETRIEBE; 
+      L     3; 
+      ==I   ; 
+      )     ; 
+      O     ; 
+      U     "DB_FEHLERMELDUNG".Warnung._701911_Pneumatik_0Sig; 
+      U     "M_Hauptachsen_stehen"; 
+      U     "DB_FAMILIEN_MODUL".Gesamt.A_Einlesesperre; 
+      )     ; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700711_Pneumatik_Drk_0S; 
+      U     "M_Ruecksetze_Fehler"; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700711_Pneumatik_Drk_0S; 
+      NOP   0; 
+END_FUNCTION
+

@@ -1,0 +1,124 @@
+TYPE "UDT_VWWZ"
+//$Revision: 1.7 $
+//$Date: 2008/05/14 14:20:27CEST $
+//$Author: hgc $
+//zu DB175: WzWechsler Grdstlg.fahren...
+AUTHOR : SPAC_slh
+VERSION : 0.1
+
+
+  STRUCT 	
+   gd0 : STRUCT 	//globale Daten Bereich 0
+    FpWzvb : BOOL ;	//Flanke "Wz vorbereitet"
+    FTMDsi : BOOL ;	//Frg.TM-Daten bei WzwReset sichern
+    g1Spi : BOOL ;	//Grf.1 hatte Stlg.Spindel bei Spindel lösen
+    g1Mag : BOOL ;	//Grf.1 hatte Stlg.Magazin bei Spindel lösen
+    FkXArbR : BOOL ;	//neg.Flankenhilfsmk.X fahren zum Arbeitsraum
+    UspMTpuM : BOOL ;	//Umspeichern Mag->Tpu oder Tpu->Mag
+    clrAlWwAbb : BOOL ;	//Reset Warnung._701857_Err_WZV_Abbruch
+    ax7 : BOOL ;	
+    Frg_Hand_Greifer_drehen : BOOL ;	
+    Frg_Hand_X_zur_WW_Pos : BOOL ;	
+    Frg_Hand_X_zum_Arbeitsr : BOOL ;	
+    Frg_Hand_Y_zur_WW_Pos : BOOL ;	
+    Frg_Hand_SPI_zur_WW_Pos : BOOL ;	
+    bx5 : BOOL ;	
+    bx6 : BOOL ;	
+    bx7 : BOOL ;	
+    cx : BOOL ;	
+    cx1 : BOOL ;	
+    cx2 : BOOL ;	
+    cx3 : BOOL ;	
+    cx4 : BOOL ;	
+    cx5 : BOOL ;	
+    cx6 : BOOL ;	
+    cx7 : BOOL ;	
+    dx : BOOL ;	
+    dx1 : BOOL ;	
+    dx2 : BOOL ;	
+    dx3 : BOOL ;	
+    dx4 : BOOL ;	
+    dx5 : BOOL ;	
+    dx6 : BOOL ;	
+    dx7 : BOOL ;	
+   END_STRUCT ;	
+   TMD0 : STRUCT 	//Inhalt ZwiSp."Wz vorbereitet" od."M_WZ_Rdy_Ablegen"
+    TNrGr1 : INT ;	//bei Fl"Wz vorber/Rdy_ableg":int.T-Nr.von Wz im Grf.1, $TC_MPP6[9998,2]
+    TnrGr2 : INT ;	//bei Fl"Wz vorber/Rdy_ableg":int.T-Nr.von Wz im Grf.2, $TC_MPP6[9998,3]
+    TNrSpi : INT ;	//bei Fl"Wz vorber/Rdy_ableg":int.T-Nr.von Wz in Spi, $TC_MPP6[9998,1]
+    TNrTpu : INT ;	//bei Fl"Wz vorber/Rdy_ableg":int.T-Nr.von Wz in TPU, $TC_MPP6[9998,4]
+    ax : BOOL ;	//bei Fl"Wz vorbereitet":
+    ax1 : BOOL ;	//bei Fl"Wz vorbereitet":
+    ax2 : BOOL ;	//bei Fl"Wz vorbereitet":
+    ax3 : BOOL ;	//bei Fl"Wz vorbereitet":
+    ax4 : BOOL ;	//bei Fl"Wz vorbereitet":
+    ax5 : BOOL ;	//bei Fl"Wz vorbereitet":
+    ax6 : BOOL ;	//bei Fl"Wz vorbereitet":
+    ax7 : BOOL ;	//bei Fl"Wz vorbereitet":
+    bx : BOOL ;	//bei Fl"Wz vorbereitet":
+    bx1 : BOOL ;	//bei Fl"Wz vorbereitet":
+    bx2 : BOOL ;	//bei Fl"Wz vorbereitet":
+    bx3 : BOOL ;	//bei Fl"Wz vorbereitet":
+    bx4 : BOOL ;	//bei Fl"Wz vorbereitet":
+    bx5 : BOOL ;	//bei Fl"Wz vorbereitet":
+    bx6 : BOOL ;	//bei Fl"Wz vorbereitet":
+    bx7 : BOOL ;	//bei Fl"Wz vorbereitet":
+   END_STRUCT ;	
+   TMDR : STRUCT 	//gerettete Daten der WzVErw.bei M_Reset_WZW
+    aInt : INT ;	//WwRset:
+    aInt1 : INT ;	//WwRset:
+    WwSr : BYTE ;	//WwRset:aus "MB_SKZ_VERTMAG_WZW", Mb528
+    L164Sr : BYTE ;	//WwRset:aus ZustZaehlerWZW $A_DBB[103]
+    ax : BOOL ;	//WwRset:
+    ax1 : BOOL ;	//WwRset:
+    ax2 : BOOL ;	//WwRset:
+    ax3 : BOOL ;	//WwRset:
+    ax4 : BOOL ;	//WwRset:
+    ax5 : BOOL ;	//WwRset:
+    wwNcAkt : BOOL ;	//WwRset:$A_DBB[111] A_NC_WZW_AKTIV
+    VorbReq : BOOL ;	//WwRset:
+    VorbLft : BOOL ;	//WwRset:
+    BerStFm : BOOL ;	//WwRset:
+    AblReq : BOOL ;	//WwRset:
+    AblLft : BOOL ;	//WwRset:
+    AblFm : BOOL ;	//WwRset:
+    bx5 : BOOL ;	//WwRset:
+    bx6 : BOOL ;	//WwRset:
+    bx7 : BOOL ;	//WwRset:
+    cx : BOOL ;	//WwRset:
+    cx1 : BOOL ;	//WwRset:
+    cx2 : BOOL ;	//WwRset:
+    cx3 : BOOL ;	//WwRset:
+    cx4 : BOOL ;	//WwRset:
+    cx5 : BOOL ;	//WwRset:
+    cx6 : BOOL ;	//WwRset:
+    cx7 : BOOL ;	//WwRset:
+    dx : BOOL ;	
+    dx1 : BOOL ;	
+    dx2 : BOOL ;	
+    dx3 : BOOL ;	
+    dx4 : BOOL ;	
+    dx5 : BOOL ;	
+    dx6 : BOOL ;	
+    dx7 : BOOL ;	
+    ex : BOOL ;	
+    ex1 : BOOL ;	
+    ex2 : BOOL ;	
+    ex3 : BOOL ;	
+    ex4 : BOOL ;	
+    ex5 : BOOL ;	
+    ex6 : BOOL ;	
+    ex7 : BOOL ;	
+    fx : BOOL ;	
+    fx1 : BOOL ;	
+    fx2 : BOOL ;	
+    fx3 : BOOL ;	
+    fx4 : BOOL ;	
+    fx5 : BOOL ;	
+    fx6 : BOOL ;	
+    fx7 : BOOL ;	
+   END_STRUCT ;	
+   s : "UDT_VWWZ_0";	//stat.Daten FC_WZW_VMAG_STATUS Bereich Wzw.Grundstlg.fahren
+  END_STRUCT ;	
+END_TYPE
+

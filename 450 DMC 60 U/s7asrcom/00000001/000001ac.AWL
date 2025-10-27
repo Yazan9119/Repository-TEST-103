@@ -1,0 +1,49 @@
+DATA_BLOCK DB 246
+TITLE =
+AUTHOR : NUMERIK
+FAMILY : _800D
+VERSION : 0.0
+
+"FB_SIEM_GET"
+BEGIN
+   Req := FALSE; 
+   NumVar := 0; 
+   Unit1 := B#16#0; 
+   Column1 := W#16#0; 
+   Line1 := W#16#0; 
+   Unit2 := B#16#0; 
+   Column2 := W#16#0; 
+   Line2 := W#16#0; 
+   Unit3 := B#16#0; 
+   Column3 := W#16#0; 
+   Line3 := W#16#0; 
+   Unit4 := B#16#0; 
+   Column4 := W#16#0; 
+   Line4 := W#16#0; 
+   Unit5 := B#16#0; 
+   Column5 := W#16#0; 
+   Line5 := W#16#0; 
+   Unit6 := B#16#0; 
+   Column6 := W#16#0; 
+   Line6 := W#16#0; 
+   Unit7 := B#16#0; 
+   Column7 := W#16#0; 
+   Line7 := W#16#0; 
+   Unit8 := B#16#0; 
+   Column8 := W#16#0; 
+   Line8 := W#16#0; 
+   Error := FALSE; 
+   NDR := FALSE; 
+   State := W#16#0; 
+   ident := B#16#0; 
+   regist := FALSE; 
+   flanke := FALSE; 
+   run := FALSE; 
+   progtest := FALSE; 
+   err_cls_cod := W#16#0; 
+   err_stat := W#16#0; 
+   PError := DW#16#0; 
+   PRD1 := DW#16#0; 
+   Pident := DW#16#0; 
+END_DATA_BLOCK
+

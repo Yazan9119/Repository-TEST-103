@@ -1,0 +1,275 @@
+FUNCTION "FC_OVR_PROZENT" : VOID
+TITLE =
+//$Revision: 1.5 $
+//$Date: 2008/02/20 15:30:49CET $
+//$Author: sth $
+{ S7_language := '7(1) Deutsch (Deutschland)  20.02.2008  14:02:12' }
+VERSION : 0.1
+
+
+VAR_INPUT
+  EB_Vorschub_Poti : BYTE ;	
+  EB_Eilgang_Poti : BYTE ;	
+  EB_Spindel_Override : BYTE ;	
+END_VAR
+VAR_OUTPUT
+  AB_Vorschub_Prozent : BYTE ;	
+  AB_Eilgang_Prozent : BYTE ;	
+  AB_SpindelOver_Prozent : BYTE ;	
+END_VAR
+VAR_TEMP
+  Hilfswort_0 : ARRAY  [0 .. 15 ] OF BOOL ;	
+  Hilfswort_1 : ARRAY  [0 .. 15 ] OF BOOL ;	
+  off : BOOL ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =Umwandlung des Vorschubpotis in Prozent
+
+      L     #EB_Vorschub_Poti; 
+      SPL   SK99; 
+      SPA   SK00; 
+      SPA   SK01; 
+      SPA   SK02; 
+      SPA   SK03; 
+      SPA   SK04; 
+      SPA   SK05; 
+      SPA   SK06; 
+      SPA   SK07; 
+      SPA   SK08; 
+      SPA   SK09; 
+      SPA   SK10; 
+      SPA   SK11; 
+      SPA   SK12; 
+      SPA   SK13; 
+      SPA   SK14; 
+      SPA   SK15; 
+      SPA   SK16; 
+      SPA   SK17; 
+      SPA   SK18; 
+      SPA   SK19; 
+      SPA   SK20; 
+      SPA   SK21; 
+      SPA   SK22; 
+      SPA   SK23; 
+      SPA   SK24; 
+      SPA   SK25; 
+      SPA   SK26; 
+      SPA   SK27; 
+      SPA   SK28; 
+      SPA   SK29; 
+
+SK99: SPA   MEND; 
+
+SK00: NOP   0; 
+SK01: L     0; 
+      SPA   AUSG; 
+SK02: L     1; 
+      SPA   AUSG; 
+SK03: L     1; 
+      SPA   AUSG; 
+SK04: L     2; 
+      SPA   AUSG; 
+SK05: L     3; 
+      SPA   AUSG; 
+SK06: L     4; 
+      SPA   AUSG; 
+SK07: L     5; 
+      SPA   AUSG; 
+SK08: L     6; 
+      SPA   AUSG; 
+SK09: L     7; 
+      SPA   AUSG; 
+SK10: L     8; 
+      SPA   AUSG; 
+SK11: L     9; 
+      SPA   AUSG; 
+SK12: L     10; 
+      SPA   AUSG; 
+SK13: L     15; 
+      SPA   AUSG; 
+SK14: L     20; 
+      SPA   AUSG; 
+SK15: L     30; 
+      SPA   AUSG; 
+SK16: L     40; 
+      SPA   AUSG; 
+SK17: L     50; 
+      SPA   AUSG; 
+SK18: L     60; 
+      SPA   AUSG; 
+SK19: L     70; 
+      SPA   AUSG; 
+SK20: L     75; 
+      SPA   AUSG; 
+SK21: L     80; 
+      SPA   AUSG; 
+SK22: L     85; 
+      SPA   AUSG; 
+SK23: L     90; 
+      SPA   AUSG; 
+SK24: L     95; 
+      SPA   AUSG; 
+SK25: L     100; 
+      SPA   AUSG; 
+SK26: L     105; 
+      SPA   AUSG; 
+SK27: L     110; 
+      SPA   AUSG; 
+SK28: L     115; 
+      SPA   AUSG; 
+SK29: L     120; 
+      SPA   AUSG; 
+
+
+AUSG: T     #AB_Vorschub_Prozent; 
+MEND: NOP   0; 
+NETWORK
+TITLE =Umwandlung des Eilgangpotis in Prozent
+
+      L     #EB_Eilgang_Poti; 
+      SPL   S099; 
+      SPA   S000; 
+      SPA   S001; 
+      SPA   S002; 
+      SPA   S003; 
+      SPA   S004; 
+      SPA   S005; 
+      SPA   S006; 
+      SPA   S007; 
+      SPA   S008; 
+      SPA   S009; 
+      SPA   S010; 
+      SPA   S011; 
+      SPA   S012; 
+      SPA   S013; 
+      SPA   S014; 
+      SPA   S015; 
+      SPA   S016; 
+      SPA   S017; 
+      SPA   S018; 
+      SPA   S019; 
+      SPA   S020; 
+      SPA   S021; 
+      SPA   S022; 
+      SPA   S023; 
+
+S099: SPA   EEND; 
+
+S000: NOP   0; 
+S001: L     0; 
+      SPA   AUS2; 
+S002: L     0; 
+      SPA   AUS2; 
+S003: L     0; 
+      SPA   AUS2; 
+S004: L     0; 
+      SPA   AUS2; 
+S005: L     0; 
+      SPA   AUS2; 
+S006: L     0; 
+      SPA   AUS2; 
+S007: L     0; 
+      SPA   AUS2; 
+S008: L     1; 
+      SPA   AUS2; 
+S009: L     2; 
+      SPA   AUS2; 
+S010: L     4; 
+      SPA   AUS2; 
+S011: L     6; 
+      SPA   AUS2; 
+S012: L     8; 
+      SPA   AUS2; 
+S013: L     10; 
+      SPA   AUS2; 
+S014: L     20; 
+      SPA   AUS2; 
+S015: L     30; 
+      SPA   AUS2; 
+S016: L     40; 
+      SPA   AUS2; 
+S017: L     50; 
+      SPA   AUS2; 
+S018: L     60; 
+      SPA   AUS2; 
+S019: L     70; 
+      SPA   AUS2; 
+S020: L     80; 
+      SPA   AUS2; 
+S021: L     90; 
+      SPA   AUS2; 
+S022: L     95; 
+      SPA   AUS2; 
+S023: L     100; 
+      SPA   AUS2; 
+
+
+AUS2: T     #AB_Eilgang_Prozent; 
+EEND: NOP   0; 
+
+
+NETWORK
+TITLE =Umwandlung des Spindeloverrides in Prozent
+
+      L     #EB_Spindel_Override; 
+      SPL   L099; 
+      SPA   L000; 
+      SPA   L001; 
+      SPA   L002; 
+      SPA   L003; 
+      SPA   L004; 
+      SPA   L005; 
+      SPA   L006; 
+      SPA   L007; 
+      SPA   L008; 
+      SPA   L009; 
+      SPA   L010; 
+      SPA   L011; 
+      SPA   L012; 
+      SPA   L013; 
+      SPA   L014; 
+      SPA   L015; 
+
+
+L099: SPA   LEND; 
+
+L000: NOP   0; 
+L001: L     50; 
+      SPA   AUS3; 
+L002: L     55; 
+      SPA   AUS3; 
+L003: L     60; 
+      SPA   AUS3; 
+L004: L     65; 
+      SPA   AUS3; 
+L005: L     70; 
+      SPA   AUS3; 
+L006: L     75; 
+      SPA   AUS3; 
+L007: L     80; 
+      SPA   AUS3; 
+L008: L     85; 
+      SPA   AUS3; 
+L009: L     90; 
+      SPA   AUS3; 
+L010: L     95; 
+      SPA   AUS3; 
+L011: L     100; 
+      SPA   AUS3; 
+L012: L     105; 
+      SPA   AUS3; 
+L013: L     110; 
+      SPA   AUS3; 
+L014: L     115; 
+      SPA   AUS3; 
+L015: L     120; 
+      SPA   AUS3; 
+
+
+AUS3: T     #AB_SpindelOver_Prozent; 
+LEND: NOP   0; 
+
+
+END_FUNCTION
+

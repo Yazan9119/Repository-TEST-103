@@ -1,0 +1,1637 @@
+FUNCTION "FC_PS_RS10_ABLAUF" : VOID
+TITLE =
+//$Revision: 1.12 $
+//$Date: 2008/09/10 07:00:10CEST $
+//$Author: hgc $
+//
+VERSION : 0.1
+
+
+VAR_TEMP
+  TX_RPl_Antrieb : BOOL ;	//Rüstplatz mit Antrieb
+  tw_bringen : INT ;	
+  tx_ma_ueb_auftr : BOOL ;	
+  tx_rpl_auftr : BOOL ;	
+  TEMP0 : BOOL ;	
+  tx_leer : BOOL ;	
+  Option_RP_Hydr_Klemmung : BOOL ;	
+  HUB_E0_UNTEN_CamPlus : REAL ;	
+  HUB_E0_UNTEN_CamMinus : REAL ;	
+  HUB_E0_OBEN_CamPlus : REAL ;	
+  HUB_E0_OBEN_CamMinus : REAL ;	
+  HUB_E1_UNTEN_CamPlus : REAL ;	
+  HUB_E1_UNTEN_CamMinus : REAL ;	
+  HUB_E1_OBEN_CamPlus : REAL ;	
+  HUB_E1_OBEN_CamMinus : REAL ;	
+  HUBACHSE_ZUR_POSITION : BYTE ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =Palettenspeicher: Auftrag abgebrochen
+
+      U(    ; 
+      U     "M_LS_Ax_10_11_Freig"; 
+      FN    "M_FN_Speicher"; 
+      O     "M_RS_RETTUNG_AKTIV"; 
+      )     ; 
+      UN    "DB_LSSchnittstelle".IX_Bringen_laeuft; 
+      UN    "DB_LSSchnittstelle".IX_Holen_laeuft; 
+      =     "DB_LSSchnittstelle".IX_Holen_abgebrochen; 
+      =     "DB_LSSchnittstelle".IX_Bringen_abgebrochen; 
+NETWORK
+TITLE =Palettenspeicher: Reset bei Abbruch
+
+      U     "DB_LSSchnittstelle".OX_LS_Auftrag_abbrechen; 
+      O     "M_MA_FN_Maschine_Ein"; // Bei Not-Aus Aufträge abbrechen
+      O(    ; 
+      U     "MX_POS_FL_SKR"; 
+      UN    "DB_LSSchnittstelle".IX_Bringen_laeuft; 
+      UN    "DB_LSSchnittstelle".IX_Holen_laeuft; 
+      )     ; 
+      SPBN  M003; 
+      L     0; 
+      T     "DB_LS_POS".SKZ_Transport_von; 
+      T     "DB_LS_POS".SKZ_Transport_nach; 
+      T     "DB_LSSchnittstelle".OB_Transportauftrag_brin; 
+      T     "DB_LSSchnittstelle".OB_Transportauftrag_hole; 
+      T     "DB_SPEICHERTRANSPORT".bringen_zu; 
+      T     "DB_SPEICHERTRANSPORT".holen_von; 
+      T     "MB_SKZ_Drehstation"; 
+      T     "MB_SKZ_Transport"; 
+      T     "MB_SKZ_Hub_PS"; 
+      T     "DB_Achs9_DrehSt".MB_SKZ_Achse; 
+      T     "DB_Achs10_Transport".MB_SKZ_Achse; 
+      T     "DB_Achs16_Hub_PS".MB_SKZ_Achse; 
+
+      SET   ; 
+      S     "DB_LSSchnittstelle".IX_Holen_abgebrochen; 
+      S     "DB_LSSchnittstelle".IX_Bringen_abgebrochen; 
+      S     "DB_Achs9_DrehSt".MX_Abbruch_Positionieren; 
+      S     "DB_Achs10_Transport".MX_Abbruch_Positionieren; 
+      S     "DB_Achs16_Hub_PS".MX_Abbruch_Positionieren; 
+      R     "DB_LSSchnittstelle".IX_Bringen_laeuft; 
+      R     "DB_LSSchnittstelle".IX_Holen_laeuft; 
+      R     "DB_LSSchnittstelle".IX_Bringen_Ready; 
+      R     "DB_LSSchnittstelle".IX_Holen_Ready; 
+      R     "DB_Achs9_DrehSt".MX_Anf_Positionieren; 
+      R     "DB_Achs9_DrehSt".MX_Rueck_Positionieren; 
+      R     "DB_Achs10_Transport".MX_Anf_Positionieren; 
+      R     "DB_Achs10_Transport".MX_Rueck_Positionieren; 
+      R     "DB_Achs16_Hub_PS".MX_Anf_Positionieren; 
+      R     "DB_Achs16_Hub_PS".MX_Rueck_Positionieren; 
+      R     "DB_OEMDB2".RS4.Stornier_Trans_Auftrag; 
+      R     "DB_LSSchnittstelle".OX_Request_bringen; 
+      R     "DB_LSSchnittstelle".OX_Request_holen; 
+      R     "DB_LSSchnittstelle".IX_Bringen_PalTausch; 
+      R     "DB_LSSchnittstelle".IX_Holen_PalTausch; 
+      R     "DB_HR".RPT.RPL_RS_Anf_ankuppeln; 
+      R     "DB_HR".RPT.RPL_RS_RM_angekuppelt; 
+      R     "DB_HR".RPT.RPL_RS_Anf_abkuppeln; 
+      R     "DB_HR".RPT.RPL_RS_RM_abgekuppelt; 
+      R     "M_PS_RPL_BLASLUFT_PARALL"; 
+
+
+M003: UN    "DB_LSSchnittstelle".OX_Request_holen; 
+      UN    "M_RS_RETTUNG_AKTIV"; 
+      R     "DB_LSSchnittstelle".IX_Holen_abgebrochen; 
+      R     "DB_LSSchnittstelle".IX_Holen_Ready; 
+      R     "DB_LSSchnittstelle".IX_Holen_abgelehnt; 
+      UN    "DB_LSSchnittstelle".OX_Request_bringen; 
+      UN    "M_RS_RETTUNG_AKTIV"; 
+      R     "DB_LSSchnittstelle".IX_Bringen_abgebrochen; 
+      R     "DB_LSSchnittstelle".IX_Bringen_Ready; 
+      R     "DB_LSSchnittstelle".IX_Bringen_abgelehnt; 
+
+NETWORK
+TITLE =Hydraulische Klemmung vorhanden
+
+      U     "DB_PLC_MD_DB20".UDHex._17_BIT7_RP_HYD_KLEMMEN; 
+      =     #Option_RP_Hydr_Klemmung; 
+NETWORK
+TITLE =Reset Bit Taste bearbeitet
+
+      CLR   ; 
+      =     "DB_LSSchnittstelle".IX_Taste_bearbeitet; 
+NETWORK
+TITLE =Rüstplatztüre vorn zu
+
+      U     "I_PS_RPL_TUER_VORNE_ZU"; 
+      =     "DB_LSSchnittstelle".IX_Ruestplatz_Tuer_Zu; 
+NETWORK
+TITLE =Rüstplatztüre hinten zu
+
+      U     "I_PS_RPL_TUER_HINTEN_ZU"; 
+      =     "DB_LSSchnittstelle".IX_Ruestplatz_Tuer_Auf; 
+NETWORK
+TITLE =Rüstplatz Palettenspeicher in Grundstellung
+
+      U     "I_PS_RPL_GST"; 
+      =     "DB_LSSchnittstelle".IX_Ruestplatz_UebergabeP; 
+NETWORK
+TITLE =Drehstation belegt
+
+      U     "I_PS_DREHST_PAL_GST"; 
+      =     "DB_LSSchnittstelle".IX_Transportwagen_belegt; 
+NETWORK
+TITLE =Rohteil setzen
+
+      U     "I_RP_Rohteil_setzen"; 
+      =     "DB_LSSchnittstelle".IX_Taste_Rohteil; 
+NETWORK
+TITLE =Datentausch Palettenwechsler
+
+      CLR   ; 
+      U     "DB_DM_M_FUNKTION".MX_M[198]; 
+      SPBN  M050; 
+
+      SET   ; 
+      R     "DB_DM_M_FUNKTION".MX_M[198]; 
+      CALL "FC_RANGIER_PW_DATA1" (
+           PlatzNr                  := "DB_SPEICHERTRANSPORT".bringen_zu,
+           bTransport               := 3,
+           retWert                  := #tx_leer);
+
+M050: NOP   0; 
+NETWORK
+TITLE =Rüstplatztüre verriegeln abfallverzögert
+
+      U(    ; 
+      O     "M_PW_Aktiv"; 
+      O     "DB_OEM".OEM_SpeEinrbildaktiv; 
+      O     "DB_OEM".OEM_SpeRettbildaktiv; 
+      O     "DB_OEM".OEM_SpeRettbildaktiv3; 
+      O     "DB_OEM".OEM_PW_Rettbildaktiv; 
+      O     "DB_OEM".OEM_PW2_Rettbildaktiv; 
+
+      O     "DB_LSSchnittstelle".IX_Holen_laeuft; 
+      O     "DB_LSSchnittstelle".IX_Bringen_laeuft; 
+      O     "DB_LSSchnittstelle".OX_Request_bringen; 
+      O     "DB_LSSchnittstelle".OX_Request_holen; 
+      ON    "M_PS_Achsen_stehen"; 
+      O     "DB_SAFE_ZD".GR2_ZD.PS_Test_Tuere_verriegeln; 
+      )     ; 
+      U(    ; 
+      O     "I_PS_RPL_TUER_VORNE_ZU"; 
+      O     "I_PS_RPL_TUER_HINTEN_ZU"; 
+      )     ; 
+// Rüstplatz-Türe entriegeln
+      UN    "Tv_PS_RPL_entriegeln"; 
+      L     S5T#2S; 
+      SA    "Ta_RS_Tuer_Verr"; 
+NETWORK
+TITLE =Rüstplatztüre vorn entriegeln
+
+      ON    "Ta_RS_Tuer_Verr"; 
+      ON    "I_PS_RPL_TUER_VORNE_ZU"; 
+      =     "O_PS_RPL_TUER_VORN_ENTR"; 
+NETWORK
+TITLE =Rüstplatztüre hinten entriegeln
+
+      ON    "Ta_RS_Tuer_Verr"; 
+      ON    "I_PS_RPL_TUER_HINTEN_ZU"; 
+      =     "O_PS_RPL_TUER_HINT_ENTR"; 
+NETWORK
+TITLE =Rüstplatztüre entriegeln verlängert
+
+      U     "O_PS_RPL_TUER_VORN_ENTR"; 
+      U     "O_PS_RPL_TUER_HINT_ENTR"; 
+      L     S5T#3S; 
+      SV    "Tv_PS_RPL_entriegeln"; 
+NETWORK
+TITLE =Leistung für Achsen zuschalten
+
+      U     "M_Leistung_Steht_an"; 
+      =     "DB_Achs9_DrehSt".MX_Ax_Leistung_Aktiv; 
+      =     "DB_Achs10_Transport".MX_Ax_Leistung_Aktiv; 
+      =     "DB_Achs16_Hub_PS".MX_Ax_Leistung_Aktiv; 
+      =     "M_LS_Ax_10_11_Freig"; 
+NETWORK
+TITLE =Freigabe Achse Drehstation 
+
+      U(    ; 
+      O     "MX_Transport_Gst"; 
+      O     ; 
+      U     "M_RS_EINRICHTEN_AKTIV"; 
+      U(    ; 
+      O     "DB_ACHSE9".A_Minus; 
+      O     "DB_ACHSE9".A_Plus; 
+      )     ; 
+      )     ; 
+      U     "I_PS_FRG_AR_PSACHS"; 
+      =     "M_FRG_Drehst_Achse"; 
+NETWORK
+TITLE =Freigabe Achse Transport
+
+      U(    ; 
+      U(    ; 
+      U(    ; 
+      L     "DB_LSSchnittstelle".IB_TW_Stellung; 
+      L     2; 
+      >=I   ; 
+      )     ; 
+      U(    ; 
+      L     "DB_LSSchnittstelle".IB_TW_Stellung; 
+      L     8; 
+      <=I   ; 
+      )     ; 
+      U     "M_RS_HUBACHSE_BER_EBENE0"; 
+      O     ; 
+      U(    ; 
+      L     "DB_LSSchnittstelle".IB_TW_Stellung; 
+      L     9; 
+      >=I   ; 
+      )     ; 
+      U(    ; 
+      L     "DB_LSSchnittstelle".IB_TW_Stellung; 
+      L     13; 
+      <=I   ; 
+      )     ; 
+      U     "M_RS_HUBACHSE_BER_EBENE1"; 
+      )     ; 
+      =     "M_RS_DREHST_POSITIONIERT"; 
+      U     "M_RS_DREHST_POSITIONIERT"; 
+      U(    ; 
+      U(    ; 
+      O     "M_RS_HUBACHSE_E0_OBEN"; 
+      O     "M_RS_HUBACHSE_E1_OBEN"; 
+      )     ; 
+      U(    ; 
+      ON    "I_PS_DREHST_PAL_VORH"; 
+      ON    "MX_Transport_Gst"; 
+      )     ; 
+      O     ; 
+      U(    ; 
+      O     "M_RS_HUBACHSE_E0_UNTEN"; 
+      O     "M_RS_HUBACHSE_E1_UNTEN"; 
+      )     ; 
+      UN    "I_PS_DREHST_PAL_GST"; 
+      )     ; 
+      U(    ; 
+      U     "DB_PW_DATA".In.IX_PW_Hub_unten; 
+      U(    ; 
+      O     "DB_PW_DATA".bPW_0Grad; 
+      O     "DB_PW_DATA".bPW_180Grad; 
+      )     ; 
+      ON    "M_DS_Pos_3"; 
+      )     ; 
+      O     ; 
+      U     "M_RS_EINRICHTEN_AKTIV"; 
+      U(    ; 
+      O     "DB_ACHSE10".A_Minus; 
+      O     "DB_ACHSE10".A_Plus; 
+      )     ; 
+      )     ; 
+      U     "I_PS_FRG_AR_PSACHS"; 
+      =     "M_FRG_Transp_Achse"; 
+NETWORK
+TITLE =Freigabe Achse Hub
+
+      U(    ; 
+      U     "MX_Transport_Ausgef"; 
+      U     "M_RS_DREHST_POSITIONIERT"; 
+      U(    ; 
+      U(    ; 
+      L     "DB_LSSchnittstelle".IB_TW_Stellung; 
+      L     2; 
+      ==I   ; 
+      )     ; 
+      U(    ; 
+      U     "I_PW_RP_GELOEST"; 
+      UN    "DB_PLC_MD_DB20".UDHex._17_BIT7_RP_HYD_KLEMMEN; 
+      O     ; 
+      U     "I_PW_RPL_PAL_GELOEST"; 
+      U     "DB_PLC_MD_DB20".UDHex._17_BIT7_RP_HYD_KLEMMEN; 
+      O     "DB_PLC_MD_DB20".UDHex._33_Bit7_RPL_keine_Klemm; 
+      )     ; 
+      O     ; 
+      U(    ; 
+      L     "DB_LSSchnittstelle".IB_TW_Stellung; 
+      L     3; 
+      >=I   ; 
+      )     ; 
+      U(    ; 
+      L     "DB_LSSchnittstelle".IB_TW_Stellung; 
+      L     13; 
+      <=I   ; 
+      )     ; 
+      )     ; 
+      O     "MX_Transport_Gst"; 
+      O     ; 
+      U     "M_RS_EINRICHTEN_AKTIV"; 
+      U(    ; 
+      O     "DB_ACHSE16".A_Minus; 
+      O     "DB_ACHSE16".A_Plus; 
+      )     ; 
+      )     ; 
+      U     "I_PS_FRG_AR_PSACHS"; 
+      =     "M_FRG_Hub_Achse"; 
+NETWORK
+TITLE =Alarm: Eingang Freigabe Arbeitsraum Palettenspeicher von PNOZ 0
+
+      U(    ; 
+      U(    ; 
+      ON    "O_PS_RPL_TUER_VORN_ENTR"; 
+      ON    "O_PS_RPL_TUER_HINT_ENTR"; 
+      )     ; 
+      U     "TE_MASCHINE_EIN"; 
+      L     S5T#2S; 
+      SE    "Te_RS_Uebw_RP"; 
+      NOP   0; 
+      NOP   0; 
+      NOP   0; 
+      U     "Te_RS_Uebw_RP"; 
+      )     ; 
+      UN    "I_PS_FRG_AR_PSACHS"; 
+      S     "DB_FEHLERMELDUNG".VS_Halt_Async3._701757_FRG_AR3_0; 
+NETWORK
+TITLE =MEL, PS Fehlende Freigabe->Vorschub Halt für Achse 9 DREHST akt.
+
+      U(    ; 
+      O     "DB_ACHSE9".E_TCMinus; 
+      O     "DB_ACHSE9".E_TCPlus; 
+      )     ; 
+      UN    "M_FRG_Drehst_Achse"; 
+      =     "DB_FEHLERMELDUNG".Meldung._702213_VSH_AX_9; 
+NETWORK
+TITLE =MEL, PS Fehlende Freigabe->Vorschub Halt für Achse 10 TRANS akt.
+
+      U(    ; 
+      O     "DB_ACHSE10".E_TCMinus; 
+      O     "DB_ACHSE10".E_TCPlus; 
+      )     ; 
+      UN    "M_FRG_Transp_Achse"; 
+      =     "DB_FEHLERMELDUNG".Meldung._702214_VSH_AX_10; 
+NETWORK
+TITLE =MEL, PS Fehlende Freigabe->Vorschub Halt für Achse 10 HUB akt.
+
+      U(    ; 
+      O     "DB_ACHSE16".E_TCMinus; 
+      O     "DB_ACHSE16".E_TCPlus; 
+      )     ; 
+      UN    "M_FRG_Hub_Achse"; 
+      =     "DB_FEHLERMELDUNG".Meldung._702215_VSH_AX_16; 
+NETWORK
+TITLE =PS: Transport PS gestoppt, Tueren nicht zu
+
+      U(    ; 
+      O     "DB_LSSchnittstelle".IX_Holen_laeuft; 
+      O     "DB_LSSchnittstelle".IX_Bringen_laeuft; 
+      O     "DB_LSSchnittstelle".OX_Request_bringen; 
+      O     "DB_LSSchnittstelle".OX_Request_holen; 
+      )     ; 
+      U(    ; 
+      UN    "I_PS_RPL_TUER_VORNE_ZU"; 
+      UN    "I_PS_RPL_TUER_HINTEN_ZU"; 
+      ON    "I_PS_FRG_AR_PSACHS"; 
+      )     ; 
+      =     "m_PS_STOP_TUERE_NICHT_ZU"; 
+      =     "DB_FEHLERMELDUNG".Meldung._702037_RP_Tuer_offen; 
+NETWORK
+TITLE =Schnittstelle Drehstation Softwarenocken auf 0 schreiben
+//
+// 
+      L     0; 
+      T     "DB_LSSchnittstelle".IB_TW_Stellung; 
+      NOP   0; 
+
+NETWORK
+TITLE =Drehstation Softwarenocken 
+//Position Rüstplatz
+      U     "DB_SIEM_NCK".E_SWCamMinus[18]; 
+      U     "DB_SIEM_NCK".E_SWCamPlus[18]; 
+      U     "M_RS_HUBACHSE_BER_EBENE0"; 
+      =     "M_DS_Pos_2"; 
+      SPBN  M004; 
+      L     2; 
+      SPA   M005; 
+
+//Position Übergabeplatz
+M004: U     "DB_SIEM_NCK".E_SWCamMinus[19]; 
+      U     "DB_SIEM_NCK".E_SWCamPlus[19]; 
+      U     "M_RS_HUBACHSE_BER_EBENE0"; 
+      =     "M_DS_Pos_3"; 
+      SPBN  M006; 
+      L     3; 
+      SPA   M005; 
+
+//Position Speicherplatz 1
+M006: U     "DB_SIEM_NCK".E_SWCamMinus[20]; 
+      U     "DB_SIEM_NCK".E_SWCamPlus[20]; 
+      U     "M_RS_HUBACHSE_BER_EBENE0"; 
+      =     "M_DS_Pos_4"; 
+      SPBN  M007; 
+      L     4; 
+      SPA   M005; 
+
+//Position Speicherplatz 2
+M007: U     "DB_SIEM_NCK".E_SWCamMinus[21]; 
+      U     "DB_SIEM_NCK".E_SWCamPlus[21]; 
+      U     "M_RS_HUBACHSE_BER_EBENE0"; 
+      =     "M_DS_Pos_5"; 
+      SPBN  M008; 
+      L     5; 
+      SPA   M005; 
+
+//Position Speicherplatz 3
+M008: U     "DB_SIEM_NCK".E_SWCamMinus[22]; 
+      U     "DB_SIEM_NCK".E_SWCamPlus[22]; 
+      U     "M_RS_HUBACHSE_BER_EBENE0"; 
+      =     "M_DS_Pos_6"; 
+      SPBN  M049; 
+      L     6; 
+      SPA   M005; 
+
+//Position Speicherplatz 4
+M049: U     "DB_SIEM_NCK".E_SWCamMinus[23]; 
+      U     "DB_SIEM_NCK".E_SWCamPlus[23]; 
+      U     "M_RS_HUBACHSE_BER_EBENE0"; 
+      =     "M_DS_Pos_7"; 
+      SPBN  XY01; 
+      L     7; 
+      SPA   M005; 
+
+//Position Speicherplatz 5 
+XY01: U     "DB_SIEM_NCK".E_SWCamMinus[13]; 
+      U     "DB_SIEM_NCK".E_SWCamPlus[13]; 
+      U     "M_RS_HUBACHSE_BER_EBENE0"; 
+      =     "M_DS_Pos_8"; 
+      SPBN  XY02; 
+      L     8; 
+      SPA   M005; 
+
+//Position Speicherplatz 6
+XY02: U     "DB_SIEM_NCK".E_SWCamMinus[20]; 
+      U     "DB_SIEM_NCK".E_SWCamPlus[20]; 
+      U     "M_RS_HUBACHSE_BER_EBENE1"; 
+      =     "M_DS_Pos_9"; 
+      SPBN  XY03; 
+      L     9; 
+      SPA   M005; 
+
+//Position Speicherplatz 7
+XY03: U     "DB_SIEM_NCK".E_SWCamMinus[21]; 
+      U     "DB_SIEM_NCK".E_SWCamPlus[21]; 
+      U     "M_RS_HUBACHSE_BER_EBENE1"; 
+      =     "M_DS_Pos_10"; 
+      SPBN  XY04; 
+      L     10; 
+      SPA   M005; 
+
+//Position Speicherplatz 8
+XY04: U     "DB_SIEM_NCK".E_SWCamMinus[22]; 
+      U     "DB_SIEM_NCK".E_SWCamPlus[22]; 
+      U     "M_RS_HUBACHSE_BER_EBENE1"; 
+      =     "M_DS_Pos_11"; 
+      SPBN  XY05; 
+      L     11; 
+      SPA   M005; 
+
+//Position Speicherplatz 9
+XY05: U     "DB_SIEM_NCK".E_SWCamMinus[23]; 
+      U     "DB_SIEM_NCK".E_SWCamPlus[23]; 
+      U     "M_RS_HUBACHSE_BER_EBENE1"; 
+      =     "M_DS_Pos_12"; 
+      SPBN  XY06; 
+      L     12; 
+      SPA   M005; 
+
+//Position Speicherplatz 10
+XY06: U     "DB_SIEM_NCK".E_SWCamMinus[13]; 
+      U     "DB_SIEM_NCK".E_SWCamPlus[13]; 
+      U     "M_RS_HUBACHSE_BER_EBENE1"; 
+      =     "M_DS_Pos_13"; 
+      SPBN  M009; 
+      L     13; 
+
+M005: T     "DB_LSSchnittstelle".IB_TW_Stellung; 
+M009: NOP   0; 
+NETWORK
+TITLE =Hubachse Ermittlung der Positionen für die Softwarenocken 
+//Aus Mangel an freien Nocken wird die Position der Hubachse ständig gelesen und 
+//die Softwarenocken in der PLC gebildet.
+//
+      U     "DB_LS_POS".Daten_OK; 
+      =     L     39.0; 
+      U     L     39.0; 
+      SPBNB _003; 
+      L     "DB_LS_POS".Hubachse_Ebene_0_unten; 
+      L     1.000000e-001; 
+      +R    ; 
+      T     #HUB_E0_UNTEN_CamPlus; 
+_003: NOP   0; 
+      U     L     39.0; 
+      SPBNB _007; 
+      L     "DB_LS_POS".Hubachse_Ebene_0_unten; 
+      L     1.000000e-001; 
+      -R    ; 
+      T     #HUB_E0_UNTEN_CamMinus; 
+_007: NOP   0; 
+      U     L     39.0; 
+      SPBNB _00b; 
+      L     "DB_LS_POS".Hubachse_Ebene_0_oben; 
+      L     1.000000e-001; 
+      +R    ; 
+      T     #HUB_E0_OBEN_CamPlus; 
+_00b: NOP   0; 
+      U     L     39.0; 
+      SPBNB _013; 
+      L     "DB_LS_POS".Hubachse_Ebene_0_oben; 
+      L     1.000000e-001; 
+      -R    ; 
+      T     #HUB_E0_OBEN_CamMinus; 
+_013: NOP   0; 
+      U     L     39.0; 
+      SPBNB _014; 
+      L     "DB_LS_POS".Hubachse_Ebene_1_unten; 
+      L     1.000000e-001; 
+      +R    ; 
+      T     #HUB_E1_UNTEN_CamPlus; 
+_014: NOP   0; 
+      U     L     39.0; 
+      SPBNB _015; 
+      L     "DB_LS_POS".Hubachse_Ebene_1_unten; 
+      L     1.000000e-001; 
+      -R    ; 
+      T     #HUB_E1_UNTEN_CamMinus; 
+_015: NOP   0; 
+      U     L     39.0; 
+      SPBNB _016; 
+      L     "DB_LS_POS".Hubachse_Ebene_1_oben; 
+      L     1.000000e-001; 
+      +R    ; 
+      T     #HUB_E1_OBEN_CamPlus; 
+_016: NOP   0; 
+      U     L     39.0; 
+      SPBNB _017; 
+      L     "DB_LS_POS".Hubachse_Ebene_1_oben; 
+      L     1.000000e-001; 
+      -R    ; 
+      T     #HUB_E1_OBEN_CamMinus; 
+_017: NOP   0; 
+NETWORK
+TITLE =Hubachse Softwarenocken 
+//Aus Mangel an freien Nocken wird die Position der Hubachse ständig gelesen und 
+//die Softwarenocken in der PLC gebildet.
+//
+      U     "DB_ACHSE16".E_RefSyn1; 
+      U     "DB_LS_POS".Daten_OK; 
+      UN    "M_Error_Lesen_Ax16_CAM"; 
+      U     "M_AX16_SW_NOCKEN_OK"; 
+      =     L     39.0; 
+      U     L     39.0; 
+      U(    ; 
+      L     "DB_Achs16_Hub_PS".MR_ISTPOSITION_SW_CAM; 
+      L     #HUB_E0_UNTEN_CamMinus; 
+      >=R   ; 
+      )     ; 
+      U(    ; 
+      L     "DB_Achs16_Hub_PS".MR_ISTPOSITION_SW_CAM; 
+      L     #HUB_E0_UNTEN_CamPlus; 
+      <=R   ; 
+      )     ; 
+      =     "M_RS_HUBACHSE_E0_UNTEN"; 
+      U     L     39.0; 
+      U(    ; 
+      L     "DB_Achs16_Hub_PS".MR_ISTPOSITION_SW_CAM; 
+      L     #HUB_E0_OBEN_CamMinus; 
+      >=R   ; 
+      )     ; 
+      U(    ; 
+      L     "DB_Achs16_Hub_PS".MR_ISTPOSITION_SW_CAM; 
+      L     #HUB_E0_OBEN_CamPlus; 
+      <=R   ; 
+      )     ; 
+      =     "M_RS_HUBACHSE_E0_OBEN"; 
+      U     L     39.0; 
+      U(    ; 
+      L     "DB_Achs16_Hub_PS".MR_ISTPOSITION_SW_CAM; 
+      L     #HUB_E1_UNTEN_CamMinus; 
+      >=R   ; 
+      )     ; 
+      U(    ; 
+      L     "DB_Achs16_Hub_PS".MR_ISTPOSITION_SW_CAM; 
+      L     #HUB_E1_UNTEN_CamPlus; 
+      <=R   ; 
+      )     ; 
+      =     "M_RS_HUBACHSE_E1_UNTEN"; 
+      U     L     39.0; 
+      U(    ; 
+      L     "DB_Achs16_Hub_PS".MR_ISTPOSITION_SW_CAM; 
+      L     #HUB_E1_OBEN_CamMinus; 
+      >=R   ; 
+      )     ; 
+      U(    ; 
+      L     "DB_Achs16_Hub_PS".MR_ISTPOSITION_SW_CAM; 
+      L     #HUB_E1_OBEN_CamPlus; 
+      <=R   ; 
+      )     ; 
+      =     "M_RS_HUBACHSE_E1_OBEN"; 
+      U     L     39.0; 
+      U(    ; 
+      L     "DB_Achs16_Hub_PS".MR_ISTPOSITION_SW_CAM; 
+      L     #HUB_E0_UNTEN_CamMinus; 
+      >=R   ; 
+      )     ; 
+      U(    ; 
+      L     "DB_Achs16_Hub_PS".MR_ISTPOSITION_SW_CAM; 
+      L     #HUB_E0_OBEN_CamPlus; 
+      <=R   ; 
+      )     ; 
+      =     "M_RS_HUBACHSE_BER_EBENE0"; 
+      U     L     39.0; 
+      U(    ; 
+      L     "DB_Achs16_Hub_PS".MR_ISTPOSITION_SW_CAM; 
+      L     #HUB_E1_UNTEN_CamMinus; 
+      >=R   ; 
+      )     ; 
+      U(    ; 
+      L     "DB_Achs16_Hub_PS".MR_ISTPOSITION_SW_CAM; 
+      L     #HUB_E1_OBEN_CamPlus; 
+      <=R   ; 
+      )     ; 
+      =     "M_RS_HUBACHSE_BER_EBENE1"; 
+NETWORK
+TITLE =Transport in Grundstellung
+//// Kettenpositionen auswerten
+      U     "DB_SIEM_NCK".E_SWCamMinus[24]; 
+      U     "DB_SIEM_NCK".E_SWCamPlus[24]; 
+      =     "MX_Transport_Gst"; 
+
+
+NETWORK
+TITLE =Transport ausgefahren
+//// Kettenpositionen auswerten
+      U     "DB_SIEM_NCK".E_SWCamMinus[25]; 
+      U     "DB_SIEM_NCK".E_SWCamPlus[25]; 
+      =     "MX_Transport_Ausgef"; 
+
+
+NETWORK
+TITLE =2nd software limit switch minus
+//   
+      U     "I_PS_RPL_TUER_HINTEN_ZU"; 
+      =     "DB_ACHSE9".A_SWLimit2Minus; 
+NETWORK
+TITLE =Palettenspeicher in Grundstellung
+
+      U     "MX_Transport_Gst"; 
+      =     "MX_RS_Grundstellung"; 
+NETWORK
+TITLE =Rüstplatz Grundstellung
+//Rüstplatz  frei zum Bringen / Holen
+      U     "I_PS_RPL_GST"; 
+      U     "I_PS_RPL_TUER_VORNE_ZU"; 
+      UN    "I_PS_RPL_TUER_HINTEN_ZU"; 
+      U     "DB_HR".RPT_Zustand.Z00_Grundstellung; 
+      U(    ; 
+      O     "I_PW_RP_GELOEST"; 
+      O     #Option_RP_Hydr_Klemmung; 
+      )     ; 
+      U(    ; 
+      O     "DB_HR".RPT.RS_RPL_FRG; 
+      ON    "MX_Jobbetrieb"; 
+      O(    ; 
+      L     "DB_PAL_NR".Platz[4].Pal_Nr; 
+      L     0; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     "DB_PAL_NR".Platz[4].Status; 
+      L     1; 
+      ==I   ; 
+      )     ; 
+      )     ; 
+      U(    ; 
+      ON    "DB_OUT".AMX_STACKER_LOCK; 
+      ON    "DB_HR".ABST.SP_ext_Nullpunktspannsys; 
+      )     ; 
+      =     "DB_LSSchnittstelle".IX_RP_LS_verfuegbar; 
+NETWORK
+TITLE =Rangierter Eingang Palette auf Übergabeplatz
+
+      O     "I_PW_Ruestpl_Uebergabe"; 
+      O     "I_PW_UPL_PAL_VORH"; 
+      =     "MX_I_Palette_auf_UG"; 
+
+NETWORK
+TITLE =Schrittkette Palette holen von ... --- Sprungleiste ---
+
+      L     "DB_LS_POS".SKZ_Transport_von; 
+      SPL   M010; 
+      SPA   M011; //Linearachse Fahrauftrag aktivieren
+      SPA   M012; //Teleskopachse ausfahren
+      SPA   SK02; // Spannsystem 
+      SPA   SK03; // Spannsystem 
+      SPA   M013; //Hub nach oben
+      SPA   M014; //Teleskop nach Grundstellung
+      SPA   M015; //Hub nach unten
+      SPA   M016; //Fertigmeldung Platz entladen
+      SPA   M017; 
+
+M010: SPA   M018; 
+
+//--------------------------------------------------------------------------------------
+//Palette holen von ... Schritt 0:  Auftrag aktivieren -> Bedingungen überprüfen
+//--------------------------------------------------------------------------------------
+M011: U     "DB_LSSchnittstelle".OX_Request_holen; 
+      UN    "DB_LSSchnittstelle".OX_LS_Auftrag_abbrechen; 
+      U(    ; 
+      L     "DB_LSSchnittstelle".OB_Transportauftrag_hole; 
+      L     0; 
+      <>I   ; 
+      )     ; 
+      UN    "DB_LSSchnittstelle".IX_Bringen_laeuft; 
+      SPBN  M018; 
+
+      L     "DB_LSSchnittstelle".OB_Transportauftrag_hole; 
+      T     "DB_LS_POS".Platz_Von; 
+
+      SET   ; 
+      R     "MX_UG_Auftrag"; 
+      R     "MX_RPL_Auftrag"; 
+      R     "MX_RS_DrehSt_Fertig"; 
+      R     "MX_RS_Tansport_Fertig"; 
+
+      CALL "FC_PS_Pal_Auftr" (
+           Auftr_Platz              := "DB_LS_POS".Platz_Von,
+           Ma_Ueb_Auftr             := "MX_UG_Auftrag",
+           RPL_Auftr                := "MX_RPL_Auftrag");
+
+//Auftrag Maschinenübergabe ablehnen bei Palettenwechsel
+      U     "MX_UG_Auftrag"; 
+      U     "Mx_APC_Disable_H67"; 
+      SPB   M020; 
+
+      U     "MX_UG_Auftrag"; 
+      SPBN  M019; 
+
+      U     "DB_LSSchnittstelle".OX_PW_Aktiv; 
+      U     "DB_LSSchnittstelle".OX_Request_holen; 
+      SPBN  MH11; 
+      S     "DB_FEHLERMELDUNG".VS_Halt_Async3._701736_LS_Auftr_abgel; 
+      S     "DB_LSSchnittstelle".IX_Holen_abgelehnt; 
+      SPA   M020; 
+
+MH11: U     "I_AL_Hubtuere_zu"; 
+      O     "M_RS4_80er"; 
+      SPB   MH13; 
+      S     "DB_FEHLERMELDUNG".VS_Halt_Async3._701754_SP_PW_GrdSt_0; 
+      SPA   M020; 
+
+MH13: U     "MX_I_Palette_auf_UG"; 
+      O     "DB_PLC_MD_DB20".UDHex._09_BIT6_kein_Pal_ueberw; 
+      SPB   M019; 
+      S     "DB_FEHLERMELDUNG".VS_Halt_Async3._701734_LS_Pal_ni_auf_Pl; 
+      SPA   M020; 
+
+M019: U     "I_PS_DREHST_PAL_GST"; 
+      SPBN  M021; 
+      S     "DB_FEHLERMELDUNG".VS_Halt_Async3._701720_TP_belegt_nichbe; 
+      SPA   M020; 
+
+M021: U     "m_eins"; // Keine Abfrage der Hubachse bei RS10
+      SPB   M022; 
+      S     "DB_FEHLERMELDUNG".VS_Halt_Async3._701750_SP_Hub_Unten_0; 
+      SPA   M020; 
+
+M022: UN    "MX_Transport_Gst"; 
+      SPBN  M023; 
+      S     "DB_FEHLERMELDUNG".VS_Halt_Async3._701733_LS_Tel_ni_Grdst; 
+      SPA   M020; 
+
+M023: U     "MX_RPL_Auftrag"; 
+      SPBN  MX21; 
+      UN    "I_PS_RPL_TUER_VORNE_ZU"; 
+      SPBN  MX22; 
+      S     "DB_FEHLERMELDUNG".VS_Halt_Async3._701722_RP_Tuer_offen; 
+      SPA   M020; 
+
+MX22: U     "DB_HR".RPT.RS_RPL_FRG; 
+      SPB   M025; 
+      SET   ; 
+      S     "DB_FEHLERMELDUNG".Meldung4._702409_Freigabe_RPL_0; 
+      SPA   M020; 
+
+M025: U     "I_PS_RPL_GST"; 
+      SPB   M055; 
+      S     "DB_FEHLERMELDUNG".Meldung._702056_Ruestpl_Ueberg_0; 
+      SPA   M020; 
+
+M055: UN    "I_PW_RP_GELOEST"; 
+      UN    #Option_RP_Hydr_Klemmung; 
+      U     "M_RS4_80er"; 
+      SPBN  MH12; 
+      S     "DB_FEHLERMELDUNG".MELDUNG2._701319_RP_nicht_geloest; 
+      SPA   M020; 
+
+MH12: U     "I_PS_RPL_PAL_VORH"; 
+      O     "DB_PLC_MD_DB20".UDHex._09_BIT6_kein_Pal_ueberw; 
+      SPB   M024; 
+      S     "DB_FEHLERMELDUNG".VS_Halt_Async3._701756_SP_RPL_Pal_0; 
+      SPA   M020; 
+
+MX21: UN    "I_PS_RPL_TUER_VORNE_ZU"; 
+      UN    "I_PS_RPL_TUER_HINTEN_ZU"; 
+      =     "DB_FEHLERMELDUNG".Meldung._702055_PW_RPL_Tuer_Zu0; 
+      SPB   M020; 
+
+M024: SET   ; 
+
+      UN    "DB_Achs10_Transport".MX_Ax_FahrAnf; 
+      UN    "DB_Achs9_DrehSt".MX_Ax_FahrAnf; 
+      UN    "DB_Achs16_Hub_PS".MX_Ax_FahrAnf; 
+      U     "M_LS_Ax_10_11_Freig"; 
+      SPBN  M020; 
+
+      SET   ; 
+      S     "DB_LSSchnittstelle".IX_Holen_laeuft; 
+      R     "DB_LSSchnittstelle".IX_Holen_Ready; 
+
+      L     1; 
+      T     "DB_LS_POS".SKZ_Transport_von; 
+      SPA   M020; 
+
+//--------------------------------------------------------------------------------------
+//Palette holen von ... Schritt 1: Fahrauftrag Drehstation und Hubachse
+//--------------------------------------------------------------------------------------
+
+M012: NOP   0; 
+      CALL "FC_PS_DrehSt_Pos" (
+           EW_Platz                 := "DB_LS_POS".Platz_Von,
+           EX_Fahrbefehl            := TRUE,
+           EAX_Fahrbefehl_Fertig    := "MX_RS_DrehSt_Fertig");
+
+// Hubachse Position ermitteln
+      L     "DB_LS_POS".Platz_Von; 
+      L     1; 
+      >=I   ; 
+      TAK   ; 
+      L     9; 
+      <=I   ; 
+      SPBN  HU1; 
+      L     1; 
+      SPA   HU2; 
+HU1:  L     "DB_LS_POS".Platz_Von; 
+      L     10; 
+      >=I   ; 
+      TAK   ; 
+      L     14; 
+      <=I   ; 
+      SPBN  HU3; 
+      L     3; 
+HU2:  T     #HUBACHSE_ZUR_POSITION; 
+      SPA   HU4; 
+HU3:  SET   ; 
+      S     "DB_FEHLERMELDUNG".VS_Halt_Async3._701761_K_GUELT_POS_HUB; 
+      SPA   M020; 
+
+HU4:  CALL "FC_PS_Hub_Pos" (
+           Eb_Position              := #HUBACHSE_ZUR_POSITION,
+           EX_Fahrbefehl            := TRUE,
+           EAX_Fahrbefehl_Fertig    := "MX_RS_HUB_Fertig");
+
+      U     "MX_RS_DrehSt_Fertig"; 
+      U     "MX_RS_HUB_Fertig"; 
+      U(    ; 
+      UN    "M_RS_HUBACHSE_E0_OBEN"; 
+      U     "M_RS_HUBACHSE_E0_UNTEN"; 
+      O     ; 
+      UN    "M_RS_HUBACHSE_E1_OBEN"; 
+      U     "M_RS_HUBACHSE_E1_UNTEN"; 
+      )     ; 
+      SPBN  M018; 
+      R     "MX_RS_DrehSt_Fertig"; 
+      R     "MX_RS_HUB_Fertig"; 
+
+      U     "DB_PLC_MD_DB20".UDHex._09_BIT6_kein_Pal_ueberw; 
+      SPB   M026; 
+
+      U     "MX_UG_Auftrag"; 
+      SPBN  M027; 
+      U     "MX_I_Palette_auf_UG"; 
+      SPB   M026; 
+      S     "DB_FEHLERMELDUNG".VS_Halt_Async3._701734_LS_Pal_ni_auf_Pl; 
+      SPA   M020; 
+
+M027: U     "I_PS_DREHST_PAL_VORH"; 
+      O     "M_RS4_80er"; 
+      SPB   M026; 
+      S     "DB_FEHLERMELDUNG".VS_Halt_Async3._701734_LS_Pal_ni_auf_Pl; 
+      SPA   M020; 
+
+M026: L     2; 
+      T     "DB_LS_POS".SKZ_Transport_von; 
+      SPA   M020; 
+
+//--------------------------------------------------------------------------------------
+//Palette holen von ... Schritt 2: Spannsystem abkuppeln
+//--------------------------------------------------------------------------------------
+SK02: U     "DB_HR".RPT.extSpannsystem_vorhanden; 
+      U     "MX_RPL_Auftrag"; 
+      S     "DB_HR".RPT.RPL_RS_Anf_abkuppeln; 
+
+      L     3; 
+      T     "DB_LS_POS".SKZ_Transport_von; 
+      SPA   M020; 
+
+//--------------------------------------------------------------------------------------
+//Palette holen von ... Schritt 3: Spannsystem abkuppeln abfragen
+//--------------------------------------------------------------------------------------
+
+SK03: U     "DB_HR".RPT.RPL_RS_RM_abgekuppelt; 
+      ON    "DB_HR".RPT.extSpannsystem_vorhanden; 
+      ON    "MX_RPL_Auftrag"; 
+      SPBN  M020; 
+      R     "DB_HR".RPT.RPL_RS_Anf_abkuppeln; 
+      L     4; 
+      T     "DB_LS_POS".SKZ_Transport_von; 
+      SPA   M020; 
+
+//--------------------------------------------------------------------------------------
+//Palette holen von ... Schritt 4: Transport ausfahren
+//--------------------------------------------------------------------------------------
+
+M013: CALL "FC_PS_Transp_Pos" (
+           Eb_Position              := B#16#2,
+           EX_Fahrbefehl            := TRUE,
+           EAX_Fahrbefehl_Fertig    := "MX_RS_Tansport_Fertig");
+
+// Spannhydraulik Lösen
+      U     "MX_RPL_Auftrag"; 
+      U(    ; 
+      O     "DB_HR".RPT.extSpannsystem_vorhanden; 
+      O     #Option_RP_Hydr_Klemmung; 
+      )     ; 
+      S     "O_PW_RPL_PAL_LOESEN"; 
+      R     "O_PW_RPL_PAL_KLEMMEN"; 
+
+      U     "MX_RS_Tansport_Fertig"; 
+      U(    ; 
+      U     "I_PW_RPL_PAL_GELOEST"; 
+      UN    "I_PW_RPL_PAL_GEKLEMMT"; 
+      ON    "MX_RPL_Auftrag"; 
+      ON(   ; 
+      O     "DB_HR".RPT.extSpannsystem_vorhanden; 
+      O     #Option_RP_Hydr_Klemmung; 
+      )     ; 
+      )     ; 
+      SPBN  M018; 
+      R     "MX_RS_Tansport_Fertig"; 
+
+      L     5; 
+      T     "DB_LS_POS".SKZ_Transport_von; 
+      SPA   M020; 
+
+//--------------------------------------------------------------------------------------
+//Palette holen von ... Schritt 5: Hub heben
+//--------------------------------------------------------------------------------------
+// Hubachse Position ermitteln
+M014: L     "DB_LS_POS".Platz_Von; 
+      L     1; 
+      >=I   ; 
+      TAK   ; 
+      L     9; 
+      <=I   ; 
+      SPBN  HU5; 
+      L     2; 
+      SPA   HU6; 
+HU5:  L     "DB_LS_POS".Platz_Von; 
+      L     10; 
+      >=I   ; 
+      TAK   ; 
+      L     14; 
+      <=I   ; 
+      SPBN  HU7; 
+      L     4; 
+HU6:  T     #HUBACHSE_ZUR_POSITION; 
+      SPA   HU8; 
+HU7:  SET   ; 
+      S     "DB_FEHLERMELDUNG".VS_Halt_Async3._701761_K_GUELT_POS_HUB; 
+      SPA   M020; 
+
+HU8:  CALL "FC_PS_Hub_Pos" (
+           Eb_Position              := #HUBACHSE_ZUR_POSITION,
+           EX_Fahrbefehl            := TRUE,
+           EAX_Fahrbefehl_Fertig    := "MX_RS_HUB_Fertig");
+
+      U     "MX_RS_HUB_Fertig"; 
+      U(    ; 
+      U     "M_RS_HUBACHSE_E0_OBEN"; 
+      UN    "M_RS_HUBACHSE_E0_UNTEN"; 
+      O     ; 
+      U     "M_RS_HUBACHSE_E1_OBEN"; 
+      UN    "M_RS_HUBACHSE_E1_UNTEN"; 
+      )     ; 
+      SPBN  M020; 
+      R     "MX_RS_HUB_Fertig"; 
+
+      L     6; 
+      T     "DB_LS_POS".SKZ_Transport_von; 
+
+      SET   ; 
+      S     "DB_LSSchnittstelle".IX_Holen_PalTausch; 
+
+      SPA   M020; 
+
+//--------------------------------------------------------------------------------------
+//Palette holen von ... Schritt 6: Transport-Achse einfahren
+//--------------------------------------------------------------------------------------
+
+M015: CALL "FC_PS_Transp_Pos" (
+           Eb_Position              := B#16#1,
+           EX_Fahrbefehl            := TRUE,
+           EAX_Fahrbefehl_Fertig    := "MX_RS_Tansport_Fertig");
+
+// Spannhydraulik Lösen
+
+      U     "MX_RS_Tansport_Fertig"; 
+      SPBN  M018; 
+      R     "MX_RS_Tansport_Fertig"; 
+
+      L     7; 
+      T     "DB_LS_POS".SKZ_Transport_von; 
+      SPA   M020; 
+
+//--------------------------------------------------------------------------------------
+//Palette holen von ... Schritt 7: Bei Rüstplatzauftrag Spannhydraulik klemmen
+//--------------------------------------------------------------------------------------
+
+M016: U     "MX_RPL_Auftrag"; 
+      U(    ; 
+      O     "DB_HR".RPT.extSpannsystem_vorhanden; 
+      O     #Option_RP_Hydr_Klemmung; 
+      )     ; 
+      R     "O_PW_RPL_PAL_LOESEN"; 
+      S     "O_PW_RPL_PAL_KLEMMEN"; 
+
+      UN    "I_PW_RPL_PAL_GELOEST"; 
+      U     "I_PW_RPL_PAL_GEKLEMMT"; 
+      ON    "MX_RPL_Auftrag"; 
+      ON(   ; 
+      O     "DB_HR".RPT.extSpannsystem_vorhanden; 
+      O     #Option_RP_Hydr_Klemmung; 
+      )     ; 
+      SPBN  M020; 
+
+      L     8; 
+      T     "DB_LS_POS".SKZ_Transport_von; 
+      SPA   M020; 
+
+//--------------------------------------------------------------------------------------
+//Palette holen von ... Schritt 8: Fertigmelden
+//--------------------------------------------------------------------------------------
+
+M017: SET   ; 
+
+      S     "DB_LSSchnittstelle".IX_Holen_Ready; 
+      R     "DB_LSSchnittstelle".IX_Holen_laeuft; 
+      R     "MX_UG_Auftrag"; 
+      R     "MX_RPL_Auftrag"; 
+
+      U     "I_PS_DREHST_PAL_GST"; 
+      O     "DB_PLC_MD_DB20".UDHex._09_BIT6_kein_Pal_ueberw; 
+      SPB   M059; 
+      S     "DB_FEHLERMELDUNG".VS_Halt_Async3._701720_TP_belegt_nichbe; 
+      SPA   M020; 
+
+M059: L     0; 
+      T     "DB_LS_POS".SKZ_Transport_von; 
+
+      SPA   M020; 
+
+M018: NOP   0; 
+
+
+NETWORK
+TITLE =Schrittkette Palette bringen --- Sprungleiste ---
+
+      L     "DB_LS_POS".SKZ_Transport_nach; 
+      SPL   M028; 
+      SPA   M029; 
+      SPA   M030; 
+      SPA   M031; 
+      SPA   M032; 
+      SPA   M033; 
+      SPA   M034; 
+      SPA   M035; 
+      SPA   M036; 
+      SPA   SK08; 
+      SPA   SB09; 
+      SPA   SB10; 
+      SPA   M037; 
+
+M028: SPA   M020; 
+
+
+//--------------------------------------------------------------------------------------
+//Palette bringen zu ... Schritt 0:  Auftrag aktivieren -> Bedingungen überprüfen
+//--------------------------------------------------------------------------------------
+
+M029: U     "DB_LSSchnittstelle".OX_Request_bringen; 
+      UN    "DB_LSSchnittstelle".OX_LS_Auftrag_abbrechen; 
+      U(    ; 
+      L     "DB_LSSchnittstelle".OB_Transportauftrag_brin; 
+      L     0; 
+      <>I   ; 
+      )     ; 
+      UN    "DB_LSSchnittstelle".IX_Holen_laeuft; 
+      SPBN  M020; 
+
+      L     "DB_LSSchnittstelle".OB_Transportauftrag_brin; 
+      T     "DB_LS_POS".Platz_Nach; 
+
+      SET   ; 
+      R     "MX_UG_Auftrag"; 
+      R     "MX_RPL_Auftrag"; 
+      R     "MX_RS_DrehSt_Fertig"; 
+      R     "MX_RS_Tansport_Fertig"; 
+
+//Auswertung Auftragsart
+      CALL "FC_PS_Pal_Auftr" (
+           Auftr_Platz              := "DB_LS_POS".Platz_Nach,
+           Ma_Ueb_Auftr             := "MX_UG_Auftrag",
+           RPL_Auftr                := "MX_RPL_Auftrag");
+
+//Auftrag Maschinenübergabe ablehnen bei Palettenwechsel 
+      UN    "MX_Transport_Gst"; 
+      SPBN  MB12; 
+      S     "DB_FEHLERMELDUNG".VS_Halt_Async3._701733_LS_Tel_ni_Grdst; 
+      SPA   M020; 
+
+MB12: U     "MX_UG_Auftrag"; 
+      U     "Mx_APC_Disable_H67"; 
+      SPB   M020; 
+
+      U     "MX_UG_Auftrag"; 
+      SPBN  M038; 
+
+      U     "DB_LSSchnittstelle".OX_PW_Aktiv; 
+      U     "DB_LSSchnittstelle".OX_Request_bringen; 
+      SPBN  M039; 
+      S     "DB_FEHLERMELDUNG".VS_Halt_Async3._701736_LS_Auftr_abgel; 
+      S     "DB_LSSchnittstelle".IX_Bringen_abgelehnt; 
+      SPA   M020; 
+
+M039: UN    "MX_I_Palette_auf_UG"; 
+      SPB   MB11; 
+      S     "DB_FEHLERMELDUNG".VS_Halt_Async3._701735_LS_Pal_auf_Pl; 
+      SPA   M020; 
+
+MB11: U     "I_AL_Hubtuere_zu"; 
+      O     "M_RS4_80er"; 
+      SPB   M038; 
+      S     "DB_FEHLERMELDUNG".VS_Halt_Async3._701754_SP_PW_GrdSt_0; 
+      SPA   M020; 
+
+M038: UN    "I_PS_DREHST_PAL_GST"; 
+      UN    "DB_PLC_MD_DB20".UDHex._09_BIT6_kein_Pal_ueberw; 
+      SPBN  M040; 
+      S     "DB_FEHLERMELDUNG".VS_Halt_Async3._701720_TP_belegt_nichbe; 
+      SPA   M020; 
+
+M040: U     "m_eins"; 
+      SPB   M041; 
+      S     "DB_FEHLERMELDUNG".VS_Halt_Async3._701750_SP_Hub_Unten_0; 
+      SPA   M020; 
+
+M041: U     "MX_RPL_Auftrag"; 
+      SPBN  MX41; 
+      U     "I_PS_RPL_TUER_VORNE_ZU"; 
+      SPB   MX42; 
+      S     "DB_FEHLERMELDUNG".VS_Halt_Async3._701722_RP_Tuer_offen; 
+      SPA   M020; 
+
+MX42: U     "I_PS_RPL_PAL_VORH"; 
+      SPBN  M044; 
+      S     "DB_FEHLERMELDUNG".VS_Halt_Async3._701735_LS_Pal_auf_Pl; 
+      SPA   M020; 
+
+M044: U     "I_PS_RPL_GST"; 
+      SPB   M043; 
+      S     "DB_FEHLERMELDUNG".Meldung._702056_Ruestpl_Ueberg_0; 
+      SPA   M020; 
+
+M043: UN    "I_PW_RP_GELOEST"; 
+      UN    #Option_RP_Hydr_Klemmung; 
+      U     "M_RS4_80er"; 
+      SPBN  MX41; 
+      S     "DB_FEHLERMELDUNG".MELDUNG2._701319_RP_nicht_geloest; 
+      SPA   M020; 
+
+MX41: UN    "I_PS_RPL_TUER_VORNE_ZU"; 
+      UN    "I_PS_RPL_TUER_HINTEN_ZU"; 
+      =     "DB_FEHLERMELDUNG".Meldung._702055_PW_RPL_Tuer_Zu0; 
+      SPB   M020; 
+
+      NOP   0; 
+
+      UN    "DB_Achs10_Transport".MX_Ax_FahrAnf; 
+      UN    "DB_Achs9_DrehSt".MX_Ax_FahrAnf; 
+      UN    "DB_Achs16_Hub_PS".MX_Ax_FahrAnf; 
+      U     "M_LS_Ax_10_11_Freig"; 
+      SPBN  M020; 
+
+      S     "DB_LSSchnittstelle".IX_Bringen_laeuft; 
+      R     "DB_LSSchnittstelle".IX_Bringen_Ready; 
+
+
+// auf jeden Fall abkuppeln
+      U     "MX_RPL_Auftrag"; 
+      U     "DB_HR".RPT.extSpannsystem_vorhanden; 
+      S     "DB_HR".RPT.RPL_RS_Anf_abkuppeln; 
+
+      L     1; 
+      T     "DB_LS_POS".SKZ_Transport_nach; 
+      SPA   M020; 
+
+//--------------------------------------------------------------------------------------
+//Palette bringen zu ... Schritt 1: Fahrauftrag Drehstation und Hubachse
+//--------------------------------------------------------------------------------------
+
+M030: CALL "FC_PS_DrehSt_Pos" (
+           EW_Platz                 := "DB_LS_POS".Platz_Nach,
+           EX_Fahrbefehl            := TRUE,
+           EAX_Fahrbefehl_Fertig    := "MX_RS_DrehSt_Fertig");
+
+// Hubachse Position ermitteln
+      L     "DB_LS_POS".Platz_Nach; 
+      L     1; 
+      >=I   ; 
+      TAK   ; 
+      L     9; 
+      <=I   ; 
+      SPBN  HU15; 
+      L     2; 
+      SPA   HU16; 
+HU15: L     "DB_LS_POS".Platz_Nach; 
+      L     10; 
+      >=I   ; 
+      TAK   ; 
+      L     14; 
+      <=I   ; 
+      SPBN  HU17; 
+      L     4; 
+HU16: T     #HUBACHSE_ZUR_POSITION; 
+      SPA   HU18; 
+HU17: SET   ; 
+      S     "DB_FEHLERMELDUNG".VS_Halt_Async3._701761_K_GUELT_POS_HUB; 
+      SPA   M020; 
+
+HU18: CALL "FC_PS_Hub_Pos" (
+           Eb_Position              := #HUBACHSE_ZUR_POSITION,
+           EX_Fahrbefehl            := TRUE,
+           EAX_Fahrbefehl_Fertig    := "MX_RS_HUB_Fertig");
+
+      U     "MX_RS_DrehSt_Fertig"; 
+      U(    ; 
+      U     "DB_HR".RPT.RPL_RS_RM_abgekuppelt; 
+      ON    "DB_HR".RPT.extSpannsystem_vorhanden; 
+      ON    "MX_RPL_Auftrag"; 
+      )     ; 
+      U     "MX_RS_HUB_Fertig"; 
+      U(    ; 
+      U     "M_RS_HUBACHSE_E0_OBEN"; 
+      UN    "M_RS_HUBACHSE_E0_UNTEN"; 
+      O     ; 
+      U     "M_RS_HUBACHSE_E1_OBEN"; 
+      UN    "M_RS_HUBACHSE_E1_UNTEN"; 
+      )     ; 
+      SPBN  M020; 
+      R     "MX_RS_DrehSt_Fertig"; 
+      R     "MX_RS_HUB_Fertig"; 
+      R     "DB_HR".RPT.RPL_RS_Anf_abkuppeln; 
+      R     "O_SP_RPL_BLASLUFT"; 
+
+      L     2; 
+      T     "DB_LS_POS".SKZ_Transport_nach; 
+      SPA   M020; 
+
+//--------------------------------------------------------------------------------------
+//Palette bringen zu ... Schritt 2: Spannhydraulik lösen
+//--------------------------------------------------------------------------------------
+
+M031: UN    "MX_RPL_Auftrag"; 
+      UN    "MX_UG_Auftrag"; 
+      SPBN  M045; 
+      UN    "I_PS_DREHST_PAL_VORH"; 
+      O     "M_RS4_80er"; 
+      SPB   M045; 
+      S     "DB_FEHLERMELDUNG".VS_Halt_Async3._701735_LS_Pal_auf_Pl; 
+      SPA   M020; 
+
+M045: U     "MX_RPL_Auftrag"; 
+      SPBN  M046; 
+      U     "I_PS_RPL_PAL_VORH"; 
+      SPBN  M047; 
+      S     "DB_FEHLERMELDUNG".VS_Halt_Async3._701735_LS_Pal_auf_Pl; 
+      SPA   M020; 
+
+M046: U     "MX_UG_Auftrag"; 
+      SPBN  M047; 
+      U     "MX_I_Palette_auf_UG"; 
+      SPBN  M047; 
+      S     "DB_FEHLERMELDUNG".VS_Halt_Async3._701735_LS_Pal_auf_Pl; 
+      SPA   M020; 
+
+// Spannhydraulik Lösen
+M047: U     "MX_RPL_Auftrag"; 
+      U(    ; 
+      O     "DB_HR".RPT.extSpannsystem_vorhanden; 
+      O     #Option_RP_Hydr_Klemmung; 
+      )     ; 
+      S     "O_PW_RPL_PAL_LOESEN"; 
+      R     "O_PW_RPL_PAL_KLEMMEN"; 
+
+      U     "I_PW_RPL_PAL_GELOEST"; 
+      UN    "I_PW_RPL_PAL_GEKLEMMT"; 
+      ON    "MX_RPL_Auftrag"; 
+      ON(   ; 
+      O     "DB_HR".RPT.extSpannsystem_vorhanden; 
+      O     #Option_RP_Hydr_Klemmung; 
+      )     ; 
+      SPBN  M020; 
+      L     3; 
+      T     "DB_LS_POS".SKZ_Transport_nach; 
+      SPA   M020; 
+
+//--------------------------------------------------------------------------------------
+//Palette bringen zu ... Schritt 3: Abfrage Palette auf Drehstation vorhanden
+//--------------------------------------------------------------------------------------
+
+M032: U     "MX_RPL_Auftrag"; 
+      S     "M_PS_RPL_BLASLUFT_PARALL"; 
+
+      U     "I_PS_DREHST_PAL_VORH"; 
+      U     "M_RS4_80er"; 
+      SPBN  M058; 
+      SET   ; 
+      S     "DB_FEHLERMELDUNG".VS_Halt_Async3._701735_LS_Pal_auf_Pl; 
+      SPA   M020; 
+
+M058: NOP   0; 
+
+      L     4; 
+      T     "DB_LS_POS".SKZ_Transport_nach; 
+
+      SPA   M020; 
+
+//--------------------------------------------------------------------------------------
+//Palette bringen zu ... Schritt 4: Transport-Achse ausfahren
+//--------------------------------------------------------------------------------------
+
+M033: CALL "FC_PS_Transp_Pos" (
+           Eb_Position              := B#16#2,
+           EX_Fahrbefehl            := TRUE,
+           EAX_Fahrbefehl_Fertig    := "MX_RS_Tansport_Fertig");
+
+      U     "MX_RS_Tansport_Fertig"; 
+      SPBN  M020; 
+      R     "MX_RS_Tansport_Fertig"; 
+
+      L     5; 
+      T     "DB_LS_POS".SKZ_Transport_nach; 
+      SPA   M020; 
+
+//--------------------------------------------------------------------------------------
+//Palette bringen zu ... Schritt 5: Hub senken
+//--------------------------------------------------------------------------------------
+// Hubachse Position ermitteln
+M034: L     "DB_LS_POS".Platz_Nach; 
+      L     1; 
+      >=I   ; 
+      TAK   ; 
+      L     9; 
+      <=I   ; 
+      SPBN  HU11; 
+      L     1; 
+      SPA   HU12; 
+HU11: L     "DB_LS_POS".Platz_Nach; 
+      L     10; 
+      >=I   ; 
+      TAK   ; 
+      L     14; 
+      <=I   ; 
+      SPBN  HU13; 
+      L     3; 
+HU12: T     #HUBACHSE_ZUR_POSITION; 
+      SPA   HU14; 
+HU13: SET   ; 
+      S     "DB_FEHLERMELDUNG".VS_Halt_Async3._701761_K_GUELT_POS_HUB; 
+      SPA   M020; 
+
+HU14: CALL "FC_PS_Hub_Pos" (
+           Eb_Position              := #HUBACHSE_ZUR_POSITION,
+           EX_Fahrbefehl            := TRUE,
+           EAX_Fahrbefehl_Fertig    := "MX_RS_HUB_Fertig");
+
+      U     "MX_RS_HUB_Fertig"; 
+      U(    ; 
+      UN    "M_RS_HUBACHSE_E0_OBEN"; 
+      U     "M_RS_HUBACHSE_E0_UNTEN"; 
+      O     ; 
+      UN    "M_RS_HUBACHSE_E1_OBEN"; 
+      U     "M_RS_HUBACHSE_E1_UNTEN"; 
+      )     ; 
+      SPBN  M020; 
+      R     "MX_RS_HUB_Fertig"; 
+
+      L     6; 
+      T     "DB_LS_POS".SKZ_Transport_nach; 
+
+      SET   ; 
+      S     "DB_LSSchnittstelle".IX_Bringen_PalTausch; 
+
+      U     "MX_RPL_Auftrag"; 
+      R     "M_PS_RPL_BLASLUFT_PARALL"; 
+
+      SPA   M020; 
+
+//--------------------------------------------------------------------------------------
+//Palette bringen zu ... Schritt 6: Transport-Achse einfahren
+//--------------------------------------------------------------------------------------
+M035: NOP   0; 
+
+      CALL "FC_PS_Transp_Pos" (
+           Eb_Position              := B#16#1,
+           EX_Fahrbefehl            := TRUE,
+           EAX_Fahrbefehl_Fertig    := "MX_RS_Tansport_Fertig");
+
+      U     "MX_RPL_Auftrag"; 
+      U(    ; 
+      O     "DB_HR".RPT.extSpannsystem_vorhanden; 
+      O     #Option_RP_Hydr_Klemmung; 
+      )     ; 
+      R     "O_PW_RPL_PAL_LOESEN"; 
+      S     "O_PW_RPL_PAL_KLEMMEN"; 
+
+      UN    "I_PW_RPL_PAL_GELOEST"; 
+      U     "I_PW_RPL_PAL_GEKLEMMT"; 
+      ON    "MX_RPL_Auftrag"; 
+      ON(   ; 
+      O     "DB_HR".RPT.extSpannsystem_vorhanden; 
+      O     #Option_RP_Hydr_Klemmung; 
+      )     ; 
+      U     "MX_RS_Tansport_Fertig"; 
+      SPBN  M020; 
+      R     "MX_RS_Tansport_Fertig"; 
+
+      SET   ; 
+      S     "DB_LSSchnittstelle".IX_Bringen_Ready; 
+
+      U     "MX_RPL_Auftrag"; 
+      SPBN  M048; 
+
+      L     7; 
+      T     "DB_LS_POS".SKZ_Transport_nach; 
+      SPA   M020; 
+
+M048: L     9; 
+      T     "DB_LS_POS".SKZ_Transport_nach; 
+      SPA   M020; 
+
+//--------------------------------------------------------------------------------------
+//Palette bringen zu ... Schritt 7: Drehstation auf Maschinenplatz fahren
+//--------------------------------------------------------------------------------------
+
+M036: CALL "FC_PS_DrehSt_Pos" (
+           EW_Platz                 := B#16#1,
+           EX_Fahrbefehl            := TRUE,
+           EAX_Fahrbefehl_Fertig    := "MX_RS_DrehSt_Fertig");
+
+      U     "MX_RS_DrehSt_Fertig"; 
+      SPBN  M020; 
+      R     "MX_RS_DrehSt_Fertig"; 
+
+      L     9; 
+      T     "DB_LS_POS".SKZ_Transport_nach; 
+      SPA   M020; 
+
+//--------------------------------------------------------------------------------------
+//Palette bringen zu ... Schritt 8: Schrittkette Ende
+//--------------------------------------------------------------------------------------
+
+SK08: CALL "FC_PS_DrehSt_Pos" (
+           EW_Platz                 := B#16#5,
+           EX_Fahrbefehl            := TRUE,
+           EAX_Fahrbefehl_Fertig    := "MX_RS_DrehSt_Fertig");
+
+      U     "MX_RS_DrehSt_Fertig"; 
+      SPBN  M020; 
+      R     "MX_RS_DrehSt_Fertig"; 
+
+      L     9; 
+      T     "DB_LS_POS".SKZ_Transport_nach; 
+      SPA   M020; 
+
+//--------------------------------------------------------------------------------------
+//Palette bringen zu ... Schritt 9: Spannhydraulik
+//--------------------------------------------------------------------------------------
+
+SB09: U     "MX_RPL_Auftrag"; 
+      S     "DB_HR".RPT.RPL_RS_Anf_ankuppeln; 
+
+      L     10; 
+      T     "DB_LS_POS".SKZ_Transport_nach; 
+      SPA   M020; 
+
+//--------------------------------------------------------------------------------------
+//Palette bringen zu ... Schritt 10: Spannhydraulik
+//--------------------------------------------------------------------------------------
+
+SB10: SET   ; 
+      U     "DB_HR".RPT.RPL_RS_RM_angekuppelt; 
+      ON    "DB_HR".RPT.extSpannsystem_vorhanden; 
+      ON    "MX_RPL_Auftrag"; 
+      SPBN  M020; 
+      L     11; 
+      T     "DB_LS_POS".SKZ_Transport_nach; 
+      SPA   M020; 
+
+//--------------------------------------------------------------------------------------
+//Palette bringen zu ... Schritt 11: Schrittkette Ende
+//--------------------------------------------------------------------------------------
+
+
+M037: SET   ; 
+      R     "DB_LSSchnittstelle".IX_Bringen_laeuft; 
+      R     "MX_UG_Auftrag"; 
+      R     "MX_RPL_Auftrag"; 
+      R     "DB_HR".RPT.RPL_RS_Anf_ankuppeln; 
+      S     "DB_LSSchnittstelle".IX_Bringen_Ready; 
+
+      L     0; 
+      T     "DB_LS_POS".SKZ_Transport_nach; 
+
+      SPA   M020; 
+
+
+NETWORK
+TITLE =Palettenwechsel ist von Speicher Freigegeben
+
+M020: NOP   0; 
+
+      O     "DB_LSSchnittstelle".IX_Holen_laeuft; 
+      O     "DB_LSSchnittstelle".IX_Bringen_laeuft; 
+      U     "MX_UG_Auftrag"; 
+      NOT   ; 
+      U(    ; 
+      O     "M_DS_Pos_2"; 
+      O     "M_DS_Pos_4"; 
+      O     "M_DS_Pos_5"; 
+      O     "M_DS_Pos_6"; 
+      O     "M_DS_Pos_7"; 
+      O     "MX_Transport_Gst"; 
+      )     ; 
+      U(    ; 
+      O     "I_PS_RPL_TUER_VORNE_ZU"; 
+      O     "I_PS_RPL_TUER_HINTEN_ZU"; 
+      O     "M_RS4_80er"; 
+      )     ; 
+// 80er Speicher 
+      U(    ; 
+      U     "I_PS_FRG_AR_PSACHS"; 
+      U(    ; 
+      U(    ; 
+      O     "I_PS_RPL_TUER_VORNE_ZU"; 
+      O     "I_PS_RPL_TUER_HINTEN_ZU"; 
+      )     ; 
+      U     "M_RS4_80er"; 
+      )     ; 
+      ON    "M_RS4_80er"; 
+      )     ; 
+
+      U(    ; 
+      UN    "I_PS_DREHST_PAL_GST"; 
+      UN(   ; 
+      L     "DB_PAL_NR".Platz[3].Pal_Nr; 
+      L     0; 
+      >I    ; 
+      )     ; 
+      UN    "DB_LSSchnittstelle".IX_Holen_laeuft; 
+      UN    "DB_LSSchnittstelle".IX_Bringen_laeuft; 
+      ON    "M_RS4_80er"; 
+      )     ; 
+      UN    "M_RS_RETTUNG_AKTIV"; 
+      =     "DB_LSSchnittstelle".IX_FreigabePWvonLS; 
+
+      O     "DB_LSSchnittstelle".IX_Holen_laeuft; 
+      O     "DB_LSSchnittstelle".IX_Bringen_laeuft; 
+      U     "MX_UG_Auftrag"; 
+      NOT   ; 
+      U(    ; 
+      O     "I_PS_RPL_TUER_VORNE_ZU"; 
+      O     "I_PS_RPL_TUER_HINTEN_ZU"; 
+      )     ; 
+      =     "DB_LSSchnittstelle".IX_Freigabe_PRG_Start; 
+
+      O     "DB_LSSchnittstelle".IX_Holen_laeuft; 
+      O     "DB_LSSchnittstelle".IX_Bringen_laeuft; 
+      U     "MX_RPL_Auftrag"; 
+      =     "DB_LSSchnittstelle".IX_Wechsel_RP_Aktiv; 
+NETWORK
+TITLE =M-Ausgang: Ventil Luft Spannkonen+Medienkupplung abblasen
+
+      U     "DB_LSSchnittstelle".IX_Wechsel_RP_Aktiv; 
+      =     "O_SP_RPL_BLASLUFT"; 
+END_FUNCTION
+

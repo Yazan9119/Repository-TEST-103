@@ -1,0 +1,406 @@
+FUNCTION "FC_ACHS_7" : VOID
+TITLE =
+//$Revision: 1.22 $
+//$Date: 2008/10/11 09:30:35CEST $
+//$Author: hgc $
+VERSION : 0.1
+
+
+VAR_TEMP
+  MAG_Positionierung : BYTE ;	
+  MAG_Achs_Typ : BYTE ;	
+  MAG_Geschwindigkeit : REAL ;	
+  TX_Vorschub_Halt_Mag : BOOL ;	
+  Tx_Override_aktiv : BOOL ;	
+  TX_AX7_PULSE_ENABLE : BOOL ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =Achse 7 (Magazinachse): Umschalten Positionier.-/Teilungsachse
+
+      U     "m_eins"; 
+      =     L      7.0; 
+      U     L      7.0; 
+      U(    ; 
+      U     "M_MAG_Umk_Korrektur_bei+"; 
+      U     "M_MAG_Umk_kuerzesterWeg+"; 
+      O     ; 
+      U     "M_MAG_Umk_Korrektur_bei-"; 
+      U     "M_MAG_Umk_kuerzesterWeg-"; 
+      )     ; 
+      SPBNB _001; 
+      L     B#16#2; 
+      T     #MAG_Achs_Typ; 
+_001: NOP   0; 
+      U     L      7.0; 
+      U(    ; 
+      ON    "M_MAG_Umk_kuerzesterWeg+"; 
+      ON    "M_MAG_Umk_Korrektur_bei+"; 
+      )     ; 
+      U(    ; 
+      ON    "M_MAG_Umk_kuerzesterWeg-"; 
+      ON    "M_MAG_Umk_Korrektur_bei-"; 
+      )     ; 
+      SPBNB _002; 
+      L     B#16#1; 
+      T     #MAG_Achs_Typ; 
+_002: NOP   0; 
+NETWORK
+TITLE =Achse 7 (Magazinachse): Umschalten der Positionier-Richtung
+
+      U     "m_eins"; 
+      =     L      7.0; 
+      U     L      7.0; 
+      U(    ; 
+      U     "M_MAG_Umk_Korrektur_bei+"; 
+      U     "M_MAG_Umk_kuerzesterWeg+"; 
+      O     "m_mag_handfunktion_+"; 
+      )     ; 
+      SPBNB _003; 
+      L     B#16#3; 
+      T     #MAG_Positionierung; 
+_003: NOP   0; 
+      U     L      7.0; 
+      U(    ; 
+      U     "M_MAG_Umk_Korrektur_bei-"; 
+      U     "M_MAG_Umk_kuerzesterWeg-"; 
+      O     "m_mag_handfunktion_-"; 
+      )     ; 
+      SPBNB _005; 
+      L     B#16#4; 
+      T     #MAG_Positionierung; 
+_005: NOP   0; 
+      U     L      7.0; 
+      U(    ; 
+      ON    "M_MAG_Umk_kuerzesterWeg+"; 
+      ON    "M_MAG_Umk_Korrektur_bei+"; 
+      )     ; 
+      U(    ; 
+      ON    "M_MAG_Umk_kuerzesterWeg-"; 
+      ON    "M_MAG_Umk_Korrektur_bei-"; 
+      )     ; 
+      UN    "m_mag_handfunktion_+"; 
+      UN    "m_mag_handfunktion_-"; 
+      SPBNB _006; 
+      L     B#16#2; 
+      T     #MAG_Positionierung; 
+_006: NOP   0; 
+NETWORK
+TITLE =Achse 7 (Magazinachse): Umschalten der Geschwindigkeit
+//Bei 0.000000e+000 wird der Geschwindigkeitswert aus Maschinendatum aktiv
+      U     "m_eins"; 
+      =     L      7.0; 
+      U     L      7.0; 
+      U     "I_WM_Beladung_zu"; 
+      =     L      7.1; 
+      U     L      7.1; 
+      UN    "m_mag_handfunktion_+"; 
+      UN    "m_mag_handfunktion_-"; 
+      SPBNB _007; 
+      L     0.000000e+000; 
+      T     #MAG_Geschwindigkeit; 
+_007: NOP   0; 
+      U     L      7.1; 
+      U(    ; 
+      O     "m_mag_handfunktion_+"; 
+      O     "m_mag_handfunktion_-"; 
+      )     ; 
+      SPBNB _014; 
+      L     "DB_REMANENT".A7_JOG_VELO_RAPID; 
+      T     #MAG_Geschwindigkeit; 
+_014: NOP   0; 
+      U     L      7.0; 
+      UN    "I_WM_Beladung_zu"; 
+      SPBNB _015; 
+      L     "DB_REMANENT".A7_JOG_VELO; 
+      T     #MAG_Geschwindigkeit; 
+_015: NOP   0; 
+NETWORK
+TITLE =7-Achse: Aktivierung Softwarenocken nachdem Achse referiert ist
+
+      UN    "DB_PLC_MD_DB20".UDHex._02_BIT6_ACHSE7_MESSYST; 
+      U     "DB_ACHSE7".E_RefSyn1; 
+      O     ; 
+      U     "DB_PLC_MD_DB20".UDHex._02_BIT6_ACHSE7_MESSYST; 
+      U     "DB_ACHSE7".E_RefSyn2; 
+      =     "DB_ACHSE7".A_SWCam; 
+NETWORK
+TITLE =Achse 7 MAG-Achse: Vorschub Halt
+
+      O     "M_Vorschub_Halt_Asyn1"; 
+      O     "M_Vorschub_Halt_Asyn4"; 
+      =     #TX_Vorschub_Halt_Mag; 
+NETWORK
+TITLE =Achse 7 MAG-Achse: Override aktivieren
+
+      O     "DB_PLC_MD_DB20".UDHex._04_BIT4_EINRICHT_BETR; 
+      O     "DB_PLC_MD_DB20".UDHex._04_BIT0_OVR_HILFSACHSEN; 
+      O     ; 
+      U(    ; 
+      O     "DB_OEM".OEM_WZW_REttbildaktiv; 
+      O     "DB_OEM".OEM_WZW2_Rettbildaktiv; 
+      O     "DB_OEM".OEM_WZW3_Rettbildaktiv; 
+      O     "DB_OEM".OEM_WZW6_Rettbildaktiv; // "DB_SIEM_BAG".E_JOG
+      O     "DB_OEM".OEM_Winkelkopfrettaktiv; 
+      )     ; 
+      U     "M_Handbetrieb"; 
+      =     #Tx_Override_aktiv; 
+NETWORK
+TITLE =Magazin: Pickup(PU) Hub mit Zylinder ?
+
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.WZW_RAD_MIT_ZYLINDER; 
+      SPBN  M007; 
+NETWORK
+TITLE =Achse 7 MAG-Achse PU -> Aufruf FC_ACHSE_HILF
+
+      CALL "FC_ACHSE_HILF" (
+           EX_EN                    := TRUE,
+           EX_UDHex_00_IB_Bit_Achse := "DB_PLC_MD_DB20".UDHex._00_BIT6_ACHSE7_AUSBLEND,
+           EX_UDHex_01_Ax_Messystem := "DB_PLC_MD_DB20".UDHex._02_BIT6_ACHSE7_MESSYST,
+           EX_UDHex_RPF_Richtung    := FALSE,
+           EX_Option_Safety         := "O_INFEED_ENABLE_NCU",
+           EX_Safe_Bremsentest      := FALSE,
+           EX_Safe_StopC_aktiv      := "DB_ACHSE7".E_StopC,
+           EX_Safe_StopA_aktiv      := "DB_ACHSE7".E_StopAB,
+           EX_Safe_Teststop_laeuft  := "DB_SPL".IPLC_ZD_GR1_RUN,
+           EX_Maschine_Ein          := "M_MA_Maschine_Ein",
+           EX_Antrieb_Sperre        := "DB_FAMILIEN_MODUL".Achssperre_extern.E_Ax_7,
+           EX_Freigabe_Regler       := TRUE,
+           EX_Leistung_steht_an     := "DB_ACHS7_WZM".MX_Ax_Leistung_Aktiv,
+           EX_VSHalt_EinzelAchse    := "DB_FAMILIEN_MODUL".Gesamt.A_Vorschub_Halt_7_Achse,
+           EX_VSHalt_Gruppe         := #TX_Vorschub_Halt_Mag,
+           EX_VSHalt_Kanal          := "DB_FAMILIEN_MODUL".Gesamt.A_Vorschub_Halt_Kanal,
+           EX_RefPkt_Achse          := FALSE,
+           EX_Abbruch_Positionieren := "DB_ACHS7_WZM".MX_Abbruch_Positionieren,
+           EX_Ax_KorrWirksam_1x7    := #Tx_Override_aktiv,
+           EX_Ax_E_RefSyn1_60x4     := "DB_ACHSE7".E_RefSyn1,
+           EX_Ax_E_FahrAF_61x0      := "DB_ACHSE7".E_TravRequ,
+           EX_Ax_E_Steht_61x4       := "DB_ACHSE7".E_Stat,
+           EX_Ax_E_LageRegler_61x5  := "DB_ACHSE7".E_PositContr,
+           EX_Ax_E_DrehzRegler_61x6 := "DB_ACHSE7".E_SpeedContr,
+           EX_Ax_E_StromRegler_61x7 := "DB_ACHSE7".E_CurrentContr,
+           EX_Ax_E_PLC_Achse_63x1   := "DB_ACHSE7".E_PLCCtrlAx,
+           EX_Ax_E_FBMinus_64x6     := "DB_ACHSE7".E_TCMinus,
+           EX_Ax_E_FBPlus_64x7      := "DB_ACHSE7".E_TCPlus,
+           EX_Ax_E_ChPoss_68x5      := "DB_ACHSE7".E_ChPoss,
+           EX_Ax_E_NeutrASp_68x6    := "DB_ACHSE7".E_NeutrASp,
+           EX_Ax_E_MotOK_93x5       := "DB_ACHSE7".E_MotOK,
+           EX_Ax_E_IntSperr_93x6    := "DB_ACHSE7".E_IntegratDisable,
+           EX_Ax_E_ImpFrei_93x7     := "DB_ACHSE7".E_PulseEnable,
+           EX_Ax_E_MTempWarn_94x0   := "DB_ACHSE7".E_MTempWarn,
+           EX_Ax_E_KTempWarn_94x1   := "DB_ACHSE7".E_HTempWarn,
+           EX_FahrAnf_Positiv       := "DB_ACHS7_WZM".MX_FahrAnf_Plus,
+           EX_FahrAnf_Negativ       := "DB_ACHS7_WZM".MX_FahrAnf_Minus,
+           EX_Inch_Umrechnen        := FALSE,
+           EB_Achs_Typ              := #MAG_Achs_Typ,
+           EB_MSST_Vorschub_OVR     := "MSST_Vorschub_OVR",
+           EB_Positierung           := #MAG_Positionierung,
+           EI_Teilung               := "DB_PLC_MD_DB20".UDInt._120_ANZAHL_MAG_PLAETZE,
+           EI_Achs_Nr               := 7,
+           ER_SollPosition          := "DB_ACHS7_WZM".MR_SollPosition,
+           ER_Istposition           := "DB_ACHS7_WZM".MR_IstPosition,
+           ER_Geschwindigkeit       := #MAG_Geschwindigkeit,
+           ET_Timer_Ax_Freigabe     := "Te_AX_7_Bremse_loesen",
+           EAX_Ax_Anforderung_Pos   := "DB_ACHS7_WZM".MX_Anf_Positionieren,
+           EAX_Ax_Rueckmeldung_Pos  := "DB_ACHS7_WZM".MX_Rueck_Positionieren,
+           EAX_Ax_Fehler_Pos        := "DB_ACHS7_WZM".MX_Fehler_Positionieren,
+           EAX_Ax_Anf_Referenzieren := "DB_ACHS7_WZM".MX_Anf_Referieren,
+           EAX_Ax_A_ASpSperre_1x3   := "DB_ACHSE7".A_ASpDisable,
+           EAX_Ax_A_NachfBetr_1x4   := "DB_ACHSE7".A_Follow_upMode,
+           EAX_Ax_A_LageMess1_1x5   := "DB_ACHSE7".A_PosMeas1,
+           EAX_Ax_A_LageMess2_1x6   := "DB_ACHSE7".A_PosMeas2,
+           EAX_Ax_A_KorrW_1x7       := "DB_ACHSE7".A_ORactive,
+           EAX_Ax_A_ReglerFrei_2x1  := "DB_ACHSE7".A_ContrEnable,
+           EAX_Ax_A_RestWegRe_2x2   := "DB_ACHSE7".A_DelDTGSpReset,
+           EAX_Ax_A_VSSpHalt_4x3    := "DB_ACHSE7".A_FDSpStop,
+           EAX_Ax_A_Minus_4x6       := "DB_ACHSE7".A_Minus,
+           EAX_Ax_A_Plus_4x7        := "DB_ACHSE7".A_Plus,
+           EAX_Ax_A_NCASpChA_8x0    := "DB_ACHSE7".A_NCASpChanA,
+           EAX_Ax_A_NCASpStrobe_8x4 := "DB_ACHSE7".A_NCASpStrobe,
+           EAX_Ax_A_PLCASp_8x7      := "DB_ACHSE7".A_PLCASp,
+           EAX_Ax_A_RefVerzoeg_12x7 := "DB_ACHSE7".A_DelayRef,
+           EAX_Ax_A_ImpFrei_21x7    := "DB_ACHSE7".A_PulseEnable,
+           EAX_Ax_A_PLC_Achse_28x7  := "DB_ACHSE7".A_PLCAxis,
+           EAX_AX_RefSync1          := "DB_ACHS7_WZM".MX_Achs_Referiert,
+           EAX_Alarm_Regler         := "DB_FEHLERMELDUNG".Spi_VS_Halt._700122_7_IMP_REGFRG_0S,
+           EAX_Alarm_VSSP_Mot_Temp  := "DB_FEHLERMELDUNG".Spi_VS_Halt._700134_7_TEMP_ZU_HOCH,
+           EAX_Alarm_VSSP_KK_Temp   := "DB_FEHLERMELDUNG".Spi_VS_Halt1._510129_7_KK_TEMP_ZH,
+           EAX_Alarm_NA_MotOK       := "DB_FEHLERMELDUNG".Spi_VS_Halt3._701138_7_DR_READY_0,
+           EAX_Alarm_FehlerPos      := "DB_FEHLERMELDUNG".Warnung._701860_Rueck_Pos_Umg,
+           EAX_M_Bremse_oeffnen     := "O_Bremse_oeffnen_Ax_7",
+           EAX_Anf_Lesen_AxPos      := "DB_ACHS7_WZM".MX_Ax_Position_Lesen,
+           EAX_Rdy_Lesen_AxPos      := "M_Axpos_lesen_ready",//"DB_ACHS7_WZM".M_Ax_Pos_Lesen_Fertig
+           EAX_Achse_Fahranf        := "DB_ACHS7_WZM".MX_Ax_FahrAnf,
+           EAX_Achse_InPosition     := "DB_ACHS7_WZM".MX_Ax_InPosition,
+           EAX_Achse_Fehler_Pos     := "DB_ACHS7_WZM".MX_Ax_Fehler_Pos,
+           EAX_Achse_Positioniert   := "DB_ACHS7_WZM".MX_Ax_Positioniert,
+           EAX_InPos_Merker         := "DB_ACHS7_WZM".M_Ax_Pos_Lesen_Fertig,
+           EAB_Ax_VS_Korrektur_DBB0 := "DB_ACHSE7".A_FD_OR,
+           EAB_SKZ_Achse            := "DB_ACHS7_WZM".MB_SKZ_Achse);
+
+NETWORK
+TITLE =Sprung zum Bausteinende
+
+      SPA   M008; 
+
+NETWORK
+TITLE =MASTER-SLAVE Achse vorhanden ?
+
+M007: U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.MAG_KETTE_MASTER_SLAVE; 
+      SPBN  M171; 
+NETWORK
+TITLE =MASTER-SLAVE:Überwachung Synchronisation entprellen
+
+      U     "DB_ACHSE13".A_MS; 
+      UN    "DB_ACHSE13".E_MS; 
+      UN    "DB_SPL".IPLC_ZD_GR1_RUN; 
+      UN    "DB_PLC_MD_DB20".UDHex._05_BIT2_SAFTY_ABNAHME; 
+      L     S5T#500MS; 
+      SE    "Te_Entprell_sync"; 
+NETWORK
+TITLE =MASTER-SLAVE:Fehlermeldung Synchronisation Antriebe fehlt
+
+      U     "Te_Entprell_sync"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt._700208_WZM_Slave_Kopp_0; 
+      U     "M_Ruecksetze_Fehler"; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt._700208_WZM_Slave_Kopp_0; 
+      NOP   0; 
+NETWORK
+TITLE =MASTER-SLAVE:ON
+
+      U     "DB_ACHS7_WZM".MX_Ax_Leistung_Aktiv; 
+      =     "DB_ACHSE13".A_MS; 
+NETWORK
+TITLE =Achse 7 MAG-Achse -> Aufruf FC_ACHSE_HILF
+
+M171: CALL "FC_ACHSE_HILF" (
+           EX_EN                    := TRUE,
+           EX_UDHex_00_IB_Bit_Achse := "DB_PLC_MD_DB20".UDHex._00_BIT6_ACHSE7_AUSBLEND,
+           EX_UDHex_01_Ax_Messystem := "DB_PLC_MD_DB20".UDHex._02_BIT6_ACHSE7_MESSYST,
+           EX_UDHex_RPF_Richtung    := FALSE,
+           EX_Option_Safety         := "O_INFEED_ENABLE_NCU",
+           EX_Safe_Bremsentest      := FALSE,
+           EX_Safe_StopC_aktiv      := FALSE,
+           EX_Safe_StopA_aktiv      := "DB_ACHSE7".E_StopAB,
+           EX_Safe_Teststop_laeuft  := "DB_SPL".IPLC_ZD_GR1_RUN,
+           EX_Maschine_Ein          := "M_MA_Maschine_Ein",
+           EX_Antrieb_Sperre        := "DB_FAMILIEN_MODUL".Achssperre_extern.E_Ax_7,
+           EX_Freigabe_Regler       := TRUE,
+           EX_Leistung_steht_an     := "DB_ACHS7_WZM".MX_Ax_Leistung_Aktiv,
+           EX_VSHalt_EinzelAchse    := "DB_FAMILIEN_MODUL".Gesamt.A_Vorschub_Halt_7_Achse,
+           EX_VSHalt_Gruppe         := #TX_Vorschub_Halt_Mag,
+           EX_VSHalt_Kanal          := "DB_FAMILIEN_MODUL".Gesamt.A_Vorschub_Halt_Kanal,
+           EX_RefPkt_Achse          := "I_RefImp_WZ_Mag",
+           EX_Abbruch_Positionieren := "DB_ACHS7_WZM".MX_Abbruch_Positionieren,// "DB_Achse7_DB37".A_ORactive
+           EX_Ax_KorrWirksam_1x7    := #Tx_Override_aktiv,
+           EX_Ax_E_RefSyn1_60x4     := "DB_ACHSE7".E_RefSyn1,
+           EX_Ax_E_FahrAF_61x0      := "DB_ACHSE7".E_TravRequ,
+           EX_Ax_E_Steht_61x4       := "DB_ACHSE7".E_Stat,
+           EX_Ax_E_LageRegler_61x5  := "DB_ACHSE7".E_PositContr,
+           EX_Ax_E_DrehzRegler_61x6 := "DB_ACHSE7".E_SpeedContr,
+           EX_Ax_E_StromRegler_61x7 := "DB_ACHSE7".E_CurrentContr,
+           EX_Ax_E_PLC_Achse_63x1   := "DB_ACHSE7".E_PLCCtrlAx,
+           EX_Ax_E_FBMinus_64x6     := "DB_ACHSE7".E_TCMinus,
+           EX_Ax_E_FBPlus_64x7      := "DB_ACHSE7".E_TCPlus,
+           EX_Ax_E_ChPoss_68x5      := "DB_ACHSE7".E_ChPoss,
+           EX_Ax_E_NeutrASp_68x6    := "DB_ACHSE7".E_NeutrASp,
+           EX_Ax_E_MotOK_93x5       := "DB_ACHSE7".E_MotOK,
+           EX_Ax_E_IntSperr_93x6    := "DB_ACHSE7".E_IntegratDisable,
+           EX_Ax_E_ImpFrei_93x7     := "DB_ACHSE7".E_PulseEnable,
+           EX_Ax_E_MTempWarn_94x0   := "DB_ACHSE7".E_MTempWarn,
+           EX_Ax_E_KTempWarn_94x1   := "DB_ACHSE7".E_HTempWarn,
+           EX_FahrAnf_Positiv       := "DB_ACHS7_WZM".MX_FahrAnf_Plus,
+           EX_FahrAnf_Negativ       := "DB_ACHS7_WZM".MX_FahrAnf_Minus,
+           EX_Inch_Umrechnen        := FALSE,
+           EB_Achs_Typ              := #MAG_Achs_Typ,
+           EB_MSST_Vorschub_OVR     := "MSST_Vorschub_OVR",
+           EB_Positierung           := #MAG_Positionierung,
+           EI_Teilung               := "DB_PLC_MD_DB20".UDInt._120_ANZAHL_MAG_PLAETZE,
+           EI_Achs_Nr               := 7,
+           ER_SollPosition          := "DB_ACHS7_WZM".MR_SollPosition,
+           ER_Istposition           := "DB_ACHS7_WZM".MR_IstPosition,
+           ER_Geschwindigkeit       := #MAG_Geschwindigkeit,
+           ET_Timer_Ax_Freigabe     := "Te_AX_7_Bremse_loesen",
+           EAX_Ax_Anforderung_Pos   := "DB_ACHS7_WZM".MX_Anf_Positionieren,
+           EAX_Ax_Rueckmeldung_Pos  := "DB_ACHS7_WZM".MX_Rueck_Positionieren,
+           EAX_Ax_Fehler_Pos        := "DB_ACHS7_WZM".MX_Fehler_Positionieren,
+           EAX_Ax_Anf_Referenzieren := "DB_ACHS7_WZM".MX_Anf_Referieren,
+           EAX_Ax_A_ASpSperre_1x3   := "DB_ACHSE7".A_ASpDisable,
+           EAX_Ax_A_NachfBetr_1x4   := "DB_ACHSE7".A_Follow_upMode,
+           EAX_Ax_A_LageMess1_1x5   := "DB_ACHSE7".A_PosMeas1,
+           EAX_Ax_A_LageMess2_1x6   := "DB_ACHSE7".A_PosMeas2,
+           EAX_Ax_A_KorrW_1x7       := "DB_ACHSE7".A_ORactive,
+           EAX_Ax_A_ReglerFrei_2x1  := "DB_ACHSE7".A_ContrEnable,
+           EAX_Ax_A_RestWegRe_2x2   := "DB_ACHSE7".A_DelDTGSpReset,
+           EAX_Ax_A_VSSpHalt_4x3    := "DB_ACHSE7".A_FDSpStop,
+           EAX_Ax_A_Minus_4x6       := "DB_ACHSE7".A_Minus,
+           EAX_Ax_A_Plus_4x7        := "DB_ACHSE7".A_Plus,
+           EAX_Ax_A_NCASpChA_8x0    := "DB_ACHSE7".A_NCASpChanA,
+           EAX_Ax_A_NCASpStrobe_8x4 := "DB_ACHSE7".A_NCASpStrobe,
+           EAX_Ax_A_PLCASp_8x7      := "DB_ACHSE7".A_PLCASp,
+           EAX_Ax_A_RefVerzoeg_12x7 := "DB_ACHSE7".A_DelayRef,
+           EAX_Ax_A_ImpFrei_21x7    := #TX_AX7_PULSE_ENABLE,
+           EAX_Ax_A_PLC_Achse_28x7  := "DB_ACHSE7".A_PLCAxis,
+           EAX_AX_RefSync1          := "DB_ACHS7_WZM".MX_Achs_Referiert,
+           EAX_Alarm_Regler         := "DB_FEHLERMELDUNG".Spi_VS_Halt._700122_7_IMP_REGFRG_0S,
+           EAX_Alarm_VSSP_Mot_Temp  := "DB_FEHLERMELDUNG".Spi_VS_Halt._700134_7_TEMP_ZU_HOCH,
+           EAX_Alarm_VSSP_KK_Temp   := "DB_FEHLERMELDUNG".Spi_VS_Halt1._510129_7_KK_TEMP_ZH,
+           EAX_Alarm_NA_MotOK       := "DB_FEHLERMELDUNG".Spi_VS_Halt3._701138_7_DR_READY_0,
+           EAX_Alarm_FehlerPos      := "DB_FEHLERMELDUNG".Warnung._701860_Rueck_Pos_Umg,
+           EAX_M_Bremse_oeffnen     := "O_Bremse_oeffnen_Ax_7",
+           EAX_Anf_Lesen_AxPos      := "DB_ACHS7_WZM".MX_Ax_Position_Lesen,
+           EAX_Rdy_Lesen_AxPos      := "M_Axpos_lesen_ready",
+           EAX_Achse_Fahranf        := "DB_ACHS7_WZM".MX_Ax_FahrAnf,
+           EAX_Achse_InPosition     := "DB_ACHS7_WZM".MX_Ax_InPosition,
+           EAX_Achse_Fehler_Pos     := "DB_ACHS7_WZM".MX_Ax_Fehler_Pos,
+           EAX_Achse_Positioniert   := "DB_ACHS7_WZM".MX_Ax_Positioniert,
+           EAX_InPos_Merker         := "DB_ACHS7_WZM".M_Ax_Pos_Lesen_Fertig,
+           EAB_Ax_VS_Korrektur_DBB0 := "DB_ACHSE7".A_FD_OR,
+           EAB_SKZ_Achse            := "DB_ACHS7_WZM".MB_SKZ_Achse);
+
+NETWORK
+TITLE =Impulsfreigabe WZM
+//Problem: NOT-AUS --> Regler- und Impulsfreigabe werden zurückgesetzt --> Achse 
+//trudelt bei Vertikaler Kette 80HS aus und wird durch einfallen der Motorbremse 
+//hart abgebremst, Magazin driftet bei NOT-AUS
+//
+//Lösung: Die Impulsfreigabe wird mit Maschine ein gesetzt und mit dem Stillstand 
+//der Magazinachse nach dem Maschine Ein zurückgesetzt wurde, wird die 
+//Impulsfreigabe zurückgesetzt
+//
+//Ergebnis: Die Achse hat nun die Möglichkeit mit ihrer Bremsrampe zum Stillstand 
+//zu kommen, danach fällt die Bremse ein
+      U     "M_MA_Maschine_Ein"; 
+      S     "DB_ACHSE7".A_PulseEnable; 
+      U     "DB_ACHSE7".E_Stat; 
+      UN    "M_MA_Maschine_Ein"; 
+      R     "DB_ACHSE7".A_PulseEnable; 
+      NOP   0; 
+NETWORK
+TITLE =Reset Warnung Positionieren ungültig
+
+      O     "M_MAG_Manuell_Links"; 
+      O     "M_MAG_Manuell_Rechts"; 
+      R     "DB_FEHLERMELDUNG".Warnung._701860_Rueck_Pos_Umg; 
+NETWORK
+TITLE =Achse Reset Fahranforderung
+
+M008: U     "DB_ACHS7_WZM".MX_Abbruch_Positionieren; 
+      =     "DB_ACHSE7".A_AxReset; 
+      R     "DB_ACHS7_WZM".MX_Abbruch_Positionieren; 
+      R     "DB_ACHS7_WZM".MX_Ax_FahrAnf; 
+NETWORK
+TITLE =Achse fährt
+
+      U(    ; 
+      ON    "DB_ACHSE7".E_Stat; 
+      O     "DB_ACHSE7".E_TCMinus; 
+      O     "DB_ACHSE7".E_TCPlus; 
+      )     ; 
+      U(    ; 
+      O     "DB_ACHS7_WZM".MX_Ax_Leistung_Aktiv; 
+      O     "I_WM_Energiefreigabe"; 
+      )     ; 
+      =     "DB_ACHS7_WZM".MX_Achse_Faehrt; 
+END_FUNCTION
+

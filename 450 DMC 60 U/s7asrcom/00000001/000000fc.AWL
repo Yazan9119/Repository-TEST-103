@@ -1,0 +1,1363 @@
+FUNCTION "FC_BHG" : VOID
+TITLE =
+//$Revision: 1.17 $
+//$Date: 2008/06/06 08:40:09CEST $
+//$Author: hgc $
+//
+//02.06.04 V0.5 FUH Y und Z getauscht wegen H-Maschine
+//
+//22.10.03 V0.4 FUH Wenn WKS und Cycle800 aktiv ist, wird jetzt mit den 
+//Geo-Achsen 
+//                  verfahren.
+//
+//07.05.01 V0.3 sja 
+//         Handrad beliebige Inkremente für Eilgang und Normal Betrieb            
+//         wählbar 
+//
+//30.07.00 V0.2 sja Handrad muss über Taste BHG angewählt werden
+//              sja Handrad nicht mehr über MSST-Fenster anwählbar
+//              sja Magazinfkt. (Taste F2 hinzugefügt) 
+//
+//10.07.00 V0.1 sja Spindelfkt. (Taste F1 hinzugefuegt)
+//
+//
+//
+AUTHOR : SJA
+FAMILY : DMU
+NAME : MBHG
+VERSION : 0.3
+
+
+VAR_INPUT
+  Gesamt_Freigabe : BOOL ;	//Gesamtfreigabe
+  Handrad_Freigabe : BOOL ;	//Freigabe nur für das Handrad
+  _4_Achsbetrieb : BOOL ;	//4 Achsen aktiv
+  _5_Achsbetrieb : BOOL ;	//5 Achsen aktiv
+  Zustimm_Taste : BOOL ;	//Zustimmtaste
+  Achswahl_Bit_0 : BOOL ;	//Achsauswahl Bit 2
+  Achswahl_Bit_1 : BOOL ;	//Achsauswahl Bit 1
+  Achswahl_Bit_2 : BOOL ;	//Achsauswahl Bit 0
+  Eilgang_Taste : BOOL ;	//Eilgangtaste Msst
+  Plus_Taste : BOOL ;	//Plus Taste Msst
+  Minus_Taste : BOOL ;	//Minus Taste Msst
+  F1_Taste : BOOL ;	
+  F2_Taste : BOOL ;	
+  F3_Taste : BOOL ;	
+  Achskreuz : BOOL ;	//Achskreuz 0=nein 1=ja 
+  Option_MBHG : BOOL ;	//Option Mini-BHG angewählt
+  E_MBHG_Anwahl : BOOL ;	//Taste MBHG-Anwahl
+  E_INC_VAR_Taste : BOOL ;	
+  E_INC_1_Taste : BOOL ;	
+  E_INC_10_Taste : BOOL ;	
+  E_INC_100_Taste : BOOL ;	
+  E_INC_1000_Taste : BOOL ;	
+  E_Tuer_zu : BOOL ;	
+  E_BA4_angewaehlt : BOOL ;	
+END_VAR
+VAR_OUTPUT
+  LED_Achse_Z : BOOL ;	//Leuchtdiode Z-Taste (Bedientafel)
+  LED_Achse_X : BOOL ;	//Leuchtdiode X-Taste (Bedientafel)
+  LED_Achse_Y : BOOL ;	//Leuchtdiode Y-Taste (Bedientafel)
+  LED_Achse_4 : BOOL ;	//Leuchtdiode 4-Taste (Bedientafel)
+  LED_Achse_5 : BOOL ;	//Leuchtdiode 5-Taste (Bedientafel)
+  LED_Spindel : BOOL ;	//Leuchtdiode 6-Taste (Bedientafel) Spindel 
+  Meld_BHG_Bereit : BOOL ;	//Alarm: Handpendel in Betrieb
+  Meld_Kein_BHG : BOOL ;	//Alarm: Handpendel nicht angeschlossen
+  Meld_Axtast_Handrad : BOOL ;	//Wenn die Achstasten der Msst bei aktiven Handrad
+  Meld_OVR0 : BOOL ;	//Vorschub- oder Eilgangkorrekturschalter auf 0
+  LED_INC_1 : BOOL ;	//Leuchtdiode INC_1 (Bedientafel)
+  LED_INC_10 : BOOL ;	//Leuchtdiode INC_10 (Bedientafel)
+  LED_INC_100 : BOOL ;	//Leuchtdiode INC_100 (Bedientafel)
+  LED_INC_1000 : BOOL ;	//Leuchtdiode INC_1000 (Bedientafel)
+  LED_INC_var : BOOL ;	//Leuchtdiode INC_variabel (Bedientafel)
+END_VAR
+VAR_IN_OUT
+  Pos_Fl : BOOL ;	
+  Neg_Fl : BOOL ;	
+  EA_BHG_angewaehlt : BOOL ;	//Merker BHG angewaehlt
+  EA_LED_MBHG_Anwahl : BOOL ;	//LED Anwahl MBHG
+  LED_Zustand_Retten : BYTE ;	
+  Inkrement_normal : BYTE ;	//Art des Inkrements fuer Normalbetrieb (ohne Eilgang)
+  Inkrement_Eilgang : BYTE ;	//Art des Inkrements fuer Eilgang
+  Taste_BA_JOG : BOOL ;	
+END_VAR
+VAR_TEMP
+  Kein_BHG : BOOL ;	//Handgerät nicht angeschlossen
+  BHG_Angewaehlt : BOOL ;	//Handgerät angewaehlt (Achs angewaehlt oder F1,F2,F3)
+  Stellung_0 : BOOL ;	//Handgerät Stufe 0
+  Handp_bereit : BOOL ;	//Handgerät betriebsbereit
+  Stellung_Z : BOOL ;	//Handpendel Stufe Z
+  Stellung_X : BOOL ;	//Handpendel Stufe X
+  Stellung_Y : BOOL ;	//Handpendel Stufe Y
+  Stellung_4 : BOOL ;	//Handpendel Stufe 4
+  Stellung_5 : BOOL ;	//Handpendel Stufe 5
+  nicht_Handr_aktiv : BOOL ;	//Handrad nicht aktiv
+  Begr_Zustimm_Taste : BOOL ;	//Begrenzung Zustimmtaste auf 30s
+  Handrad_bereit : BOOL ;	//Handrad bereit
+  Plus_Taste_Freigabe : BOOL ;	//Plus Taste Freigabe
+  Minus_Taste_Freigabe : BOOL ;	//Minus Taste Freigabe
+  INC1 : BOOL ;	//INC 1
+  INC100 : BOOL ;	//INC 100
+  MBHG_negFlanke : BOOL ;	//neg. Flanke BHG angewaehlt/Zustimmtaste
+  INC1_DEL : BOOL ;	//Inc 1 löschen
+  Vorschub_0 : BOOL ;	//Vorschubkorrekturschalter 0 Stellung
+  Eilgang_0 : BOOL ;	//Eilgangkorrekturschalter 0 Stellung
+  T_Flanke_Taste_Anwahl : BOOL ;	//IM Taste MBHG Anwahl 
+  T_Zustimm_oder_Tuerzu : BOOL ;	//Zustimmtaste gedrueckt oder die Tuere ist geschlossen und BHG angewaehlt !!!
+  T_Teilapparat : BOOL ;	
+  TB_A_INC : BYTE ;	//Teilapperat: Incrementanwahl
+  TX_A_HW1 : BOOL ;	//Teilapperat: Ausgang Handrad aktiv
+  TX_E_HW1 : BOOL ;	//Teilapperat: Eingang Handrad aktiv
+  TX_GEO_aktiv : BOOL ;	//Geo-Achsen aktiviert
+END_VAR
+BEGIN
+NETWORK
+TITLE =Maschinedatum MBHG vorhanden
+//MBHG in MD angewaehlt ? 
+      L     "DB_PLC_MD_DB20".UDInt._029_BEDIENOPTIION_SIE; 
+      L     3; 
+      ==I   ; 
+      SPB   ANF; 
+
+      CLR   ; 
+      =     #Meld_BHG_Bereit; 
+      =     #Meld_Kein_BHG; 
+      =     #Meld_OVR0; 
+      =     #Meld_Axtast_Handrad; 
+
+      SPA   ENDE; 
+
+NETWORK
+TITLE = Handpendel nicht angeschlossen
+//Handbedienpendel angeschlossen ?
+ANF:  UN    #Achswahl_Bit_0; 
+      UN    #Achswahl_Bit_1; 
+      UN    #Achswahl_Bit_2; 
+      =     #Kein_BHG; 
+NETWORK
+TITLE =Teilapparat
+
+      L     "DB_PLC_MD_DB20".UDInt._043_ANWAHL_TISCH; 
+      L     1; 
+      ==I   ; 
+      =     #T_Teilapparat; 
+
+      U     #T_Teilapparat; 
+      SPBN  nw3; 
+
+      U     "DB_ACHSE11".E_HW1; 
+      =     #TX_E_HW1; 
+
+nw3:  NOP   0; 
+NETWORK
+TITLE = Anzeige Handpendel nicht angeschlossen!
+//Handrad nicht mehr über MMC-Fenster (Handrad) anwählbar
+      U     #Kein_BHG; 
+      U     #Option_MBHG; 
+      =     #Meld_Kein_BHG; 
+
+//--- Handrad 1 ist nicht mehr über MMC-Standard Fenster Handrad anwaehlbar  sja
+//--- Nahtstellensignale abloeschen
+      CLR   ; 
+      =     "DB_SIEM_NCK".E_HW_sel1; 
+      =     "DB_SIEM_NCK".E_Ax_A_HW1; 
+      =     "DB_SIEM_NCK".E_Ax_B_HW1; 
+      =     "DB_SIEM_NCK".E_Ax_C_HW1; 
+      =     "DB_SIEM_NCK".E_Ax_D_HW1; 
+      =     "DB_SIEM_NCK".E_Ax_E_HW1; 
+
+
+// -- fuer DRF - Verschiebung  kann man DB21.DBX24.3 aktivieren 
+// --- wird unter AUTO --> Programmbeeinflussung --> DRF angewaehlt und aktiv
+
+//      SET   
+//=     DB21.DBX   24.3
+
+NETWORK
+TITLE = BHG Achswahlschalter Stufe 0 // BHG An-/Abwahl
+//sja 
+//BHG Anwahl ueber Taste E5.7 noetig
+//19-07-00
+//
+// --- Achswahlschalter Stellung 0 auskodieren
+      U     #Achswahl_Bit_0; 
+      U     #Achswahl_Bit_1; 
+      UN    #Achswahl_Bit_2; 
+      =     #Stellung_0; 
+
+// --- An- / Abwahl mit Taste 
+
+      U     #E_MBHG_Anwahl; 
+      FP    "M_pos_Fl_Tas_BHG_aktiv"; 
+      =     "M_an_abwaehl_BHG"; 
+
+      U     "M_an_abwaehl_BHG"; 
+      UN    #EA_BHG_angewaehlt; 
+      S     #EA_BHG_angewaehlt; 
+      SPB   nw41; 
+
+      U     "M_an_abwaehl_BHG"; 
+      R     #EA_BHG_angewaehlt; 
+
+nw41: U     #EA_BHG_angewaehlt; 
+      =     #EA_LED_MBHG_Anwahl; 
+
+// --- An- / Abwahl mit Taste ENDE
+NETWORK
+TITLE =
+//FUH 22.10.03
+//
+//Wenn Cycle 800 und WKS aktiv ist und nicht SRT - Maschine, mit den Geo-Achsen 
+//verfahren
+      U     "DB_ICON"._1.UI_17; //TCARR aktiv
+      U     "DB_SIEM_MMC".A_ActWCS; // "DM_LED_MKS_WKS"
+      UN(   ; 
+      L     "DB_PLC_MD_DB20".UDInt._042_ANWAHL_KINE_TYP; 
+      L     1; 
+      ==I   ; 
+      )     ; 
+      =     #TX_GEO_aktiv; 
+
+NETWORK
+TITLE =Inkrementeinstellung
+//sja 02-04-01
+//
+//bei angewaehltem BHG kann durch Tastendruck das gültige Inkrement für 
+//Normal und für Eilgang (zusammen mit Eilgangtaste!) verstellt werden 
+      U     #EA_BHG_angewaehlt; 
+      SPBN  IEND; 
+
+      U     #Eilgang_Taste; 
+      SPB   EILG; 
+
+
+//-------- Normal -------------------------
+
+      L     #Inkrement_normal; // aktuelle Inkrementeinstellung fuer normal
+
+      U     #E_INC_VAR_Taste; 
+      SPBN  n1; 
+      L     1; 
+
+n1:   U     #E_INC_1_Taste; 
+      SPBN  n2; 
+      L     2; 
+
+n2:   U     #E_INC_10_Taste; 
+      SPBN  n3; 
+      L     3; 
+
+n3:   U     #E_INC_100_Taste; 
+      O(    ; 
+      U     #E_INC_1000_Taste; 
+      U(    ; 
+      O     "M_Einrichtbetrieb"; 
+      O     "M_3Te_Betriebsart"; 
+      O     "M_4Te_Betriebsart"; 
+      )     ; 
+      )     ; 
+      SPBN  n4; 
+      L     4; 
+      SPA   nend; 
+
+n4:   U     #E_INC_1000_Taste; 
+      UN    "M_Einrichtbetrieb"; 
+      UN    "M_3Te_Betriebsart"; 
+      UN    "M_4Te_Betriebsart"; 
+      SPBN  nend; 
+      L     5; 
+
+
+nend: T     #Inkrement_normal; 
+      SPA   IEND; 
+
+
+//------------ Eilgang ---------------------
+
+EILG: L     #Inkrement_Eilgang; // aktuelle Inkrementeinstellung für Eilgang
+
+      U     #E_INC_VAR_Taste; 
+      SPBN  e1; 
+      L     1; 
+
+e1:   U     #E_INC_1_Taste; 
+      SPBN  e2; 
+      L     2; 
+
+e2:   U     #E_INC_10_Taste; 
+      SPBN  e3; 
+      L     3; 
+
+e3:   U     #E_INC_100_Taste; 
+      O(    ; 
+      U     #E_INC_1000_Taste; 
+      U(    ; 
+      O     "M_Einrichtbetrieb"; 
+      O     "M_3Te_Betriebsart"; 
+      O     "M_4Te_Betriebsart"; 
+      )     ; 
+      )     ; 
+      SPBN  e4; 
+      L     4; 
+      SPA   eend; 
+
+e4:   U     #E_INC_1000_Taste; 
+      UN    "M_Einrichtbetrieb"; 
+      UN    "M_3Te_Betriebsart"; 
+      UN    "M_4Te_Betriebsart"; 
+      SPBN  eend; 
+      L     5; 
+
+eend: T     #Inkrement_Eilgang; 
+
+
+
+IEND: NOP   0; 
+
+
+NETWORK
+TITLE =Zustimmtaste oder Tuer geschlossen und BHG angewaehlt
+//SJA 6.2.04
+//Verknüpft mit Leistung steht an, da in BA4 sonst Achskreuz verfahren werden 
+//konnte obwohl Handrad aktiv
+//
+//SJA 13-06-00
+//BHG angewaehlt (ueber Taste) BHG und angeschlossen und Zustimm-Taste oder Tuere 
+//zu -->
+//T_Zustimm_oder_Tuerzu = 1
+//
+      U     #EA_BHG_angewaehlt; 
+      UN    #Kein_BHG; 
+      U(    ; 
+      O     #Zustimm_Taste; 
+      O     #E_Tuer_zu; 
+      O     #E_BA4_angewaehlt; 
+      )     ; 
+      =     #T_Zustimm_oder_Tuerzu; 
+NETWORK
+TITLE = Nahtstelle Achsen Handrad 1 löschen
+//wenn kein Handrad angeschlossen oder Handrad nicht aktiv
+//-> ablöschen der Handradaktivierungsbits in den Achsen
+//-> ablöschen von DB21.DBX12.0 16.0 und 20.0 
+      O     #Kein_BHG; 
+      ON    #EA_BHG_angewaehlt; 
+      SPBN  HR0; 
+
+      R     "DB_ACHSE1_X".A_HW1; //Handrad Achsen löschen
+      R     "DB_ACHSE2_Y".A_HW1; 
+      R     "DB_ACHSE3_Z".A_HW1; 
+
+      U     "M_4Achse_existiert"; 
+      R     "DB_ACHSE4".A_HW1; 
+
+      U     "M_5Achse_existiert"; 
+      R     "DB_ACHSE5".A_HW1; 
+
+      U     "M_6Achse_existiert"; 
+      R     "DB_ACHSE6_SPINDEL".A_HW1; // Spindel löschen
+
+
+
+      U     #T_Teilapparat; 
+      R     #TX_A_HW1; // Teilapparat löschen
+
+
+      R     "DB_SIEM_KANAL_1".A_Geo[1].HW1; 
+      R     "DB_SIEM_KANAL_1".A_Geo[2].HW1; 
+      R     "DB_SIEM_KANAL_1".A_Geo[3].HW1; 
+
+HR0:  NOP   0; 
+NETWORK
+TITLE =BHG nicht aktiv
+//bei Abwahl des BHG -> INC Eingaenge in BAG weider aktivieren
+//
+//bei Abwahl, BHG nich angeschlossen, oder REF-Pkt-Fahren:
+//  Ruecksetzender BHG - Meldungen und der Umschaltung der Zustimmtaste auf BHG
+      UN    #EA_BHG_angewaehlt; 
+      FP    "M_BHG_PF_deaktiviert"; // bei pos. Flanke BHG abgewaehlt  -> BHG wieder deaktiviert
+      S     "DB_SIEM_NCK".A_IncInModeGroup; // INC aus BAG wieder aktivieren
+
+      SET   ; 
+      O     #Kein_BHG; 
+      ON    #EA_BHG_angewaehlt; 
+      O     "DB_SIEM_BAG".E_REF; 
+      R     #Meld_BHG_Bereit; 
+      R     #Meld_Axtast_Handrad; 
+      R     #Meld_OVR0; 
+      R     #Meld_Kein_BHG; 
+      R     "O_Umsch_Zustimm_HR"; 
+
+NETWORK
+TITLE = Handpendel betriebsbereit
+//bei BHG Anwahl:
+//Speichern der Achse, die auf Plus Minus Taste liegt 
+//bei BHG Abwahl:
+//Wiederherstellen der Achse, die auf Plus minus Taste liegt
+      UN    #Kein_BHG; 
+      U     #EA_BHG_angewaehlt; 
+      U     #Gesamt_Freigabe; 
+      =     #Handp_bereit; 
+
+// Umschaltung Zustimmtaste Kommandostation / Handrad 
+
+      U     #Handp_bereit; 
+      U     #Zustimm_Taste; 
+      L     S5T#200MS; 
+      SA    "TV_HR_Entprell"; 
+      U     "TV_HR_Entprell"; 
+      =     "O_Umsch_Zustimm_HR"; 
+
+// bei HR-Anwahl abspeichern ob Spindel oder 5-te achse 
+// auf Plus/Minus Tasten liegen
+
+      U     #EA_BHG_angewaehlt; 
+      FP    "M_pos_Fl_BHG_angewaehlt"; 
+      SPBN  n900; 
+
+      U     "M_5o6Achse"; 
+      =     "M_5te_6te_BHG"; 
+
+// bei negativer Flanke 
+// Spindel oder 5-te Achse wieder auf Plus/Minus Taste legen
+
+n900: U     #EA_BHG_angewaehlt; 
+      FN    "M_neg_Fl_BHG_angewaehlt"; 
+      SPBN  n901; 
+
+      U     "M_5te_6te_BHG"; 
+      =     "M_5o6Achse"; 
+
+n901: NOP   0; 
+
+NETWORK
+TITLE = Begrenzung Zustimmtaste
+//- bei Vorschub-Override = 0 -> kein Verfahren moeglich (NW 52 wird Meldung 
+//  gesetzt)
+//
+//- mit Plus / minus Taste ist kein Eilgangverfahren moeglich
+//
+      U     #T_Zustimm_oder_Tuerzu; 
+      U     #Gesamt_Freigabe; 
+      =     #Begr_Zustimm_Taste; 
+
+      L     "DB_SIEM_KANAL_1".A_FD_OR; 
+      L     1; //Vorschubkorrektur = 0 %
+      ==I   ; 
+      =     #Vorschub_0; 
+
+      UN    #Eilgang_Taste; 
+      U     #Vorschub_0; 
+      R     #Begr_Zustimm_Taste; 
+
+      L     "DB_SIEM_KANAL_1".A_RT_OR; 
+      L     1; //Eilgangkorrektur = 0 %
+      ==I   ; 
+      =     #Eilgang_0; 
+
+
+// Plus / Minus nicht mit Eilgang Verfahrbar 
+
+      U     #Eilgang_Taste; 
+      U(    ; 
+      U     #Plus_Taste; 
+      O     #Minus_Taste; 
+      )     ; 
+      R     #Begr_Zustimm_Taste; 
+
+NETWORK
+TITLE = Handrad nicht aktiv
+//NCK --> PLC
+      UN    "DB_ACHSE1_X".E_HW1; 
+      UN    "DB_ACHSE2_Y".E_HW1; 
+      UN    "DB_ACHSE3_Z".E_HW1; 
+      UN    "DB_ACHSE1_X".E_INC1; 
+      UN    "DB_ACHSE1_X".E_INC10; 
+      UN    "DB_ACHSE1_X".E_INC100; 
+      UN    "DB_ACHSE1_X".E_INC1000; 
+      UN    "DB_ACHSE1_X".E_INCVar; 
+      UN    "DB_ACHSE2_Y".E_INC1; 
+      UN    "DB_ACHSE2_Y".E_INC10; 
+      UN    "DB_ACHSE2_Y".E_INC100; 
+      UN    "DB_ACHSE2_Y".E_INC1000; 
+      UN    "DB_ACHSE2_Y".E_INCVar; 
+      UN    "DB_ACHSE3_Z".E_INC1; 
+      UN    "DB_ACHSE3_Z".E_INC10; 
+      UN    "DB_ACHSE3_Z".E_INC100; 
+      UN    "DB_ACHSE3_Z".E_INC1000; 
+      UN    "DB_ACHSE3_Z".E_INCVar; 
+      =     #nicht_Handr_aktiv; 
+NETWORK
+TITLE = Handrad bereit
+
+      U(    ; 
+      O     #Begr_Zustimm_Taste; 
+      O     #Handrad_Freigabe; 
+      )     ; 
+      UN    #Plus_Taste; 
+      UN    #Minus_Taste; 
+      =     #Handrad_bereit; 
+
+
+//-- bei BHG Abwahl und Jog zurueck in Jog (abloeschen der INC Anzeige)
+
+      U     "DB_SIEM_BAG".E_REF; // ausser in REFERENZPUNKT(sonst schaltet Jog Ref wieder ab 
+      SPB   refp; // nach Hochlauf)
+
+//     U     "NC".A_IncInModeGroup
+      U(    ; 
+      U(    ; 
+      U     "DB_CMM_PLC".CMM_OUT.cmm_mmc_activ; // JOG
+      U     "DB_CMM_PLC".CMM_OUT.base_sig.main_mode_mill.manual; 
+      )     ; 
+      O(    ; 
+      U     "DB_SIEM_BAG".E_JOG; 
+      UN    "DB_CMM_PLC".CMM_OUT.cmm_mmc_activ; 
+      )     ; 
+      )     ; 
+      U(    ; 
+      U     #Handrad_bereit; 
+      FN    "M_FP_INC_Abwahl"; 
+      )     ; 
+      O     #Taste_BA_JOG; // bei Taste Jog abloeschen der INC Anzeige
+      =     #Taste_BA_JOG; 
+
+refp: UN    #Handrad_bereit; 
+      =     "DB_SIEM_NCK".A_IncInModeGroup; //AB Anwahl INC aus BAG-Bereich 
+
+// --- wenn Handrad bereit, alle Achstasten (MSST) zuruecksetzen)
+
+      UN    #Handrad_bereit; 
+      SPB   MSTT; 
+      R     "I_DM_Ta_SpiOVR_erhoehen"; 
+      R     "I_DM_Ta_Spindel_over100"; 
+      R     "I_DM_Ta_SpiOVR_reduz"; 
+      R     "I_DM_Ta_Spindel links"; 
+      S     "I_DM_Ta_Spindel HALT"; 
+      R     "I_DM_Ta Spindel rechts"; 
+      R     "I_DM_Ta X-Achse minus"; 
+      R     "I_DM_Ta X-Achse plus"; 
+      R     "I_DM_Ta Y-Achse minus"; 
+      R     "I_DM_Ta Y-Achse plus"; 
+      R     "I_DM_Ta Z-Achse minus"; 
+      R     "I_DM_Ta Z-Achse plus"; 
+      R     "I_DM_Ta Eilgang"; 
+      R     "I_DM_Ta_5/6-Achse minus"; 
+      R     "I_DM_Ta_5/6-Achse plus"; 
+      R     "I_DM_Ta 4-Achse links"; 
+      R     "I_DM_Ta 4-Achse rechts"; 
+
+
+MSTT: NOP   0; 
+
+
+NETWORK
+TITLE = Löschen INC 1
+//04-02-01 sja Ablöschen aller möglichen INC's
+//
+//
+//bei Verfahren durch Plus-/Minus Tasten oder bei (keine HR-Freigabe und keine 
+//Maschine ein und keine Handrad-Leistung)
+//
+//
+//--> abloeschen der INC1 (Plus-Minus wird je nach Override-Stellung verfahren)
+//--> ueberspringe NW15/16 (setzen Inc 1 ider Inc 100 (Eilgang))
+      UN    #T_Zustimm_oder_Tuerzu; // sja 13-06-00
+      UN    #Gesamt_Freigabe; 
+      UN    #Handrad_Freigabe; 
+      O     #Plus_Taste; 
+      O     #Minus_Taste; 
+      =     #INC1_DEL; 
+
+      U     #INC1_DEL; 
+      SPBN  HL7; 
+
+      L     0; 
+      T     DB31.DBB    5; 
+      T     DB32.DBB    5; 
+      T     DB33.DBB    5; 
+      T     DB21.DBB   13; 
+      T     DB21.DBB   17; 
+      T     DB21.DBB   21; 
+
+      UN    "M_4Achse_existiert"; //nein
+      SPB   HL4; 
+      T     DB34.DBB    5; //AchsDB Achse 5 vorhanden ?
+
+HL4:  UN    "M_5Achse_existiert"; //nein
+      SPB   HL5; 
+
+      T     DB35.DBB    5; 
+
+HL5:  UN    "M_6Achse_existiert"; 
+      SPB   HL6; 
+
+      T     DB36.DBB    5; 
+
+
+HL6:  U     #T_Teilapparat; 
+      SPBN  HL7; 
+
+      T     #TB_A_INC; 
+
+HL7:  U     #INC1_DEL; 
+      SPB   HAND; 
+NETWORK
+TITLE = Handrad: kein Eilgang // INC 1 
+//04-02-01 sja
+//setzen von angewaehltem INC
+//
+//Handrad bereit und kein Eilgang
+//--> setzen von INC1
+      U     #Handrad_bereit; 
+      UN    #Eilgang_Taste; 
+      =     #INC1; 
+
+      U     #INC1; 
+      SPBN  IEIL; 
+
+      L     #Inkrement_normal; // angewaehltes Inkrement
+
+      SPL   I0; // an Ende, wenn grösser 5
+      SPA   I0; // an Ende wenn 0
+      SPA   I1; // Inc Var
+      SPA   I2; // Inc 1
+      SPA   I3; // Inc 10
+      SPA   I4; // Inc 100
+      SPA   I5; // Inc 1000
+
+I0:   SPA   IE5; 
+
+// -------- variables Inkrement angewaehlt ----------------------
+
+I1:   L     32; 
+
+      SET   ; 
+      S     #LED_INC_var; 
+      R     #LED_INC_100; 
+      R     #LED_INC_1; 
+      R     #LED_INC_10; 
+      R     #LED_INC_1000; 
+
+      SPA   IE5; 
+
+
+// -------- 1 Inkrement angewaehlt ----------------------
+
+
+I2:   SET   ; 
+      S     #LED_INC_1; 
+      R     #LED_INC_100; 
+      R     #LED_INC_var; 
+      R     #LED_INC_10; 
+      R     #LED_INC_1000; 
+
+      L     1; 
+
+      SPA   IE5; 
+
+// -------- 10 Inkrement angewaehlt ----------------------
+
+
+I3:   SET   ; 
+      S     #LED_INC_10; 
+      R     #LED_INC_100; 
+      R     #LED_INC_var; 
+      R     #LED_INC_1; 
+      R     #LED_INC_1000; 
+
+      L     2; 
+      SPA   IE5; 
+
+// -------- 100 Inkrement angewaehlt ----------------------
+I4:   SET   ; 
+      S     #LED_INC_100; 
+      R     #LED_INC_1; 
+      R     #LED_INC_var; 
+      R     #LED_INC_10; 
+      R     #LED_INC_1000; 
+
+      L     4; 
+      SPA   IE5; 
+
+// -------- 1000 Inkrement angewaehlt ----------------------
+
+
+I5:   SET   ; 
+      S     #LED_INC_1000; 
+      R     #LED_INC_100; 
+      R     #LED_INC_var; 
+      R     #LED_INC_10; 
+      R     #LED_INC_1; 
+
+      L     8; 
+
+IE5:  U     #TX_GEO_aktiv; 
+      SPB   IGa1; 
+      T     DB31.DBB    5; 
+      T     DB32.DBB    5; 
+      T     DB33.DBB    5; 
+      L     0; 
+      T     DB21.DBB   13; 
+      T     DB21.DBB   17; 
+      T     DB21.DBB   21; 
+      TAK   ; 
+      SPA   IGa2; 
+
+IGa1: T     DB21.DBB   13; 
+      T     DB21.DBB   17; 
+      T     DB21.DBB   21; 
+      T     DB31.DBB    5; 
+      T     DB32.DBB    5; 
+      T     DB33.DBB    5; 
+
+IGa2: NOP   0; 
+
+      U     "M_4Achse_existiert"; 
+      SPBN  A5te; 
+      T     DB34.DBB    5; 
+
+A5te: U     "M_5Achse_existiert"; 
+      SPBN  A6te; 
+      T     DB35.DBB    5; 
+
+A6te: U     "M_6Achse_existiert"; 
+      SPBN  A11e; 
+      T     DB36.DBB    5; 
+
+A11e: U     #T_Teilapparat; 
+      SPBN  Aend; 
+
+      T     #TB_A_INC; 
+
+Aend: NOP   0; 
+NETWORK
+TITLE = Handrad Taste Eilgang entspricht INC 100 
+//Hnadrad und Eilgang
+//--> setzen von INC100
+IEIL: U     #Handrad_bereit; 
+      U     #Eilgang_Taste; 
+      =     #INC100; 
+
+      U     #INC100; 
+      SPBN  IEEN; 
+
+      L     #Inkrement_Eilgang; // angewaehltes Inkrement
+
+      SPL   E0; // an Ende, wenn grösser 5
+      SPA   E0; // an Ende wenn 0
+      SPA   E1; // Inc Var
+      SPA   E2; // Inc 1
+      SPA   E3; // Inc 10
+      SPA   E4; // Inc 100
+      SPA   E5; // Inc 1000
+
+E0:   SPA   IH5; 
+
+// -------- variables Inkrement angewaehlt ----------------------
+
+E1:   SET   ; 
+      S     #LED_INC_var; 
+      R     #LED_INC_100; 
+      R     #LED_INC_1; 
+      R     #LED_INC_10; 
+      R     #LED_INC_1000; 
+
+      L     32; 
+
+      SPA   IH5; 
+
+// -------- 1 Inkrement angewaehlt ----------------------
+
+E2:   SET   ; 
+      S     #LED_INC_1; 
+      R     #LED_INC_100; 
+      R     #LED_INC_var; 
+      R     #LED_INC_10; 
+      R     #LED_INC_1000; 
+
+      L     1; 
+      SPA   IH5; 
+
+// -------- 10 Inkrement angewaehlt ----------------------
+
+E3:   SET   ; 
+      S     #LED_INC_10; 
+      R     #LED_INC_100; 
+      R     #LED_INC_var; 
+      R     #LED_INC_1; 
+      R     #LED_INC_1000; 
+
+      L     2; 
+
+      SPA   IH5; 
+
+// -------- 100 Inkrement angewaehlt ----------------------
+
+E4:   SET   ; 
+      S     #LED_INC_100; 
+      R     #LED_INC_1; 
+      R     #LED_INC_var; 
+      R     #LED_INC_10; 
+      R     #LED_INC_1000; 
+
+      L     4; 
+
+      SPA   IH5; 
+
+// -------- 1000 Inkrement angewaehlt ----------------------
+
+E5:   SET   ; 
+      S     #LED_INC_1000; 
+      R     #LED_INC_100; 
+      R     #LED_INC_var; 
+      R     #LED_INC_10; 
+      R     #LED_INC_1; 
+
+      L     8; 
+
+IH5:  U     #TX_GEO_aktiv; 
+      SPB   IGe1; 
+      T     DB31.DBB    5; 
+      T     DB32.DBB    5; 
+      T     DB33.DBB    5; 
+      L     0; 
+      T     DB21.DBB   13; 
+      T     DB21.DBB   17; 
+      T     DB21.DBB   21; 
+      TAK   ; 
+      SPA   IGe2; 
+
+IGe1: T     DB21.DBB   13; 
+      T     DB21.DBB   17; 
+      T     DB21.DBB   21; 
+      T     DB31.DBB    5; 
+      T     DB32.DBB    5; 
+      T     DB33.DBB    5; 
+
+IGe2: NOP   0; 
+      U     "M_4Achse_existiert"; 
+      SPBN  I5te; 
+      T     DB34.DBB    5; 
+
+I5te: U     "M_5Achse_existiert"; 
+      SPBN  I6te; 
+      T     DB35.DBB    5; 
+
+I6te: U     "M_6Achse_existiert"; 
+      SPBN  I11e; 
+      T     DB36.DBB    5; 
+
+I11e: U     #T_Teilapparat; 
+      SPBN  IEEN; 
+
+      T     #TB_A_INC; 
+
+
+IEEN: NOP   0; 
+NETWORK
+TITLE = //Achswahlschalter Stellung Y aktivieren
+//Anzeige der angewaehlten Achse, bei HR-Variante Achsvorwahl (kein Achskreuz) 
+HAND: UN    #Achswahl_Bit_0; 
+      U     #Achswahl_Bit_1; 
+      UN    #Achswahl_Bit_2; 
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.MASCHTYP_3071_AKTIV; 
+      O     ; 
+      U     #Achswahl_Bit_0; 
+      U     #Achswahl_Bit_1; 
+      U     #Achswahl_Bit_2; 
+      U(    ; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.MASCHTYP_3070_AKTIV; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.MASCHTYP_3060_AKTIV; 
+      )     ; 
+      UN    #Stellung_0; 
+      =     #Stellung_Y; 
+      U     #Stellung_Y; 
+      UN    #Achskreuz; //LED Msst aktualisieren, nur bei Achsvorwahl
+      S     #LED_Achse_Y; 
+      R     #LED_Achse_X; 
+      R     #LED_Achse_Z; 
+      R     #LED_Achse_4; 
+      R     #LED_Achse_5; 
+      R     #LED_Spindel; 
+
+NETWORK
+TITLE = Achswahlschalter Stellung X aktivieren
+//Anzeige der angewaehlten Achse, bei Variante Achsvorwahl (kein Achskreuz) 
+      UN    #Achswahl_Bit_0; 
+      U     #Achswahl_Bit_1; 
+      U     #Achswahl_Bit_2; 
+      =     #Stellung_X; 
+      U     #Stellung_X; 
+      UN    #Achskreuz; //LED Msst aktualisieren, nur bei Achsvorwahl
+      R     #LED_Achse_Z; 
+      S     #LED_Achse_X; 
+      R     #LED_Achse_Y; 
+      R     #LED_Achse_4; 
+      R     #LED_Achse_5; 
+      R     #LED_Spindel; 
+
+
+NETWORK
+TITLE =Achswahlschalter Stellung Z aktivieren
+//Anzeige der angewaehlten Achse, bei HR-Variante Achsvorwahl (kein Achskreuz) 
+      U(    ; 
+      U     #Achswahl_Bit_0; 
+      U     #Achswahl_Bit_1; 
+      U     #Achswahl_Bit_2; 
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.MASCHTYP_3071_AKTIV; 
+      O     ; 
+      UN    #Achswahl_Bit_0; 
+      U     #Achswahl_Bit_1; 
+      UN    #Achswahl_Bit_2; 
+      UN    #Stellung_0; 
+      U(    ; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.MASCHTYP_3070_AKTIV; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.MASCHTYP_3060_AKTIV; 
+      )     ; 
+      )     ; 
+      =     #Stellung_Z; 
+      U     #Stellung_Z; 
+      UN    #Achskreuz; //LED Msst aktualisieren, nur bei Achsvorwahl
+      R     #LED_Achse_Y; 
+      R     #LED_Achse_X; 
+      S     #LED_Achse_Z; 
+      R     #LED_Achse_4; 
+      R     #LED_Achse_5; 
+      R     #LED_Spindel; 
+NETWORK
+TITLE = Achswahlschalter Stellung 4 aktivieren
+//Anzeige der angewaehlten Achse, bei HR-Variante Achsvorwahl (kein Achskreuz) 
+      U     #_4_Achsbetrieb; 
+      U     #Achswahl_Bit_0; 
+      UN    #Achswahl_Bit_1; 
+      U     #Achswahl_Bit_2; 
+      =     #Stellung_4; 
+      U     #Stellung_4; 
+      UN    #Achskreuz; //LED Msst aktualisieren, nur bei Achsvorwahl
+      R     #LED_Achse_Z; 
+      R     #LED_Achse_X; 
+      R     #LED_Achse_Y; 
+      S     #LED_Achse_4; 
+      R     #LED_Achse_5; 
+      R     #LED_Spindel; 
+
+NETWORK
+TITLE = Achswahlschalter Stellung 5 aktivieren
+//Anzeige der angewaehlten Achse, bei HR-Variante Achsvorwahl (kein Achskreuz) 
+      U     #_5_Achsbetrieb; 
+      UN    #Achswahl_Bit_0; 
+      UN    #Achswahl_Bit_1; 
+      U     #Achswahl_Bit_2; 
+      =     #Stellung_5; 
+      U     #Stellung_5; 
+      UN    #Achskreuz; //LED Msst aktualisieren, nur bei Achsvorwahl
+      R     #LED_Achse_Z; 
+      R     #LED_Achse_X; 
+      R     #LED_Achse_Y; 
+      R     #LED_Achse_4; 
+      S     #LED_Achse_5; 
+      R     #LED_Spindel; 
+
+
+NETWORK
+TITLE = Alarm BHG aktiv
+//Handrad aktiv, wenn über MSST - Tasteangewaehlt
+//
+//
+      U     #EA_BHG_angewaehlt; 
+      =     #Meld_BHG_Bereit; 
+
+NETWORK
+TITLE = Handrad aktivieren Z-Achse
+
+      U     #Handrad_bereit; 
+      U     #Stellung_Z; 
+      UN    #TX_GEO_aktiv; 
+      =     "DB_ACHSE3_Z".A_HW1; 
+
+      U     #Handrad_bereit; 
+      U     #Stellung_Z; 
+      U     #TX_GEO_aktiv; 
+      =     "DB_SIEM_KANAL_1".A_Geo[3].HW1; 
+
+NETWORK
+TITLE = Handrad aktivieren X-Achse
+
+      U     #Handrad_bereit; 
+      U     #Stellung_X; 
+      UN    #TX_GEO_aktiv; 
+      =     "DB_ACHSE1_X".A_HW1; 
+
+      U     #Handrad_bereit; 
+      U     #Stellung_X; 
+      U     #TX_GEO_aktiv; 
+      =     "DB_SIEM_KANAL_1".A_Geo[1].HW1; 
+
+NETWORK
+TITLE = Handrad aktivieren Y-Achse
+
+      U     #Handrad_bereit; 
+      U     #Stellung_Y; 
+      UN    #TX_GEO_aktiv; 
+      =     "DB_ACHSE2_Y".A_HW1; 
+
+      U     #Handrad_bereit; 
+      U     #Stellung_Y; 
+      U     #TX_GEO_aktiv; 
+      =     "DB_SIEM_KANAL_1".A_Geo[2].HW1; 
+
+NETWORK
+TITLE =Handrad aktivieren Spindel
+//Spindel kann durch Stellung 0 und durch Betaetigen der F1-Taste verfahren 
+//werden 
+      U     #Handrad_bereit; 
+      U     #F1_Taste; 
+      U     #Stellung_0; 
+      =     "DB_ACHSE6_SPINDEL".A_HW1; 
+
+NETWORK
+TITLE = Handrad aktivieren 4-Achse
+
+      UN    "M_4Achse_existiert"; 
+      SPB   HA4; 
+      U     #Handrad_bereit; 
+      U     #Stellung_4; 
+      =     "DB_ACHSE4".A_HW1; 
+HA4:  NOP   0; 
+NETWORK
+TITLE = Handrad aktivieren 5-Achse
+
+      U     #T_Teilapparat; 
+      SPB   n27a; 
+
+
+      UN    "M_5Achse_existiert"; 
+      SPB   HA5; 
+
+      U     #Handrad_bereit; 
+      U     #Stellung_5; 
+      =     "DB_ACHSE5".A_HW1; 
+      SPA   HA5; 
+
+n27a: U     #Handrad_bereit; 
+      U     #Stellung_5; 
+      =     #TX_A_HW1; 
+
+      U     #Handrad_bereit; 
+      U     #Stellung_5; 
+      FP    "M_FP_HR_bereit"; 
+      S     "M_AchseNCT_loesen"; //für NCTA 23.01.06       // S     "M_HR_bereit"
+
+HA5:  NOP   0; 
+NETWORK
+TITLE =Handrad angewaehlt
+
+      U     #EA_BHG_angewaehlt; 
+      SPBN  ENDE; 
+
+
+NETWORK
+TITLE = Plus Taste Freigabe
+
+      U     #Begr_Zustimm_Taste; 
+      U     #Plus_Taste; 
+      U     #nicht_Handr_aktiv; 
+      =     #Plus_Taste_Freigabe; 
+NETWORK
+TITLE = Minus Taste Freigabe
+
+      U     #Begr_Zustimm_Taste; 
+      U     #Minus_Taste; 
+      U     #nicht_Handr_aktiv; 
+      =     #Minus_Taste_Freigabe; 
+NETWORK
+TITLE = X-Achse fahren mittels + Taste
+
+      U     #Plus_Taste_Freigabe; 
+      U     #Stellung_X; 
+      O     "I_DM_Ta X-Achse plus"; 
+      =     "I_DM_Ta X-Achse plus"; 
+
+NETWORK
+TITLE = X-Achse fahren mittels - Taste
+
+      U     #Minus_Taste_Freigabe; 
+      U     #Stellung_X; 
+      O     "I_DM_Ta X-Achse minus"; 
+      =     "I_DM_Ta X-Achse minus"; 
+
+NETWORK
+TITLE =Eilgangüberlagerung Achse X
+
+      O     #Minus_Taste_Freigabe; 
+      O     #Plus_Taste_Freigabe; 
+      U     #Stellung_X; 
+      U     #Eilgang_Taste; 
+      UN    #Eilgang_0; 
+      O     "I_DM_Ta Eilgang"; 
+      =     "I_DM_Ta Eilgang"; 
+
+NETWORK
+TITLE = Y-Achse fahren mittels + Taste
+
+      U     #Plus_Taste_Freigabe; 
+      U     #Stellung_Y; 
+      O     "I_DM_Ta Y-Achse plus"; 
+      =     "I_DM_Ta Y-Achse plus"; 
+
+NETWORK
+TITLE = Y-Achse fahren mittels - Taste
+
+      U     #Minus_Taste_Freigabe; 
+      U     #Stellung_Y; 
+      O     "I_DM_Ta Y-Achse minus"; 
+      =     "I_DM_Ta Y-Achse minus"; 
+
+NETWORK
+TITLE =Eilgangüberlagerung Achse Y
+
+      O     #Minus_Taste_Freigabe; 
+      O     #Plus_Taste_Freigabe; 
+      U     #Stellung_Y; 
+      U     #Eilgang_Taste; 
+      UN    #Eilgang_0; 
+      O     "I_DM_Ta Eilgang"; 
+      =     "I_DM_Ta Eilgang"; 
+
+NETWORK
+TITLE = Z-Achse fahren mittels + Taste
+
+      U     #Plus_Taste_Freigabe; 
+      U     #Stellung_Z; 
+      O     "I_DM_Ta Z-Achse plus"; 
+      =     "I_DM_Ta Z-Achse plus"; 
+
+NETWORK
+TITLE = Z-Achse fahren mittels - Taste
+
+      U     #Minus_Taste_Freigabe; 
+      U     #Stellung_Z; 
+      O     "I_DM_Ta Z-Achse minus"; 
+      =     "I_DM_Ta Z-Achse minus"; 
+
+NETWORK
+TITLE =Eilgangüberlagerung Achse Z
+
+      O     #Minus_Taste_Freigabe; 
+      O     #Plus_Taste_Freigabe; 
+      U     #Stellung_Z; 
+      U     #Eilgang_Taste; 
+      UN    #Eilgang_0; 
+      O     "I_DM_Ta Eilgang"; 
+      =     "I_DM_Ta Eilgang"; 
+
+NETWORK
+TITLE = 4-Achse fahren mittels + Taste
+
+      UN    "M_4Achse_existiert"; 
+      SPB   HP4; 
+      U     #Plus_Taste_Freigabe; 
+      U     #Stellung_4; 
+      UN    "DB_ACHSE4".E_HW1; 
+      O     "I_DM_Ta 4-Achse rechts"; 
+      =     "I_DM_Ta 4-Achse rechts"; 
+
+HP4:  NOP   0; 
+NETWORK
+TITLE = 4-Achse fahren mittels - Taste
+
+      UN    "M_4Achse_existiert"; 
+      SPB   HM4; 
+
+      U     #Minus_Taste_Freigabe; 
+      U     #Stellung_4; 
+      UN    "DB_ACHSE4".E_HW1; 
+      O     "I_DM_Ta 4-Achse links"; 
+      =     "I_DM_Ta 4-Achse links"; 
+
+
+
+HM4:  NOP   0; 
+
+NETWORK
+TITLE =Eilgangüberlagerung Achse 4
+
+      UN    "M_4Achse_existiert"; 
+      SPB   HE4; 
+
+      O     #Minus_Taste_Freigabe; 
+      O     #Plus_Taste_Freigabe; 
+      U     #Stellung_4; 
+      U     #Eilgang_Taste; 
+      UN    #Eilgang_0; 
+      O     "I_DM_Ta Eilgang"; 
+      =     "I_DM_Ta Eilgang"; 
+HE4:  NOP   0; 
+NETWORK
+TITLE = 5-Achse fahren mittels + Taste
+
+      U     #Handrad_bereit; 
+      U     #Stellung_5; 
+      =     "DB_ACHSE5".A_HW1; 
+
+      U     #T_Teilapparat; 
+      SPBN  nw44; 
+      U     #Handrad_bereit; 
+      U     #Stellung_5; 
+      =     #TX_A_HW1; 
+      R     "DB_ACHSE5".A_HW1; 
+
+
+nw44: UN    "M_5Achse_existiert"; 
+      UN    #T_Teilapparat; 
+      ON    #Stellung_5; 
+      SPB   HP5; 
+
+      U     #Plus_Taste_Freigabe; 
+      U     #Stellung_5; 
+      U(    ; 
+      UN    "DB_ACHSE5".E_HW1; 
+      UN    #TX_E_HW1; 
+      )     ; 
+//  UN    "DM_LED 5/6Achsanwahl"
+      O     "I_DM_Ta_5/6-Achse plus"; 
+      =     "I_DM_Ta_5/6-Achse plus"; 
+      R     "M_5o6Achse"; 
+
+HP5:  NOP   0; 
+NETWORK
+TITLE = 5-Achse fahren mittels - Taste
+
+      UN    "M_5Achse_existiert"; 
+      UN    #T_Teilapparat; 
+      ON    #Stellung_5; 
+      SPB   HM5; 
+
+      U     #Minus_Taste_Freigabe; 
+      U     #Stellung_5; 
+      U(    ; 
+      UN    "DB_ACHSE5".E_HW1; 
+      UN    #TX_E_HW1; 
+      )     ; 
+//  UN    "DM_LED 5/6Achsanwahl"
+      O     "I_DM_Ta_5/6-Achse minus"; 
+      =     "I_DM_Ta_5/6-Achse minus"; 
+      R     "M_5o6Achse"; 
+HM5:  NOP   0; 
+
+NETWORK
+TITLE =Eilgangüberlagerung Achse 5
+
+      U     "M_5Achse_existiert"; 
+      O     #T_Teilapparat; 
+      ON    #Stellung_5; 
+      SPB   HE5; 
+
+      O     #Minus_Taste_Freigabe; 
+      O     #Plus_Taste_Freigabe; 
+      U     #Stellung_5; 
+      U     #Eilgang_Taste; 
+      UN    #Eilgang_0; 
+      O     "I_DM_Ta Eilgang"; 
+      =     "I_DM_Ta Eilgang"; 
+
+//-- wenn 5.Achse dann keine Spindel (5/6 verriegelt (Achskreuz))
+HE5:  U     #Stellung_5; 
+      SPB   MAG; 
+
+NETWORK
+TITLE = Spindel fahren mittels + Taste
+
+      U     #Plus_Taste_Freigabe; 
+      U     #Stellung_0; 
+      U     #F1_Taste; 
+      =     "I_DM_Ta_5/6-Achse plus"; 
+      S     "M_5o6Achse"; 
+
+
+NETWORK
+TITLE = Spindel fahren mittels - Taste
+
+      U     #Minus_Taste_Freigabe; 
+      U     #Stellung_0; 
+      U     #F1_Taste; 
+      O     "I_DM_Ta_5/6-Achse minus"; 
+      =     "I_DM_Ta_5/6-Achse minus"; 
+      S     "M_5o6Achse"; 
+
+
+NETWORK
+TITLE =Eilgangüberlagerung Spindel
+
+      O     #Minus_Taste_Freigabe; 
+      O     #Plus_Taste_Freigabe; 
+      U     #Stellung_0; 
+      U     #F1_Taste; 
+      U     #Eilgang_Taste; 
+      UN    #Eilgang_0; 
+      O     "I_DM_Ta Eilgang"; 
+      =     "I_DM_Ta Eilgang"; 
+NETWORK
+TITLE =Magazin verfahren links / rechts
+
+MAG:  U     #Minus_Taste_Freigabe; 
+      U     #F2_Taste; 
+      U     #Stellung_0; 
+      =     "M_BHG_Mag_links"; 
+
+      U     #Plus_Taste_Freigabe; 
+      U     #F2_Taste; 
+      U     #Stellung_0; 
+      =     "M_BHG_Mag_rechts"; 
+
+NETWORK
+TITLE =Meldung an Kommandostation wird bedient
+//sja 04-02-01
+//
+//Inkremente über MSST anwählbar
+//
+//Wenn MBHG aktiv ist, sind die Achstasten der MSST nicht aktiv.
+//Werden diese Tasten gedrückt, wird der Bediener darauf hingewiesen.
+//Text: "Taste gesperrt, da Handbediengerät aktiv"
+      U     #Handp_bereit; 
+      U     #EA_BHG_angewaehlt; 
+      U(    ; 
+      O     "I_DM_Ta Eilgang"; 
+      O     "I_DM_Ta_5/6-Achse minus"; 
+      O     "I_DM_Ta_5/6-Achse plus"; 
+      )     ; 
+      =     #Meld_Axtast_Handrad; 
+
+NETWORK
+TITLE =Meldung Override ist auf 0
+//Wenn MBHG aktiv ist, und Vorschub- oder Eilgangkorrekturschalter auf 0
+//
+// U     #Handp_bereit
+//  UN    #Stellung_0
+//  U     #Vorschub_0
+//   =     #Meld_OVR0
+      U     #Handp_bereit; 
+      U     #EA_BHG_angewaehlt; 
+      U     #Vorschub_0; 
+      =     #Meld_OVR0; 
+
+NETWORK
+TITLE =Option Teilapperat
+
+      U     #T_Teilapparat; 
+      SPBN  nw53; 
+
+      U     #TX_A_HW1; 
+      =     "DB_ACHSE11".A_HW1; 
+
+      L     #TB_A_INC; 
+      T     DB41.DBB    5; 
+
+nw53: NOP   0; 
+NETWORK
+TITLE =Bausteinende
+
+ENDE: NOP   0; 
+
+END_FUNCTION
+

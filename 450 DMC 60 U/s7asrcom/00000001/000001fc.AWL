@@ -1,0 +1,172 @@
+FUNCTION "FC_ROB_MPL_STAT_ERW" : VOID
+TITLE =
+//$Revision: 1.3 $
+//$Date: 2009/03/04 07:14:02CET $
+//$Author: riedlh $
+//
+//Ablauf Sonderfunktionen für BoschRexroth
+//========================================
+{ S7_language := '7(1) Deutsch (Deutschland)  26.03.2008  08:00:15' }
+VERSION : 0.1
+
+
+VAR_INPUT
+  i_PW_inGRST : BOOL ;	//PW-Ablauf ist in Grundstelleung
+  i_PalV_MPL_T1_belegt : BOOL ;	//PalVerw: MPL Werkstück 1 ist belegt
+  i_PalV_MPL_T2_belegt : BOOL ;	//PalVerw: MPL Werkstück 2 ist belegt
+  i_SS_ROBOTER_EIN : BOOL ;	//Schlüsselschalter: Roboterbetrieb ist EIN
+END_VAR
+VAR_IN_OUT
+  io_MPL_T1_bearbeitet : BOOL ;	//MPL Pal-Status: Teil 1 ist bearbeitet
+  io_MPL_T1_NIO : BOOL ;	//MPL Pal-Status: Teil 1 Teil niO
+  io_MPL_T2_bearbeitet : BOOL ;	//MPL Pal-Status: Teil 2 ist bearbeitet
+  io_MPL_T2_NIO : BOOL ;	//MPL Pal-Status: Teil 2 Teil niO
+END_VAR
+BEGIN
+NETWORK
+TITLE =Netzwerk-Übersicht
+// Netzwerk-Übersicht
+// ==================
+// NW 1: Netzwerk-Übersicht
+// NW 2: DualPortRam ===> PalVerw: MPL Teil 1 bearbeitet
+// NW 3: DualPortRam ===> PalVerw: MPL Teil 1 niO ===> DualPortRam
+// NW 4: DualPortRam ===> PalVerw: MPL Teil 2 bearbeitet
+// NW 5: DualPortRam ===> PalVerw: MPL Teil 2 niO
+// NW 6: NC<<<PLC: Teil 1 belegt
+// NW 7: NC<<<PLC: Teil 2 belegt
+// NW 8: NC<<<PLC: Schlüsselschalter: Roboter-Betrieb ist EIN
+      NOP   0; 
+
+NETWORK
+TITLE =DualPortRam ===> PalVerw: MPL Teil 1 bearbeitet
+//Die NC bewirkt mit S/R-Adresse ein S/R in der MPL-PalVerwaltung.
+//Der Status der MPL-PalVerw wir über DPR-Adressen an die NC gemeldet.
+//Mit dieser IST-Zustandsmeldung nimmt die NC ihre S/R-Anweisung an die PLC 
+//wieder 
+//weg.
+//
+//1) NC-Programm für "SET Teil 1 bearbeitet"    setzt   MPL:PalVerwaltung
+//   DB70.DBX319.0=1 (SET)                      ==>     DB318.DBX 1334.1=1
+//   DB70.DBX319.1=1 (RESET)                    ==>     DB318.DBX 1334.1=0
+//2) MPL-PalVerwaltung IST-Zustand wird an NC gemeldet
+//   DB318.DBX 1334.1     ==>   DB70.DBX384.1
+//
+//3) Rückmeldung an NC setzt Auslöser von NC wieder zurück (NC-Programm)
+//   wenn DB70.DBX384.1=1 UND DB70.DBX319.0=1  ==> setzt NC DB70.DBX319.0=0
+//   wenn DB70.DBX384.1=0 UND DB70.DBX319.1=1  ==> setzt NC DB70.DBX319.1=0
+      U     "DB_NC_PLC".Zusatz.NC_an_PLC.Rob_Teil_1_bearbeitet_S; 
+      U     #i_PW_inGRST; 
+      S     #io_MPL_T1_bearbeitet; 
+      U     "DB_NC_PLC".Zusatz.NC_an_PLC.Rob_Teil_1_bearbeitet_R; 
+      U     #i_PW_inGRST; 
+      R     #io_MPL_T1_bearbeitet; 
+      U     #io_MPL_T1_bearbeitet; 
+      =     "DB_NC_PLC".Zusatz.PLC_an_NC.PalVerw_MPL_Status.Teil_1_bearbeitet; 
+NETWORK
+TITLE =DualPortRam ===> PalVerw: MPL Teil 1 niO ===> DualPortRam
+//Die NC bewirkt mit S/R-Adresse ein S/R in der MPL-PalVerwaltung.
+//Der Status der MPL-PalVerw wir über DPR-Adressen an die NC gemeldet.
+//Mit dieser IST-Zustandsmeldung nimmt die NC ihre S/R-Anweisung an die PLC 
+//wieder 
+//weg.
+//
+//1) NC-Programm für "SET Teil 1 niO"           setzt   MPL:PalVerwaltung
+//   DB70.DBX319.2=1 (SET)                      ==>     DB318.DBX 1334.2=1
+//   DB70.DBX319.3=1 (RESET)                    ==>     DB318.DBX 1334.2=0
+//2) MPL-PalVerwaltung IST-Zustand wird an NC gemeldet
+//   DB318.DBX 1334.2     ==>   DB70.DBX384.2
+//
+//3) Rückmeldung an NC setzt Auslöser von NC wieder zurück (NC-Programm)
+//   wenn DB70.DBX384.2=1 UND DB70.DBX319.2=1  ==> setzt NC DB70.DBX319.2=0
+//   wenn DB70.DBX384.2=0 UND DB70.DBX319.3=1  ==> setzt NC DB70.DBX319.3=0
+      U     "DB_NC_PLC".Zusatz.NC_an_PLC.Rob_Teil_1_niO_S; 
+      U     #i_PW_inGRST; 
+      S     #io_MPL_T1_NIO; 
+      U     "DB_NC_PLC".Zusatz.NC_an_PLC.Rob_Teil_1_niO_R; 
+      U     #i_PW_inGRST; 
+      R     #io_MPL_T1_NIO; 
+      U     #io_MPL_T1_NIO; 
+      =     "DB_NC_PLC".Zusatz.PLC_an_NC.PalVerw_MPL_Status.Teil_1_niO; 
+NETWORK
+TITLE =DualPortRam ===> PalVerw: MPL Teil 2 bearbeitet
+//Die NC bewirkt mit S/R-Adresse ein S/R in der MPL-PalVerwaltung.
+//Der Status der MPL-PalVerw wir über DPR-Adressen an die NC gemeldet.
+//Mit dieser IST-Zustandsmeldung nimmt die NC ihre S/R-Anweisung an die PLC 
+//wieder 
+//weg.
+//
+//1) NC-Programm für "SET Teil 1 bearbeitet"    setzt   MPL:PalVerwaltung
+//   DB70.DBX319.4=1 (SET)                      ==>     DB318.DBX 1334.5=1
+//   DB70.DBX319.5=1 (RESET)                    ==>     DB318.DBX 1334.5=0
+//2) MPL-PalVerwaltung IST-Zustand wird an NC gemeldet
+//   DB318.DBX 1334.5     ==>   DB70.DBX384.5
+//
+//3) Rückmeldung an NC setzt Auslöser von NC wieder zurück (NC-Programm)
+//   wenn DB70.DBX384.5=1 UND DB70.DBX319.4=1  ==> setzt NC DB70.DBX319.4=0
+//   wenn DB70.DBX384.5=0 UND DB70.DBX319.5=1  ==> setzt NC DB70.DBX319.5=0
+      U     "DB_NC_PLC".Zusatz.NC_an_PLC.Rob_Teil_2_bearbeitet_S; 
+      U     #i_PW_inGRST; 
+      S     #io_MPL_T2_bearbeitet; 
+      U     "DB_NC_PLC".Zusatz.NC_an_PLC.Rob_Teil_2_bearbeitet_R; 
+      U     #i_PW_inGRST; 
+      R     #io_MPL_T2_bearbeitet; 
+      U     #io_MPL_T2_bearbeitet; 
+      =     "DB_NC_PLC".Zusatz.PLC_an_NC.PalVerw_MPL_Status.Teil_2_bearbeitet; 
+NETWORK
+TITLE =DualPortRam ===> PalVerw: MPL Teil 2 niO
+//Die NC bewirkt mit S/R-Adresse ein S/R in der MPL-PalVerwaltung.
+//Der Status der MPL-PalVerw wir über DPR-Adressen an die NC gemeldet.
+//Mit dieser IST-Zustandsmeldung nimmt die NC ihre S/R-Anweisung an die PLC 
+//wieder 
+//weg.
+//
+//1) NC-Programm für "SET Teil 1 niO"           setzt   MPL:PalVerwaltung
+//   DB70.DBX319.6=1 (SET)                      ==>     DB318.DBX 1334.6=1
+//   DB70.DBX319.7=1 (RESET)                    ==>     DB318.DBX 1334.6=0
+//2) MPL-PalVerwaltung IST-Zustand wird an NC gemeldet
+//   DB318.DBX 1334.6     ==>   DB70.DBX384.6
+//
+//3) Rückmeldung an NC setzt Auslöser von NC wieder zurück (NC-Programm)
+//   wenn DB70.DBX384.6=1 UND DB70.DBX319.6=1  ==> setzt NC DB70.DBX319.6=0
+//   wenn DB70.DBX384.6=0 UND DB70.DBX319.7=1  ==> setzt NC DB70.DBX319.7=0
+      U     "DB_NC_PLC".Zusatz.NC_an_PLC.Rob_Teil_2_niO_S; 
+      U     #i_PW_inGRST; 
+      S     #io_MPL_T2_NIO; 
+      U     "DB_NC_PLC".Zusatz.NC_an_PLC.Rob_Teil_2_niO_R; 
+      U     #i_PW_inGRST; 
+      R     #io_MPL_T2_NIO; 
+      U     #io_MPL_T2_NIO; 
+      =     "DB_NC_PLC".Zusatz.PLC_an_NC.PalVerw_MPL_Status.Teil_2_niO; 
+NETWORK
+TITLE =NC<<<PLC: Teil 1 belegt
+//Mit "PW_aktiv"=0 (PW in GRST) werden die Daten von der PalVerw
+//in den DualPortRam (DPR) geschrieben:
+//- Werkstück 1 belegt     DPR: 384.0
+//- Werkstück 2 belegt     DPR: 384.1
+      U     #i_PW_inGRST; 
+      U     #i_PalV_MPL_T1_belegt; 
+      S     "DB_NC_PLC".Zusatz.PLC_an_NC.PalVerw_MPL_Status.Teil_1_belegt; 
+      U     #i_PW_inGRST; 
+      UN    #i_PalV_MPL_T1_belegt; 
+      R     "DB_NC_PLC".Zusatz.PLC_an_NC.PalVerw_MPL_Status.Teil_1_belegt; 
+      NOP   0; 
+NETWORK
+TITLE =NC<<<PLC: Teil 2 belegt
+//Mit "PW_aktiv"=0 (PW in GRST) werden die Daten von der PalVerw
+//in den DualPortRam (DPR) geschrieben:
+//- Werkstück 1 belegt     DPR: 384.0
+//- Werkstück 2 belegt     DPR: 384.1
+      U     #i_PW_inGRST; 
+      U     #i_PalV_MPL_T2_belegt; 
+      S     "DB_NC_PLC".Zusatz.PLC_an_NC.PalVerw_MPL_Status.Teil_2_belegt; 
+      U     #i_PW_inGRST; 
+      UN    #i_PalV_MPL_T2_belegt; 
+      R     "DB_NC_PLC".Zusatz.PLC_an_NC.PalVerw_MPL_Status.Teil_2_belegt; 
+      NOP   0; 
+NETWORK
+TITLE =NC<<<PLC: Schlüsselschalter: Roboter-Betrieb ist EIN
+
+      U     #i_SS_ROBOTER_EIN; 
+      =     "DB_NC_PLC".Zusatz.PLC_an_NC.PalVerw_MPL_Status.SS_ROBOTER_EIN; 
+END_FUNCTION
+

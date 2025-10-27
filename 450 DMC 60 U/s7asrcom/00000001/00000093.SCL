@@ -1,0 +1,395 @@
+FUNCTION FC_PS_MazuSpeicher : VOID
+// Palette zum Ruestplatz / Speicher bringen
+
+TITLE = ''
+//$Revision: 1.14 $
+//$Date: 2007/11/24 17:44:11CET $
+//$Author: schmoelp $
+
+// Erstellen Transportauftrag von Maschine zu Speicher oder Rüstplatz, von Speicher zu Rüstplatz
+
+VAR_INPUT
+bRPverfuegbar: BOOL; // RP frei und verfuegbar    
+bQuerStellung: BOOL; // Querschlitten in definierter Stellung
+bUebpl1frei: BOOL;   //Übergabeplatz 1 frei
+iAnzahlSpPlaetze: INT;
+iAnzahlJobs: INT; 
+END_VAR
+
+VAR_TEMP
+tintPriorzaehl: INT;
+bholen:BOOL; // wenn eine Palette geholt werden muss, dann true
+i: INT;
+job: INT;
+job_prio: INT;
+tbyPrioritaet: BYTE;
+tbyStatus: BYTE;
+tdwStueckzahl: INT;
+y: INT;
+bPalgefunden: BOOL;
+bJobMPFoWPD:BOOL;
+bPalMPoWPD:BOOL; 
+iSpeifrei:INT;
+b_Ue1keinJob: BOOL; // Übergabeplatz 1 liegt Palette, die in Jobliste steht
+b_Ue2keinJob: BOOL; // Übergabeplatz 2 liegt Palette, die in Jobliste steht
+bJobRohteil: BOOL;   //Job und ein Rohteil vorhanden
+bUebplatzfrei: BOOL; 
+bJob_Vorhanden: BOOL; 
+bEin_Job_Maschine: BOOL; 
+tdwPrgname: STRING[32];
+tdwOrdname: STRING[32];
+byprioRP: INT;
+bResetfertig: BOOL;
+END_VAR
+
+VAR_OUTPUT
+TR_holen: INT;
+TR_bringen: INT;
+b_Transport: BOOL;
+END_VAR    
+
+// Anweisungsteil
+
+b_Transport:=FALSE;
+Tr_holen:=0;
+Tr_bringen:=0;
+iSpeifrei:=0;
+b_Ue1keinJob:=FALSE;
+b_Ue2keinJob:=FALSE;
+tbyPrioritaet:=0;
+bJobRohteil:=TRUE;
+tdwPrgname:='';
+tdwOrdname:='';
+bResetfertig:=FALSE;
+bUebplatzfrei:=FALSE;
+
+
+// Übergabeplatz frei
+IF bUebpl1frei THEN     
+   bUebplatzfrei:=TRUE;
+END_IF;      
+
+// schauen, ob Speicherplatz frei ist 
+FOR i:=5 TO (iAnzahlSpPlaetze+4) BY 1 DO
+    IF ("DB_PAL_NR".Platz[i].Pal_Nr = 0) THEN
+    iSpeifrei:= i;
+    EXIT;
+    END_IF;
+END_FOR; 
+ 
+// Setzen / Rücksetzen von JOB fertig
+FC_PS_JOB_FERTIG(
+   iAnzahlJobs :=iAnzahlJobs);  // IN: INT
+    
+//"FC_PRG_JOB_SUCHE"(4);
+FC_Prg_Job_Suche(
+   iAnzahlSpPlaetze:=iAnzahlSpPlaetze,  // IN: INT
+   iAnzahlJobs     :=iAnzahlJobs);  // IN: INT
+ 
+// Paletten from maschine/storage
+  
+IF (((bRPverfuegbar=0) OR ("DB_PAL_NR".Platz[4].Pal_nr <> 0)) AND (ispeifrei=0)) THEN // Rüstplatz nicht verfügbar und kein Speicherplatz frei 
+   RETURN;
+END_IF;   
+
+// 0:Maschine,1:Überpl1,2:Überpl2,3:Transportw,4:Ruepl,5-xx:Speicherpl 1 -- xx 
+// wenn der Übergabeplatz belegt ist und nur in der Maschine ein aktiver Job ist dann zurück
+IF (bUebplatzfrei=0) THEN
+   IF "MX_1Job_Maschine"=TRUE THEN
+      RETURN;
+   END_IF;
+END_IF;
+
+// new
+// check Priority of RP Palette, if Rohteil
+// suchen nach Rohteil mit kleinster Prioritaet  
+y:=4;
+byprioRP:=99;
+FOR tintPriorzaehl:=1 TO 20 BY 1 DO
+    tbyPrioritaet:=WORD_TO_BYTE(INT_TO_WORD(tintPriorzaehl));
+    FOR i := 1 TO iAnzahlJobs BY 1 DO
+        IF (("DB_JOB".Job[i].Prg_Name) <> ' ') AND ("DB_JOB".Job[i].Prioritaet = tbyPrioritaet) THEN // if Prgnumber exists
+           job_prio:= i;
+           tdwStueckzahl:= WORD_TO_INT("DB_JOB".Job[job_prio].Stueckzahl);
+           // Suche nach Job mit gleiche Prioritaet und kleinerer Stückzahl, dann diese Palette ausgenommen Maschinenplätze
+           FOR job := i TO iAnzahlJobs BY 1 DO
+               IF ("DB_JOB".Job[job].Prioritaet = tbyPrioritaet) THEN  // nächster Job gleiche Prioritaet
+                  IF (WORD_TO_INT("DB_JOB".Job[job].Stueckzahl) < tdwStueckzahl) THEN  // Stückzahl kleiner
+                     IF ("DB_JOB".Job[job].Prg_Name) <> ("DB_PAL_NR".Platz[0].Prg_name) THEN  // nicht Job von Palette auf Maschine
+                        IF ("DB_JOB".Job[job].Prg_Name) <> ("DB_PAL_NR".Platz[1].Prg_name) THEN // nicht Job von Palette auf Übergabeplatz 1
+                           IF ("DB_JOB".Job[job].Prg_Name) <> ("DB_PAL_NR".Platz[2].Prg_name) THEN // nicht Job von Palette auf Übergabeplatz 2
+                              job_prio:= job;
+                              tdwStueckzahl:= WORD_TO_INT("DB_JOB".Job[job_prio].Stueckzahl);
+                           END_IF;
+                        END_IF;
+                     END_IF;
+                  END_IF;
+               END_IF;
+           END_FOR;
+           tdwPrgname:="DB_JOB".Job[job_prio].Prg_name; // lesen von Programnummer aus Job
+           bJobMPFoWPD:="DB_JOB".Job[job_prio].MPFoWPD; // Werkstück oder Teileprogramm
+           tdwOrdname:="DB_JOB".Job[job_prio].Ordner_name;// lesen von Ordnername aus Job
+         
+           // look if Palette exists with Jobnumber on RP
+           // bring Üp1 to storage/rp
+           y:=4; 
+           IF (("DB_PAL_NR".Platz[y].Pal_Nr <> 0) AND ("DB_PAL_NR".Platz[y].Status = 2))  THEN// Rohteil on RP
+              IF (tdwPrgname = "DB_PAL_NR".Platz[y].Prg_Name) AND  ("DB_LSSchnittstelle".IX_Ruestplatz_Tuer_Zu=1) THEN // Job and PalPrgnumber o.k.
+                 IF ((bJobMPFoWPD = "DB_PAL_NR".Platz[y].TeiloWRS) AND (tdwOrdname = "DB_PAL_NR".Platz[y].Ordner_name OR bJobMPFoWPD=0)) THEN // Werkstueck oder Teile
+                    byprioRP:=tintPriorzaehl;
+                 END_IF; 
+              END_IF;  
+           END_IF;
+               
+           // new new
+           FOR y:=5 TO (iAnzahlSpPlaetze+4) BY 1 DO
+               IF (tdwPrgname = "DB_PAL_NR".Platz[y].Prg_name) AND  ("DB_PAL_NR".Platz[y].Pal_nr > 0) THEN // Prgnumber gefunden
+                  IF (bJobMPFoWPD =  "DB_PAL_NR".Platz[y].TeiloWRS AND (tdwOrdname = "DB_PAL_NR".Platz[y].Ordner_name OR bJobMPFoWPD=0)) THEN // Werkstueck oder Teile
+                     IF ("DB_PAL_NR".Platz[y].Status = 2) THEN // Rohteil
+                        IF tintPriorzaehl < byprioRP THEN
+                           byprioRP:= tintpriorzaehl;
+                        END_IF;     
+                     END_IF; 
+                  END_IF; 
+               END_IF;  
+           END_FOR;
+          // new new end
+
+        END_IF;
+    END_FOR;
+END_FOR;
+ 
+// suche Jobliste nach Prioritaeten von 1 bis 20 // Priority 0 --> Job inactiv
+// 0:Maschine,1:Überpl1,2:Überpl2,3:Transportw,4:Ruepl,5-xx:Speicherpl 1 -- xx 
+FOR tintPriorzaehl:=1 TO 20 BY 1 DO
+    tbyPrioritaet:=WORD_TO_BYTE(INT_TO_WORD(tintPriorzaehl));
+   
+    // suchen nach Job mit Prioritaet  
+    FOR i := 1 TO iAnzahlJobs BY 1 DO
+        IF ("DB_JOB".Job[i].Prioritaet = tbyPrioritaet) AND ("DB_JOB".Job[i].fertig = FALSE) THEN  // wenn Prioritaet gefunden in Jobliste
+           IF (("DB_JOB".Job[i].Prg_Name) <> ' ') THEN // if Prgnumber exists
+              job_prio:= i;
+              tdwStueckzahl:= WORD_TO_INT("DB_JOB".Job[job_prio].Stueckzahl);
+              // Suche nach Job mit gleiche Prioritaet und kleinerer Stückzahl, dann diese Palette ausgenommen Maschinenplätze
+              FOR job := i TO iAnzahlJobs BY 1 DO
+                  IF ("DB_JOB".Job[job].Prioritaet = tbyPrioritaet) THEN  // nächster Job gleiche Prioritaet
+                     IF (WORD_TO_INT("DB_JOB".Job[job].Stueckzahl) < tdwStueckzahl) THEN  // Stückzahl kleiner
+                        IF ("DB_JOB".Job[job].Prg_Name) <> ("DB_PAL_NR".Platz[0].Prg_name) THEN  // nicht Job von Palette auf Maschine
+                           IF ("DB_JOB".Job[job].Prg_Name) <> ("DB_PAL_NR".Platz[1].Prg_name) THEN // nicht Job von Palette auf Übergabeplatz 1
+                              IF ("DB_JOB".Job[job].Prg_Name) <> ("DB_PAL_NR".Platz[2].Prg_name) THEN // nicht Job von Palette auf Übergabeplatz 2
+                                 job_prio:= job;
+                                 tdwStueckzahl:= WORD_TO_INT("DB_JOB".Job[job_prio].Stueckzahl);
+                              END_IF;
+                           END_IF;
+                        END_IF;
+                     END_IF;
+                  END_IF;
+              END_FOR;
+              tdwPrgname:="DB_JOB".Job[job_prio].Prg_name; // lesen von Programnummer aus Job
+              bJobMPFoWPD:="DB_JOB".Job[job_prio].MPFoWPD; // Werkstück oder Teileprogramm
+              tdwOrdname:="DB_JOB".Job[job_prio].Ordner_name;// lesen von Ordnername aus Job
+         
+              // look if Palette exists with Jobnumber on ÜPl1
+              // bring Üp1 to storage/rp, wenn kein Rohteil oder wenn es ein Rohteil mit kleinerer Priorität gibt
+              y:=1; 
+              IF ("DB_PAL_NR".Platz[y].Pal_Nr <> 0) THEN // pal on Üpl
+                 IF (tdwPrgname = "DB_PAL_NR".Platz[y].Prg_Name) AND bQuerStellung THEN // Job and PalPrgnumber o.k.
+                    IF ((bJobMPFoWPD = "DB_PAL_NR".Platz[y].TeiloWRS) AND (tdwOrdname = "DB_PAL_NR".Platz[y].Ordner_name OR bJobMPFoWPD=0)) THEN // Werkstueck oder Teile
+                       IF y=1 THEN
+                          b_Ue1keinJob:=TRUE;
+                       END_IF;
+                       IF (("DB_PAL_NR".Platz[y].Status <> 2) OR (byprioRP < tintPriorzaehl)) THEN // wenn Status nicht unbearbeitet or new
+                          b_Transport:= true;
+                          Tr_holen:=y; // holen von Platz
+                          IF (bRPverfuegbar) AND ("DB_PAL_NR".Platz[4].Pal_nr = 0) THEN
+                             Tr_bringen:=4; // bringen zu RP
+                          ELSE    
+                             Tr_bringen:=iSpeifrei; // bringen zu Speicher 
+                          END_IF;
+                          RETURN;
+                       END_IF; 
+                    END_IF; 
+                 END_IF;  
+              END_IF;
+       
+             // auf Speicherplaetzen 1-5 nach aktivem Job ohne Rohteil und Leerpalette suchen
+             // wenn gefunden zum Rüstplatz bringen
+             IF (bRPverfuegbar) AND ("DB_PAL_NR".Platz[4].Pal_nr = 0) THEN
+                FOR y:=5 TO (iAnzahlSpPlaetze+4) BY 1 DO
+                    IF (tdwPrgname = "DB_PAL_NR".Platz[y].Prg_name AND ("DB_PAL_NR".Platz[y].Pal_Nr <> 0)) THEN // Prgnumber gefunden
+                       IF ((bJobMPFoWPD =  "DB_PAL_NR".Platz[y].TeiloWRS)  AND (tdwOrdname = "DB_PAL_NR".Platz[y].Ordner_name OR bJobMPFoWPD=0)) THEN // Werkstueck oder Teile
+                          IF ("DB_PAL_NR".Platz[y].Status <> 2) THEN
+                             b_Transport:= true;
+                             Tr_holen:=y; // holen von Platz
+                             Tr_bringen:=4; // bringen zu RP
+                          RETURN;
+                          END_IF; 
+                       END_IF; 
+                    END_IF;  
+                END_FOR;
+             END_IF;
+        
+           END_IF; 
+        END_IF;    
+    END_FOR; // ende suche Job mit Prioritaet tbyPrioritaet
+END_FOR; // ende durchsuchen Jobliste
+
+// ---------------- Abarbeitung nach Reihenfolge
+// suche Jobliste nach kleinster Prioritaet von 21 bis 30
+tbyPrioritaet:= 0;
+FOR i := 1 TO iAnzahlJobs BY 1 DO
+    IF (BYTE_TO_INT("DB_JOB".Job[i].Prioritaet) > 20) AND (("DB_JOB".Job[i].Prg_Name) <> '') THEN
+       IF ((BYTE_TO_INT("DB_JOB".Job[i].Prioritaet) < BYTE_TO_INT(tbyPrioritaet)) OR (tbyPrioritaet = 0)) THEN 
+          tbyPrioritaet:= "DB_JOB".Job[i].Prioritaet;
+       END_IF;
+    END_IF;
+END_FOR;
+// Suche nach Palette für Rüstplatz
+IF (BYTE_TO_INT(tbyPrioritaet) > 0) THEN
+   // Auswahl Fertigteil mit Priorität > 20 zum Rüstplatz
+   IF ((bRPverfuegbar) AND ("DB_PAL_NR".Platz[4].Pal_nr = 0)) THEN
+      // erst suchen nach unbearbeiteten Jobs
+      FOR tintPriorzaehl:=(BYTE_TO_INT(tbyPrioritaet)) TO 30 BY 1 DO
+          FOR i := 1 TO iAnzahlJobs BY 1 DO
+              IF (tintPriorzaehl = (BYTE_TO_INT("DB_JOB".Job[i].Prioritaet))) AND ("DB_JOB".Job[i].fertig = FALSE) THEN
+                 tdwPrgname:="DB_JOB".Job[i].Prg_name; // lesen von Programnummer aus Job
+                 bJobMPFoWPD:="DB_JOB".Job[i].MPFoWPD; // Werkstück oder Teileprogramm
+                 tdwOrdname:="DB_JOB".Job[i].Ordner_name;// lesen von Ordnername aus Job
+                 // auf Übergabeplatz schauen, ob kein Rohteil für Rüstplatz
+                 y:=1;
+                 IF (bUebplatzfrei = FALSE) AND ("DB_PAL_NR".Platz[y].Status <> 2) AND ("DB_PAL_NR".Platz[y].Status <> 1) THEN
+                    IF (tdwPrgname = "DB_PAL_NR".Platz[y].Prg_name) AND  ("DB_PAL_NR".Platz[y].Pal_nr > 0) THEN // Prgnumber gefunden
+                       IF (bJobMPFoWPD =  "DB_PAL_NR".Platz[y].TeiloWRS AND (tdwOrdname = "DB_PAL_NR".Platz[y].Ordner_name OR bJobMPFoWPD=0)) THEN // Werkstueck oder Teile
+                          b_Transport:= true;
+                          Tr_holen:=1; // holen von Übergabeplatz
+                          Tr_bringen:=4; // bringen zu Rüstplatz
+                          RETURN;
+                       END_IF; 
+                    END_IF;  
+                 END_IF;
+                 // auf Speicherplaetze 1-4 schauen ,ob kein Rohteil für Rüstplatz
+                 FOR y:=5 TO (iAnzahlSpPlaetze+4) BY 1 DO
+                     IF ("DB_PAL_NR".Platz[y].Pal_nr > 0) AND ("DB_PAL_NR".Platz[y].Status <> 2) THEN // Fertigteil
+                        IF (tdwPrgname = "DB_PAL_NR".Platz[y].Prg_name) THEN // Prgnumber gefunden
+                           IF (bJobMPFoWPD =  "DB_PAL_NR".Platz[y].TeiloWRS AND (tdwOrdname = "DB_PAL_NR".Platz[y].Ordner_name OR bJobMPFoWPD=0)) THEN // Werkstueck oder Teile
+                              b_Transport:= true;
+                              Tr_holen:=y; // holen von Platz
+                              Tr_bringen:=4; // bringen zu Rüstplatz
+                              RETURN;
+                           END_IF; 
+                        END_IF;
+                     END_IF;
+                 END_FOR; 
+              END_IF;
+          END_FOR;
+      END_FOR;
+      // jetzt suchen in den bearbeiteten Jobs
+      FOR tintPriorzaehl:=(BYTE_TO_INT(tbyPrioritaet)) TO 30 BY 1 DO
+          FOR i := 1 TO iAnzahlJobs BY 1 DO
+              IF (tintPriorzaehl = (BYTE_TO_INT("DB_JOB".Job[i].Prioritaet))) AND ("DB_JOB".Job[i].fertig = TRUE) THEN
+                 tdwPrgname:="DB_JOB".Job[i].Prg_name; // lesen von Programnummer aus Job
+                 bJobMPFoWPD:="DB_JOB".Job[i].MPFoWPD; // Werkstück oder Teileprogramm
+                 tdwOrdname:="DB_JOB".Job[i].Ordner_name;// lesen von Ordnername aus Job
+                 // auf Übergabeplatz schauen, ob kein Rohteil zum Rüstplatz
+                 y:=1;
+                 IF (bUebplatzfrei = FALSE) AND ("DB_PAL_NR".Platz[y].Status <> 2) AND ("DB_PAL_NR".Platz[y].Status <> 1) THEN
+                    IF (tdwPrgname = "DB_PAL_NR".Platz[y].Prg_name) AND ("DB_PAL_NR".Platz[y].Pal_nr > 0) THEN // Prgnumber gefunden
+                       IF (bJobMPFoWPD =  "DB_PAL_NR".Platz[y].TeiloWRS AND (tdwOrdname = "DB_PAL_NR".Platz[y].Ordner_name OR bJobMPFoWPD=0)) THEN // Werkstueck oder Teile
+                          b_Transport:= true;
+                          Tr_holen:=1; // holen von Übergabeplatz
+                          Tr_bringen:=4; // bringen zu Rüstplatz
+                          RETURN;
+                       END_IF; 
+                    END_IF;  
+                 END_IF;
+                 // auf Speicherplaetze 1-4 schauen ,ob kein Rohteil für Rüstplatz
+                 FOR y:=5 TO (iAnzahlSpPlaetze+4) BY 1 DO
+                     IF ("DB_PAL_NR".Platz[y].Status <> 2) AND ("DB_PAL_NR".Platz[y].Status <> 1) THEN // kein Rohteil
+                        IF (tdwPrgname = "DB_PAL_NR".Platz[y].Prg_name) AND  ("DB_PAL_NR".Platz[y].Pal_nr > 0) THEN // Prgnumber gefunden
+                           IF (bJobMPFoWPD =  "DB_PAL_NR".Platz[y].TeiloWRS AND (tdwOrdname = "DB_PAL_NR".Platz[y].Ordner_name OR bJobMPFoWPD=0)) THEN // Werkstueck oder Teile
+                              b_Transport:= true;
+                              Tr_holen:=y; // holen von Platz
+                              Tr_bringen:=4; // bringen zu Rüstplatz
+                              RETURN;
+                           END_IF; 
+                        END_IF;
+                     END_IF;
+                 END_FOR; 
+              END_IF;
+          END_FOR;
+      END_FOR;
+   END_IF;
+   // Fertigteil vom Übergabeplatz zum Speicher, nur wenn Rohteil für Maschine zur Verfügung steht
+   IF (iSpeifrei > 0) AND ("DB_PAL_NR".Platz[1].Status = 4) THEN
+      // erst nach unbearbeiteten Jobs suchen
+      FOR tintPriorzaehl:=(BYTE_TO_INT(tbyPrioritaet)) TO 30 BY 1 DO
+          FOR i := 1 TO iAnzahlJobs BY 1 DO
+              IF (tintPriorzaehl = (BYTE_TO_INT("DB_JOB".Job[i].Prioritaet))) AND ("DB_JOB".Job[i].fertig = FALSE) THEN
+                 tdwPrgname:="DB_JOB".Job[i].Prg_name; // lesen von Programnummer aus Job
+                 bJobMPFoWPD:="DB_JOB".Job[i].MPFoWPD; // Werkstück oder Teileprogramm
+                 tdwOrdname:="DB_JOB".Job[i].Ordner_name;// lesen von Ordnername aus Job
+                 FOR y:=4 TO (iAnzahlSpPlaetze+4) BY 1 DO
+                     IF ("DB_PAL_NR".Platz[y].Status = 2) OR (y = 4) THEN // Rohteil oder Rüstplatz
+                        IF (tdwPrgname = "DB_PAL_NR".Platz[y].Prg_name) AND  ("DB_PAL_NR".Platz[y].Pal_nr > 0) THEN // Prgnumber gefunden
+                           IF (bJobMPFoWPD =  "DB_PAL_NR".Platz[y].TeiloWRS AND (tdwOrdname = "DB_PAL_NR".Platz[y].Ordner_name OR bJobMPFoWPD=0)) THEN // Werkstueck oder Teile
+                              b_Transport:= true;
+                              Tr_holen:=1; // holen von Übergabeplatz
+                              Tr_bringen:=iSpeifrei; // bringen zu Speicherplatz
+                              RETURN;
+                           END_IF; 
+                        END_IF; 
+                     END_IF;  
+                 END_FOR;
+                 tintPriorzaehl:= 30;
+                 EXIT;
+              END_IF;
+          END_FOR;
+      END_FOR;
+   END_IF;
+END_IF;
+   
+
+IF (BYTE_TO_INT(tbyPrioritaet) < 21) THEN
+   // keine Palette für Jobliste gefunden --> schauen, ob Palette von Übergabeplatz
+   // in Speicher gebracht werden muss
+   // Übergabeplatz 1
+  
+   // schauen, ob Speicherplatz frei ist 
+   IF (iSpeifrei > 0)  THEN
+      IF ("DB_PAL_NR".Platz[1].Pal_Nr>0)  AND ("DB_PAL_NR".Platz[1].Status <> 2) THEN // Palnumber gefunden  und nicht in Jobliste                
+         b_Transport:= true;
+         Tr_holen:=1; // holen von Übplatz1
+         Tr_bringen:=iSpeifrei; // bringen zu Speicherplatz
+         RETURN;
+      END_IF;     
+   ELSE  // alles belegt ausser RP und Palette auf Übergabeplatz, die nicht Rohteil und nicht Leerpalette --> zu Rüstplatz
+      IF ("DB_PAL_NR".Platz[1].Pal_Nr>0)  AND ("DB_PAL_NR".Platz[1].Status <> 2) AND ("DB_PAL_NR".Platz[1].Status <> 1) AND (bRPverfuegbar) AND ("DB_PAL_NR".Platz[4].Pal_nr = 0) THEN // Palnumber gefunden  und nicht in Jobliste                
+         b_Transport:= true;
+         Tr_holen:=1; // holen von Übplatz1
+         Tr_bringen:=4; // bringen zu RP
+         RETURN;
+      END_IF;     
+      RETURN; 
+   END_IF;
+END_IF;
+
+// Kein Ein-Palettenbetrieb
+// Leerpalette von Maschine holen
+IF ("MX_1Job_Maschine"=FALSE) THEN
+   IF ("DB_PAL_NR".Platz[1].Pal_nr > 0) AND ("DB_PAL_NR".Platz[1].Status = 1) THEN
+      IF (iSpeifrei > 0) THEN
+         b_Transport:= true;
+         Tr_holen:=1; // holen von Übergabeplatz
+         Tr_bringen:=iSpeifrei; // bringen zu Speicherplatz
+         RETURN;
+      END_IF; 
+      IF (bRPverfuegbar) THEN
+         b_Transport:= true;
+         Tr_holen:=1; // holen von Übergabeplatz
+         Tr_bringen:=9; // holen von Rüstplatz
+         RETURN;
+      END_IF;
+   END_IF;
+END_IF;
+ 
+END_FUNCTION

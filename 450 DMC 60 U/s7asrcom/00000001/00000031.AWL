@@ -1,0 +1,3565 @@
+FUNCTION "FC_VSM_RPT_CS_Reihe" : VOID
+TITLE =
+//$Revision: 2.54 $
+//$Date: 2009/01/29 11:10:45CET $
+//$Author: schmoelp $
+VERSION : 0.1
+
+
+VAR_TEMP
+  t_ROB_aktiv : BOOL ;	//Merker Roboter-Betrieb ist angewählt
+  t_Zxx_INIT : BOOL ;	//Merker initialisiere Zustandsgraph Zxx
+  t_PI_Z00_Grundstellung : BOOL ;	//posFlanke Z00 Grundstellung
+  t_EK_Tasten_FG : BOOL ;	//Merker EK-Tasten sind zulässig
+  t_SpannFolge_aktiv : BOOL ;	//Merker eine SpannHydraulik-Spann-Folge ist aktiv
+  t_FG_PWFG_ausloesen : BOOL ;	//Merker RP hat Voraussetzungen für PW-Freigabe auslösen
+  t_RPTFolgen_FG : BOOL ;	//Merker Freigabe RPT-Folgen
+  t_RPT_offen : BOOL ;	//Merker Rüstplatztür ist offen
+  dummy : BOOL ;	//Dummy
+  t_PI_RP_Spannen_ok : BOOL ;	//PI Spannen aller aktiven Stellen am RP fertig
+  t_PI_RP_Entspannen_ok : BOOL ;	//PI Entspannen aller aktiven Stellen am RP fertig
+  t_VSM_Folge_fertig : BOOL ;	//Folge wurde fertig
+  t_Bef_RP_Achse_pos : BOOL ;	//Befehl RP-Achse positionieren
+  t_RPL_mitPAL_belegt : BOOL ;	//Rüstplatz mit Palette belegt
+  t_Folge_fertig_mit_Z11 : BOOL ;	//Folge mit Z11 RP-Achse positionieren fertig
+  t_PI_PWFG_ausloesen : BOOL ;	//PI PW-Freigabe auslösen
+  t_RP_Pal_geloest : BOOL ;	//Palette am Rüstplatz gelöst
+  t_RP_Pal_geklemmt : BOOL ;	//Palette am Rüstplatz geklemmt
+  t_EntspannFolge_aktiv : BOOL ;	//Merker eine SpannHydraulik-Entspann-Folge ist aktiv
+  t_RPT_zu : BOOL ;	//Rüstplatztür zu
+  t_PI_Ankuppeln : BOOL ;	//PI Anstoß Ankuppeln
+  t_PI_Abkuppeln : BOOL ;	//PI Anstoß Abkuppeln
+  t_RP_0_Grad : BOOL ;	//Rüstplatz auf Stellung 0-Grad
+  t_Folge_fertig_mit_Z02 : BOOL ;	//Folge mit Z02 Ankuppeln fertig
+  t_Folge_fertig_mit_Z03 : BOOL ;	//Folge mit Z03 Spannen fertig
+  t_Folge_fertig_mit_Z04 : BOOL ;	//Folge mit Z04 RPT schließen fertig
+  t_Folge_fertig_mit_Z05 : BOOL ;	//Folge mit Z05 Abkuppeln fertig
+  t_Folge_fertig_mit_Z07 : BOOL ;	//Folge mit Z07 PW-Freigabe fertig
+  t_Folge_fertig_mit_Z08 : BOOL ;	//Folge mit Z08 Entspannen fertig
+  t_Folge_fertig_mit_Z09 : BOOL ;	//Folge mit Z09 RPT öffnen fertig
+  t_FG_von_SPH_zulaessig : BOOL ;	//PW-Freigabe von SPH-Status zulässig
+  t_PI_TASTE_STELLE_1 : BOOL ;	//pos.Flanke Taste Spannstelle 1, wenn konfiguriert
+  t_PI_TASTE_STELLE_2 : BOOL ;	//pos.Flanke Taste Spannstelle 2, wenn konfiguriert
+  t_PI_TASTE_STELLE_3 : BOOL ;	//pos.Flanke Taste Spannstelle 3, wenn konfiguriert
+  t_PI_TASTE_STELLE_4 : BOOL ;	//pos.Flanke Taste Spannstelle 4, wenn konfiguriert
+  t_PI_AUTO_nachPW : BOOL ;	//Auslöser für AUTO-Funktion nach PW-Ablauf
+  t_BLKMOVE_RET_VAL : INT ;	
+  t_DINT : DINT ;	//temporär DINT
+  t_Folge_Wert : DINT ;	//Zwischenspeicher Folge-Wert
+  t_Zustand_Wert : WORD ;	//Zwischenspeicher Zustands-Wert
+  t_SFC20_RET_VAL : INT ;	//Interner Speicher für SFC20
+  t_Taste_spannen : BOOL ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =FC_VSM_RPT: Verwaltungs- und Steuer-Modul Rüstplatz-Funktionen
+// Netzwerk-Übersicht
+// ==================
+// NW 1: FC_VSM_RPT: Verwaltungs- und Steuer-Modul Rüstplatz-Funktionen
+// NW 2: --- DOKU: UDT20-Definitionen
+// NW 3: >>> SpH für Maschine OHNE PW
+// NW 4: Lokales Abspeichern der Rüstplatzdaten
+// NW 5: TV: Rüstplatz Nachregeln unterdrücken (NOTAUS von Hawe steht an)
+// NW 6: RPL "Vorrichtung Nachregeln ein" an HAWE
+// NW 7: RESET Fehlermeldungen SpannHydraulik
+// NW 8: Merker Roboter ist angewählt
+// NW 9: Schnittstelle zu anderen Modulen:
+// NW 10: SpannHydraulik Pumpe ist ein
+// NW 11: PI PW-Daten wechseln
+// NW 12: Letzte PW-Stellung: 0=0-Grad / 1=180-Grad
+// NW 13: Rüstplatz auf Stellung 0-Grad
+// NW 14: Palette am Rüstplatz gelöst
+// NW 15: Palette am Rüstplatz geklemmt
+// NW 16: Auslöser für AUTO-Funktion nach PW-Ablauf
+// NW 17: PW in GRST und NC-PW-Ablauf nicht aktiv
+// NW 18: PW-Freigabe von SPH-Status zulässig
+// NW 19: PI PW-Freigabe auslösen
+// NW 20: PI Auslöser Spannen
+// NW 21: PI Auslöser Entspannen
+// NW 22: Rüstplatz mit Palette belegt
+// NW 23: RESET aller KONF_Stellen SpannHydraulik
+// NW 24: Befehl RP-Achse positionieren
+// NW 25: Anwahl FASTEMS
+// NW 26: Aufsatzplatte auf Ruestplatz vorhanden
+// NW 27: Absoluter Sprung
+// NW 28: Rüstplatz: Palette mit Nullpunktspannsystem
+// NW 29: Anstoss Ankuppeln
+// NW 30: Anstoss Abkuppeln
+// NW 31: Merker Rüstplatztür ist offen
+// NW 32: pos.Flanke Taste Spannstelle 1, wenn konfiguriert
+// NW 33: RPL-Spannstelle 1 ist mit RPL-BDP-Taste aktiviert
+// NW 34: Rüstplatz SpannStelle 1 ist aktiviert
+// NW 35: pos.Flanke Taste Spannstelle 2, wenn konfiguriert
+// NW 36: RPL-Spannstelle 2 ist mit RPL-BDP-Taste aktiviert
+// NW 37: Rüstplatz SpannStelle 2 ist aktiviert
+// NW 38: pos.Flanke Taste Spannstelle 3, wenn konfiguriert
+// NW 39: RPL-Spannstelle 3 ist mit RPL-BDP-Taste aktiviert
+// NW 40: Rüstplatz SpannStelle 3 ist aktiviert
+// NW 41: pos.Flanke Taste Spannstelle 4, wenn konfiguriert
+// NW 42: RPL-Spannstelle 4 ist mit RPL-BDP-Taste aktiviert
+// NW 43: Rüstplatz SpannStelle 4 ist aktiviert
+// NW 44: PI Spannen aller aktiven Stellen am RP fertig
+// NW 45: PI Entspannen aller aktiven Stellen am RP fertig
+// NW 46: HMI-Zeile aktiv decodieren
+// NW 47: HMI: SpannHydraulik Rüstplatz angewählt
+// NW 48: HMI: Automatisch Starten einschalten/auschalten
+// NW 49: HMI: "Automatisch-Starten" ist angewählt
+// NW 50: HMI:"Tür auf nach Programm-Ende" einschalten/ausschalten
+// NW 51: HMI: "Tür auf nach Programm-Ende" ist angewählt
+// NW 52: Merker Freigabe RPT-Folgen
+// NW 53: Merker EK-Tasten sind zulässig
+// NW 54: Folgen aus DB kopieren
+// NW 55: A1: 00-01-02-03-00 Spannen bei offener RPT
+// NW 56: B1: 00-01-02-08-00 Entspannen bei offener RPT
+// NW 57: C2: 00-09-00 RPT entriegeln + öffnen
+// NW 58: D1: 00-01-02-00 Ankuppeln (Auftrag vom RS)
+// NW 59: D2: 00-05-00 Abkuppeln (Auftrag vom RS)
+// NW 60: E1: 00-04-05-07-00 PW-FG (ABST_SPH=1;ABST_RPAx=0)
+// NW 61: E2: 00-04-07-00 PW-FG (ABST_SPH=0;ABST_RPAx=0)
+// NW 62: E3: 00-04-05-10-07-00 PW-FG (ABST_SPH=1;ABST_RPAx=1)
+// NW 63: E4: 00-04-10-07-00 PW-FG (ABST_SPH=0;ABST_RPAx=1)
+// NW 64: E5: 00-04-01-02-03-05-07-00 PW-FG Spannen ohne RP-Achse (Auto)
+// NW 65: E6: 00-04-01-02-03-05-10-07-00 PW-FG Spannen mit RP-Achse(Auto)
+// NW 66: E7: 00-04-07-00 PW-FG bei Nullpunktspannungssystem
+// NW 67: E8: 00-04-07-00 PW-FG SpH ohne PROP ohne Rüstplatz-Achse
+// NW 68: F1: 00-04-01-02-03-00 Spannen mit RPT schließen
+// NW 69: G1: 00-04-01-02-08-00 Entspannen mit RPT schließen
+// NW 70: H1: 00-04-00 Roboter: RPT schließen
+// NW 71: H2: 00-09-00 Roboter: RPT öffnen
+// NW 72: I1: 00-01-02-03-00 Roboter: Spannen
+// NW 73: K1: 00-01-02-08-00 Roboter: Entspannen
+// NW 74: L1: 00-05-07-00 Roboter: PW-FG (mit SPH ohne RP-Achse)
+// NW 75: L2: 00-01-05-10-07-00 Roboter: PW-FG (mit SPH mit RP-Achse)
+// NW 76: M1: 00-01-11-00 RP-Achse positionieren mit BDP-Tasten
+// NW 77: M2: 00-01-11-00 RP-Achse positionieren mit Roboter
+// NW 78: PI Z00: Grundstellung
+// NW 79: Folge mit Z02 Ankuppeln fertig
+// NW 80: Folge mit Z03 Spannen fertig
+// NW 81: Folge mit Z04 RPT schließen fertig
+// NW 82: Folge mit Z05 Abkuppeln fertig
+// NW 83: Folge mit Z07 PW-Freigabe fertig
+// NW 84: Folge mit Z08 Entspannen fertig
+// NW 85: Folge mit Z09 RPT öffnen fertig
+// NW 86: Folge mit Z11 RP-Achse positionieren fertig
+// NW 87: Folge wurde fertig
+// NW 88: Folgen: ALLE löschen
+// NW 89: RPT-Folgen-Abbruch auslösen
+// NW 90: STATUS "Folge_alt" aktualisieren
+// NW 91: Folge im DB abspeichern
+// NW 92: Zustand aus DB kopieren
+// NW 93: Zustands-Graph initialisieren
+// NW 94: Z00: Grundstellung
+// NW 95: Z01: Paletten-Klemmung einschalten
+// NW 96: Z02: Ankuppeln
+// NW 97: Z03: Spannen
+// NW 98: Z04: RPT schließen
+// NW 99: Z05: Abkuppeln
+// NW 100: Z07: PW-Freigabe aktivieren
+// NW 101: Z08: Entspannen
+// NW 102: Z09: RPT öffnen
+// NW 103: Z10: RP-Achse auf 0-Grad positionieren für PW
+// NW 104: Z11: RP-Achse positionieren
+// NW 105: Z15: Abbruch
+// NW 106: Zustand im DB abspeichern
+// NW 107: RPT-Folge-Abbruch wurde aktiviert
+// NW 108: Freigabe RPT-Tür-Zylinder öffnen
+// NW 109: Freigabe RPT-Tür-Zylinder schließen
+// NW 110: SOKO: Anforderung Rüstplatztüre(n) schließen
+// NW 111: SOKO: Anforderung Rüstplatztüre(n) öffnen
+// NW 112: Merker eine SpannHydraulik-Spann-Folge ist aktiv
+// NW 113: Merker eine SpannHydraulik-Entspann-Folge ist aktiv
+// NW 114: M-Ausgang: Spannhydraulik Lampe Spannstelle 1
+// NW 115: M-Ausgang: Spannhydraulik Lampe Spannstelle 2
+// NW 116: M-Ausgang: Lampe Taste SpannHydraulik spannen
+// NW 117: M-Ausgang: Lampe Taste SpannHydraulik entspannen
+// NW 118: Merker RP hat Voraussetzungen für PW-Freigabe auslösen
+// NW 119: Status "LeerPalette" am Rüstplatz löst PW-Freigabe aus
+// NW 120: PW-Freigabe OHNE Rundspeicher ist aktiv
+// NW 121: FG-PW Status letzter PLC-Zyklus
+// NW 122: VSM-intern Freigabe Palette am RPL-Rundspeicher
+// NW 123: M-Ausgang: Lampe Taste PW Freigabe
+// NW 124: RundSpeicher Rüstplatz Freigabe
+// NW 125: M-AUSGANG: Rückschlagventil Entspann-Leitung RPL öffnen
+// NW 126: M-Ausgang: SpannHydraulik Pumpe ein
+// NW 127: MA H4-94.2 Auflagenkontrolle Luft-Reinigung (hoher ALK-Druck)
+// NW 128: Timer Laufzeit Auflagenkontrolle "Luft-Reinigung" entlüften
+// NW 129: MA H4-94.4 Auflagenkontrolle Luft-Messung (niedriger ALK-Druck)
+// NW 130: MA H4-93.2 Status Auflagenkontrolle Spannstelle 1 (Meldeleuchte)
+// NW 131: MA H4-93.4 Status Auflagenkontrolle Spannstelle 2 (Meldeleuchte)
+// NW 132: M-Ausgang: Freigabe SpannHydraulik Rüstplatz
+// NW 133: Anforderung an Rüstplatz-Achse: Auf PW-Wechsel-Position fahren
+// NW 134: Anforderung an Rüstplatz-Achse: (+)Fahren
+// NW 135: Bef. RPL-Achse positionieren
+// NW 136: Anforderung an HAWE: Druck 0 für Spannkreis 1 (Rüstplatz)
+// NW 137: FM-Timer START
+// NW 138: Multifunktions-Timer: aktuellen Zustand in ALT-Wert speichern
+// NW 139: 700455 Rüstplatz: Meldung Palette geklemmt fehlt!
+// NW 140: 700463 Rüstplatz: Meldung Türen zu fehlt!
+// NW 141: 700459 Rüstplatz: Meldung verriegelt fehlt!
+// NW 142: 700458 Rüstplatz: Meldung entriegelt fehlt!
+// NW 143: 700460 Rüstplatz: Meldung offen rechts fehlt!
+// NW 144: 700461 Rüstplatz: Meldung offen links fehlt!
+// NW 145: 700462 Rüstplatz: Achse nicht auf PW-Wechselposition!
+// NW 146: 702323 "WAR, FD-Spannhydraulik Filter verschmutzt"
+// NW 147: FD-Spannhydraulik OHNE PROP: max Fehlerlaufzeit bis VS-HLT
+// NW 148: FD-Spannhydraulik OHNE PROP: max Fehlerlaufzeit bis VS-HLT
+// NW 149: 700426 SpannHydraulik: Öl-Temperatur nicht ok!
+// NW 150: 700427 SpannHydraulik: Öl-Niveau zu niedrig!
+// NW 151: 700209 "SPI-VS-H, Spannhydraulik Überwachung Füllstand / Tempera
+// NW 152: Timer für Meldung: SpannHydraulik Aggregat ist ein
+// NW 153: 700431 SpannHydraulik: Motorschutzschalter ausgelöst!
+// NW 154: 700452 SpannHydraulik: Rüstplatz Spannstelle 1 nicht gespannt!
+// NW 155: 700453 SpannHydraulik: Rüstplatz Spannstelle 2 nicht gespannt!
+// NW 156: 700454 Rüstplatz: Palettenstellung nicht auf 0-Grad!
+// NW 157: 702412 "Meldung, keine PW-Freigabe; SOKO fordert ankuppeln"
+// NW 158: Zurückschreiben der lokalen Rüstplatzdaten
+// NW 159: Absprung, wenn keine Spannhydraulik
+// NW 160: ProfiBus-EINGANG-HAWE: HAWE-Signale holen auf DB-HR-Bereich
+// NW 161: >>>>> FB_SPH: Aufruf SpannHydraulik OHNE FD
+// NW 162: >>>>> FB_SPH_FD SpannHydraulik für FD-Maschinen
+// NW 163: ProfiBus-AUSGANG-HAWE: DB_HR-Bereich an HAWE senden
+// NW 164: LABEL:   SpH
+// NW 165: an HMI: Palette am Rüstplatz hat Spannhydraulik
+// NW 166: Palette besitzt Spannhydraulik
+// NW 167: Palette besitzt Spannhydraulik
+// NW 168: Palette besitzt Spannhydraulik
+// NW 169: M-Ausgang: SpannHydraulik Rüstplatz entkuppeln
+// NW 170: M-Ausgang: SpannHydraulik Rüstplatz kuppeln
+// NW 171: MA H4-03.7 Spannvorrichtung Verriegelung Palettenwechsler
+// NW 172: an RS: Rüstplatz Rückmeldung angekuppelt
+// NW 173: an SOKO: Rüstplatz Rückmeldung angekuppelt
+// NW 174: an RS: Rüstplatz Rückmeldung abgekuppelt
+// NW 175: an SOKO: SpannHydraulik am Rüstplatz drucklos
+// NW 176: ================ SpH für Maschine OHNE PW ======================
+// NW 177: ProfiBus-EINGANG-HAWE: HAWE-Signale holen auf DB-HR-Bereich
+// NW 178: >>>>> FB_SPH_PW: Aufruf SpannHydraulik OHNE PW
+// NW 179: ProfiBus-AUSGANG-HAWE: DB_HR-Bereich an HAWE senden
+// NW 180: M-Ausgang: SpannHydraulik Pumpe ein
+// NW 181: Aufruf: Rüstplatztüre entriegeln
+      U     "DB_HR".RPT_Folgen.A1_spannen_oRPT; 
+      U     "DB_HR".RPT_Folgen.B1_entspannen_oRPT; 
+      U     "DB_HR".RPT_Folgen.C2_RPT_oeffnen; 
+      U     "DB_HR".RPT_Folgen.D1_Ankuppeln; 
+      U     "DB_HR".RPT_Folgen.D2_Abkuppeln; 
+      U     "DB_HR".RPT_Folgen.E1_PWFG_mSPH_oRPAX; 
+      U     "DB_HR".RPT_Folgen.E2_PWFG_oSPH_oRPAX; 
+      U     "DB_HR".RPT_Folgen.E3_PWFG_mSPH_mRPAX; 
+      U     "DB_HR".RPT_Folgen.E4_PWFG_oSPH_mRPAX; 
+      U     "DB_HR".RPT_Folgen.E5_PWFG_mSpH_oRPAX_Auto; 
+      U     "DB_HR".RPT_Folgen.E6_PWFG_mSpH_mRPAX_Auto; 
+      U     "DB_HR".RPT_Folgen.E7_PWFG_NullpunktSpg; 
+      U     "DB_HR".RPT_Folgen.E8_PWFG_oPROP_oRPAX; 
+      U     "DB_HR".RPT_Folgen.F1_spannen_mRPT; 
+      U     "DB_HR".RPT_Folgen.G1_entspannen_mRPT; 
+      U     "DB_HR".RPT_Folgen.H1_ROB_RPT_schliessen; 
+      U     "DB_HR".RPT_Folgen.H2_ROB_RPT_oeffnen; 
+      U     "DB_HR".RPT_Folgen.I1_ROB_spannen; 
+      U     "DB_HR".RPT_Folgen.K1_ROB_entspannen; 
+      U     "DB_HR".RPT_Folgen.L1_ROB_PWFG_oRPAX; 
+      U     "DB_HR".RPT_Folgen.L2_ROB_PWFG_mRPAX; 
+      U     "DB_HR".RPT_Folgen.M1_RPAX_positionieren; 
+      U     "DB_HR".RPT_Folgen.M2_ROB_RPAX_Pos; 
+      U     "DB_HR".RPT_Zustand.Z00_Grundstellung; 
+      U     "DB_HR".RPT_Zustand.Z01_PalKlemmung_ein; 
+      U     "DB_HR".RPT_Zustand.Z02_Ankuppeln; 
+      U     "DB_HR".RPT_Zustand.Z03_Spannen; 
+      U     "DB_HR".RPT_Zustand.Z04_RPT_schliessen; 
+      U     "DB_HR".RPT_Zustand.Z05_Abkuppeln; 
+      U     "DB_HR".RPT_Zustand.Z06_PalKlemmung_aus; 
+      U     "DB_HR".RPT_Zustand.Z07_PW_FG_aktivieren; 
+      U     "DB_HR".RPT_Zustand.Z08_Entspannen; 
+      U     "DB_HR".RPT_Zustand.Z09_RPT_oeffnen; 
+      U     "DB_HR".RPT_Zustand.Z10_RPAX_0_Grad; 
+      U     "DB_HR".RPT_Zustand.Z11_RPAX_positionieren; 
+      U     "DB_HR".RPT_Zustand.Z15_Abbruch; 
+      U     "DB_HR".ABST.SpannHydraulik; 
+      U     "DB_HR".ABST.SP_MPL_Kuppeln; 
+      U     "DB_HR".ABST.SP_nur_RPL; 
+      U     "DB_HR".ABST.SP_bei_offener_RPT; 
+      U     "DB_CONFIG".ABST.SPH_VORBEREITET; 
+      U     "DB_HR".ABST.SP_ext_Nullpunktspannsys; 
+      U     "DB_HR".ABST.SP_ohne_KupplungKlemmung; 
+      U     "DB_HR".ABST.SP_SA_MTU; 
+      U     "DB_HR".ABST.SP_ohnePROP; 
+      U     "DB_HR".ABST.SP_FD; 
+      =     #dummy; 
+NETWORK
+TITLE =--- DOKU: UDT20-Definitionen
+//UDT20:
+//_165_SpH_Druck_erreicht  I_165: Tol-Fenster(+/-) "Druck erreicht" beim Spannen 
+//                                (initial: 3bar)
+//_166_SpH_Nachregeln      I_166: Tol-Fenster(-) "Nachregeln"
+//                                (initial: 10bar)
+//_167_SpH_Notaus          I_167: Tol-Fenster(-) "Druckabfall NOTAUS-Abschaltung" 
+//                                (initial: 25bar)
+//_168_SpH_Vorgabe_Steuern I_168: %-Vorgabe vom SOLL-Wert zum Steuern
+//                                (initial: 90%)
+//_169_SpH_Schwelle_Regeln I_169: %-Vorgabe vom SOLL-Wert für Übergang Regelung 
+//                                (initial: 80%)
+//_184_SpH_P_Vorr_oeffnen  I_184: Druckvorgabe für Vorrichtung öffnen
+//                                (initial: 150bar)
+//_185_SpH_P_RV_oeffnen    I_185: Druckvorgabe für Rückschlag-Ventil öffnen 
+//                                (initial: 100bar)
+//_186_SpH_gespannt_verz   I_186: Verzögerungszeit "Spannstelle gespannt" in 
+//                                [100ms] (initial: 5)
+//_187_SpH_Zeit_RV_oeffnen I_187: Laufzeit "Rückschlag-Ventil öffnen" in [100ms] 
+      SET   ; 
+      =     "DB_HR".ABST.DS_Software; 
+NETWORK
+TITLE =>>> SpH für Maschine OHNE PW
+
+      O     "DB_HR".ABST.SP_ohnePW_OFFEN_Tuer; 
+      O     "DB_HR".ABST.SP_ohnePW_ZU_Tuer; 
+      SPB   SpH2; 
+NETWORK
+TITLE =Lokales Abspeichern der Rüstplatzdaten
+
+      U(    ; 
+      UN    "MX_ABST_Rundspeicher"; 
+      SPBNB _001; 
+      CALL "BLKMOVE" (
+           SRCBLK                   := "DB_PV_SpH".SpH[1],
+           RET_VAL                  := #t_BLKMOVE_RET_VAL,
+           DSTBLK                   := "DB_PV_SpH".RPL);
+_001: U     BIE; 
+      )     ; 
+      NOT   ; 
+      SPBNB _002; 
+      CALL "BLKMOVE" (
+           SRCBLK                   := "DB_PV_SpH".SpH[4],
+           RET_VAL                  := #t_BLKMOVE_RET_VAL,
+           DSTBLK                   := "DB_PV_SpH".RPL);
+_002: NOP   0; 
+NETWORK
+TITLE =TV: Rüstplatz Nachregeln unterdrücken (NOTAUS von Hawe steht an)
+
+      U     "DB_HR".HAWE.von.SK1_St1_NOTAUS; 
+      L     S5T#100MS; 
+      SV    "Tv_RPL_NachCTRL_unterdr"; 
+      NOP   0; 
+      NOP   0; 
+      NOP   0; 
+      NOP   0; 
+NETWORK
+TITLE =RPL "Vorrichtung Nachregeln ein" an HAWE
+
+      U(    ; 
+      U     "DB_HR".SpH.RPL_Element_VorrNachCtrl; 
+      U     "DB_HR".RPT_Zustand.Z03_Spannen; 
+      S     "DB_HR".SpH.RPL_NachCtrl_aktiv; 
+      U(    ; 
+      ON    "DB_HR".SpH.RPL_Element_VorrNachCtrl; 
+      O     "DB_HR".RPT_Zustand.Z07_PW_FG_aktivieren; 
+      ON    "M_MA_Maschine_Ein"; 
+      )     ; 
+      R     "DB_HR".SpH.RPL_NachCtrl_aktiv; 
+      U     "DB_HR".SpH.RPL_NachCtrl_aktiv; 
+      )     ; 
+      UN    "Tv_RPL_NachCTRL_unterdr"; 
+      =     "DB_HR".SpH.RPL_NachCtrl_ein; 
+NETWORK
+TITLE =RESET Fehlermeldungen SpannHydraulik
+
+      U     "DB_HR".ABST.SpannHydraulik; 
+      SPB   a01; 
+
+      U     "M_Ruecksetze_Fehler"; 
+      R     "DB_FEHLERMELDUNG".MELDUNG3._700451_SpH; 
+      R     "DB_FEHLERMELDUNG".WARNUNG3._700405_SpH; 
+      R     "DB_FEHLERMELDUNG".WARNUNG3._700406_SpH; 
+      R     "DB_FEHLERMELDUNG".WARNUNG3._700414_SpH; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700954_SpH; 
+      R     "DB_FEHLERMELDUNG".WARNUNG3._700410_SpH; 
+      R     "DB_FEHLERMELDUNG".WARNUNG3._700411_SpH; 
+      R     "DB_FEHLERMELDUNG".WARNUNG3._700412_SpH; 
+      R     "DB_FEHLERMELDUNG".WARNUNG3._700413_SpH; 
+a01:  NOP   0; 
+NETWORK
+TITLE =Merker Roboter ist angewählt
+//Schlüsselschalter steht auf "Roboter-Beladung"
+      U     "DB_ROB_IF".STAT.Roboter.Automation_ein; 
+      =     #t_ROB_aktiv; 
+NETWORK
+TITLE =Schnittstelle zu anderen Modulen:
+//Modul: Rüstplatz-Achse positionieren
+//====================================
+//"DB_PW_DATA".Automatik.bRP_NCAchse  Anf: RP-Achse auf PW-Wechselposition fahren
+//"DB_PW_DATA".bRP_0Grad              Mel: RP-Achse auf PW-Wechselpos(SW-Nocke)
+//"DB_HR".RPT.Anf_RPAX_POSplus        Anf: Rüstplatz-Achse (+)Fahren
+//"DB_HR".RPT.Anf_RPAX_POSminus       Anf: Rüstplatz-Achse (-)Fahren
+//
+//Modul: Palettenwechsler
+//=======================
+//"DB_HR".SpH.Anf_PalSpg_ein          Anf: PalettenSpannung am RP einschalten
+//"DB_HR".RPT.RP_PWFG_oRSP_aktiv      Mel: PW-Freigabe am Rüstplatz OHNE          
+//                                         Rundspeicher ist aktiv
+//Modul: SpannHydraulik
+//=====================
+//"DB_HR".anSpannHydraulik.Anf_Spannen    Anf: an SpannHydraulik: Spannen
+//"DB_HR".PalV_RP.STAT_St1_gespannt       Mel: Rüstpaltz Stelle 1 gespannt
+//"DB_HR".PalV_RP.STAT_St2_gespannt       Mel: Rüstpaltz Stelle 2 gespannt
+//"DB_HR".PalV_RP.STAT_St3_gespannt       Mel: Rüstpaltz Stelle 3 gespannt
+//"DB_HR".PalV_RP.STAT_St4_gespannt       Mel: Rüstpaltz Stelle 4 gespannt
+//"DB_HR".anSpannHydraulik.Anf_Entspannen Anf: an SpannHydraulik: Entspannen
+//"DB_HR".PalV_RP.STAT_St1_entspannt      Mel: Rüstplatz Stelle 1 entspannt
+//"DB_HR".PalV_RP.STAT_St2_entspannt      Mel: Rüstplatz Stelle 2 entspannt
+//"DB_HR".PalV_RP.STAT_St3_entspannt      Mel: Rüstplatz Stelle 3 entspannt
+//"DB_HR".PalV_RP.STAT_St4_entspannt      Mel: Rüstplatz Stelle 4 entspannt
+//"DB_HR".anSpannHydraulik.Anf_Ankuppeln  Anf: Ankuppeln Spannkreis 1 (Rüstplatz)
+//"DB_HR".anSpannHydraulik.Anf_Abkuppeln  Anf: Abkuppeln Spannkreis 1 (Rüstplatz)
+//
+//
+      U     "I_PW_Tueren_zu"; 
+      UN    "MX_ABST_Rundspeicher"; 
+      O     ; 
+      U     "I_PS_RPL_TUER_VORNE_ZU"; 
+      U     "MX_ABST_Rundspeicher"; 
+      =     #t_RPT_zu; 
+NETWORK
+TITLE =SpannHydraulik Pumpe ist ein
+
+      U     "I_SP_HYD_EIN"; 
+      =     "DB_HR".SpH.SPH_Pumpe_ist_ein; 
+NETWORK
+TITLE =PI PW-Daten wechseln
+//Datentausch erfolgt, wenn PW in Grundstellung meldet und die letzte 
+//abgespeicherte Drehstellung von der neuen verschieden ist.
+//Dadurch kommt es bei PW-Abbruch + Freifahren rückwärts zu keinem Datentausch, 
+//weil die neue_Endstellung = letzte_Endstellung
+      U(    ; 
+      U     "I_PW_180_GRAD_M62"; 
+      UN    "DB_HR".RPT.letzte_PW_Stellung; 
+      O     ; 
+      U     "I_PW_0_GRAD_M61"; 
+      U     "DB_HR".RPT.letzte_PW_Stellung; 
+      )     ; 
+      U     "DB_HR".RPT.PWinGRSTundNICHTaktiv; 
+      =     "DB_HR".SpH.PI_PW_DataChange; 
+NETWORK
+TITLE =Letzte PW-Stellung: 0=0-Grad / 1=180-Grad
+
+      U     "I_PW_180_GRAD_M62"; 
+      U     "DB_HR".RPT.PWinGRSTundNICHTaktiv; 
+      S     "DB_HR".RPT.letzte_PW_Stellung; 
+      U     "I_PW_0_GRAD_M61"; 
+      U     "DB_HR".RPT.PWinGRSTundNICHTaktiv; 
+      R     "DB_HR".RPT.letzte_PW_Stellung; 
+      NOP   0; 
+NETWORK
+TITLE =Rüstplatz auf Stellung 0-Grad
+
+      U     "DB_PW_DATA".bRP_0Grad; 
+      UN    "MX_ABST_Rundspeicher"; 
+      O     ; 
+      U     "I_PS_RPL_GST"; 
+      U     "MX_ABST_Rundspeicher"; 
+      =     #t_RP_0_Grad; 
+NETWORK
+TITLE =Palette am Rüstplatz gelöst
+
+      U     "I_PW_RPL_PAL_GELOEST"; 
+      =     #t_RP_Pal_geloest; 
+NETWORK
+TITLE =Palette am Rüstplatz geklemmt
+
+      U     "I_PW_RPL_PAL_GEKLEMMT"; 
+      =     #t_RP_Pal_geklemmt; 
+NETWORK
+TITLE =Auslöser für AUTO-Funktion nach PW-Ablauf
+//Nur in BA-Automatik:
+//Wenn unter ANWENDER Auto-Entspannen EIN ist, erfolgt nach dem Ablauf der 
+//Palette 
+//auf Rüstplatz ablegen:
+//- Rüstplatz-Tür öffnen, wenn keine SpH-Funktion angewählt ist
+//- Entspannen der Vorrichtung und öffnen der Rüstplatz-Tür
+      U(    ; 
+      U     "M_PW_GRDST"; 
+      UN    "MX_ABST_Rundspeicher"; 
+      O     ; 
+      UN    "MX_RPL_Auftrag"; 
+      U     "MX_ABST_Rundspeicher"; 
+      )     ; 
+      FP    "DB_HR".RPT.HM_PI_RPL; 
+      U     "M_Automatik_Betrieb"; 
+      U     "DB_HR".RPT.HMI_TuerAuf_PrgEnde; 
+      =     #t_PI_AUTO_nachPW; 
+NETWORK
+TITLE =PW in GRST und NC-PW-Ablauf nicht aktiv
+//"DB_NC_PLC".PW_NC_Aktiv
+//ausgeblendet,weil sonst bei aktivem M60 keine
+//Spann- und Freigabe-Funktionen möglich sind
+      U     "M_PW_GRDST"; 
+      U(    ; 
+      ON    "DB_NC_PLC".PW_NC_Aktiv; 
+      O     "m_eins"; 
+      )     ; 
+      =     "DB_HR".RPT.PWinGRSTundNICHTaktiv; 
+NETWORK
+TITLE =PW-Freigabe von SPH-Status zulässig
+
+      U(    ; 
+      O     "DB_PV_SpH".RPL.Stelle[1].STAT_gespannt; 
+      ON    "DB_PV_SpH".RPL.Stelle[1].KONF_mitSPH; 
+      )     ; 
+      U(    ; 
+      O     "DB_PV_SpH".RPL.Stelle[2].STAT_gespannt; 
+      ON    "DB_PV_SpH".RPL.Stelle[2].KONF_mitSPH; 
+      )     ; 
+      U(    ; 
+      O     "DB_PV_SpH".RPL.Stelle[3].STAT_gespannt; 
+      ON    "DB_PV_SpH".RPL.Stelle[3].KONF_mitSPH; 
+      )     ; 
+      U(    ; 
+      O     "DB_PV_SpH".RPL.Stelle[4].STAT_gespannt; 
+      ON    "DB_PV_SpH".RPL.Stelle[4].KONF_mitSPH; 
+      )     ; 
+      ON    "DB_HR".ABST.SpannHydraulik; 
+      =     #t_FG_von_SPH_zulaessig; 
+NETWORK
+TITLE =PI PW-Freigabe auslösen
+//01.12.2006 / HR
+//Nur noch bei Maschinen OHNE Rundspeicher
+      U(    ; 
+      U     "DB_PW_DATA".bFreigabeAnforderung; 
+      FP    "DB_HR".RPT.HM_PI_RPL_FG; 
+      O     ; 
+      U(    ; 
+      L     "DB_PAL_NR".Platz[1].Status; 
+      L     2; 
+      ==I   ; 
+      )     ; 
+      UN    "DB_HR".RPT.RP_PWFG_oRSP_aktiv; 
+      U     #t_FG_von_SPH_zulaessig; 
+      U     "DB_PLC_MD_DB20".UDHex._09_BIT4_Folgebearbeitun; 
+      )     ; 
+      U     "DB_PW_DATA".bPW_GRDST; 
+      UN    "MX_ABST_Rundspeicher"; 
+      U(    ; 
+      O     "I_PW_RPL_SPANNDRUCK_OK"; 
+      ON    "DB_HR".ABST.SP_SA_MTU; 
+      )     ; 
+      UN    "DB_HR".FASTEMS.ABST_FASTEMS; 
+      =     "DB_HR".SpH.M_Aktor_PWFG_ausloesen; 
+      U     "DB_HR".SpH.M_Aktor_PWFG_ausloesen; 
+      U(    ; 
+      U(    ; 
+      L     "DB_PAL_NR".Platz[1].Status; 
+      L     1; 
+      ==I   ; 
+      )     ; 
+      NOT   ; 
+      )     ; 
+      =     #t_PI_PWFG_ausloesen; 
+NETWORK
+TITLE =PI Auslöser Spannen
+
+      U(    ; 
+      U     "I_SP_HYD_RPL_SPANNEN"; 
+      FP    "DB_HR".SpH.HM_PI_T_Spannen; 
+      U(    ; 
+      U(    ; 
+      L     "DB_PAL_NR".Platz[1].Status; 
+      L     1; 
+      ==I   ; 
+      )     ; 
+      NOT   ; 
+      O     #t_ROB_aktiv; 
+      )     ; 
+      =     #t_Taste_spannen; 
+      U     #t_Taste_spannen; 
+      O     "DB_HR".RPT_Folgen.I1_ROB_spannen; 
+      O     "DB_HR".RPT_Folgen.E5_PWFG_mSpH_oRPAX_Auto; 
+      O     "DB_HR".RPT_Folgen.E6_PWFG_mSpH_mRPAX_Auto; 
+      )     ; 
+      FP    "DB_HR".RPT.HM_PI_Ausloeser_Spannen; 
+      =     "DB_HR".RPT.PI_Ausloeser_Spannen; 
+NETWORK
+TITLE =PI Auslöser Entspannen
+
+      U(    ; 
+      O     "I_SP_HYD_RPL_LOESEN"; 
+      O     "DB_HR".RPT_Folgen.K1_ROB_entspannen; 
+      O     #t_PI_AUTO_nachPW; 
+      )     ; 
+      FP    "DB_HR".RPT.HM_PI_Ausloeser_Entspann; 
+      =     "DB_HR".RPT.PI_Ausloeser_Entspann; 
+NETWORK
+TITLE =Rüstplatz mit Palette belegt
+
+      UN    "MX_ABST_Rundspeicher"; 
+      U(    ; 
+      L     "DB_PAL_NR".Platz[1].Pal_Nr; 
+      L     0; 
+      <>I   ; 
+      )     ; 
+      O     ; 
+      U     "MX_ABST_Rundspeicher"; 
+      U(    ; 
+      L     "DB_PAL_NR".Platz[4].Pal_Nr; 
+      L     0; 
+      <>I   ; 
+      )     ; 
+      =     #t_RPL_mitPAL_belegt; 
+NETWORK
+TITLE =RESET aller KONF_Stellen SpannHydraulik
+
+      UN    "DB_HR".ABST.SpannHydraulik; 
+      =     L     21.0; 
+      U     L     21.0; 
+      SPBNB _003; 
+      L     0; 
+      T     "DB_PV_SpH".SpH[0].Stelle[1].KONF_Element; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+_003: U     BIE; 
+      R     "DB_PV_SpH".SpH[0].Stelle[1].KONF_mitSPH; 
+      U     L     21.0; 
+      BLD   102; 
+      R     "DB_PV_SpH".SpH[0].Stelle[2].KONF_mitSPH; 
+      U     L     21.0; 
+      BLD   102; 
+      R     "DB_PV_SpH".SpH[0].Stelle[3].KONF_mitSPH; 
+      U     L     21.0; 
+      BLD   102; 
+      R     "DB_PV_SpH".SpH[0].Stelle[4].KONF_mitSPH; 
+      U     L     21.0; 
+      BLD   102; 
+      R     "DB_PV_SpH".RPL.Stelle[1].KONF_mitSPH; 
+      U     L     21.0; 
+      BLD   102; 
+      R     "DB_PV_SpH".RPL.Stelle[2].KONF_mitSPH; 
+      U     L     21.0; 
+      BLD   102; 
+      R     "DB_PV_SpH".RPL.Stelle[3].KONF_mitSPH; 
+      U     L     21.0; 
+      BLD   102; 
+      R     "DB_PV_SpH".RPL.Stelle[4].KONF_mitSPH; 
+      U     L     21.0; 
+      BLD   102; 
+      R     "DB_PV_SpH".SpH[2].Stelle[1].KONF_mitSPH; 
+      U     L     21.0; 
+      BLD   102; 
+      R     "DB_PV_SpH".SpH[2].Stelle[2].KONF_mitSPH; 
+      U     L     21.0; 
+      BLD   102; 
+      R     "DB_PV_SpH".SpH[2].Stelle[3].KONF_mitSPH; 
+      U     L     21.0; 
+      BLD   102; 
+      R     "DB_PV_SpH".SpH[2].Stelle[4].KONF_mitSPH; 
+      U     L     21.0; 
+      BLD   102; 
+      R     "DB_PV_SpH".SpH[3].Stelle[1].KONF_mitSPH; 
+      U     L     21.0; 
+      BLD   102; 
+      R     "DB_PV_SpH".SpH[3].Stelle[2].KONF_mitSPH; 
+      U     L     21.0; 
+      BLD   102; 
+      R     "DB_PV_SpH".SpH[3].Stelle[3].KONF_mitSPH; 
+      U     L     21.0; 
+      BLD   102; 
+      R     "DB_PV_SpH".SpH[3].Stelle[4].KONF_mitSPH; 
+      U     L     21.0; 
+      BLD   102; 
+      R     "DB_PV_SpH".SpH[4].Stelle[1].KONF_mitSPH; 
+      U     L     21.0; 
+      BLD   102; 
+      R     "DB_PV_SpH".SpH[4].Stelle[2].KONF_mitSPH; 
+      U     L     21.0; 
+      BLD   102; 
+      R     "DB_PV_SpH".SpH[4].Stelle[3].KONF_mitSPH; 
+      U     L     21.0; 
+      BLD   102; 
+      R     "DB_PV_SpH".SpH[4].Stelle[4].KONF_mitSPH; 
+      U     L     21.0; 
+      BLD   102; 
+      R     "DB_PV_SpH".SpH[5].Stelle[1].KONF_mitSPH; 
+      U     L     21.0; 
+      BLD   102; 
+      R     "DB_PV_SpH".SpH[5].Stelle[2].KONF_mitSPH; 
+      U     L     21.0; 
+      BLD   102; 
+      R     "DB_PV_SpH".SpH[5].Stelle[3].KONF_mitSPH; 
+      U     L     21.0; 
+      BLD   102; 
+      R     "DB_PV_SpH".SpH[5].Stelle[4].KONF_mitSPH; 
+      U     L     21.0; 
+      BLD   102; 
+      R     "DB_PV_SpH".SpH[6].Stelle[1].KONF_mitSPH; 
+      U     L     21.0; 
+      BLD   102; 
+      R     "DB_PV_SpH".SpH[6].Stelle[2].KONF_mitSPH; 
+      U     L     21.0; 
+      BLD   102; 
+      R     "DB_PV_SpH".SpH[6].Stelle[3].KONF_mitSPH; 
+      U     L     21.0; 
+      BLD   102; 
+      R     "DB_PV_SpH".SpH[6].Stelle[4].KONF_mitSPH; 
+      U     L     21.0; 
+      BLD   102; 
+      R     "DB_PV_SpH".SpH[7].Stelle[1].KONF_mitSPH; 
+      U     L     21.0; 
+      BLD   102; 
+      R     "DB_PV_SpH".SpH[7].Stelle[2].KONF_mitSPH; 
+      U     L     21.0; 
+      BLD   102; 
+      R     "DB_PV_SpH".SpH[7].Stelle[3].KONF_mitSPH; 
+      U     L     21.0; 
+      BLD   102; 
+      R     "DB_PV_SpH".SpH[7].Stelle[4].KONF_mitSPH; 
+NETWORK
+TITLE =Befehl RP-Achse positionieren
+
+      U(    ; 
+      U     "I_RPL_T_DREHEN"; 
+      U     #t_RPT_zu; 
+      O     ; 
+      U     "I_RPL_T_DREHEN"; 
+      U     "I_RPL_T_ZUSTIMM"; 
+      UN    #t_RPT_zu; 
+      )     ; 
+      UN    #t_ROB_aktiv; 
+      U     "DB_HR".ABST.RP_mit_Achse; 
+      =     #t_Bef_RP_Achse_pos; 
+NETWORK
+TITLE =Anwahl FASTEMS
+
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.HASYS_FASTEMS; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.HASYS_FASTEMS_VORBER; //"DB_IN".EMX_RPL_Pal_mit_NPSpS; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.HASYS_FASREMS_V3X; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.HASYS_FASTEMS_V3X_RPC; 
+      SPBN  FAST; 
+NETWORK
+TITLE =Aufsatzplatte auf Ruestplatz vorhanden
+
+      U     "I_PC_FIXTURE_EXIST"; 
+      =     "DB_IN".EMX_FIXTURE_ON_SUS; 
+NETWORK
+TITLE =Absoluter Sprung
+
+      SPA   TEMS; 
+
+NETWORK
+TITLE =Rüstplatz: Palette mit Nullpunktspannsystem
+//an: - Sonder-Software
+//    - Palettenspeicher
+FAST: U     "DB_HR".ABST.SP_ext_Nullpunktspannsys; 
+      =     "DB_IN".EMX_FIXTURE_ON_SUS; 
+NETWORK
+TITLE =Anstoss Ankuppeln
+
+TEMS: U(    ; 
+      U     "DB_HR".RPT.RPL_RS_Anf_ankuppeln; 
+      FP    "DB_HR".RPT.HM_PI_RS_Anf_ankuppeln; 
+      U     "MX_ABST_Rundspeicher"; 
+      O     ; 
+      U     "DB_OUT".AMX_SUS_COUPLE; 
+      UN    "I_SP_RPL_GEKUPPELT"; 
+      UN    "MX_ABST_Rundspeicher"; 
+      )     ; 
+      U     "DB_PLC_MD_DB20".UDHex._27_Bit3_RPLmitKupplung; 
+      =     #t_PI_Ankuppeln; 
+NETWORK
+TITLE =Anstoss Abkuppeln
+
+      U     "DB_HR".RPT.RPL_RS_Anf_abkuppeln; 
+      FP    "DB_HR".RPT.HM_PI_RS_Anf_abkuppeln; 
+      U     "DB_PLC_MD_DB20".UDHex._27_Bit3_RPLmitKupplung; 
+      =     #t_PI_Abkuppeln; 
+NETWORK
+TITLE =Merker Rüstplatztür ist offen
+//Rückmeldungen für "offen" nur bei automatischer Tür.
+//Ohne automatische Tür gilt die RPT als offen, wenn sie entriegelt ist.
+      U(    ; 
+      U(    ; 
+      U     "I_PW_RP_TUER_1_OFFEN"; 
+      U     "I_PW_RP_TUER_2_OFFEN"; 
+      O     "DB_OUT".AmxSusDoorOpen; 
+      )     ; 
+      U     "DB_HR".ABST.Automatische_RPT; 
+      O     ; 
+      UN    #t_RPT_zu; 
+      UN    "DB_HR".ABST.Automatische_RPT; 
+      )     ; 
+      U     "M_MA_Maschine_Ein"; 
+      =     #t_RPT_offen; 
+NETWORK
+TITLE =pos.Flanke Taste Spannstelle 1, wenn konfiguriert
+
+      U     "I_SP_T_SPANNSTELLE_1"; 
+      FP    "DB_HR".SpH.HM_PI_T_Stelle_1; 
+      U     "DB_PV_SpH".RPL.Stelle[1].KONF_mitSPH; 
+      =     #t_PI_TASTE_STELLE_1; 
+NETWORK
+TITLE =RPL-Spannstelle 1 ist mit RPL-BDP-Taste aktiviert
+//Gibt es nur 1 Spannstelle, so wird diese mit Anwahl in Konfiguration sofort 
+//aktiv.
+//Bei mehreren Spannstellen wird Aktiv mit Taster ein/aus-geschaltet
+      U(    ; 
+      U     #t_PI_TASTE_STELLE_1; 
+      U     "DB_HR".SpH.RP_Stelle_1_aktiviert; 
+      ON    "DB_PV_SpH".RPL.Stelle[1].KONF_mitSPH; 
+      O     "I_ROBOT_AUTOM_EIN"; 
+      O     ; 
+      UN    "DB_PLC_MD_DB20".UDHex._33_Bit0_SPH_RPL; 
+      UN    "DB_PLC_MD_DB20".UDHex._33_Bit3_SPH_FD; 
+      )     ; 
+      R     "DB_HR".SpH.RPL_St1_Taste_aktiviert; 
+      U(    ; 
+      U     #t_PI_TASTE_STELLE_1; 
+      UN    "DB_HR".SpH.RP_Stelle_1_aktiviert; 
+      O     ; 
+      U     "DB_PV_SpH".RPL.Stelle[1].KONF_mitSPH; 
+      UN    "DB_PV_SpH".RPL.Stelle[2].KONF_mitSPH; 
+      UN    "DB_PV_SpH".RPL.Stelle[3].KONF_mitSPH; 
+      UN    "DB_PV_SpH".RPL.Stelle[4].KONF_mitSPH; 
+      )     ; 
+      U(    ; 
+      O     "DB_PLC_MD_DB20".UDHex._33_Bit0_SPH_RPL; 
+      O     "DB_PLC_MD_DB20".UDHex._33_Bit3_SPH_FD; 
+      )     ; 
+      UN    "I_ROBOT_AUTOM_EIN"; 
+      S     "DB_HR".SpH.RPL_St1_Taste_aktiviert; 
+      NOP   0; 
+NETWORK
+TITLE =Rüstplatz SpannStelle 1 ist aktiviert
+
+      U     "DB_HR".SpH.RPL_St1_Taste_aktiviert; 
+      UN    "I_ROBOT_AUTOM_EIN"; 
+      O     ; 
+      U(    ; 
+      O     "DB_ROB_IF".IN.Stelle[1].Bef_Spannen_OHNE_CTRL; 
+      O     "DB_ROB_IF".IN.Stelle[1].Bef_Spannen_MIT_CTRL; 
+      O     "DB_ROB_IF".IN.Stelle[1].Bef_Entspannen; 
+      )     ; 
+      U     "I_ROBOT_AUTOM_EIN"; 
+      =     "DB_HR".SpH.RP_Stelle_1_aktiviert; 
+NETWORK
+TITLE =pos.Flanke Taste Spannstelle 2, wenn konfiguriert
+
+      U     "I_SP_T_SPANNSTELLE_2"; 
+      FP    "DB_HR".SpH.HM_PI_T_Stelle_2; 
+      U     "DB_PV_SpH".RPL.Stelle[2].KONF_mitSPH; 
+      =     #t_PI_TASTE_STELLE_2; 
+NETWORK
+TITLE =RPL-Spannstelle 2 ist mit RPL-BDP-Taste aktiviert
+
+      U(    ; 
+      U     #t_PI_TASTE_STELLE_2; 
+      U     "DB_HR".SpH.RP_Stelle_2_aktiviert; 
+      ON    "DB_PV_SpH".RPL.Stelle[2].KONF_mitSPH; 
+      O     "I_ROBOT_AUTOM_EIN"; 
+      O     ; 
+      UN    "DB_PLC_MD_DB20".UDHex._33_Bit0_SPH_RPL; 
+      UN    "DB_PLC_MD_DB20".UDHex._33_Bit3_SPH_FD; 
+      )     ; 
+      R     "DB_HR".SpH.RPL_St2_Taste_aktiviert; 
+      U     #t_PI_TASTE_STELLE_2; 
+      UN    "DB_HR".SpH.RP_Stelle_2_aktiviert; 
+      U(    ; 
+      O     "DB_PLC_MD_DB20".UDHex._33_Bit0_SPH_RPL; 
+      O     "DB_PLC_MD_DB20".UDHex._33_Bit3_SPH_FD; 
+      )     ; 
+      UN    "I_ROBOT_AUTOM_EIN"; 
+      S     "DB_HR".SpH.RPL_St2_Taste_aktiviert; 
+      NOP   0; 
+NETWORK
+TITLE =Rüstplatz SpannStelle 2 ist aktiviert
+
+      U     "DB_HR".SpH.RPL_St2_Taste_aktiviert; 
+      UN    "I_ROBOT_AUTOM_EIN"; 
+      O     ; 
+      U(    ; 
+      O     "DB_ROB_IF".IN.Stelle[2].Bef_Spannen_OHNE_CTRL; 
+      O     "DB_ROB_IF".IN.Stelle[2].Bef_Spannen_MIT_CTRL; 
+      O     "DB_ROB_IF".IN.Stelle[2].Bef_Entspannen; 
+      )     ; 
+      U     "I_ROBOT_AUTOM_EIN"; 
+      =     "DB_HR".SpH.RP_Stelle_2_aktiviert; 
+NETWORK
+TITLE =pos.Flanke Taste Spannstelle 3, wenn konfiguriert
+
+      U     "I_SP_T_SPANNSTELLE_3"; 
+      FP    "DB_HR".SpH.HM_PI_T_Stelle_3; 
+      U     "DB_PV_SpH".RPL.Stelle[3].KONF_mitSPH; 
+      =     #t_PI_TASTE_STELLE_3; 
+NETWORK
+TITLE =RPL-Spannstelle 3 ist mit RPL-BDP-Taste aktiviert
+
+      U(    ; 
+      U     #t_PI_TASTE_STELLE_3; 
+      U     "DB_HR".SpH.RP_Stelle_3_aktiviert; 
+      ON    "DB_PV_SpH".RPL.Stelle[3].KONF_mitSPH; 
+      O     "I_ROBOT_AUTOM_EIN"; 
+      O     ; 
+      UN    "DB_PLC_MD_DB20".UDHex._33_Bit0_SPH_RPL; 
+      UN    "DB_PLC_MD_DB20".UDHex._33_Bit3_SPH_FD; 
+      )     ; 
+      R     "DB_HR".SpH.RPL_St3_Taste_aktiviert; 
+      U     #t_PI_TASTE_STELLE_3; 
+      UN    "DB_HR".SpH.RP_Stelle_3_aktiviert; 
+      U(    ; 
+      O     "DB_PLC_MD_DB20".UDHex._33_Bit0_SPH_RPL; 
+      O     "DB_PLC_MD_DB20".UDHex._33_Bit3_SPH_FD; 
+      )     ; 
+      UN    "I_ROBOT_AUTOM_EIN"; 
+      S     "DB_HR".SpH.RPL_St3_Taste_aktiviert; 
+      NOP   0; 
+NETWORK
+TITLE =Rüstplatz SpannStelle 3 ist aktiviert
+
+      U     "DB_HR".SpH.RPL_St3_Taste_aktiviert; 
+      UN    "I_ROBOT_AUTOM_EIN"; 
+      O     ; 
+      U(    ; 
+      O     "DB_ROB_IF".IN.Stelle[3].Bef_Spannen_OHNE_CTRL; 
+      O     "DB_ROB_IF".IN.Stelle[3].Bef_Spannen_MIT_CTRL; 
+      O     "DB_ROB_IF".IN.Stelle[3].Bef_Entspannen; 
+      )     ; 
+      U     "I_ROBOT_AUTOM_EIN"; 
+      =     "DB_HR".SpH.RP_Stelle_3_aktiviert; 
+NETWORK
+TITLE =pos.Flanke Taste Spannstelle 4, wenn konfiguriert
+
+      U     "I_SP_T_SPANNSTELLE_4"; 
+      FP    "DB_HR".SpH.HM_PI_T_Stelle_4; 
+      U     "DB_PV_SpH".RPL.Stelle[4].KONF_mitSPH; 
+      =     #t_PI_TASTE_STELLE_4; 
+NETWORK
+TITLE =RPL-Spannstelle 4 ist mit RPL-BDP-Taste aktiviert
+
+      U(    ; 
+      U     #t_PI_TASTE_STELLE_4; 
+      U     "DB_HR".SpH.RP_Stelle_4_aktiviert; 
+      ON    "DB_PV_SpH".RPL.Stelle[4].KONF_mitSPH; 
+      O     "I_ROBOT_AUTOM_EIN"; 
+      O     ; 
+      UN    "DB_PLC_MD_DB20".UDHex._33_Bit0_SPH_RPL; 
+      UN    "DB_PLC_MD_DB20".UDHex._33_Bit3_SPH_FD; 
+      )     ; 
+      R     "DB_HR".SpH.RPL_St4_Taste_aktiviert; 
+      U     #t_PI_TASTE_STELLE_4; 
+      UN    "DB_HR".SpH.RP_Stelle_4_aktiviert; 
+      U(    ; 
+      O     "DB_PLC_MD_DB20".UDHex._33_Bit0_SPH_RPL; 
+      O     "DB_PLC_MD_DB20".UDHex._33_Bit3_SPH_FD; 
+      )     ; 
+      UN    "I_ROBOT_AUTOM_EIN"; 
+      S     "DB_HR".SpH.RPL_St4_Taste_aktiviert; 
+      NOP   0; 
+NETWORK
+TITLE =Rüstplatz SpannStelle 4 ist aktiviert
+
+      U     "DB_HR".SpH.RPL_St4_Taste_aktiviert; 
+      UN    "I_ROBOT_AUTOM_EIN"; 
+      O     ; 
+      U(    ; 
+      O     "DB_ROB_IF".IN.Stelle[4].Bef_Spannen_OHNE_CTRL; 
+      O     "DB_ROB_IF".IN.Stelle[4].Bef_Spannen_MIT_CTRL; 
+      O     "DB_ROB_IF".IN.Stelle[4].Bef_Entspannen; 
+      )     ; 
+      U     "I_ROBOT_AUTOM_EIN"; 
+      =     "DB_HR".SpH.RP_Stelle_4_aktiviert; 
+NETWORK
+TITLE =PI Spannen aller aktiven Stellen am RP fertig
+
+      U(    ; 
+      U     "DB_HR".SpH.RP_Stelle_1_aktiviert; 
+      U     "DB_PV_SpH".RPL.Stelle[1].STAT_gespannt; 
+      ON    "DB_HR".SpH.RP_Stelle_1_aktiviert; 
+      )     ; 
+      U(    ; 
+      U     "DB_HR".SpH.RP_Stelle_2_aktiviert; 
+      U     "DB_PV_SpH".RPL.Stelle[2].STAT_gespannt; 
+      ON    "DB_HR".SpH.RP_Stelle_2_aktiviert; 
+      )     ; 
+      U(    ; 
+      U     "DB_HR".SpH.RP_Stelle_3_aktiviert; 
+      U     "DB_PV_SpH".RPL.Stelle[3].STAT_gespannt; 
+      ON    "DB_HR".SpH.RP_Stelle_3_aktiviert; 
+      )     ; 
+      U(    ; 
+      U     "DB_HR".SpH.RP_Stelle_4_aktiviert; 
+      U     "DB_PV_SpH".RPL.Stelle[4].STAT_gespannt; 
+      ON    "DB_HR".SpH.RP_Stelle_4_aktiviert; 
+      )     ; 
+      FP    "DB_HR".SpH.HM_PI_RP_gespannt; 
+      =     #t_PI_RP_Spannen_ok; 
+NETWORK
+TITLE =PI Entspannen aller aktiven Stellen am RP fertig
+
+      U(    ; 
+      U     "DB_HR".SpH.RP_Stelle_1_aktiviert; 
+      U     "DB_PV_SpH".RPL.Stelle[1].STAT_entspannt; 
+      ON    "DB_HR".SpH.RP_Stelle_1_aktiviert; 
+      )     ; 
+      U(    ; 
+      U     "DB_HR".SpH.RP_Stelle_2_aktiviert; 
+      U     "DB_PV_SpH".RPL.Stelle[2].STAT_entspannt; 
+      ON    "DB_HR".SpH.RP_Stelle_2_aktiviert; 
+      )     ; 
+      U(    ; 
+      U     "DB_HR".SpH.RP_Stelle_3_aktiviert; 
+      U     "DB_PV_SpH".RPL.Stelle[3].STAT_entspannt; 
+      ON    "DB_HR".SpH.RP_Stelle_3_aktiviert; 
+      )     ; 
+      U(    ; 
+      U     "DB_HR".SpH.RP_Stelle_4_aktiviert; 
+      U     "DB_PV_SpH".RPL.Stelle[4].STAT_entspannt; 
+      ON    "DB_HR".SpH.RP_Stelle_4_aktiviert; 
+      )     ; 
+      FP    "DB_HR".SpH.HM_PI_RP_entspannt; 
+      =     #t_PI_RP_Entspannen_ok; 
+NETWORK
+TITLE =HMI-Zeile aktiv decodieren
+//HMI_Zeile_0_aktiviert   HMI Zeile 0 (Vertikal-SK1) aktiviert
+//HMI_Zeile_1_aktiviert   HMI Zeile 1 (Vertikal-SK2) aktiviert
+//HMI_Zeile_2_aktiviert   HMI Zeile 2 (Vertikal-SK3) aktiviert
+//HMI_Zeile_3_aktiviert   HMI Zeile 3 (Vertikal-SK4) aktiviert
+//HMI_Zeile_4_aktiviert   HMI Zeile 4 (Vertikal-SK5) aktiviert
+//HMI_Zeile_5_aktiviert   HMI Zeile 5 (Vertikal-SK6) aktiviert
+//HMI_Zeile_6_aktiviert   HMI Zeile 6 (Vertikal-SK7) aktiviert
+//HMI_Zeile_7_aktiviert   HMI Zeile 7 (Vertikal-SK8) aktiviert
+      CALL "BLKMOVE" (
+           SRCBLK                   := "DB_OEM".VertikalSKStatus,
+           RET_VAL                  := #t_SFC20_RET_VAL,
+           DSTBLK                   := "DB_HR".SpH.HMI);
+      U     BIE; 
+      =     #dummy; 
+NETWORK
+TITLE =HMI: SpannHydraulik Rüstplatz angewählt
+//HMI: Manuell / [SK5] Hand-Fkt SpannHydr.   Bild-Nr: 5
+      U     "DB_OEM".OEM_SpH_Ruestplatz; 
+      U     "M_Handbetrieb"; 
+      U     "DB_HR".ABST.SpannHydraulik; 
+      =     "DB_HR".SpH.HMI_SpH_Ruestplatz; 
+NETWORK
+TITLE =HMI: Automatisch Starten einschalten/auschalten
+//Wenn diese Option aktiviert ist, wird mit Taste "PW-Freigabe" bei
+//a) Palette am Rüstplatz OHNE aktivierte Spannhydraulik-Stellen
+//   - RPL-Tür geschlossen
+//   - Palette freigegeben
+//b) Palette am Rüstplatz MIT aktivierten Spannhydraulik-Stellen
+//   - RPL-Tür geschlossen
+//   - aktivierte Spannstellen der Vorrichtung gespannt
+//   - Palette freigegeben
+      U     "m_eins"; 
+      =     L     21.0; 
+      BLD   103; 
+      U     "m_eins"; 
+      =     L     21.1; 
+      BLD   103; 
+      U     "DB_HR".RPT.HMI_AutoStarten; 
+      =     L     21.2; 
+      BLD   103; 
+      UN    "DB_HR".RPT.HMI_AutoStarten; 
+      =     L     21.3; 
+      BLD   103; 
+      U     "DB_HR".RPT.HMI_AutoStarten; 
+      =     L     21.4; 
+      BLD   103; 
+      UN    "DB_HR".RPT.HMI_AutoStarten; 
+      =     L     21.5; 
+      BLD   103; 
+      CALL "FC_HMI_IO_TO_TLINE" (
+           Freigabe_AST_Hand        := L     21.0,
+           Freigabe_GST_Hand        := L     21.1,
+           Endlage_AST              := L     21.2,
+           Endlage_GST              := L     21.3,
+           Ventil_AST               := L     21.4,
+           Ventil_GST               := L     21.5,
+           Bewegungsnummer          := 141);
+      NOP   0; 
+NETWORK
+TITLE =HMI: "Automatisch-Starten" ist angewählt
+
+      U     "DB_EINRICHTFUNKTION".Bewegung_141_Minus; 
+      S     "DB_HR".RPT.HMI_AutoStarten; 
+      U     "DB_EINRICHTFUNKTION".Bewegung_141_Plus; 
+      R     "DB_HR".RPT.HMI_AutoStarten; 
+      NOP   0; 
+NETWORK
+TITLE =HMI:"Tür auf nach Programm-Ende" einschalten/ausschalten
+//Wenn diese Option aktiviert ist, wird nach dem PW-Ablauf:
+//a) Palette am Rüstplatz OHNE aktivierte Spannhydraulik-Stellen
+//   - RPL-Tür entriegelt
+//   - RPL-Tür geöffnet
+//b) Palette am Rüstplatz MIT aktivierten Spannhydraulik-Stellen
+//   - aktivierte Spannstellen der Vorrichtung entspannt
+//   - RPL-Tür entriegelt
+//   - RPL-Tür geöffnet
+      U     "m_eins"; 
+      =     L     21.0; 
+      BLD   103; 
+      U     "m_eins"; 
+      =     L     21.1; 
+      BLD   103; 
+      U     "DB_HR".RPT.HMI_TuerAuf_PrgEnde; 
+      =     L     21.2; 
+      BLD   103; 
+      UN    "DB_HR".RPT.HMI_TuerAuf_PrgEnde; 
+      =     L     21.3; 
+      BLD   103; 
+      U     "DB_HR".RPT.HMI_TuerAuf_PrgEnde; 
+      =     L     21.4; 
+      BLD   103; 
+      UN    "DB_HR".RPT.HMI_TuerAuf_PrgEnde; 
+      =     L     21.5; 
+      BLD   103; 
+      CALL "FC_HMI_IO_TO_TLINE" (
+           Freigabe_AST_Hand        := L     21.0,
+           Freigabe_GST_Hand        := L     21.1,
+           Endlage_AST              := L     21.2,
+           Endlage_GST              := L     21.3,
+           Ventil_AST               := L     21.4,
+           Ventil_GST               := L     21.5,
+           Bewegungsnummer          := 142);
+      NOP   0; 
+NETWORK
+TITLE =HMI: "Tür auf nach Programm-Ende" ist angewählt
+
+      U     "DB_EINRICHTFUNKTION".Bewegung_142_Minus; 
+      S     "DB_HR".RPT.HMI_TuerAuf_PrgEnde; 
+      U     "DB_EINRICHTFUNKTION".Bewegung_142_Plus; 
+      R     "DB_HR".RPT.HMI_TuerAuf_PrgEnde; 
+      NOP   0; 
+NETWORK
+TITLE =Merker Freigabe RPT-Folgen
+//1) PW muss in GRST und nicht aktiviert sein
+//2) HMI-Bilder "Handbedienung" müssen abgewählt sein
+      U     "DB_HR".RPT.PWinGRSTundNICHTaktiv; 
+      U(    ; 
+      UN    "DB_HR".RPT.RP_PWFG_oRSP_aktiv; 
+      UN    "MX_ABST_Rundspeicher"; 
+      O     ; 
+      UN    "DB_HR".RPT.VSM_RS_Freigabe; 
+      U     "MX_ABST_Rundspeicher"; 
+      )     ; 
+      UN    "DB_HR".SpH.HMI_SpH_Ruestplatz; 
+      =     #t_RPTFolgen_FG; 
+NETWORK
+TITLE =Merker EK-Tasten sind zulässig
+
+      U(    ; 
+      O     "DB_PV_SpH".RPL.Stelle[1].KONF_mitSPH; 
+      O     "DB_PV_SpH".RPL.Stelle[2].KONF_mitSPH; 
+      O     "DB_PV_SpH".RPL.Stelle[3].KONF_mitSPH; 
+      O     "DB_PV_SpH".RPL.Stelle[4].KONF_mitSPH; 
+      )     ; 
+      UN    #t_ROB_aktiv; 
+      =     #t_EK_Tasten_FG; 
+NETWORK
+TITLE =Folgen aus DB kopieren
+
+      CALL "BLKMOVE" (
+           SRCBLK                   := "DB_HR".RPT_Folgen,
+           RET_VAL                  := #t_SFC20_RET_VAL,
+           DSTBLK                   := #t_Folge_Wert);
+      U     BIE; 
+      =     #dummy; 
+NETWORK
+TITLE =A1: 00-01-02-03-00 Spannen bei offener RPT
+//Z00: Grundstellung
+//Z01: RP-Paletten-Klemmung einschalten
+//Z02: Ankuppeln, wenn RPL Kupplung
+//Z03: Spannen
+      U(    ; 
+      U     #t_Taste_spannen; 
+      FP    "DB_HR".RPT.HM_PI_Taste_Spannen; 
+      U     "DB_HR".ABST.SP_bei_offener_RPT; 
+      U     #t_EK_Tasten_FG; 
+      O(    ; 
+      U     "DB_EINRICHTFUNKTION".Bewegung_55_Minus; 
+      FP    "DB_HR".RPT.HM_PI_SAuto_spannen_1; 
+      U     "DB_PV_SpH".RPL.Stelle[1].KONF_mitSPH; 
+      )     ; 
+      )     ; 
+      U     #t_RPTFolgen_FG; 
+      U(    ; 
+      O     "DB_HR".SpH.RP_Stelle_1_aktiviert; 
+      O     "DB_HR".SpH.RP_Stelle_2_aktiviert; 
+      O     "DB_HR".SpH.RP_Stelle_3_aktiviert; 
+      O     "DB_HR".SpH.RP_Stelle_4_aktiviert; 
+      )     ; 
+      U(    ; 
+      O     "DB_OUT".AMX_ZPS_CLAMPED; 
+      ON    "DB_HR".ABST.SP_ext_Nullpunktspannsys; 
+      )     ; 
+      U(    ; 
+      O     "I_PW_RPL_PAL_GEKLEMMT"; 
+      ON    "DB_PLC_MD_DB20".UDHex._17_BIT7_RP_HYD_KLEMMEN; 
+      )     ; 
+      SPBNB _004; 
+      L     1; 
+      T     #t_Folge_Wert; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+_004: U     BIE; 
+      S     "DB_HR".RPT_Folgen.A1_spannen_oRPT; 
+NETWORK
+TITLE =B1: 00-01-02-08-00 Entspannen bei offener RPT
+//Z00: Grundstellung
+//Z01: RP-Paletten-Klemmung einschalten
+//Z02: Ankuppeln, wenn RPL Kupplung
+//Z08: Entspannen
+      U(    ; 
+      U     "I_SP_HYD_RPL_LOESEN"; 
+      FP    "DB_HR".SpH.HM_PI_T_Entspannen; 
+      U     "DB_HR".ABST.SP_bei_offener_RPT; 
+      U     #t_EK_Tasten_FG; 
+      O(    ; 
+      U     "DB_EINRICHTFUNKTION".Bewegung_55_Plus; 
+      FP    "DB_HR".RPT.HM_PI_SAuto_entspannen_1; 
+      U     "DB_PV_SpH".RPL.Stelle[1].KONF_mitSPH; 
+      )     ; 
+      )     ; 
+      U     #t_RPTFolgen_FG; 
+      UN    "DB_HR".SpH.RPL_Element_VorrNachCtrl; 
+      U(    ; 
+      O     "DB_HR".SpH.RP_Stelle_1_aktiviert; 
+      O     "DB_HR".SpH.RP_Stelle_2_aktiviert; 
+      O     "DB_HR".SpH.RP_Stelle_3_aktiviert; 
+      O     "DB_HR".SpH.RP_Stelle_4_aktiviert; 
+      )     ; 
+      U(    ; 
+      O     "DB_OUT".AMX_ZPS_CLAMPED; 
+      ON    "DB_HR".ABST.SP_ext_Nullpunktspannsys; 
+      )     ; 
+      U(    ; 
+      O     "I_PW_RPL_PAL_GEKLEMMT"; 
+      ON    "DB_PLC_MD_DB20".UDHex._17_BIT7_RP_HYD_KLEMMEN; 
+      )     ; 
+      SPBNB _005; 
+      L     2; 
+      T     #t_Folge_Wert; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+_005: U     BIE; 
+      S     "DB_HR".RPT_Folgen.B1_entspannen_oRPT; 
+NETWORK
+TITLE =C2: 00-09-00 RPT entriegeln + öffnen
+//Z00: Grundstellung
+//Z09: RPT öffnen
+      U(    ; 
+      U     "DB_ROB_IF".STAT.Roboter.Automation_ein; 
+      U     "DB_ROB_IF".IN.RPL.Bef_RPL_Tuer_oeffnen; 
+      FP    "DB_ROB_IF".STAT.Ruestplatz.FP_Tuere_oeffnen; 
+      O     ; 
+      U     #t_PI_AUTO_nachPW; 
+      U(    ; 
+      UN    "DB_HR".SpH.RP_Stelle_1_aktiviert; 
+      UN    "DB_HR".SpH.RP_Stelle_2_aktiviert; 
+      UN    "DB_HR".SpH.RP_Stelle_3_aktiviert; 
+      UN    "DB_HR".SpH.RP_Stelle_4_aktiviert; 
+      O     ; 
+      UN    "DB_PLC_MD_DB20".UDHex._33_Bit0_SPH_RPL; 
+      UN    "DB_PLC_MD_DB20".UDHex._33_Bit3_SPH_FD; 
+      )     ; 
+      )     ; 
+      U     #t_RPTFolgen_FG; 
+      SPBNB _006; 
+      L     8; 
+      T     #t_Folge_Wert; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+_006: U     BIE; 
+      S     "DB_HR".RPT_Folgen.C2_RPT_oeffnen; 
+NETWORK
+TITLE =D1: 00-01-02-00 Ankuppeln (Auftrag vom RS)
+//Z00: Grundstellung
+//Z01: RP-Paletten-Klemmung einschalten
+//Z02: Ankuppeln, wenn RPL Kupplung
+      U     #t_PI_Ankuppeln; 
+      SPBNB _007; 
+      L     16; 
+      T     #t_Folge_Wert; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+_007: U     BIE; 
+      S     "DB_HR".RPT_Folgen.D1_Ankuppeln; 
+NETWORK
+TITLE =D2: 00-05-00 Abkuppeln (Auftrag vom RS)
+//Z00: Grundstellung
+//Z05: Abkuppeln, wenn RPL Kupplung
+      U     #t_PI_Abkuppeln; 
+      SPBNB _008; 
+      L     L#2097152; 
+      T     #t_Folge_Wert; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+_008: U     BIE; 
+      S     "DB_HR".RPT_Folgen.D2_Abkuppeln; 
+NETWORK
+TITLE =E1: 00-04-05-07-00 PW-FG (ABST_SPH=1;ABST_RPAx=0)
+//Z00: Grundstellung
+//Z04: RPT schließen
+//Z05: Abkuppeln, wenn RPL Kupplung
+//Z07: PW-Freigabe aktivieren
+      U     #t_PI_PWFG_ausloesen; 
+      UN    #t_ROB_aktiv; 
+      UN    "DB_HR".RPT.RP_PWFG_oRSP_aktiv; 
+      UN    "DB_IN".EMX_FIXTURE_ON_SUS; 
+      U(    ; 
+      O     "DB_PV_SpH".RPL.Stelle[1].STAT_gespannt; 
+      ON    "DB_PV_SpH".RPL.Stelle[1].KONF_mitSPH; 
+      O     "DB_NC_PLC".PW_SPH_MA_entladen; 
+      )     ; 
+      U(    ; 
+      O     "DB_PV_SpH".RPL.Stelle[2].STAT_gespannt; 
+      ON    "DB_PV_SpH".RPL.Stelle[2].KONF_mitSPH; 
+      )     ; 
+      U(    ; 
+      O     "DB_PV_SpH".RPL.Stelle[3].STAT_gespannt; 
+      ON    "DB_PV_SpH".RPL.Stelle[3].KONF_mitSPH; 
+      )     ; 
+      U(    ; 
+      O     "DB_PV_SpH".RPL.Stelle[4].STAT_gespannt; 
+      ON    "DB_PV_SpH".RPL.Stelle[4].KONF_mitSPH; 
+      )     ; 
+      U     #t_RP_0_Grad; 
+      UN    "DB_HR".ABST.RP_mit_Achse; 
+      U(    ; 
+      O     "DB_HR".ABST.SpannHydraulik; 
+      O     "DB_CONFIG".ABST.SPH_VORBEREITET; 
+      )     ; 
+      U     #t_RPTFolgen_FG; 
+      UN    "DB_HR".ABST.SP_ohnePROP; 
+      UN    "DB_FEHLERMELDUNG".Meldung4._702425_RPL_NICHT_GEKLEM; 
+      SPBNB _009; 
+      L     64; 
+      T     #t_Folge_Wert; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+_009: U     BIE; 
+      S     "DB_HR".RPT_Folgen.E1_PWFG_mSPH_oRPAX; 
+NETWORK
+TITLE =E2: 00-04-07-00 PW-FG (ABST_SPH=0;ABST_RPAx=0)
+//Z00: Grundstellung
+//Z04: RPT schließen
+//Z07: PW-Freigabe aktivieren
+      U     #t_PI_PWFG_ausloesen; 
+      UN    "DB_HR".RPT.RP_PWFG_oRSP_aktiv; 
+      UN    #t_ROB_aktiv; 
+      U     #t_RP_0_Grad; 
+      UN    "DB_HR".ABST.RP_mit_Achse; 
+      UN    "DB_IN".EMX_FIXTURE_ON_SUS; 
+      UN    "DB_HR".ABST.SpannHydraulik; 
+      UN    "DB_CONFIG".ABST.SPH_VORBEREITET; 
+      U     #t_RPTFolgen_FG; 
+      UN    "DB_HR".ABST.SP_ohnePROP; 
+      UN    "DB_FEHLERMELDUNG".Meldung4._702425_RPL_NICHT_GEKLEM; 
+      SPBNB _00a; 
+      L     128; 
+      T     #t_Folge_Wert; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+_00a: U     BIE; 
+      S     "DB_HR".RPT_Folgen.E2_PWFG_oSPH_oRPAX; 
+NETWORK
+TITLE =E3: 00-04-05-10-07-00 PW-FG (ABST_SPH=1;ABST_RPAx=1)
+//Z00: Grundstellung
+//Z04: RPT schließen
+//Z05: Abkuppeln, wenn RPL Kupplung
+//Z10: RP-Achse auf 0-Grad positionieren
+//Z07: PW-Freigabe aktivieren
+      U     #t_PI_PWFG_ausloesen; 
+      UN    #t_ROB_aktiv; 
+      UN    "DB_HR".RPT.RP_PWFG_oRSP_aktiv; 
+      UN    "DB_IN".EMX_FIXTURE_ON_SUS; 
+      U(    ; 
+      O     "DB_PV_SpH".RPL.Stelle[1].STAT_gespannt; 
+      ON    "DB_PV_SpH".RPL.Stelle[1].KONF_mitSPH; 
+      )     ; 
+      U(    ; 
+      O     "DB_PV_SpH".RPL.Stelle[2].STAT_gespannt; 
+      ON    "DB_PV_SpH".RPL.Stelle[2].KONF_mitSPH; 
+      )     ; 
+      U(    ; 
+      O     "DB_PV_SpH".RPL.Stelle[3].STAT_gespannt; 
+      ON    "DB_PV_SpH".RPL.Stelle[3].KONF_mitSPH; 
+      )     ; 
+      U(    ; 
+      O     "DB_PV_SpH".RPL.Stelle[4].STAT_gespannt; 
+      ON    "DB_PV_SpH".RPL.Stelle[4].KONF_mitSPH; 
+      )     ; 
+      U     "DB_HR".ABST.RP_mit_Achse; 
+      U(    ; 
+      O     "DB_HR".ABST.SpannHydraulik; 
+      O     "DB_CONFIG".ABST.SPH_VORBEREITET; 
+      )     ; 
+      U     #t_RPTFolgen_FG; 
+      UN    "DB_HR".ABST.SP_ohnePROP; 
+      UN    "DB_FEHLERMELDUNG".Meldung4._702425_RPL_NICHT_GEKLEM; 
+      SPBNB _00b; 
+      L     256; 
+      T     #t_Folge_Wert; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+_00b: U     BIE; 
+      S     "DB_HR".RPT_Folgen.E3_PWFG_mSPH_mRPAX; 
+NETWORK
+TITLE =E4: 00-04-10-07-00 PW-FG (ABST_SPH=0;ABST_RPAx=1)
+//Z00: Grundstellung
+//Z04: RPT schließen
+//Z10: RP-Achse auf 0-Grad positionieren
+//Z07: PW-Freigabe aktivieren
+      U     #t_PI_PWFG_ausloesen; 
+      UN    "DB_HR".RPT.RP_PWFG_oRSP_aktiv; 
+      UN    #t_ROB_aktiv; 
+      U     "DB_HR".ABST.RP_mit_Achse; 
+      UN    "DB_HR".ABST.SpannHydraulik; 
+      UN    "DB_CONFIG".ABST.SPH_VORBEREITET; 
+      U     #t_RPTFolgen_FG; 
+      UN    "DB_HR".ABST.SP_ohnePROP; 
+      UN    "DB_FEHLERMELDUNG".Meldung4._702425_RPL_NICHT_GEKLEM; 
+      SPBNB _00c; 
+      L     512; 
+      T     #t_Folge_Wert; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+_00c: U     BIE; 
+      S     "DB_HR".RPT_Folgen.E4_PWFG_oSPH_mRPAX; 
+NETWORK
+TITLE =E5: 00-04-01-02-03-05-07-00 PW-FG Spannen ohne RP-Achse (Auto)
+//Z00: Grundstellung
+//Z04: RPT schließen
+//Z01: RP-Paletten-Klemmung einschalten
+//Z02: Ankuppeln, wenn RPL Kupplung
+//Z03: Spannen
+//Z05: Abkuppeln, wenn RPL Kupplung
+//Z07: PW-Freigabe aktivieren
+      U     #t_PI_PWFG_ausloesen; 
+      UN    #t_ROB_aktiv; 
+      UN    "DB_HR".RPT.RP_PWFG_oRSP_aktiv; 
+      U(    ; 
+      O     "DB_PV_SpH".RPL.Stelle[1].KONF_mitSPH; 
+      O     "DB_PV_SpH".RPL.Stelle[2].KONF_mitSPH; 
+      O     "DB_PV_SpH".RPL.Stelle[3].KONF_mitSPH; 
+      O     "DB_PV_SpH".RPL.Stelle[4].KONF_mitSPH; 
+      )     ; 
+      U     "DB_HR".RPT.HMI_AutoStarten; 
+      U     "M_Automatik_Betrieb"; 
+      UN    #t_ROB_aktiv; 
+      UN    "DB_HR".ABST.RP_mit_Achse; 
+      U     #t_RP_0_Grad; 
+      U     #t_RPTFolgen_FG; 
+      U     "DB_HR".ABST.SpannHydraulik; 
+      UN    "DB_HR".ABST.SP_ohnePROP; 
+      UN    "DB_FEHLERMELDUNG".Meldung4._702425_RPL_NICHT_GEKLEM; 
+      SPBNB _00d; 
+      L     1024; 
+      T     #t_Folge_Wert; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+_00d: U     BIE; 
+      S     "DB_HR".RPT_Folgen.E5_PWFG_mSpH_oRPAX_Auto; 
+NETWORK
+TITLE =E6: 00-04-01-02-03-05-10-07-00 PW-FG Spannen mit RP-Achse(Auto)
+//Z00: Grundstellung
+//Z04: RPT schließen
+//Z01: RP-Paletten-Klemmung einschalten
+//Z02: Ankuppeln, wenn RPL Kupplung
+//Z03: Spannen
+//Z05: Abkuppeln, wenn RPL Kupplung
+//Z10: RP-Achse auf 0-Grad positionieren
+//Z07: PW-Freigabe aktivieren
+      U     #t_PI_PWFG_ausloesen; 
+      UN    "DB_HR".RPT.RP_PWFG_oRSP_aktiv; 
+      U(    ; 
+      O     "DB_PV_SpH".RPL.Stelle[1].KONF_mitSPH; 
+      O     "DB_PV_SpH".RPL.Stelle[2].KONF_mitSPH; 
+      O     "DB_PV_SpH".RPL.Stelle[3].KONF_mitSPH; 
+      O     "DB_PV_SpH".RPL.Stelle[4].KONF_mitSPH; 
+      )     ; 
+      U     "DB_HR".RPT.HMI_AutoStarten; 
+      U     "M_Automatik_Betrieb"; 
+      UN    #t_ROB_aktiv; 
+      U     "DB_HR".ABST.SpannHydraulik; 
+      U     "DB_HR".ABST.RP_mit_Achse; 
+      U     #t_RPTFolgen_FG; 
+      UN    "DB_HR".ABST.SP_ohnePROP; 
+      UN    "DB_FEHLERMELDUNG".Meldung4._702425_RPL_NICHT_GEKLEM; 
+      SPBNB _00e; 
+      L     2048; 
+      T     #t_Folge_Wert; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+_00e: U     BIE; 
+      S     "DB_HR".RPT_Folgen.E6_PWFG_mSpH_mRPAX_Auto; 
+NETWORK
+TITLE =E7: 00-04-07-00 PW-FG bei Nullpunktspannungssystem
+//Z00: Grundstellung
+//Z04: RPT schließen
+//Z07: PW-Freigabe aktivieren
+      U     #t_PI_PWFG_ausloesen; 
+      U     "DB_IN".EMX_FIXTURE_ON_SUS; 
+      U     "DB_HR".ABST.SP_ext_Nullpunktspannsys; 
+      U     #t_RP_0_Grad; 
+      UN    "DB_OUT".AMX_PC_LOCK; 
+      UN    "DB_HR".RPT.VSM_RS_Freigabe; 
+      U(    ; 
+      U(    ; 
+      O     "DB_PV_SpH".RPL.Stelle[1].STAT_gespannt; 
+      ON    "DB_HR".SpH.RP_Stelle_1_aktiviert; 
+      )     ; 
+      U(    ; 
+      O     "DB_PV_SpH".RPL.Stelle[2].STAT_gespannt; 
+      ON    "DB_HR".SpH.RP_Stelle_2_aktiviert; 
+      )     ; 
+      U(    ; 
+      O     "DB_PV_SpH".RPL.Stelle[3].STAT_gespannt; 
+      ON    "DB_HR".SpH.RP_Stelle_3_aktiviert; 
+      )     ; 
+      U(    ; 
+      O     "DB_PV_SpH".RPL.Stelle[4].STAT_gespannt; 
+      ON    "DB_HR".SpH.RP_Stelle_4_aktiviert; 
+      )     ; 
+      ON    "DB_HR".ABST.SpannHydraulik; 
+      )     ; 
+      UN    #t_ROB_aktiv; 
+      U     #t_RPTFolgen_FG; 
+      UN    "DB_HR".ABST.SP_ohnePROP; 
+      UN    "DB_FEHLERMELDUNG".Meldung4._702425_RPL_NICHT_GEKLEM; 
+      SPBNB _00f; 
+      L     32; 
+      T     #t_Folge_Wert; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+_00f: U     BIE; 
+      S     "DB_HR".RPT_Folgen.E7_PWFG_NullpunktSpg; 
+NETWORK
+TITLE =E8: 00-04-07-00 PW-FG SpH ohne PROP ohne Rüstplatz-Achse
+//Z00: Grundstellung
+//Z04: RPT schließen
+//Z07: PW-Freigabe aktivieren / SpannHydraulik-Ausgang wegschalten
+      U     #t_PI_PWFG_ausloesen; 
+      UN    #t_ROB_aktiv; 
+      U     #t_RP_0_Grad; 
+      UN    "DB_OUT".AMX_PC_LOCK; 
+      UN    "DB_HR".RPT.VSM_RS_Freigabe; 
+      U     "DB_HR".ABST.SP_ohnePROP; 
+      SPBNB _010; 
+      L     L#4194304; 
+      T     #t_Folge_Wert; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+_010: U     BIE; 
+      S     "DB_HR".RPT_Folgen.E8_PWFG_oPROP_oRPAX; 
+NETWORK
+TITLE =F1: 00-04-01-02-03-00 Spannen mit RPT schließen
+//Z00: Grundstellung
+//Z04: RPT schließen
+//Z01: RP-Paletten-Klemmung einschalten
+//Z02: Ankuppeln, wenn RPL Kupplung
+//Z03: Spannen
+      U     #t_Taste_spannen; 
+      U(    ; 
+      O     "DB_PV_SpH".RPL.Stelle[1].KONF_mitSPH; 
+      O     "DB_PV_SpH".RPL.Stelle[2].KONF_mitSPH; 
+      O     "DB_PV_SpH".RPL.Stelle[3].KONF_mitSPH; 
+      O     "DB_PV_SpH".RPL.Stelle[4].KONF_mitSPH; 
+      )     ; 
+      UN    "DB_HR".ABST.SP_bei_offener_RPT; 
+      U     #t_EK_Tasten_FG; 
+      U     #t_RPTFolgen_FG; 
+      U(    ; 
+      O     "DB_OUT".AMX_ZPS_CLAMPED; 
+      ON    "DB_HR".ABST.SP_ext_Nullpunktspannsys; 
+      )     ; 
+      SPBNB _011; 
+      L     4096; 
+      T     #t_Folge_Wert; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+_011: U     BIE; 
+      S     "DB_HR".RPT_Folgen.F1_spannen_mRPT; 
+NETWORK
+TITLE =G1: 00-04-01-02-08-00 Entspannen mit RPT schließen
+//Z00: Grundstellung
+//Z04: RPT schließen
+//Z01: RP-Paletten-Klemmung einschalten
+//Z02: Ankuppeln, wenn RPL Kupplung
+//Z08: Entspannen
+      U(    ; 
+      O     "DB_HR".RPT.PI_Ausloeser_Entspann; 
+      O     #t_PI_AUTO_nachPW; 
+      )     ; 
+      U(    ; 
+      U     "DB_PV_SpH".RPL.Stelle[1].KONF_mitSPH; 
+      U     "DB_HR".SpH.RP_Stelle_1_aktiviert; 
+      O     ; 
+      U     "DB_PV_SpH".RPL.Stelle[2].KONF_mitSPH; 
+      U     "DB_HR".SpH.RP_Stelle_2_aktiviert; 
+      O     ; 
+      U     "DB_PV_SpH".RPL.Stelle[3].KONF_mitSPH; 
+      U     "DB_HR".SpH.RP_Stelle_3_aktiviert; 
+      O     ; 
+      U     "DB_PV_SpH".RPL.Stelle[4].KONF_mitSPH; 
+      U     "DB_HR".SpH.RP_Stelle_4_aktiviert; 
+      )     ; 
+      UN    "DB_HR".ABST.SP_bei_offener_RPT; 
+      U     #t_EK_Tasten_FG; 
+      U     #t_RPTFolgen_FG; 
+      UN    "DB_HR".SpH.RPL_Element_VorrNachCtrl; 
+      U(    ; 
+      O     "DB_OUT".AMX_ZPS_CLAMPED; 
+      ON    "DB_HR".ABST.SP_ext_Nullpunktspannsys; 
+      )     ; 
+      SPBNB _012; 
+      L     8192; 
+      T     #t_Folge_Wert; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+_012: U     BIE; 
+      S     "DB_HR".RPT_Folgen.G1_entspannen_mRPT; 
+NETWORK
+TITLE =H1: 00-04-00 Roboter: RPT schließen
+//Z00: Grundstellung
+//Z04: RPT schließen
+//      U     "DB_HR".vonROB.Bef_RPT_schliessen
+      U     "DB_ROB_IF".IN.RPL.Bef_RPL_Tuer_schliessen; 
+      U     "DB_ROB_IF".STAT.Roboter.Automation_ein; 
+      UN    #t_RPT_zu; 
+      U     #t_RPTFolgen_FG; 
+      SPBNB _013; 
+      L     16384; 
+      T     #t_Folge_Wert; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+_013: U     BIE; 
+      S     "DB_HR".RPT_Folgen.H1_ROB_RPT_schliessen; 
+NETWORK
+TITLE =H2: 00-09-00 Roboter: RPT öffnen
+//Z00: Grundstellung
+//Z09: RPT öffnen
+      U     "DB_ROB_IF".IN.RPL.Bef_RPL_Tuer_oeffnen; 
+      U     "DB_ROB_IF".STAT.Roboter.Automation_ein; 
+      UN    #t_RPT_offen; 
+      U     #t_RPTFolgen_FG; 
+      SPBNB _014; 
+      L     L#32768; 
+      T     #t_Folge_Wert; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+_014: U     BIE; 
+      S     "DB_HR".RPT_Folgen.H2_ROB_RPT_oeffnen; 
+NETWORK
+TITLE =I1: 00-01-02-03-00 Roboter: Spannen
+//Z00: Grundstellung
+//Z01: RP-Paletten-Klemmung einschalten
+//Z02: Ankuppeln, wenn RPL Kupplung
+//Z03: Spannen
+      U(    ; 
+      U     "DB_HR".vonROB.Bef_St1_spannen; 
+      FP    "DB_HR".vonROB.PI_spannen; 
+      O     ; 
+      U     "DB_HR".vonROB.Bef_St1_spannen; 
+      UN    "DB_ROB_IF".STAT.Stelle[1].gespannt; 
+      O     ; 
+      U     "DB_HR".vonROB.Bef_St2_spannen; 
+      UN    "DB_ROB_IF".STAT.Stelle[2].gespannt; 
+      O     ; 
+      U     "DB_HR".vonROB.Bef_St3_spannen; 
+      UN    "DB_ROB_IF".STAT.Stelle[3].gespannt; 
+      O     ; 
+      U     "DB_HR".vonROB.Bef_St4_spannen; 
+      UN    "DB_ROB_IF".STAT.Stelle[4].gespannt; 
+      )     ; 
+      U     "DB_ROB_IF".STAT.Roboter.Automation_ein; 
+      U     #t_ROB_aktiv; 
+      U     #t_RPTFolgen_FG; 
+      SPBNB _015; 
+      L     L#65536; 
+      T     #t_Folge_Wert; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+_015: U     BIE; 
+      S     "DB_HR".RPT_Folgen.I1_ROB_spannen; 
+NETWORK
+TITLE =K1: 00-01-02-08-00 Roboter: Entspannen
+//Z00: Grundstellung
+//Z01: RP-Paletten-Klemmung einschalten
+//Z02: Ankuppeln, wenn RPL Kupplung
+//Z08: Entspannen
+      U(    ; 
+      U     "DB_HR".vonROB.Bef_St1_entspannen; 
+      FP    "DB_HR".vonROB.PI_entspannen; 
+      O     ; 
+      U     "DB_HR".vonROB.Bef_St1_entspannen; 
+      UN    "DB_ROB_IF".STAT.Stelle[1].entspannt; 
+      O     ; 
+      U     "DB_HR".vonROB.Bef_St2_entspannen; 
+      UN    "DB_ROB_IF".STAT.Stelle[2].entspannt; 
+      O     ; 
+      U     "DB_HR".vonROB.Bef_St3_entspannen; 
+      UN    "DB_ROB_IF".STAT.Stelle[3].entspannt; 
+      O     ; 
+      U     "DB_HR".vonROB.Bef_St4_entspannen; 
+      UN    "DB_ROB_IF".STAT.Stelle[4].entspannt; 
+      )     ; 
+      U     "DB_ROB_IF".STAT.Roboter.Automation_ein; 
+      U     #t_ROB_aktiv; 
+      U     #t_RPTFolgen_FG; 
+      SPBNB _016; 
+      L     L#131072; 
+      T     #t_Folge_Wert; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+_016: U     BIE; 
+      S     "DB_HR".RPT_Folgen.K1_ROB_entspannen; 
+NETWORK
+TITLE =L1: 00-05-07-00 Roboter: PW-FG (mit SPH ohne RP-Achse)
+//Z00: Grundstellung
+//Z05: Abkuppeln, wenn RPL Kupplung
+//Z07: PW-Freigabe aktivieren
+      U     "DB_HR".vonROB.Bef_PW_FG; 
+      U     "DB_ROB_IF".STAT.Roboter.Automation_ein; 
+      U     #t_ROB_aktiv; 
+      UN    "DB_HR".ABST.RP_mit_Achse; 
+      U     #t_RP_0_Grad; 
+      U     #t_RPTFolgen_FG; 
+      SPBNB _017; 
+      L     L#262144; 
+      T     #t_Folge_Wert; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+_017: U     BIE; 
+      S     "DB_HR".RPT_Folgen.L1_ROB_PWFG_oRPAX; 
+NETWORK
+TITLE =L2: 00-01-05-10-07-00 Roboter: PW-FG (mit SPH mit RP-Achse)
+//Z00: Grundstellung
+//Z01: RP-Paletten-Klemmung einschalten
+//Z05: Abkuppeln, wenn RPL Kupplung
+//Z10: RP-Achse auf 0-Grad positionieren
+//Z07: PW-Freigabe aktivieren
+      U     "DB_HR".vonROB.Bef_PW_FG; 
+      U     "DB_ROB_IF".STAT.Roboter.Automation_ein; 
+      U     #t_ROB_aktiv; 
+      U     "DB_HR".ABST.RP_mit_Achse; 
+      U     #t_RPTFolgen_FG; 
+      SPBNB _018; 
+      L     L#524288; 
+      T     #t_Folge_Wert; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+_018: U     BIE; 
+      S     "DB_HR".RPT_Folgen.L2_ROB_PWFG_mRPAX; 
+NETWORK
+TITLE =M1: 00-01-11-00 RP-Achse positionieren mit BDP-Tasten
+//Z00: Grundstellung
+//Z01: RP-Paletten-Klemmung einschalten
+//Z11: RP-Achse positionieren
+      U     #t_Bef_RP_Achse_pos; 
+      UN    #t_ROB_aktiv; 
+      U     "DB_HR".ABST.RP_mit_Achse; 
+      U     #t_RPTFolgen_FG; 
+      SPBNB _019; 
+      L     L#1048576; 
+      T     #t_Folge_Wert; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+_019: U     BIE; 
+      S     "DB_HR".RPT_Folgen.M1_RPAX_positionieren; 
+NETWORK
+TITLE =M2: 00-01-11-00 RP-Achse positionieren mit Roboter
+//Z00: Grundstellung
+//Z01: RP-Paletten-Klemmung einschalten
+//Z11: RP-Achse positionieren
+      U     "DB_HR".vonROB.Bef_RPAX_positionieren; 
+      U     #t_ROB_aktiv; 
+      U     "DB_HR".ABST.RP_mit_Achse; 
+      U     #t_RPTFolgen_FG; 
+      SPBNB _01a; 
+      L     L#8388608; 
+      T     #t_Folge_Wert; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+_01a: U     BIE; 
+      S     "DB_HR".RPT_Folgen.M2_ROB_RPAX_Pos; 
+NETWORK
+TITLE =PI Z00: Grundstellung
+
+      U     "DB_HR".RPT_Zustand.Z00_Grundstellung; 
+      FP    "DB_HR".RPT.HM_PI_Z00_Grundstellung; 
+      =     #t_PI_Z00_Grundstellung; 
+NETWORK
+TITLE =Folge mit Z02 Ankuppeln fertig
+
+      U     "DB_HR".RPT_Folgen.D1_Ankuppeln; 
+      U     "DB_HR".RPT_Zustand.Z02_Ankuppeln; 
+      U(    ; 
+      O     "I_SP_RPL_GEKUPPELT"; 
+      ON    "DB_PLC_MD_DB20".UDHex._27_Bit3_RPLmitKupplung; 
+      )     ; 
+      =     #t_Folge_fertig_mit_Z02; 
+NETWORK
+TITLE =Folge mit Z03 Spannen fertig
+
+      U(    ; 
+      O     "DB_HR".RPT_Folgen.A1_spannen_oRPT; 
+      O     "DB_HR".RPT_Folgen.F1_spannen_mRPT; 
+      O     "DB_HR".RPT_Folgen.I1_ROB_spannen; 
+      )     ; 
+      U     "DB_HR".RPT_Zustand.Z03_Spannen; 
+      U     #t_PI_RP_Spannen_ok; 
+      =     #t_Folge_fertig_mit_Z03; 
+NETWORK
+TITLE =Folge mit Z04 RPT schließen fertig
+
+      U     "DB_HR".RPT_Folgen.H1_ROB_RPT_schliessen; 
+      U     "DB_HR".RPT_Zustand.Z04_RPT_schliessen; 
+      U     #t_RPT_zu; 
+      =     #t_Folge_fertig_mit_Z04; 
+NETWORK
+TITLE =Folge mit Z05 Abkuppeln fertig
+
+      U     "DB_HR".RPT_Folgen.D2_Abkuppeln; 
+      U     "DB_HR".RPT_Zustand.Z05_Abkuppeln; 
+      U(    ; 
+      O     "I_SP_RPL_ENTKUPPELT"; 
+      ON    "DB_PLC_MD_DB20".UDHex._27_Bit3_RPLmitKupplung; 
+      )     ; 
+      =     #t_Folge_fertig_mit_Z05; 
+NETWORK
+TITLE =Folge mit Z07 PW-Freigabe fertig
+
+      U(    ; 
+      O     "DB_HR".RPT_Folgen.E1_PWFG_mSPH_oRPAX; 
+      O     "DB_HR".RPT_Folgen.E2_PWFG_oSPH_oRPAX; 
+      O     "DB_HR".RPT_Folgen.L1_ROB_PWFG_oRPAX; 
+      O     "DB_HR".RPT_Folgen.E3_PWFG_mSPH_mRPAX; 
+      O     "DB_HR".RPT_Folgen.E4_PWFG_oSPH_mRPAX; 
+      O     "DB_HR".RPT_Folgen.E7_PWFG_NullpunktSpg; 
+      O     "DB_HR".RPT_Folgen.L2_ROB_PWFG_mRPAX; 
+      O     "DB_HR".RPT_Folgen.E8_PWFG_oPROP_oRPAX; 
+      )     ; 
+      U     "DB_HR".RPT_Zustand.Z07_PW_FG_aktivieren; 
+      U(    ; 
+      U     "DB_HR".RPT.RP_PWFG_oRSP_aktiv; 
+      UN    "MX_ABST_Rundspeicher"; 
+      O     ; 
+      U     "DB_HR".RPT.VSM_RS_Freigabe; 
+      U     "MX_ABST_Rundspeicher"; 
+      )     ; 
+      U(    ; 
+      U     "I_PW_RPL_SPANNDRUCK_OK"; 
+      U     "DB_HR".ABST.SP_SA_MTU; 
+      ON    "DB_HR".ABST.SP_SA_MTU; 
+      )     ; 
+      U(    ; 
+      UN    "I_PW_RPL_SPANNDRUCK_OK"; 
+      U     "DB_HR".ABST.SP_ohnePROP; 
+      ON    "DB_HR".ABST.SP_ohnePROP; 
+      )     ; 
+      =     #t_Folge_fertig_mit_Z07; 
+NETWORK
+TITLE =Folge mit Z08 Entspannen fertig
+
+      U(    ; 
+      O     "DB_HR".RPT_Folgen.B1_entspannen_oRPT; 
+      O     "DB_HR".RPT_Folgen.G1_entspannen_mRPT; 
+      O     "DB_HR".RPT_Folgen.K1_ROB_entspannen; 
+      )     ; 
+      U     "DB_HR".RPT_Zustand.Z08_Entspannen; 
+      U     #t_PI_RP_Entspannen_ok; 
+      =     #t_Folge_fertig_mit_Z08; 
+NETWORK
+TITLE =Folge mit Z09 RPT öffnen fertig
+
+      U(    ; 
+      O     "DB_HR".RPT_Folgen.C2_RPT_oeffnen; 
+      O     "DB_HR".RPT_Folgen.G1_entspannen_mRPT; 
+      O     "DB_HR".RPT_Folgen.H2_ROB_RPT_oeffnen; 
+      )     ; 
+      U     "DB_HR".RPT_Zustand.Z09_RPT_oeffnen; 
+      U     #t_RPT_offen; 
+      =     #t_Folge_fertig_mit_Z09; 
+NETWORK
+TITLE =Folge mit Z11 RP-Achse positionieren fertig
+
+      U(    ; 
+      O     "DB_HR".RPT_Folgen.M1_RPAX_positionieren; 
+      O     "DB_HR".RPT_Folgen.M2_ROB_RPAX_Pos; 
+      )     ; 
+      U     "DB_HR".RPT_Zustand.Z11_RPAX_positionieren; 
+      U     "DB_HR".RPT.RPAX_auf_Pos; 
+      =     #t_Folge_fertig_mit_Z11; 
+NETWORK
+TITLE =Folge wurde fertig
+
+      O     #t_Folge_fertig_mit_Z02; 
+      O     #t_Folge_fertig_mit_Z03; 
+      O     #t_Folge_fertig_mit_Z04; 
+      O     #t_Folge_fertig_mit_Z05; 
+      O     #t_Folge_fertig_mit_Z07; 
+      O     #t_Folge_fertig_mit_Z08; 
+      O     #t_Folge_fertig_mit_Z09; 
+      O     #t_Folge_fertig_mit_Z11; 
+      O(    ; 
+      L     #t_Folge_Wert; 
+      L     L#0; 
+      ==D   ; 
+      )     ; 
+      =     #t_VSM_Folge_fertig; 
+NETWORK
+TITLE =Folgen: ALLE löschen
+//Mit Erreichen Zustand Grundstellung werden
+//alle Folgen gelöscht, wenn kein ABBRUCH war.
+//Bei ABBRUCH durch Folge-Änderung bleibt neue Folge erhalten.
+//Tipp-Betrieb für (Folge = 0, wenn Anforderung weggeht):
+//- Spannen
+//- Entspannen
+//- RP-Achse positionieren
+      U(    ; 
+      U     #t_PI_Z00_Grundstellung; 
+      UN    "DB_HR".RPT.Folgen_Abbruch; 
+      O     #t_VSM_Folge_fertig; 
+      O     "DB_HR".SpH.HMI_SpH_Ruestplatz; 
+      O     ; 
+      UN    "I_SP_HYD_RPL_SPANNEN"; 
+      UN    "DB_HR".SpH.RPL_Element_VorrNachCtrl; 
+      U     "DB_HR".RPT_Folgen.A1_spannen_oRPT; 
+      O     ; 
+      UN    "I_SP_HYD_RPL_LOESEN"; 
+      U     "DB_HR".RPT_Folgen.B1_entspannen_oRPT; 
+      O     ; 
+      UN    #t_Bef_RP_Achse_pos; 
+      U     "DB_HR".RPT_Folgen.M1_RPAX_positionieren; 
+      O     ; 
+      UN    "DB_HR".vonROB.Bef_RPAX_positionieren; 
+      U     "DB_HR".RPT_Folgen.M2_ROB_RPAX_Pos; 
+      O     ; 
+      U(    ; 
+      O     "DB_HR".RPT_Folgen.H1_ROB_RPT_schliessen; 
+      O     "DB_HR".RPT_Folgen.H2_ROB_RPT_oeffnen; 
+      O     "DB_HR".RPT_Folgen.I1_ROB_spannen; 
+      O     "DB_HR".RPT_Folgen.K1_ROB_entspannen; 
+      O     "DB_HR".RPT_Folgen.L1_ROB_PWFG_oRPAX; 
+      O     "DB_HR".RPT_Folgen.L2_ROB_PWFG_mRPAX; 
+      O     "DB_HR".RPT_Folgen.M2_ROB_RPAX_Pos; 
+      )     ; 
+      UN    #t_ROB_aktiv; 
+      )     ; 
+      SPBNB _01b; 
+      L     0; 
+      T     #t_Folge_Wert; 
+_01b: NOP   0; 
+NETWORK
+TITLE =RPT-Folgen-Abbruch auslösen
+
+      U     "DB_HR".RPT.Folgen_Abbruch; 
+      R     "DB_HR".RPT.Folgen_Abbruch; 
+      U(    ; 
+      U(    ; 
+      L     "DB_HR".RPT.Status_Folge_alt; 
+      L     L#0; 
+      >D    ; 
+      )     ; 
+      U(    ; 
+      L     #t_Folge_Wert; 
+      L     "DB_HR".RPT.Status_Folge_alt; 
+      <>D   ; 
+      )     ; 
+      O     ; 
+      U     "DB_HR".RPT_Folgen.F1_spannen_mRPT; 
+      UN    #t_RPT_zu; 
+      U     "DB_HR".RPT_Zustand.Z03_Spannen; 
+      O     ; 
+      U     "DB_HR".RPT_Zustand.Z08_Entspannen; 
+      U     "DB_HR".RPT_Folgen.G1_entspannen_mRPT; 
+      UN    #t_RPT_zu; 
+      )     ; 
+      S     "DB_HR".RPT.Folgen_Abbruch; 
+      NOP   0; 
+NETWORK
+TITLE =STATUS "Folge_alt" aktualisieren
+//Wird benötigt, um eine Folgenänderung feststellen zu können.
+      L     #t_Folge_Wert; 
+      T     "DB_HR".RPT.Status_Folge_alt; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+      U     BIE; 
+      =     #dummy; 
+NETWORK
+TITLE =Folge im DB abspeichern
+
+      CALL "BLKMOVE" (
+           SRCBLK                   := #t_Folge_Wert,
+           RET_VAL                  := #t_SFC20_RET_VAL,
+           DSTBLK                   := "DB_HR".RPT_Folgen);
+      U     BIE; 
+      =     #dummy; 
+NETWORK
+TITLE =Zustand aus DB kopieren
+
+      CALL "BLKMOVE" (
+           SRCBLK                   := "DB_HR".RPT_Zustand,
+           RET_VAL                  := #t_SFC20_RET_VAL,
+           DSTBLK                   := #t_Zustand_Wert);
+      NOP   0; 
+NETWORK
+TITLE =Zustands-Graph initialisieren
+
+      UN    "DB_HR".RPT_Zustand.Z00_Grundstellung; 
+      UN    "DB_HR".RPT_Zustand.Z01_PalKlemmung_ein; 
+      UN    "DB_HR".RPT_Zustand.Z02_Ankuppeln; 
+      UN    "DB_HR".RPT_Zustand.Z03_Spannen; 
+      UN    "DB_HR".RPT_Zustand.Z04_RPT_schliessen; 
+      UN    "DB_HR".RPT_Zustand.Z05_Abkuppeln; 
+      UN    "DB_HR".RPT_Zustand.Z06_PalKlemmung_aus; 
+      UN    "DB_HR".RPT_Zustand.Z07_PW_FG_aktivieren; 
+      UN    "DB_HR".RPT_Zustand.Z08_Entspannen; 
+      UN    "DB_HR".RPT_Zustand.Z09_RPT_oeffnen; 
+      UN    "DB_HR".RPT_Zustand.Z10_RPAX_0_Grad; 
+      UN    "DB_HR".RPT_Zustand.Z11_RPAX_positionieren; 
+      UN    "DB_HR".RPT_Zustand.Z15_Abbruch; 
+      =     #t_Zxx_INIT; 
+NETWORK
+TITLE =Z00: Grundstellung
+//    1: Z00_Grundstellung       Z00: Grundstellung
+//    2: Z01_PalKlemmung_ein     Z01: Paletten-Klemmung einschalten
+//    4: Z02_Ankuppeln           Z02: Ankuppeln
+//    8: Z03_Spannen             Z03: Spannen
+//   16: Z04_RPT_schliessen      Z04: RPT schließen
+//   32: Z05_Abkuppeln           Z05: Abkuppeln
+//   64: Z06_PalKlemmung_aus     Z06: Paletten-Klemmung ausschalten
+//  128: Z07_PW_FG_aktivieren    Z07: PW-Freigabe aktivieren
+//  256: Z08_Entspannen          Z08: Entspannen
+//  512: Z09_RPT_oeffnen         Z09: RPT öffnen
+// 1024: Z10_RPAX_0_Grad         Z10: RP-Achse auf 0-Grad positionieren für PW
+// 2048: Z11_RPAX_positionieren  Z11: RP-Achse positionieren
+// 4096: Z12                     Z12: frei
+// 8192: Z13                     Z13: frei
+//16384: Z14                     Z14: frei
+//32768: Z15_Abbruch             Z15: Abbruch
+      U(    ; 
+      O     #t_VSM_Folge_fertig; 
+      O     "DB_HR".RPT_Zustand.Z15_Abbruch; 
+      O     #t_Zxx_INIT; 
+      O     ; 
+      U(    ; 
+      O     "DB_HR".RPT_Folgen.H1_ROB_RPT_schliessen; 
+      O     "DB_HR".RPT_Folgen.H2_ROB_RPT_oeffnen; 
+      O     "DB_HR".RPT_Folgen.I1_ROB_spannen; 
+      O     "DB_HR".RPT_Folgen.K1_ROB_entspannen; 
+      O     "DB_HR".RPT_Folgen.L1_ROB_PWFG_oRPAX; 
+      O     "DB_HR".RPT_Folgen.L2_ROB_PWFG_mRPAX; 
+      )     ; 
+      UN    "DB_ROB_IF".STAT.Roboter.Automation_ein; 
+      O(    ; 
+      L     #t_Folge_Wert; 
+      L     L#0; 
+      ==D   ; 
+      )     ; 
+      )     ; 
+      SPBNB _01c; 
+      L     1; 
+      T     #t_Zustand_Wert; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+_01c: U     BIE; 
+      S     "DB_HR".RPT_Zustand.Z00_Grundstellung; 
+NETWORK
+TITLE =Z01: Paletten-Klemmung einschalten
+
+      U(    ; 
+      U(    ; 
+      O     "DB_HR".RPT_Folgen.A1_spannen_oRPT; 
+      O     "DB_HR".RPT_Folgen.B1_entspannen_oRPT; 
+      O     "DB_HR".RPT_Folgen.D1_Ankuppeln; 
+      O     "DB_HR".RPT_Folgen.I1_ROB_spannen; 
+      O     "DB_HR".RPT_Folgen.K1_ROB_entspannen; 
+      O     "DB_HR".RPT_Folgen.M1_RPAX_positionieren; 
+//      O     "DB_HR".RPT_Folgen.L2_ROB_PWFG_mRPAX
+      O     "DB_HR".RPT_Folgen.M2_ROB_RPAX_Pos; 
+      )     ; 
+      U     "DB_HR".RPT_Zustand.Z00_Grundstellung; 
+      O     ; 
+      U(    ; 
+      O     "DB_HR".RPT_Folgen.E5_PWFG_mSpH_oRPAX_Auto; 
+      O     "DB_HR".RPT_Folgen.E6_PWFG_mSpH_mRPAX_Auto; 
+      O     "DB_HR".RPT_Folgen.F1_spannen_mRPT; 
+      O     "DB_HR".RPT_Folgen.G1_entspannen_mRPT; 
+      )     ; 
+      U     "DB_HR".RPT_Zustand.Z04_RPT_schliessen; 
+      U     #t_RPT_zu; 
+      )     ; 
+      SPBNB _01d; 
+      L     2; 
+      T     #t_Zustand_Wert; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+_01d: U     BIE; 
+      S     "DB_HR".RPT_Zustand.Z01_PalKlemmung_ein; 
+NETWORK
+TITLE =Z02: Ankuppeln
+
+      U(    ; 
+      O     "DB_HR".RPT_Folgen.A1_spannen_oRPT; 
+      O     "DB_HR".RPT_Folgen.B1_entspannen_oRPT; 
+      O     "DB_HR".RPT_Folgen.D1_Ankuppeln; 
+      O     "DB_HR".RPT_Folgen.E5_PWFG_mSpH_oRPAX_Auto; 
+      O     "DB_HR".RPT_Folgen.E6_PWFG_mSpH_mRPAX_Auto; 
+      O     "DB_HR".RPT_Folgen.F1_spannen_mRPT; 
+      O     "DB_HR".RPT_Folgen.G1_entspannen_mRPT; 
+      O     "DB_HR".RPT_Folgen.I1_ROB_spannen; 
+      O     "DB_HR".RPT_Folgen.K1_ROB_entspannen; 
+      )     ; 
+      U     "DB_HR".RPT_Zustand.Z01_PalKlemmung_ein; 
+      SPBNB _01e; 
+      L     4; 
+      T     #t_Zustand_Wert; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+_01e: U     BIE; 
+      S     "DB_HR".RPT_Zustand.Z02_Ankuppeln; 
+NETWORK
+TITLE =Z03: Spannen
+
+      U(    ; 
+      O     "DB_HR".RPT_Folgen.A1_spannen_oRPT; 
+      O     "DB_HR".RPT_Folgen.F1_spannen_mRPT; 
+      O     "DB_HR".RPT_Folgen.I1_ROB_spannen; 
+      )     ; 
+      U     "DB_HR".RPT_Zustand.Z02_Ankuppeln; 
+      SPBNB _01f; 
+      L     8; 
+      T     #t_Zustand_Wert; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+_01f: U     BIE; 
+      S     "DB_HR".RPT_Zustand.Z03_Spannen; 
+NETWORK
+TITLE =Z04: RPT schließen
+
+      U(    ; 
+      O     "DB_HR".RPT_Folgen.E1_PWFG_mSPH_oRPAX; 
+      O     "DB_HR".RPT_Folgen.E2_PWFG_oSPH_oRPAX; 
+      O     "DB_HR".RPT_Folgen.E3_PWFG_mSPH_mRPAX; 
+      O     "DB_HR".RPT_Folgen.E4_PWFG_oSPH_mRPAX; 
+      O     "DB_HR".RPT_Folgen.E5_PWFG_mSpH_oRPAX_Auto; 
+      O     "DB_HR".RPT_Folgen.E6_PWFG_mSpH_mRPAX_Auto; 
+      O     "DB_HR".RPT_Folgen.E7_PWFG_NullpunktSpg; 
+      O     "DB_HR".RPT_Folgen.E8_PWFG_oPROP_oRPAX; 
+      O     "DB_HR".RPT_Folgen.F1_spannen_mRPT; 
+      O     "DB_HR".RPT_Folgen.G1_entspannen_mRPT; 
+      O     "DB_HR".RPT_Folgen.H1_ROB_RPT_schliessen; 
+      )     ; 
+      U     "DB_HR".RPT_Zustand.Z00_Grundstellung; 
+      SPBNB _020; 
+      L     16; 
+      T     #t_Zustand_Wert; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+_020: U     BIE; 
+      S     "DB_HR".RPT_Zustand.Z04_RPT_schliessen; 
+NETWORK
+TITLE =Z05: Abkuppeln
+
+      U(    ; 
+      U(    ; 
+      O     "DB_HR".RPT_Folgen.E1_PWFG_mSPH_oRPAX; 
+      O     "DB_HR".RPT_Folgen.E2_PWFG_oSPH_oRPAX; 
+      O     "DB_HR".RPT_Folgen.E3_PWFG_mSPH_mRPAX; 
+      O     "DB_HR".RPT_Folgen.E4_PWFG_oSPH_mRPAX; 
+      )     ; 
+      U     "DB_HR".RPT_Zustand.Z04_RPT_schliessen; 
+      U     #t_RPT_zu; 
+      O     ; 
+      U(    ; 
+      O     "DB_HR".RPT_Folgen.D2_Abkuppeln; 
+      O     "DB_HR".RPT_Folgen.L1_ROB_PWFG_oRPAX; 
+      )     ; 
+      U     "DB_HR".RPT_Zustand.Z00_Grundstellung; 
+      )     ; 
+      SPBNB _021; 
+      L     32; 
+      T     #t_Zustand_Wert; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+_021: U     BIE; 
+      S     "DB_HR".RPT_Zustand.Z05_Abkuppeln; 
+NETWORK
+TITLE =Z07: PW-Freigabe aktivieren
+
+      U(    ; 
+      U(    ; 
+      O     "DB_HR".RPT_Folgen.E1_PWFG_mSPH_oRPAX; 
+      O     "DB_HR".RPT_Folgen.E2_PWFG_oSPH_oRPAX; 
+      O     "DB_HR".RPT_Folgen.E5_PWFG_mSpH_oRPAX_Auto; 
+      O     "DB_HR".RPT_Folgen.E7_PWFG_NullpunktSpg; 
+      O     "DB_HR".RPT_Folgen.L1_ROB_PWFG_oRPAX; 
+      )     ; 
+      U     "DB_HR".RPT_Zustand.Z05_Abkuppeln; 
+      O     ; 
+      U(    ; 
+      O     "DB_HR".RPT_Folgen.E7_PWFG_NullpunktSpg; 
+      O     "DB_HR".RPT_Folgen.E8_PWFG_oPROP_oRPAX; 
+      )     ; 
+      U     "DB_HR".RPT_Zustand.Z04_RPT_schliessen; 
+      U     #t_RPT_zu; 
+      O     ; 
+      U(    ; 
+      O     "DB_HR".RPT_Folgen.E3_PWFG_mSPH_mRPAX; 
+      O     "DB_HR".RPT_Folgen.E4_PWFG_oSPH_mRPAX; 
+      O     "DB_HR".RPT_Folgen.E6_PWFG_mSpH_mRPAX_Auto; 
+      O     "DB_HR".RPT_Folgen.L2_ROB_PWFG_mRPAX; 
+      )     ; 
+      U     "DB_HR".RPT_Zustand.Z10_RPAX_0_Grad; 
+      U     #t_RP_0_Grad; 
+      )     ; 
+      SPBNB _022; 
+      L     128; 
+      T     #t_Zustand_Wert; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+_022: U     BIE; 
+      S     "DB_HR".RPT_Zustand.Z07_PW_FG_aktivieren; 
+NETWORK
+TITLE =Z08: Entspannen
+
+      U(    ; 
+      O     "DB_HR".RPT_Folgen.B1_entspannen_oRPT; 
+      O     "DB_HR".RPT_Folgen.G1_entspannen_mRPT; 
+      O     "DB_HR".RPT_Folgen.K1_ROB_entspannen; 
+      )     ; 
+      U     "DB_HR".RPT_Zustand.Z02_Ankuppeln; 
+      SPBNB _023; 
+      L     256; 
+      T     #t_Zustand_Wert; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+_023: U     BIE; 
+      S     "DB_HR".RPT_Zustand.Z08_Entspannen; 
+NETWORK
+TITLE =Z09: RPT öffnen
+
+      U(    ; 
+      U     "DB_HR".RPT_Folgen.G1_entspannen_mRPT; 
+      U     "DB_HR".RPT_Zustand.Z08_Entspannen; 
+      U(    ; 
+      O     "DB_PV_SpH".RPL.Stelle[1].STAT_entspannt; 
+      ON    "DB_HR".SpH.RP_Stelle_1_aktiviert; 
+      )     ; 
+      U(    ; 
+      O     "DB_PV_SpH".RPL.Stelle[2].STAT_entspannt; 
+      ON    "DB_HR".SpH.RP_Stelle_2_aktiviert; 
+      )     ; 
+      U(    ; 
+      O     "DB_PV_SpH".RPL.Stelle[3].STAT_entspannt; 
+      ON    "DB_HR".SpH.RP_Stelle_3_aktiviert; 
+      )     ; 
+      U(    ; 
+      O     "DB_PV_SpH".RPL.Stelle[4].STAT_entspannt; 
+      ON    "DB_HR".SpH.RP_Stelle_4_aktiviert; 
+      )     ; 
+      O     ; 
+      U(    ; 
+      O     "DB_HR".RPT_Folgen.C2_RPT_oeffnen; 
+      O     "DB_HR".RPT_Folgen.H2_ROB_RPT_oeffnen; 
+      )     ; 
+      U     "DB_HR".RPT_Zustand.Z00_Grundstellung; 
+      )     ; 
+      SPBNB _024; 
+      L     512; 
+      T     #t_Zustand_Wert; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+_024: U     BIE; 
+      S     "DB_HR".RPT_Zustand.Z09_RPT_oeffnen; 
+NETWORK
+TITLE =Z10: RP-Achse auf 0-Grad positionieren für PW
+
+      U(    ; 
+      O     "DB_HR".RPT_Folgen.E3_PWFG_mSPH_mRPAX; 
+      O     "DB_HR".RPT_Folgen.E4_PWFG_oSPH_mRPAX; 
+      O     "DB_HR".RPT_Folgen.L2_ROB_PWFG_mRPAX; 
+      )     ; 
+//      U     "DB_HR".RPT_Zustand.Z05_Abkuppeln
+      U     "DB_HR".RPT_Zustand.Z00_Grundstellung; 
+      SPBNB _025; 
+      L     1024; 
+      T     #t_Zustand_Wert; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+_025: U     BIE; 
+      S     "DB_HR".RPT_Zustand.Z10_RPAX_0_Grad; 
+NETWORK
+TITLE =Z11: RP-Achse positionieren
+
+      U(    ; 
+      O     "DB_HR".RPT_Folgen.M1_RPAX_positionieren; 
+      O     "DB_HR".RPT_Folgen.M2_ROB_RPAX_Pos; 
+      )     ; 
+      U     "DB_HR".RPT_Zustand.Z01_PalKlemmung_ein; 
+      U(    ; 
+      O     #t_RP_Pal_geklemmt; 
+      ON    "DB_PLC_MD_DB20".UDHex._17_BIT7_RP_HYD_KLEMMEN; 
+      )     ; 
+      SPBNB _026; 
+      L     2048; 
+      T     #t_Zustand_Wert; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+_026: U     BIE; 
+      S     "DB_HR".RPT_Zustand.Z11_RPAX_positionieren; 
+NETWORK
+TITLE =Z15: Abbruch
+
+      U(    ; 
+      O     "DB_HR".RPT_Zustand.Z01_PalKlemmung_ein; 
+      O     "DB_HR".RPT_Zustand.Z02_Ankuppeln; 
+      O     "DB_HR".RPT_Zustand.Z03_Spannen; 
+      O     "DB_HR".RPT_Zustand.Z04_RPT_schliessen; 
+      O     "DB_HR".RPT_Zustand.Z05_Abkuppeln; 
+      O     "DB_HR".RPT_Zustand.Z06_PalKlemmung_aus; 
+      O     "DB_HR".RPT_Zustand.Z07_PW_FG_aktivieren; 
+      O     "DB_HR".RPT_Zustand.Z08_Entspannen; 
+      O     "DB_HR".RPT_Zustand.Z09_RPT_oeffnen; 
+      O     "DB_HR".RPT_Zustand.Z10_RPAX_0_Grad; 
+      O     "DB_HR".RPT_Zustand.Z11_RPAX_positionieren; 
+      )     ; 
+      U(    ; 
+      O     "DB_HR".RPT.Folgen_Abbruch; 
+      ON    "M_MA_Maschine_Ein"; 
+      )     ; 
+      SPBNB _027; 
+      L     L#32768; 
+      T     #t_Zustand_Wert; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+_027: U     BIE; 
+      S     "DB_HR".RPT_Zustand.Z15_Abbruch; 
+NETWORK
+TITLE =Zustand im DB abspeichern
+
+      CALL "BLKMOVE" (
+           SRCBLK                   := #t_Zustand_Wert,
+           RET_VAL                  := #t_SFC20_RET_VAL,
+           DSTBLK                   := "DB_HR".RPT_Zustand);
+      NOP   0; 
+NETWORK
+TITLE =RPT-Folge-Abbruch wurde aktiviert
+
+      U     "DB_HR".RPT_Zustand.Z15_Abbruch; 
+      =     "DB_HR".RPT.Folgen_Abbruch_aktiviert; 
+NETWORK
+TITLE =Freigabe RPT-Tür-Zylinder öffnen
+
+      U(    ; 
+      U(    ; 
+      U(    ; 
+      O     "DB_HR".RPT_Zustand.Z09_RPT_oeffnen; 
+      O     "DB_EINRICHTFUNKTION".Bewegung_38_Minus; 
+      )     ; 
+      U(    ; 
+      O     #t_RPT_zu; 
+      ON    #t_RPT_zu; 
+      )     ; 
+      O     ; 
+      U     "DB_HR".ROB_Interface.PI_SS_Roboter; 
+      U     "DB_OUT".AmxSusDoorOpen; 
+      )     ; 
+      S     "DB_HR".RPT.FG_TuerZyl_oeffnen; 
+      U(    ; 
+      O     "DB_HR".RPT_Zustand.Z04_RPT_schliessen; 
+      O     "DB_EINRICHTFUNKTION".Bewegung_38_Plus; 
+      O     ; 
+      U     "DB_HR".ROB_Interface.PI_SS_Roboter; 
+      U     #t_RPT_zu; 
+      )     ; 
+      R     "DB_HR".RPT.FG_TuerZyl_oeffnen; 
+      U     "DB_HR".RPT.FG_TuerZyl_oeffnen; 
+      )     ; 
+      U     "DB_HR".ABST.Automatische_RPT; 
+      =     "DB_IN".ImxOpenSusDoor; 
+NETWORK
+TITLE =Freigabe RPT-Tür-Zylinder schließen
+
+      U(    ; 
+      U(    ; 
+      O     "DB_HR".RPT_Zustand.Z04_RPT_schliessen; 
+      O     "DB_EINRICHTFUNKTION".Bewegung_38_Plus; 
+      O     ; 
+      U     "DB_HR".ROB_Interface.PI_SS_Roboter; 
+      U     #t_RPT_zu; 
+      )     ; 
+      S     "DB_HR".RPT.FG_TuerZyl_schliessen; 
+      U(    ; 
+      O     "DB_HR".RPT_Zustand.Z09_RPT_oeffnen; 
+      O     "DB_EINRICHTFUNKTION".Bewegung_38_Minus; 
+      O     ; 
+      U     "DB_HR".ROB_Interface.PI_SS_Roboter; 
+      U     "DB_OUT".AmxSusDoorOpen; 
+      )     ; 
+      R     "DB_HR".RPT.FG_TuerZyl_schliessen; 
+      U     "DB_HR".RPT.FG_TuerZyl_schliessen; 
+      )     ; 
+      U     "DB_HR".ABST.Automatische_RPT; 
+      =     "DB_IN".ImxCloseSusDoor; 
+NETWORK
+TITLE =Merker eine SpannHydraulik-Spann-Folge ist aktiv
+
+      O     "DB_HR".RPT_Folgen.A1_spannen_oRPT; 
+      O     "DB_HR".RPT_Folgen.F1_spannen_mRPT; 
+      O     "DB_HR".RPT_Folgen.I1_ROB_spannen; 
+      =     #t_SpannFolge_aktiv; 
+NETWORK
+TITLE =Merker eine SpannHydraulik-Entspann-Folge ist aktiv
+
+      O     "DB_HR".RPT_Folgen.B1_entspannen_oRPT; 
+      O     "DB_HR".RPT_Folgen.G1_entspannen_mRPT; 
+      O     "DB_HR".RPT_Folgen.K1_ROB_entspannen; 
+      =     #t_EntspannFolge_aktiv; 
+NETWORK
+TITLE =M-Ausgang: Spannhydraulik Lampe Spannstelle 1
+
+      U     "DB_HR".SpH.RP_Stelle_1_aktiviert; 
+      U     "M_MA_Maschine_Ein"; 
+      =     "O_SP_H_SPANNSTELLE_1"; 
+NETWORK
+TITLE =M-Ausgang: Spannhydraulik Lampe Spannstelle 2
+
+      U     "DB_HR".SpH.RP_Stelle_2_aktiviert; 
+      U     "M_MA_Maschine_Ein"; 
+      =     "O_SP_H_SPANNSTELLE_2"; 
+NETWORK
+TITLE =M-Ausgang: Lampe Taste SpannHydraulik spannen
+
+      U(    ; 
+      U     "m_takt_1sec."; 
+      U     #t_SpannFolge_aktiv; 
+      O     ; 
+      U(    ; 
+      U     "DB_PV_SpH".RPL.Stelle[1].STAT_gespannt; 
+      UN    "DB_HR".SpH.RP_Stelle_2_aktiviert; 
+      O     ; 
+      U     "DB_PV_SpH".RPL.Stelle[2].STAT_gespannt; 
+      UN    "DB_HR".SpH.RP_Stelle_1_aktiviert; 
+      O     ; 
+      U     "DB_PV_SpH".RPL.Stelle[1].STAT_gespannt; 
+      U     "DB_PV_SpH".RPL.Stelle[2].STAT_gespannt; 
+      )     ; 
+      UN    #t_SpannFolge_aktiv; 
+      )     ; 
+      U(    ; 
+      O     "DB_HR".SpH.RP_Stelle_1_aktiviert; 
+      O     "DB_HR".SpH.RP_Stelle_2_aktiviert; 
+      )     ; 
+      U     "M_MA_Maschine_Ein"; 
+      =     "O_SP_HYD_RPL_SPANNDR_OK"; 
+NETWORK
+TITLE =M-Ausgang: Lampe Taste SpannHydraulik entspannen
+
+      U(    ; 
+      U     "m_takt_1sec."; 
+      U     #t_EntspannFolge_aktiv; 
+      O     ; 
+      U(    ; 
+      U     "DB_PV_SpH".RPL.Stelle[1].STAT_entspannt; 
+      UN    "DB_HR".SpH.RP_Stelle_2_aktiviert; 
+      O     ; 
+      U     "DB_PV_SpH".RPL.Stelle[2].STAT_entspannt; 
+      UN    "DB_HR".SpH.RP_Stelle_1_aktiviert; 
+      O     ; 
+      U     "DB_PV_SpH".RPL.Stelle[1].STAT_entspannt; 
+      U     "DB_PV_SpH".RPL.Stelle[2].STAT_entspannt; 
+      )     ; 
+      UN    #t_EntspannFolge_aktiv; 
+      )     ; 
+      U(    ; 
+      O     "DB_HR".SpH.RP_Stelle_1_aktiviert; 
+      O     "DB_HR".SpH.RP_Stelle_2_aktiviert; 
+      )     ; 
+      U     "M_MA_Maschine_Ein"; 
+      =     "O_SP_HYD_RPL_LOESEDR_OK"; 
+NETWORK
+TITLE =Merker RP hat Voraussetzungen für PW-Freigabe auslösen
+//Schalter- und Achsenstellungs-Voraussetzungen:
+//- Achsenstellung auf PW-Position (0-Grad)
+//- EK gespannt
+//- EK abgekuppelt
+//- RP-Paletten-Klemmung aus (Handhebel / Schalter)
+//- Türverriegelung
+//
+//Bei 0-Signal erfolgt RESET auf PW-Freigabe in PalV (Paletten-Verwaltung)
+      U(    ; 
+      U(    ; 
+      U(    ; 
+      O     "DB_PV_SpH".RPL.Stelle[1].STAT_gespannt; 
+      ON    "DB_PV_SpH".RPL.Stelle[1].KONF_mitSPH; 
+      O     "DB_NC_PLC".PW_SPH_MA_entladen; 
+      )     ; 
+      U(    ; 
+      O     "DB_PV_SpH".RPL.Stelle[2].STAT_gespannt; 
+      ON    "DB_PV_SpH".RPL.Stelle[2].KONF_mitSPH; 
+      )     ; 
+      U(    ; 
+      O     "DB_PV_SpH".RPL.Stelle[3].STAT_gespannt; 
+      ON    "DB_PV_SpH".RPL.Stelle[3].KONF_mitSPH; 
+      )     ; 
+      U(    ; 
+      O     "DB_PV_SpH".RPL.Stelle[4].STAT_gespannt; 
+      ON    "DB_PV_SpH".RPL.Stelle[4].KONF_mitSPH; 
+      )     ; 
+      O(    ; 
+      L     "DB_PAL_NR".Platz[1].Status; 
+      L     1; 
+      ==I   ; 
+      )     ; 
+      )     ; 
+      U     #t_RPT_zu; 
+      O     #t_ROB_aktiv; 
+      )     ; 
+      U     #t_RP_0_Grad; 
+      =     #t_FG_PWFG_ausloesen; 
+NETWORK
+TITLE =Status "LeerPalette" am Rüstplatz löst PW-Freigabe aus
+
+      U(    ; 
+      L     "DB_PAL_NR".Platz[1].Status; 
+      L     1; 
+      ==I   ; 
+      )     ; 
+      U     "DB_HR".RPT.PWinGRSTundNICHTaktiv; 
+      FP    "DB_HR".SpH.HM_RPL_Status_LeerPal; 
+      S     "DB_HR".SpH.M_RPL_Status_LeerPal; 
+      U     "DB_HR".RPT.RP_PWFG_oRSP_aktiv; 
+      FP    "DB_HR".SpH.HM_PI_PWFG_aktiv; 
+      R     "DB_HR".SpH.M_RPL_Status_LeerPal; 
+      NOP   0; 
+NETWORK
+TITLE =PW-Freigabe OHNE Rundspeicher ist aktiv
+
+      U(    ; 
+      U(    ; 
+      O     "DB_HR".RPT_Zustand.Z07_PW_FG_aktivieren; 
+      O     ; 
+      U(    ; 
+      O     "DB_HR".SpH.M_RPL_Status_LeerPal; 
+      O     ; 
+      U(    ; 
+      L     "DB_PAL_NR".Platz[1].Status; 
+      L     1; 
+      ==I   ; 
+      )     ; 
+      U     "DB_HR".SpH.M_Aktor_PWFG_ausloesen; 
+      UN    "DB_HR".SpH.M_PWFG_schon_aktiv; 
+      )     ; 
+      UN    #t_ROB_aktiv; 
+      )     ; 
+      UN    "MX_ABST_Rundspeicher"; 
+      UN    "DB_HR".FASTEMS.ABST_FASTEMS; 
+      O     ; 
+      U     "I_FMS_APC_MOVEMENT_OK"; 
+      UN    "DB_FEHLERMELDUNG".VS_Halt_Async2._701635_UeP1_Pal_Num; 
+      U     "DB_HR".FASTEMS.ABST_FASTEMS; 
+      )     ; 
+      S     "DB_HR".RPT.RP_PWFG_oRSP_aktiv; 
+      U(    ; 
+      U(    ; 
+      UN    "DB_HR".RPT_Folgen.E1_PWFG_mSPH_oRPAX; 
+      UN    "DB_HR".RPT_Folgen.E2_PWFG_oSPH_oRPAX; 
+      UN    "DB_HR".RPT_Folgen.E3_PWFG_mSPH_mRPAX; 
+      UN    "DB_HR".RPT_Folgen.E4_PWFG_oSPH_mRPAX; 
+      UN    "DB_HR".RPT_Folgen.E5_PWFG_mSpH_oRPAX_Auto; 
+      UN    "DB_HR".RPT_Folgen.E6_PWFG_mSpH_mRPAX_Auto; 
+      UN    "DB_HR".RPT_Folgen.E7_PWFG_NullpunktSpg; 
+      UN    "DB_HR".RPT_Folgen.E8_PWFG_oPROP_oRPAX; 
+      UN    "DB_HR".RPT_Folgen.L1_ROB_PWFG_oRPAX; 
+      UN    "DB_HR".RPT_Folgen.L2_ROB_PWFG_mRPAX; 
+      U(    ; 
+      L     L#0; 
+      L     #t_Folge_Wert; 
+      <>D   ; 
+      )     ; 
+      ON    #t_FG_PWFG_ausloesen; 
+      ON    "DB_PW_DATA".bPW_GRDST; 
+      O     ; 
+      U     "DB_HR".SpH.M_PWFG_schon_aktiv; 
+      U     "DB_HR".SpH.M_Aktor_PWFG_ausloesen; 
+      UN    "DB_HR".RPT_Zustand.Z07_PW_FG_aktivieren; 
+      O     "DB_OUT".AMX_PC_LOCK; 
+      O     "DB_FEHLERMELDUNG".WARNUNG4._702302_SPH_RPL_Filter; 
+      O     "DB_FEHLERMELDUNG".Meldung4._702425_RPL_NICHT_GEKLEM; 
+      O     "DB_FEHLERMELDUNG".WARNUNG4._702311_PWFG_gesperrt; 
+      )     ; 
+      UN    "DB_HR".FASTEMS.ABST_FASTEMS; 
+      O(    ; 
+      UN    "I_FMS_APC_MOVEMENT_OK"; 
+      U     "DB_HR".FASTEMS.ABST_FASTEMS; 
+      )     ; 
+      O(    ; 
+      U(    ; 
+      L     "DB_PAL_NR".Platz[1].Status; 
+      L     1; 
+      ==I   ; 
+      )     ; 
+      FN    "DB_HR".SpH.HM_NI_Leerpalette; 
+      U     "DB_HR".RPT.PWinGRSTundNICHTaktiv; 
+      )     ; 
+      )     ; 
+      R     "DB_HR".RPT.RP_PWFG_oRSP_aktiv; 
+      U     "DB_HR".RPT.RP_PWFG_oRSP_aktiv; 
+      =     "DB_HR".SpH.M_PWFG_schon_aktiv; 
+NETWORK
+TITLE =FG-PW Status letzter PLC-Zyklus
+
+      U     "DB_HR".RPT.RP_PWFG_oRSP_aktiv; 
+      =     "DB_HR".FASTEMS.FG_PW_Status; 
+NETWORK
+TITLE =VSM-intern Freigabe Palette am RPL-Rundspeicher
+
+      U     "DB_HR".RPT_Zustand.Z07_PW_FG_aktivieren; 
+      U     "MX_ABST_Rundspeicher"; 
+      S     "DB_HR".RPT.VSM_RS_Freigabe; 
+      U(    ; 
+      UN    "DB_HR".RPT_Folgen.E1_PWFG_mSPH_oRPAX; 
+      UN    "DB_HR".RPT_Folgen.E2_PWFG_oSPH_oRPAX; 
+      UN    "DB_HR".RPT_Folgen.E3_PWFG_mSPH_mRPAX; 
+      UN    "DB_HR".RPT_Folgen.E4_PWFG_oSPH_mRPAX; 
+      UN    "DB_HR".RPT_Folgen.E5_PWFG_mSpH_oRPAX_Auto; 
+      UN    "DB_HR".RPT_Folgen.E6_PWFG_mSpH_mRPAX_Auto; 
+      UN    "DB_HR".RPT_Folgen.E7_PWFG_NullpunktSpg; 
+      UN    "DB_HR".RPT_Folgen.L1_ROB_PWFG_oRPAX; 
+      UN    "DB_HR".RPT_Folgen.L2_ROB_PWFG_mRPAX; 
+      U(    ; 
+      L     L#0; 
+      L     #t_Folge_Wert; 
+      <>D   ; 
+      )     ; 
+      O     "DB_HR".RPT_Folgen.D2_Abkuppeln; 
+      ON    #t_FG_PWFG_ausloesen; 
+      ON    "M_MA_Maschine_Ein"; 
+      O(    ; 
+      L     "DB_PAL_NR".Platz[4].Pal_Nr; 
+      L     0; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      U     "DB_HR".RPT.VSM_RS_Freigabe; 
+      U     #t_PI_PWFG_ausloesen; 
+      UN    "DB_HR".RPT_Zustand.Z07_PW_FG_aktivieren; 
+      )     ; 
+      O(    ; 
+      U     "DB_OUT".AMX_STACKER_LOCK; 
+      U     "DB_HR".ABST.SP_ext_Nullpunktspannsys; 
+      )     ; 
+      O(    ; 
+      U(    ; 
+      L     "DB_PAL_NR".Platz[4].Status; 
+      L     2; 
+      <>I   ; 
+      )     ; 
+      FP    "DB_HR".SPH_FD.HM_PI_Reset_VSM_RS_FG; 
+      )     ; 
+      )     ; 
+      R     "DB_HR".RPT.VSM_RS_Freigabe; 
+      NOP   0; 
+NETWORK
+TITLE =M-Ausgang: Lampe Taste PW Freigabe
+
+      U(    ; 
+      U(    ; 
+      O     "DB_HR".RPT_Folgen.E1_PWFG_mSPH_oRPAX; 
+      O     "DB_HR".RPT_Folgen.E2_PWFG_oSPH_oRPAX; 
+      O     "DB_HR".RPT_Folgen.E3_PWFG_mSPH_mRPAX; 
+      O     "DB_HR".RPT_Folgen.E4_PWFG_oSPH_mRPAX; 
+      O     "DB_HR".RPT_Folgen.E5_PWFG_mSpH_oRPAX_Auto; 
+      O     "DB_HR".RPT_Folgen.E6_PWFG_mSpH_mRPAX_Auto; 
+      O     "DB_HR".RPT_Folgen.E7_PWFG_NullpunktSpg; 
+      O     "DB_HR".RPT_Folgen.E8_PWFG_oPROP_oRPAX; 
+      )     ; 
+      U     "m_takt_1sec."; 
+      O     ; 
+      UN    "DB_HR".RPT_Folgen.E1_PWFG_mSPH_oRPAX; 
+      UN    "DB_HR".RPT_Folgen.E2_PWFG_oSPH_oRPAX; 
+      UN    "DB_HR".RPT_Folgen.E3_PWFG_mSPH_mRPAX; 
+      UN    "DB_HR".RPT_Folgen.E4_PWFG_oSPH_mRPAX; 
+      UN    "DB_HR".RPT_Folgen.E5_PWFG_mSpH_oRPAX_Auto; 
+      UN    "DB_HR".RPT_Folgen.E6_PWFG_mSpH_mRPAX_Auto; 
+      UN    "DB_HR".RPT_Folgen.E7_PWFG_NullpunktSpg; 
+      UN    "DB_HR".RPT_Folgen.E8_PWFG_oPROP_oRPAX; 
+      U(    ; 
+      U     "M_FreigabePW"; 
+      UN    "MX_ABST_Rundspeicher"; 
+      O     ; 
+      U(    ; 
+      L     "DB_PAL_NR".Platz[4].Status; 
+      L     2; 
+      ==I   ; 
+      )     ; 
+      U     "MX_ABST_Rundspeicher"; 
+      )     ; 
+      )     ; 
+      U     "M_MA_Maschine_Ein"; 
+      =     "O_PW_FREIGABE"; 
+
+NETWORK
+TITLE =RundSpeicher Rüstplatz Freigabe
+//Gibt den Zugriff vom Rundspeicher auf den Rüstplatz-Rundspeicher frei
+      U     "DB_HR".RPT_Zustand.Z00_Grundstellung; 
+      U     "MX_ABST_Rundspeicher"; 
+      U(    ; 
+      U(    ; 
+      ON    "DB_PV_SpH".RPL.Stelle[1].KONF_mitSPH; 
+      O     "DB_PV_SpH".RPL.Stelle[1].STAT_gespannt; 
+      )     ; 
+      U(    ; 
+      ON    "DB_PV_SpH".RPL.Stelle[2].KONF_mitSPH; 
+      O     "DB_PV_SpH".RPL.Stelle[2].STAT_gespannt; 
+      )     ; 
+      U(    ; 
+      ON    "DB_PV_SpH".RPL.Stelle[3].KONF_mitSPH; 
+      O     "DB_PV_SpH".RPL.Stelle[3].STAT_gespannt; 
+      )     ; 
+      U(    ; 
+      ON    "DB_PV_SpH".RPL.Stelle[4].KONF_mitSPH; 
+      O     "DB_PV_SpH".RPL.Stelle[4].STAT_gespannt; 
+      )     ; 
+      O     "DB_PV_SpH".RPL.Stelle[1].KONF_geoeffnet_in_MPL; 
+      )     ; 
+      =     "DB_HR".RPT.RS_RPL_FRG; 
+NETWORK
+TITLE =M-AUSGANG: Rückschlagventil Entspann-Leitung RPL öffnen
+//Wenn das Ventil bestromt ist, ist der Entspanndruck eingesperrt.
+//Damit sicher gestellt ist, dass beim Umrüsten einer Palette am Rüstplatz, der
+//eingesperrte Druck auf der Entspannseite entweichen kann,
+//erfolgt das Ansteuern des Ventils mit dem Vorgang "Ankuppeln"
+//    und das Absteuern des Ventils mit dem Vorgang "Abkuppeln".
+//Bei Maschinen OHNE Kupplung am Rüstplatz wird die Funktion mit
+//"I_SP_HYD_NEG_STOERUNG" gesteuert.
+      U(    ; 
+      U     "O_SP_RPL_KUPPELN"; 
+      U     "DB_PLC_MD_DB20".UDHex._27_Bit3_RPLmitKupplung; 
+      O     ; 
+      U     "I_SP_HYD_NEG_STOERUNG"; 
+      UN    "DB_PLC_MD_DB20".UDHex._27_Bit3_RPLmitKupplung; 
+      )     ; 
+      S     "O_SP_SPANNVORR_RV_EIN"; 
+      U(    ; 
+      U     "O_SP_RPL_ENTKUPPELN"; 
+      U     "DB_PLC_MD_DB20".UDHex._27_Bit3_RPLmitKupplung; 
+      ON    "I_SP_HYD_NEG_STOERUNG"; 
+      O     ; 
+      UN    "DB_PV_SpH".RPL.Stelle[1].KONF_mitSPH; 
+      UN    "DB_PV_SpH".RPL.Stelle[2].KONF_mitSPH; 
+      UN    "DB_PV_SpH".RPL.Stelle[3].KONF_mitSPH; 
+      UN    "DB_PV_SpH".RPL.Stelle[4].KONF_mitSPH; 
+      )     ; 
+      R     "O_SP_SPANNVORR_RV_EIN"; 
+      NOP   0; 
+NETWORK
+TITLE =M-Ausgang: SpannHydraulik Pumpe ein
+
+      U     "M_MA_Maschine_Ein"; 
+      U(    ; 
+      U(    ; 
+      O     "DB_PV_SpH".RPL.Stelle[1].KONF_mitSPH; 
+      O     "DB_PV_SpH".RPL.Stelle[2].KONF_mitSPH; 
+      O     "DB_PV_SpH".RPL.Stelle[3].KONF_mitSPH; 
+      O     "DB_PV_SpH".RPL.Stelle[4].KONF_mitSPH; 
+      )     ; 
+      UN    "DB_HR".FASTEMS.ABST_FASTEMS; 
+      O     "DB_PV_SpH".SpH[0].Stelle[1].KONF_mitSPH; 
+      O     "DB_PV_SpH".SpH[0].Stelle[2].KONF_mitSPH; 
+      O     "DB_PV_SpH".SpH[0].Stelle[3].KONF_mitSPH; 
+      O     "DB_PV_SpH".SpH[0].Stelle[4].KONF_mitSPH; 
+      )     ; 
+      =     "O_SP_HYD_EIN"; 
+NETWORK
+TITLE =MA H4-94.2 Auflagenkontrolle Luft-Reinigung (hoher ALK-Druck)
+
+      U(    ; 
+      O     "DB_PV_SpH".RPL.Stelle[1].KONF_mitSPH; 
+      O     "DB_PV_SpH".RPL.Stelle[2].KONF_mitSPH; 
+      )     ; 
+      UN    "DB_HR".RPT_Zustand.Z03_Spannen; 
+      =     "O_SST_FIXT_CL_PO_1_CLE"; 
+NETWORK
+TITLE =Timer Laufzeit Auflagenkontrolle "Luft-Reinigung" entlüften
+
+      U(    ; 
+      O     "DB_PV_SpH".RPL.Stelle[1].KONF_mitSPH; 
+      O     "DB_PV_SpH".RPL.Stelle[2].KONF_mitSPH; 
+      )     ; 
+      U     "DB_HR".RPT_Zustand.Z03_Spannen; 
+      L     S5T#2S; 
+      SE    "Te_ALK_entlueften"; 
+NETWORK
+TITLE =MA H4-94.4 Auflagenkontrolle Luft-Messung (niedriger ALK-Druck)
+
+      U     "Te_ALK_entlueften"; 
+      =     "O_SST_SC_SENS_ACT"; 
+NETWORK
+TITLE =MA H4-93.2 Status Auflagenkontrolle Spannstelle 1 (Meldeleuchte)
+
+      U(    ; 
+      U     "I_SP_AUFL_ST1_GESPANNT"; 
+      UN    "DB_FEHLERMELDUNG".MELDUNG3._700500_SpH; 
+      O     ; 
+      U     "DB_FEHLERMELDUNG".MELDUNG3._700500_SpH; 
+      U     "m_takt_0,5sec."; 
+      )     ; 
+      U     "DB_PV_SpH".RPL.Stelle[1].KONF_CTRL_spannen; 
+      U     "M_MA_Maschine_Ein"; 
+      =     "O_SST_SC_CL_PO_1_STATE"; 
+NETWORK
+TITLE =MA H4-93.4 Status Auflagenkontrolle Spannstelle 2 (Meldeleuchte)
+
+      U(    ; 
+      U     "I_SP_AUFL_ST2_GESPANNT"; 
+      UN    "DB_FEHLERMELDUNG".MELDUNG3._700501_SpH; 
+      O     ; 
+      U     "DB_FEHLERMELDUNG".MELDUNG3._700501_SpH; 
+      U     "m_takt_0,5sec."; 
+      )     ; 
+      U     "DB_PV_SpH".RPL.Stelle[2].KONF_CTRL_spannen; 
+      U     "M_MA_Maschine_Ein"; 
+      =     "O_SST_SC_CL_PO_2_STATE"; 
+NETWORK
+TITLE =M-Ausgang: Freigabe SpannHydraulik Rüstplatz
+
+      O     "DB_HR".RPT_Zustand.Z03_Spannen; 
+      O     "DB_HR".RPT_Zustand.Z08_Entspannen; 
+      O     "DB_HR".SpH.HMI_SpH_Ruestplatz; 
+      O     "DB_HR".HAWE.von.DIAG_SK1_TEACH_IN_laeuft; 
+      O     "DB_HR".HAWE.an.SK1_St1_Bef_spannen; 
+      O     "DB_HR".HAWE.an.SK1_St2_Bef_spannen; 
+      O     "DB_HR".HAWE.an.SK1_St3_Bef_spannen; 
+      O     "DB_HR".HAWE.an.SK1_St4_Bef_spannen; 
+      =     "O_SP_RPL_FREIGABE"; 
+NETWORK
+TITLE =Anforderung an Rüstplatz-Achse: Auf PW-Wechsel-Position fahren
+//In FC191 weiterverarbeitet.
+      UN    "DB_PLC_MD_DB20".UDHex._51_Bit0_RPL_GR_SPV; 
+      U     "DB_HR".RPT_Zustand.Z10_RPAX_0_Grad; 
+      U(    ; 
+      O     #t_RP_Pal_geklemmt; 
+      ON    "DB_PLC_MD_DB20".UDHex._17_BIT7_RP_HYD_KLEMMEN; 
+      )     ; 
+      =     "DB_PW_DATA".Automatik.bRP_NCAchse; 
+NETWORK
+TITLE =Anforderung an Rüstplatz-Achse: (+)Fahren
+//In FC191 weiterverarbeitet.
+      U     "DB_HR".RPT_Zustand.Z11_RPAX_positionieren; 
+      U     #t_RP_Pal_geklemmt; 
+      =     "DB_HR".RPT.Anf_RPAX_POSplus; 
+NETWORK
+TITLE =Bef. RPL-Achse positionieren
+
+      U     "DB_HR".RPT_Zustand.Z11_RPAX_positionieren; 
+      U(    ; 
+      O     #t_RP_Pal_geklemmt; 
+      ON    "DB_PLC_MD_DB20".UDHex._17_BIT7_RP_HYD_KLEMMEN; 
+      )     ; 
+      U     "DB_HR".vonROB.Bef_RPAX_positionieren; 
+      =     "DB_HR".RP_Achse.Befehl_positionieren; 
+NETWORK
+TITLE =Anforderung an HAWE: Druck 0 für Spannkreis 1 (Rüstplatz)
+//Wegen Nullpunktspannsystem muss die SpannHydraulik immer Druck=0 machen,
+//wenn kein SPANNEN oder ENTSPANNEN ausgeführt wird.
+      UN    "DB_HR".RPT.PWinGRSTundNICHTaktiv; 
+      UN    "MX_ABST_Rundspeicher"; 
+      O     ; 
+      UN    "DB_HR".RPT_Folgen.A1_spannen_oRPT; 
+      UN    "DB_HR".RPT_Folgen.B1_entspannen_oRPT; 
+      UN    "DB_HR".RPT_Folgen.F1_spannen_mRPT; 
+      UN    "DB_HR".RPT_Folgen.G1_entspannen_mRPT; 
+      U     "DB_HR".ABST.SP_ext_Nullpunktspannsys; 
+      U     "MX_ABST_Rundspeicher"; 
+      =     "DB_HR".anSpannHydraulik.Anf_Druck_0_RP; 
+NETWORK
+TITLE =FM-Timer START
+//Startet immer bei Eintritt in einen Zustand neu. Im Zustand Z00 Grundstellung
+//ist Timer gesperrt.
+//Laufzeit: 10000 ms
+//Kommt der Timer zum Ablauf, so liegt ein Fehler bei den erforderlichen 
+//Rückmeldungen an.
+      U(    ; 
+      UN    "DB_HR".RPT_Zustand.Z00_Grundstellung; 
+      U(    ; 
+      L     #t_Zustand_Wert; 
+      L     "DB_HR".RPT.Zxx_alter_Zustand; 
+      ==I   ; 
+      )     ; 
+      SPBNB _028; 
+      L     10000; 
+      T     "DB_TIMER".Zeit_62.Vorgabe; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+_028: U     BIE; 
+      )     ; 
+      UN    "M_Ruecksetze_Fehler"; 
+      =     "DB_TIMER".Zeit_62.Start; 
+NETWORK
+TITLE =Multifunktions-Timer: aktuellen Zustand in ALT-Wert speichern
+
+      L     #t_Zustand_Wert; 
+      T     "DB_HR".RPT.Zxx_alter_Zustand; 
+      NOP   0; 
+NETWORK
+TITLE =700455 Rüstplatz: Meldung Palette geklemmt fehlt!
+//      U     "DB_HR".RPT_Zustand.Z01_PalKlemmung_ein
+//      UN    #t_RP_Pal_geklemmt
+//      U     "DB_PLC_MD_DB20".UDHex._17_BIT7_RP_HYD_KLEMMEN
+//      U     "DB_TIMER".Zeit_62.Ausgang
+//      =     "DB_FEHLERMELDUNG".MELDUNG3._700455_RPT
+//
+      U(    ; 
+      O     "DB_HR".RPT_Zustand.Z03_Spannen; 
+      O     "DB_HR".RPT_Zustand.Z08_Entspannen; 
+      O     "DB_HR".RPT_Zustand.Z01_PalKlemmung_ein; 
+      )     ; 
+      UN    #t_RP_Pal_geklemmt; 
+      U     "DB_PLC_MD_DB20".UDHex._17_BIT7_RP_HYD_KLEMMEN; 
+      U     "DB_TIMER".Zeit_62.Ausgang; 
+      =     "DB_FEHLERMELDUNG".MELDUNG3._700455_RPT; 
+NETWORK
+TITLE =700463 Rüstplatz: Meldung Türen zu fehlt!
+
+      U     "DB_HR".RPT_Zustand.Z04_RPT_schliessen; 
+      UN    #t_RPT_zu; 
+      U     "DB_TIMER".Zeit_62.Ausgang; 
+      =     "DB_FEHLERMELDUNG".MELDUNG3._700463_RPT; 
+NETWORK
+TITLE =700459 Rüstplatz: Meldung verriegelt fehlt!
+
+      U     "DB_HR".RPT_Zustand.Z04_RPT_schliessen; 
+      UN    #t_RPT_zu; 
+      U     "DB_TIMER".Zeit_62.Ausgang; 
+      =     "DB_FEHLERMELDUNG".MELDUNG3._700459_RPT; 
+NETWORK
+TITLE =700458 Rüstplatz: Meldung entriegelt fehlt!
+
+      U     "DB_HR".RPT_Zustand.Z09_RPT_oeffnen; 
+      U     #t_RPT_zu; 
+      U     "DB_TIMER".Zeit_62.Ausgang; 
+      =     "DB_FEHLERMELDUNG".MELDUNG3._700458_RPT; 
+NETWORK
+TITLE =700460 Rüstplatz: Meldung offen rechts fehlt!
+
+      U     "DB_HR".RPT_Zustand.Z09_RPT_oeffnen; 
+      UN    "I_PW_RP_TUER_1_OFFEN"; 
+      U     "DB_HR".ABST.Automatische_RPT; 
+      U     "DB_TIMER".Zeit_62.Ausgang; 
+      =     "DB_FEHLERMELDUNG".MELDUNG3._700460_RPT; 
+NETWORK
+TITLE =700461 Rüstplatz: Meldung offen links fehlt!
+
+      U     "DB_HR".RPT_Zustand.Z09_RPT_oeffnen; 
+      UN    "I_PW_RP_TUER_2_OFFEN"; 
+      U     "DB_HR".ABST.Automatische_RPT; 
+      U     "DB_TIMER".Zeit_62.Ausgang; 
+      =     "DB_FEHLERMELDUNG".MELDUNG3._700461_RPT; 
+NETWORK
+TITLE =700462 Rüstplatz: Achse nicht auf PW-Wechselposition!
+
+      U     "DB_HR".RPT_Zustand.Z10_RPAX_0_Grad; 
+      UN    #t_RP_0_Grad; 
+      U     "DB_TIMER".Zeit_62.Ausgang; 
+      =     "DB_FEHLERMELDUNG".MELDUNG3._700462_RPT; 
+NETWORK
+TITLE =702323 "WAR, FD-Spannhydraulik Filter verschmutzt"
+//FD-Spannhydraulik ohne PROP-Ventil-Technik
+      U     "I_SP_FILTER_WAR"; 
+      U     "DB_HR".ABST.SP_FD_ohne_PROP; 
+      U     "M_MA_Maschine_Ein"; 
+      S     "DB_FEHLERMELDUNG".WARNUNG4._702323_FD_SP_FILTER; 
+      U(    ; 
+      UN    "I_SP_FILTER_WAR"; 
+      U     "M_Ruecksetze_Fehler"; 
+      ON    "DB_HR".ABST.SP_FD_ohne_PROP; 
+      )     ; 
+      R     "DB_FEHLERMELDUNG".WARNUNG4._702323_FD_SP_FILTER; 
+      NOP   0; 
+NETWORK
+TITLE =FD-Spannhydraulik OHNE PROP: max Fehlerlaufzeit bis VS-HLT
+//Konfiguartionswert in Millisekunden wandeln
+//Init: 20000 ms
+      U(    ; 
+      U     "DB_HR".ABST.SP_FD_ohne_PROP; 
+      SPBNB _029; 
+      L     "DB_CONFIG".SP_FD_ohnePROP.maxZeit_Ueberwachung; 
+      L     1000; 
+      *I    ; 
+      T     #t_DINT; 
+      UN    OV; 
+      SAVE  ; 
+      CLR   ; 
+_029: U     BIE; 
+      )     ; 
+      SPBNB _02a; 
+      L     #t_DINT; 
+      T     "DB_TIMER".Zeit_28.Vorgabe; 
+_02a: NOP   0; 
+NETWORK
+TITLE =FD-Spannhydraulik OHNE PROP: max Fehlerlaufzeit bis VS-HLT
+//Wenn Vorgabezeit = 0, dann erfolt VS-HLT nur bei G00
+      U(    ; 
+      O     "DB_FEHLERMELDUNG".WARNUNG3._700427_SpH; 
+      O     "DB_FEHLERMELDUNG".WARNUNG3._700431; 
+      O     "DB_FEHLERMELDUNG".WARNUNG4._702323_FD_SP_FILTER; 
+      )     ; 
+      U(    ; 
+      L     "DB_TIMER".Zeit_28.Vorgabe; 
+      L     0; 
+      <>D   ; 
+      )     ; 
+      =     "DB_TIMER".Zeit_28.Start; 
+NETWORK
+TITLE =700426 SpannHydraulik: Öl-Temperatur nicht ok!
+
+      UN    "I_SP_HYD_TEMP_OK"; 
+      U     "M_MA_Maschine_Ein"; 
+      U     "DB_HR".ABST.SpannHydraulik; 
+      UN    "DB_CONFIG".ABST.SPH_VORBEREITET; 
+      =     "DB_FEHLERMELDUNG".WARNUNG3._700426_SpH; 
+NETWORK
+TITLE =700427 SpannHydraulik: Öl-Niveau zu niedrig!
+
+      UN    "I_SP_HYD_FUEL_OK"; 
+      U     "M_MA_Maschine_Ein"; 
+      U(    ; 
+      U     "DB_HR".ABST.SpannHydraulik; 
+      UN    "DB_CONFIG".ABST.SPH_VORBEREITET; 
+      O     "DB_HR".ABST.SP_FD_ohne_PROP; 
+      )     ; 
+      S     "DB_FEHLERMELDUNG".WARNUNG3._700427_SpH; 
+      U(    ; 
+      U     "I_SP_HYD_FUEL_OK"; 
+      U     "M_Ruecksetze_Fehler"; 
+      O     ; 
+      UN    "DB_HR".ABST.SpannHydraulik; 
+      UN    "DB_HR".ABST.SP_FD_ohne_PROP; 
+      )     ; 
+      R     "DB_FEHLERMELDUNG".WARNUNG3._700427_SpH; 
+      NOP   0; 
+NETWORK
+TITLE =700209 "SPI-VS-H, Spannhydraulik Überwachung Füllstand / Tempera
+
+      U(    ; 
+      U(    ; 
+      O     "DB_FEHLERMELDUNG".WARNUNG3._700426_SpH; 
+      O     "DB_FEHLERMELDUNG".WARNUNG3._700427_SpH; 
+      )     ; 
+      U     "M_G00_aktiv"; 
+      U(    ; 
+      O     "DB_HR".ABST.SpannHydraulik; 
+      O     "DB_HR".ABST.SP_FD_ohne_PROP; 
+      )     ; 
+      O     ; 
+      U     "DB_TIMER".Zeit_28.Ausgang; 
+      U     "DB_HR".ABST.SP_FD_ohne_PROP; 
+      )     ; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt._700209_SPHYD_OelDr_0Sig; 
+      U(    ; 
+      UN    "DB_FEHLERMELDUNG".WARNUNG3._700426_SpH; 
+      UN    "DB_FEHLERMELDUNG".WARNUNG3._700427_SpH; 
+      U     "M_Ruecksetze_Fehler"; 
+      O     ; 
+      UN    "DB_HR".ABST.SpannHydraulik; 
+      UN    "DB_HR".ABST.SP_FD_ohne_PROP; 
+      )     ; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt._700209_SPHYD_OelDr_0Sig; 
+      NOP   0; 
+NETWORK
+TITLE =Timer für Meldung: SpannHydraulik Aggregat ist ein
+
+      U     "O_SP_HYD_EIN"; 
+      L     S5T#400MS; 
+      SE    "Te_SpH_Aggregat_ein"; 
+NETWORK
+TITLE =700431 SpannHydraulik: Motorschutzschalter ausgelöst!
+
+      UN    "I_SP_HYD_NEG_STOERUNG"; 
+      U     "M_MA_Maschine_Ein"; 
+      U(    ; 
+      U     "DB_HR".ABST.SpannHydraulik; 
+      U     "Te_SpH_Aggregat_ein"; 
+      UN    "DB_HR".ABST.SP_FD; 
+      O     "DB_HR".ABST.SP_FD; 
+      )     ; 
+      S     "DB_FEHLERMELDUNG".WARNUNG3._700431; 
+      U(    ; 
+      UN    "DB_HR".ABST.SpannHydraulik; 
+      UN    "DB_HR".ABST.SP_FD; 
+      O     ; 
+      U     "I_SP_HYD_NEG_STOERUNG"; 
+      U     "M_Ruecksetze_Fehler"; 
+      )     ; 
+      R     "DB_FEHLERMELDUNG".WARNUNG3._700431; 
+      NOP   0; 
+NETWORK
+TITLE =700452 SpannHydraulik: Rüstplatz Spannstelle 1 nicht gespannt!
+
+      U     "DB_PW_DATA".bFreigabeAnforderung; 
+      U(    ; 
+      UN    "DB_PV_SpH".RPL.Stelle[1].STAT_gespannt; 
+      U     "DB_PV_SpH".RPL.Stelle[1].KONF_mitSPH; 
+      UN    "DB_NC_PLC".PW_SPH_MA_entladen; 
+      O     ; 
+      U     "DB_OUT".AMX_PC_LOCK; 
+      U     "DB_IN".EMX_FIXTURE_ON_SUS; 
+      U     "DB_HR".ABST.SP_ext_Nullpunktspannsys; 
+      O     ; 
+      UN    "I_PW_RPL_SPANNDRUCK_OK"; 
+      U     "DB_HR".ABST.SP_SA_MTU; 
+      )     ; 
+      S     "DB_FEHLERMELDUNG".MELDUNG3._700452_SpH; 
+      U(    ; 
+      O     "M_Ruecksetze_Fehler"; 
+      O     "DB_PV_SpH".RPL.Stelle[1].STAT_gespannt; 
+      O     ; 
+      UN    "DB_PV_SpH".RPL.Stelle[1].KONF_mitSPH; 
+      UN    "DB_HR".ABST.SP_ext_Nullpunktspannsys; 
+      UN    "DB_HR".ABST.SP_SA_MTU; 
+      O     ; 
+      UN    "DB_OUT".AMX_PC_LOCK; 
+      U     "DB_IN".EMX_FIXTURE_ON_SUS; 
+      U     "DB_HR".ABST.SP_ext_Nullpunktspannsys; 
+      UN    "DB_HR".ABST.SpannHydraulik; 
+      O     ; 
+      U     "I_PW_RPL_SPANNDRUCK_OK"; 
+      U     "DB_HR".ABST.SP_SA_MTU; 
+      )     ; 
+      R     "DB_FEHLERMELDUNG".MELDUNG3._700452_SpH; 
+      NOP   0; 
+NETWORK
+TITLE =700453 SpannHydraulik: Rüstplatz Spannstelle 2 nicht gespannt!
+
+      U     #t_PI_PWFG_ausloesen; 
+      UN    "DB_PV_SpH".RPL.Stelle[2].STAT_gespannt; 
+      U     "DB_PV_SpH".RPL.Stelle[2].KONF_mitSPH; 
+      S     "DB_FEHLERMELDUNG".MELDUNG3._700453_SpH; 
+      U(    ; 
+      O     "M_Ruecksetze_Fehler"; 
+      O     "DB_PV_SpH".RPL.Stelle[2].STAT_gespannt; 
+      ON    "DB_PV_SpH".RPL.Stelle[2].KONF_mitSPH; 
+      )     ; 
+      R     "DB_FEHLERMELDUNG".MELDUNG3._700453_SpH; 
+      NOP   0; 
+NETWORK
+TITLE =700454 Rüstplatz: Palettenstellung nicht auf 0-Grad!
+
+      U     #t_PI_PWFG_ausloesen; 
+      UN    #t_RP_0_Grad; 
+      UN    "DB_HR".ABST.RP_mit_Achse; 
+      S     "DB_FEHLERMELDUNG".MELDUNG3._700454_RPT; 
+      U(    ; 
+      U     #t_RP_0_Grad; 
+      UN    "DB_HR".ABST.RP_mit_Achse; 
+      O     "M_Ruecksetze_Fehler"; 
+      )     ; 
+      R     "DB_FEHLERMELDUNG".MELDUNG3._700454_RPT; 
+      NOP   0; 
+NETWORK
+TITLE =702412 "Meldung, keine PW-Freigabe; SOKO fordert ankuppeln"
+
+      U     "DB_PW_DATA".bFreigabeAnforderung; 
+      U     "DB_OUT".AMX_SUS_COUPLE; 
+      S     "DB_FEHLERMELDUNG".Meldung4._702412; 
+      U     "M_Ruecksetze_Fehler"; 
+      UN    "DB_OUT".AMX_SUS_COUPLE; 
+      R     "DB_FEHLERMELDUNG".Meldung4._702412; 
+      NOP   0; 
+NETWORK
+TITLE =Zurückschreiben der lokalen Rüstplatzdaten
+
+      U(    ; 
+      UN    "MX_ABST_Rundspeicher"; 
+      SPBNB _02b; 
+      CALL "BLKMOVE" (
+           SRCBLK                   := "DB_PV_SpH".RPL,
+           RET_VAL                  := #t_BLKMOVE_RET_VAL,
+           DSTBLK                   := "DB_PV_SpH".SpH[1]);
+_02b: U     BIE; 
+      )     ; 
+      NOT   ; 
+      SPBNB _02c; 
+      CALL "BLKMOVE" (
+           SRCBLK                   := "DB_PV_SpH".RPL,
+           RET_VAL                  := #t_BLKMOVE_RET_VAL,
+           DSTBLK                   := "DB_PV_SpH".SpH[4]);
+_02c: NOP   0; 
+NETWORK
+TITLE =Absprung, wenn keine Spannhydraulik
+
+      ON    "DB_HR".ABST.SpannHydraulik; 
+      O     "DB_CONFIG".ABST.SPH_VORBEREITET; 
+      SPB   SpH; 
+NETWORK
+TITLE =ProfiBus-EINGANG-HAWE: HAWE-Signale holen auf DB-HR-Bereich
+
+      U     "m_eins"; 
+      =     L     21.0; 
+      BLD   103; 
+      U     "m_null"; 
+      =     L     21.1; 
+      BLD   103; 
+      U     "DB_HR".ABST.SpannHydraulik; 
+      UN    "DB_CONFIG".ABST.SPH_VORBEREITET; 
+      SPBNB _02d; 
+      CALL "FC_UT_IO_PROFIBUS" (
+           read                     := L     21.0,
+           write                    := L     21.1,
+           Datenbereich             := "DB_HR".HAWE.von,
+           Profibus_ADR             := "DB_CONFIG".ProfiBus.StartAdrPLC.IN_HAWEBOX);
+_02d: NOP   0; 
+NETWORK
+TITLE =>>>>> FB_SPH: Aufruf SpannHydraulik OHNE FD
+
+      U     "m_eins"; 
+      =     L     21.0; 
+      BLD   103; 
+      U     "DB_HR".SpH.RP_Stelle_1_aktiviert; 
+      =     L     21.1; 
+      BLD   103; 
+      U     "DB_HR".SpH.RP_Stelle_2_aktiviert; 
+      =     L     21.2; 
+      BLD   103; 
+      U     "DB_HR".SpH.RP_Stelle_3_aktiviert; 
+      =     L     21.3; 
+      BLD   103; 
+      U     "DB_HR".SpH.RP_Stelle_4_aktiviert; 
+      =     L     21.4; 
+      BLD   103; 
+      U     "DB_HR".RPT_Zustand.Z03_Spannen; 
+      =     L     21.5; 
+      BLD   103; 
+      U     "DB_HR".RPT_Zustand.Z08_Entspannen; 
+      =     L     21.6; 
+      BLD   103; 
+      U     "DB_HR".ABST.SpannHydraulik; 
+      UN    "DB_HR".ABST.SP_FD; 
+      SPBNB _02e; 
+      CALL "FB_SPH" , "DI_FB_SPH" (
+           i_I_SpH_HSchalter_ein    := L     21.0,
+           i_FG_Spannstelle_1       := L     21.1,
+           i_FG_Spannstelle_2       := L     21.2,
+           i_FG_Spannstelle_3       := L     21.3,
+           i_FG_Spannstelle_4       := L     21.4,
+           i_VSM_Bef_Spannen        := L     21.5,
+           i_VSM_Bef_Entspannen     := L     21.6,
+           io_FM_Entspan_St_1_CTRL  := #dummy,
+           io_FM_Entspan_St_2_CTRL  := #dummy,
+           io_FM_Entspan_St_3_CTRL  := #dummy,
+           io_FM_Entspan_St_4_CTRL  := #dummy,
+           io_FM_Entspan_St_1_HAWE  := #dummy,
+           io_FM_Entspan_St_2_HAWE  := #dummy,
+           io_FM_Entspan_St_3_HAWE  := #dummy,
+           io_FM_Entspan_St_4_HAWE  := #dummy);
+
+_02e: NOP   0; 
+NETWORK
+TITLE =>>>>> FB_SPH_FD SpannHydraulik für FD-Maschinen
+
+      U     "DB_HR".RPT_Zustand.Z03_Spannen; 
+      =     L     21.0; 
+      BLD   103; 
+      U     "DB_HR".RPT_Zustand.Z08_Entspannen; 
+      =     L     21.1; 
+      BLD   103; 
+      U     "M_PW_GRDST"; 
+      =     L     21.2; 
+      BLD   103; 
+      U(    ; 
+      U     "O_PW_SPANNDRUCK_HYD_AUS"; 
+      UN    "MX_ABST_Rundspeicher"; 
+      O     ; 
+      U     "O_SP_RPL_DRUCK_AUS"; 
+      U     "MX_ABST_Rundspeicher"; 
+      )     ; 
+      =     L     21.3; 
+      BLD   103; 
+      U     "O_PW_SPANNDRUCK_HYD_AUS"; 
+      =     L     21.4; 
+      BLD   103; 
+      U     "DB_HR".ABST.SP_FD; 
+      SPBNB _02f; 
+      CALL "FB_SPH_FD" , "DI_FB_SPH_FD" (
+           i_VSM_Spannen            := L     21.0,
+           i_VSM_Entspannen         := L     21.1,
+           i_PW_GRST                := L     21.2,
+           i_VSM_RPL_Druck_0        := L     21.3,
+           i_VSM_MPL_Druck_0        := L     21.4);
+_02f: NOP   0; 
+NETWORK
+TITLE =ProfiBus-AUSGANG-HAWE: DB_HR-Bereich an HAWE senden
+
+      U     "m_null"; 
+      =     L     21.0; 
+      BLD   103; 
+      U     "m_eins"; 
+      =     L     21.1; 
+      BLD   103; 
+      U     "DB_HR".ABST.SpannHydraulik; 
+      UN    "DB_CONFIG".ABST.SPH_VORBEREITET; 
+      SPBNB _030; 
+      CALL "FC_UT_IO_PROFIBUS" (
+           read                     := L     21.0,
+           write                    := L     21.1,
+           Datenbereich             := "DB_HR".HAWE.an,
+           Profibus_ADR             := "DB_CONFIG".ProfiBus.StartAdrPLC.OUT_HAWEBOX);
+_030: NOP   0; 
+NETWORK
+TITLE =LABEL:   SpH
+
+SpH:  U     #dummy; 
+      =     #dummy; 
+NETWORK
+TITLE =an HMI: Palette am Rüstplatz hat Spannhydraulik
+
+      U     "MX_ABST_Rundspeicher"; 
+      SPB   ST1; 
+NETWORK
+TITLE =Palette besitzt Spannhydraulik
+
+      O     "DB_PV_SpH".RPL.Stelle[1].KONF_mitSPH; 
+      O     "DB_PV_SpH".RPL.Stelle[2].KONF_mitSPH; 
+      O     "DB_PV_SpH".RPL.Stelle[3].KONF_mitSPH; 
+      O     "DB_PV_SpH".RPL.Stelle[4].KONF_mitSPH; 
+      =     "DB_PAL_NR".Platz[1].Spannhydraulik; 
+NETWORK
+TITLE =Palette besitzt Spannhydraulik
+
+      U     "m_eins"; 
+      SPB   ST2; 
+NETWORK
+TITLE =Palette besitzt Spannhydraulik
+
+ST1:  O     "DB_PV_SpH".RPL.Stelle[1].KONF_mitSPH; 
+      O     "DB_PV_SpH".RPL.Stelle[2].KONF_mitSPH; 
+      O     "DB_PV_SpH".RPL.Stelle[3].KONF_mitSPH; 
+      O     "DB_PV_SpH".RPL.Stelle[4].KONF_mitSPH; 
+      =     "DB_PAL_NR".Platz[4].Spannhydraulik; 
+NETWORK
+TITLE =M-Ausgang: SpannHydraulik Rüstplatz entkuppeln
+//ABST: "SpannHydraulik vorbereitet":
+//Kupplung für RP und MA abkuppeln fest auf "1" sein
+//Kupplung für RP und MA ankuppeln fest auf "0" sein
+//
+//ABST: ext.Nullpunktspannsystem:
+//Kupplung am RP mit pos.Flanke "PW_in_GRST" ankuppeln
+//Kupplung am Rüstplatz mit "Taste PW-Freigabe" abkuppeln
+ST2:  U     "DB_CONFIG".ABST.SPH_VORBEREITET; 
+      UN    "DB_HR".SpH.HMI_SpH_Ruestplatz; 
+      S     "O_SP_RPL_ENTKUPPELN"; 
+NETWORK
+TITLE =M-Ausgang: SpannHydraulik Rüstplatz kuppeln
+//ABST: "SpannHydraulik vorbereitet":
+//Kupplung für RP und MA abkuppeln fest auf "1" sein
+//Kupplung für RP und MA ankuppeln fest auf "0" sein
+//
+//ABST: ext.Nullpunktspannsystem:
+//Kupplung am RP mit pos.Flanke "PW_in_GRST" ankuppeln
+//Kupplung am Rüstplatz mit "Taste PW-Freigabe" abkuppeln
+      U     "DB_CONFIG".ABST.SPH_VORBEREITET; 
+      UN    "DB_HR".SpH.HMI_SpH_Ruestplatz; 
+      R     "O_SP_RPL_KUPPELN"; 
+NETWORK
+TITLE =MA H4-03.7 Spannvorrichtung Verriegelung Palettenwechsler
+//???HR???
+      U     "DB_HR".RPT_Zustand.Z07_PW_FG_aktivieren; 
+      U     "DB_HR".ABST.SP_ohnePROP; 
+      UN    "DB_HR".ABST.SP_SA_MTU; 
+      UN    "DB_HR".ABST.SP_FD; 
+      S     "O_PW_SPANNDRUCK_HYD_AUS"; 
+      U     "DB_HR".RPT.RP_PWFG_oRSP_aktiv; 
+      FN    "DB_HR".RPT.HM_NI_PWFG; 
+      U     "DB_HR".ABST.SP_ohnePROP; 
+      UN    "DB_HR".ABST.SP_SA_MTU; 
+      UN    "DB_HR".ABST.SP_FD; 
+      R     "O_PW_SPANNDRUCK_HYD_AUS"; 
+      NOP   0; 
+NETWORK
+TITLE =an RS: Rüstplatz Rückmeldung angekuppelt
+
+      O     "I_SP_RPL_GEKUPPELT"; 
+      O     ; 
+      UN    "DB_PLC_MD_DB20".UDHex._27_Bit3_RPLmitKupplung; 
+      U     "DB_HR".RPT.RPL_RS_Anf_ankuppeln; 
+      =     "DB_HR".RPT.RPL_RS_RM_angekuppelt; 
+NETWORK
+TITLE =an SOKO: Rüstplatz Rückmeldung angekuppelt
+
+      U     "I_SP_RPL_GEKUPPELT"; 
+      =     "DB_IN".EMX_SUS_COUPLED; 
+NETWORK
+TITLE =an RS: Rüstplatz Rückmeldung abgekuppelt
+
+      O     "I_SP_RPL_ENTKUPPELT"; 
+      O     ; 
+      UN    "DB_PLC_MD_DB20".UDHex._27_Bit3_RPLmitKupplung; 
+      U     "DB_HR".RPT.RPL_RS_Anf_abkuppeln; 
+      =     "DB_HR".RPT.RPL_RS_RM_abgekuppelt; 
+NETWORK
+TITLE =an SOKO: SpannHydraulik am Rüstplatz drucklos
+
+      U(    ; 
+      O     "DB_HR".HAWE.von.SK1_St1_Druck_ist_0; 
+      ON    "DB_HR".HAWE.an.SK1_St1_ABST_SPH; 
+      )     ; 
+      U(    ; 
+      O     "DB_HR".HAWE.von.SK1_St2_Druck_ist_0; 
+      ON    "DB_HR".HAWE.an.SK1_St2_ABST_SPH; 
+      )     ; 
+      U(    ; 
+      O     "DB_HR".HAWE.von.SK1_St3_Druck_ist_0; 
+      ON    "DB_HR".HAWE.an.SK1_St3_ABST_SPH; 
+      )     ; 
+      U(    ; 
+      O     "DB_HR".HAWE.von.SK1_St4_Druck_ist_0; 
+      ON    "DB_HR".HAWE.an.SK1_St4_ABST_SPH; 
+      )     ; 
+      =     "DB_IN".EMX_SUS_PRESSURELESS; 
+NETWORK
+TITLE ================= SpH für Maschine OHNE PW ======================
+
+      UN    "DB_HR".ABST.SP_ohnePW_OFFEN_Tuer; 
+      UN    "DB_HR".ABST.SP_ohnePW_ZU_Tuer; 
+      SPB   RPT; 
+SpH2: NOP   0; 
+
+NETWORK
+TITLE =ProfiBus-EINGANG-HAWE: HAWE-Signale holen auf DB-HR-Bereich
+
+      U     "m_eins"; 
+      =     L     21.0; 
+      BLD   103; 
+      U     "m_null"; 
+      =     L     21.1; 
+      BLD   103; 
+      CALL "FC_UT_IO_PROFIBUS" (
+           read                     := L     21.0,
+           write                    := L     21.1,
+           Datenbereich             := "DB_HR".HAWE.von,
+           Profibus_ADR             := "DB_CONFIG".ProfiBus.StartAdrPLC.IN_HAWEBOX);
+      NOP   0; 
+NETWORK
+TITLE =>>>>> FB_SPH_PW: Aufruf SpannHydraulik OHNE PW
+
+      U     "I_SP_SPANN_LOES"; 
+      =     L     21.0; 
+      BLD   103; 
+      U     "I_SP_AKTIV"; 
+      =     L     21.1; 
+      BLD   103; 
+      U     "I_SP_HYD_EIN"; 
+      =     L     21.2; 
+      BLD   103; 
+      U     "m_null"; 
+      =     L     21.3; 
+      BLD   103; 
+      U     "m_null"; 
+      =     L     21.4; 
+      BLD   103; 
+      U     "m_null"; 
+      =     L     21.5; 
+      BLD   103; 
+      U     "m_null"; 
+      =     L     21.6; 
+      BLD   103; 
+      U     "m_null"; 
+      =     L     21.7; 
+      BLD   103; 
+      U     "m_null"; 
+      =     L     22.0; 
+      BLD   103; 
+      U     "m_null"; 
+      =     L     22.1; 
+      BLD   103; 
+      U     "m_null"; 
+      =     L     22.2; 
+      BLD   103; 
+      CALL "FB_SPH_OPW" , "DI_FB_SPH_OPW" (
+           i_I_SP_SPANN_LOES        := L     21.0,
+           i_I_SP_AKTIV             := L     21.1,
+           i_I_SpH_HSchalter_ein    := L     21.2,
+           i_CTRL_DruckA_St_1       := L     21.3,
+           i_CTRL_DruckA_St_2       := L     21.4,
+           i_CTRL_DruckA_St_3       := L     21.5,
+           i_CTRL_DruckA_St_4       := L     21.6,
+           i_CTRL_DruckB_St_1       := L     21.7,
+           i_CTRL_DruckB_St_2       := L     22.0,
+           i_CTRL_DruckB_St_3       := L     22.1,
+           i_CTRL_DruckB_St_4       := L     22.2,
+           io_FM_Entspan_St_1_CTRL  := #dummy,
+           io_FM_Entspan_St_2_CTRL  := #dummy,
+           io_FM_Entspan_St_3_CTRL  := #dummy,
+           io_FM_Entspan_St_4_CTRL  := #dummy,
+           io_FM_Entspan_St_1_HAWE  := #dummy,
+           io_FM_Entspan_St_2_HAWE  := #dummy,
+           io_FM_Entspan_St_3_HAWE  := #dummy,
+           io_FM_Entspan_St_4_HAWE  := #dummy);
+      NOP   0; 
+NETWORK
+TITLE =ProfiBus-AUSGANG-HAWE: DB_HR-Bereich an HAWE senden
+
+      U     "m_null"; 
+      =     L     21.0; 
+      BLD   103; 
+      U     "m_eins"; 
+      =     L     21.1; 
+      BLD   103; 
+      CALL "FC_UT_IO_PROFIBUS" (
+           read                     := L     21.0,
+           write                    := L     21.1,
+           Datenbereich             := "DB_HR".HAWE.an,
+           Profibus_ADR             := "DB_CONFIG".ProfiBus.StartAdrPLC.OUT_HAWEBOX);
+      NOP   0; 
+NETWORK
+TITLE =M-Ausgang: SpannHydraulik Pumpe ein
+
+      U     "M_MA_Maschine_Ein"; 
+      U(    ; 
+      O     "DB_PV_SpH".SpH[1].Stelle[1].KONF_mitSPH; 
+      O     "DB_PV_SpH".SpH[1].Stelle[2].KONF_mitSPH; 
+      O     "DB_PV_SpH".SpH[1].Stelle[3].KONF_mitSPH; 
+      O     "DB_PV_SpH".SpH[1].Stelle[4].KONF_mitSPH; 
+      )     ; 
+      =     "O_SP_HYD_EIN"; 
+NETWORK
+TITLE =Aufruf: Rüstplatztüre entriegeln
+
+RPT:  CALL "FC_RPT_ENTRIEGELN" ;
+      NOP   0; 
+END_FUNCTION
+

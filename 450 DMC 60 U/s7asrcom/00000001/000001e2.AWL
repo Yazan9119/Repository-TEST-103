@@ -1,0 +1,5589 @@
+FUNCTION "FC_CIO_IO_RANGIER" : VOID
+TITLE =
+//$Revision: 1.62 $
+//$Date: 2008/05/30 06:21:59CEST $
+//$Author: hgc $
+{ S7_language := '7(1) Deutsch (Deutschland)  08.05.2008  12:28:34' }
+FAMILY : DM_BASIC
+NAME : FC_INOUT
+VERSION : 0.1
+
+
+VAR_INPUT
+  IN0 : BOOL ;	
+  IN1 : BOOL ;	
+  IN2 : BOOL ;	
+  IN3 : BOOL ;	
+END_VAR
+VAR_TEMP
+  TEMP4 : BOOL ;	
+  TEMP : BOOL ;	
+  TEMP5 : WORD ;	
+  TEMP6 : INT ;	
+  TEMP7 : ANY ;	
+  E_FMS : BYTE ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =Sprung-Leiste
+// Netzwerk-Übersicht
+// ==================
+// NW 1: Sprung-Leiste
+// NW 2: Eingaenge MaschinenSteuerTafel (MSST)
+// NW 3: Eingaenge Allgemein
+// NW 4: Eingaenge Schwenkkopf und Spindel
+// NW 5: Eingaenge Kuehlaggregat
+// NW 6: Eingaenge Spannhydraulik
+// NW 7: Eingaenge Spannhydraulik nur bei FD-Maschinen
+// NW 8: Eingaenge ProfiBus: HAWE-Box
+// NW 9: Eingaenge Handrad
+// NW 10: Eingaenge Blum-Laser
+// NW 11: Eingaenge Werkzeugwechsler und Werkzeugmagazin
+// NW 12: Eingänge Option Teepackmaschine
+// NW 13: Eingaenge Palettenwechsler
+// NW 14: Eingaenge Spaenefoerderer
+// NW 15: Eingaenge Fraes-Drehtisch
+// NW 16: Eingaenge Kuehlmittel Konzernkuehlmittelanlage
+// NW 17: Eingaenge Kuehlmittel
+// NW 18: Eingaenge Wiegenfräskopf
+// NW 19: Eingaenge Roboter-Beladung für Maschinen mit Ruestplatz
+// NW 20: Eingaenge Roboter-Schnittstelle - Start-Adr für DPDP-Koppler
+// NW 21: Eingaenge Kuehlmittelanlage KNOLL
+// NW 22: Eingaenge Vibrationssensor
+// NW 23: Eingaenge OMRON-Regalmagazin
+// NW 24: Eingaenge Palettenspeicher
+// NW 25: Eingaenge: EROWA / PROMOT
+// NW 26: Eingaenge: Handlingsystem
+// NW 27: Eingaenge SOKO-Slave(8) DB_OUT-Signale
+// NW 28: Eingaenge U-Achse
+// NW 29: Eingaenge Nicht verwendete Eingänge
+// NW 30: -------------------- Ausgaenge -----------------------
+// NW 31: Ausgaenge BISC-Balluff
+// NW 32: Ausgaenge allgemein
+// NW 33: Ausgänge für Vibrationssensor
+// NW 34: Ausgaenge an NCU und NC Baugruppe SOLUTIONLINE
+// NW 35: Ausgaenge Schwenkkopf und Spindel
+// NW 36: Ausgaenge Handrad
+// NW 37: Ausgaenge Kuehlaggregat
+// NW 38: Ausgaenge Spannhydraulik
+// NW 39: Ausgaenge Spannhydraulik nur FD-Maschinen
+// NW 40: Ausgaenge ProfiBus: HAWE-Box
+// NW 41: Ausgaenge Blum-Laser
+// NW 42: Ausgaenge Werkzeugwechsler und Werkzeugmagazin
+// NW 43: Ausgänge Option Teepack
+// NW 44: Ausgaenge Werkzeugbruchueberwachung
+// NW 45: Ausgaenge Palettenwechsler
+// NW 46: Ausgaenge Spaenefoerderer
+// NW 47: Ausgaenge Fraes-Drehtisch
+// NW 48: Ausgaenge Konzern-Kuehlmittelanlage
+// NW 49: Ausgaenge Wiegenfräskopf
+// NW 50: Ausgang PROP-Ventil fuer IKZ
+// NW 51: Ausgaenge Kuehlmittelanlage KNOLL
+// NW 52: Ausgaenge OMRON-Regalmagazin
+// NW 53: Ausgaenge Palettenrundspeicher
+// NW 54: Ausgaenge EROWA / PROMOT
+// NW 55: Ausgaenge U-Achse
+// NW 56: Ausgaenge Handlingsystem
+// NW 57: Ausgaenge Roboter-Schnittstelle - Start-Adr für DPDP-Koppler
+// NW 58: Ausgaenge SOKO-Slave(8) DB_IN-Signale
+// NW 59: Ein-/Aus-Gaenge für ARTIS + Toolinspect (nur für IBN-Tool)
+// NW 60: Ausgaenge Nicht verwendete Ausgänge
+// NW 61: ----- Ende normale Abarbeitung -----
+// NW 62: BISC_Balluf
+// NW 63: Schnelle Eingaenge
+// NW 64: Baustein-Ende
+// NW 65: Schnelle Ausgaenge
+// NW 66: Baustein-Ende
+      U     "m_neustart"; 
+      SPBN  ZYKL; 
+
+      L     430; 
+      T     "DB_CONFIG".ProfiBus.StartAdrPLC.IN_HAWEBOX; 
+
+      L     430; 
+      T     "DB_CONFIG".ProfiBus.StartAdrPLC.OUT_HAWEBOX; 
+ZYKL: NOP   0; 
+
+
+      U     #IN0; // Eingaenge
+      SPB   M002; 
+
+
+      U     #IN1; // Ausgaenge
+      SPB   M003; 
+
+
+      U     #IN2; // Eingaenge Aufruf aus OB35
+      SPB   M004; 
+
+
+      U     #IN3; // Ausgaenge Aufruf aus OB35
+      SPB   M005; 
+
+
+      SPA   M006; 
+
+NETWORK
+TITLE =Eingaenge MaschinenSteuerTafel (MSST)
+
+M002: NOP   0; 
+
+      U     E      6.3; 
+      UN    "DB_PLC_MD_DB20".UDHex._04_BIT5_TASTE_TOFRAME; 
+      =     "I_Taste_ToFrame"; 
+
+
+      U     E      3.6; 
+      =     "I_DM_Ta_SKR_blau"; 
+
+
+      U     E      1.3; 
+      =     "I_DM_Ta_SKR_gelb"; 
+
+
+      U     E      6.0; 
+      =     "I_MSST_WM_Taste_Rechts"; 
+
+
+      U     E      6.1; 
+      =     "I_MSST_WM_Taste_links"; 
+
+
+      U     E      7.6; 
+      =     "I_Kab_Tuer_Entr"; 
+
+
+      U     E      4.2; 
+      =     "I_DM_Ta 4-Achse links"; 
+
+
+      U     E      6.5; 
+      =     "I_DM_Ta 4-Achse rechts"; 
+
+
+      U     E      4.5; 
+      =     "I_DM_Ta Eilgang"; 
+
+
+      U     E      4.6; 
+      =     "I_DM_Ta_5/6-Achse minus"; 
+
+
+      U     E      4.7; 
+      =     "I_DM_Ta_5/6-Achse plus"; 
+
+
+      U     E      1.6; 
+      U     "DB_PLC_MD_DB20".UDHex._04_BIT3_SPI_TAST; 
+      O(    ; 
+      U     E      1.4; 
+      UN    "DB_PLC_MD_DB20".UDHex._04_BIT3_SPI_TAST; 
+      )     ; 
+      =     "I_DM_Ta Spindel rechts"; 
+
+
+      U     E      1.4; 
+      U     "DB_PLC_MD_DB20".UDHex._04_BIT3_SPI_TAST; 
+      O(    ; 
+      U     E      1.6; 
+      UN    "DB_PLC_MD_DB20".UDHex._04_BIT3_SPI_TAST; 
+      )     ; 
+      =     "I_DM_Ta_Spindel links"; 
+
+
+      U     E      1.5; 
+      =     "I_DM_Ta_Spindel HALT"; 
+
+
+      U     E      0.5; 
+      =     "I_DM_Ta_Spindel_over100"; 
+
+
+      U     E      0.4; 
+      =     "I_DM_Ta_SpiOVR_erhoehen"; 
+
+
+      U     E      0.6; 
+      =     "I_DM_Ta_SpiOVR_reduz"; 
+
+
+      U     E      6.7; 
+      =     "I_DM_Ta_BHG"; 
+
+
+      U     E      5.6; 
+      =     "I_DM_Ta_KMTL"; 
+
+
+      U     E      5.5; 
+      =     "I_DM_Ta_IKZ"; 
+
+
+      U     E      7.5; 
+      =     "I_MSST_PW_Freigabe"; 
+
+
+      U     E      5.0; 
+      U     "DB_PLC_MD_DB20".UDHex._03_BIT4_AchsKr_drehen_x; 
+      O     ; 
+      UN    "DB_PLC_MD_DB20".UDHex._03_BIT4_AchsKr_drehen_x; 
+      U     E      5.1; 
+      =     "I_DM_Ta X-Achse minus"; 
+
+
+      U     E      5.1; 
+      U     "DB_PLC_MD_DB20".UDHex._03_BIT4_AchsKr_drehen_x; 
+      O     ; 
+      U     E      5.0; 
+      UN    "DB_PLC_MD_DB20".UDHex._03_BIT4_AchsKr_drehen_x; 
+      =     "I_DM_Ta X-Achse plus"; 
+
+
+      U     "DB_PLC_MD_DB20".UDHex._03_BIT5_AchsKr_drehen_Y; 
+      U     E      4.1; 
+      O     ; 
+      U     E      6.6; 
+      UN    "DB_PLC_MD_DB20".UDHex._03_BIT5_AchsKr_drehen_Y; 
+      =     "I_DM_Ta Y-Achse minus"; 
+
+
+      U     E      6.6; 
+      U     "DB_PLC_MD_DB20".UDHex._03_BIT5_AchsKr_drehen_Y; 
+      O     ; 
+      U     E      4.1; 
+      UN    "DB_PLC_MD_DB20".UDHex._03_BIT5_AchsKr_drehen_Y; 
+      =     "I_DM_Ta Y-Achse plus"; 
+
+
+      U     E      5.3; 
+      UN    "DB_PLC_MD_DB20".UDHex._03_BIT6_AchsKr_drehen_Z; 
+      O     ; 
+      U     E      5.2; 
+      U     "DB_PLC_MD_DB20".UDHex._03_BIT6_AchsKr_drehen_Z; 
+      =     "I_DM_Ta Z-Achse plus"; 
+
+
+      U     E      5.2; 
+      UN    "DB_PLC_MD_DB20".UDHex._03_BIT6_AchsKr_drehen_Z; 
+      O     ; 
+      U     E      5.3; 
+      U     "DB_PLC_MD_DB20".UDHex._03_BIT6_AchsKr_drehen_Z; 
+      =     "I_DM_Ta Z-Achse minus"; 
+
+
+NETWORK
+TITLE =Eingaenge Allgemein
+
+      NOP   0; 
+
+
+      U     E     62.5; 
+      =     "I_PW_QUIT_Freigabe"; 
+
+
+      U     "IX_GEN_OM_2"; 
+      =     "I_AL_BTB_PNOZ"; 
+
+
+      U     "IX_SPI_TL_CLP_SWITCH_REL"; 
+      =     "I_AL_MASCHINE_EIN"; 
+
+
+      U     E     32.4; 
+      =     "I_AL_Vorschubfreigabe"; 
+
+
+      U     E     32.5; 
+      =     "I_AL_EINLESEFREIGABE"; 
+
+
+      U     E     33.5; 
+      =     "I_AL_Kabine_zu"; 
+
+
+      U     E     33.4; 
+      =     "I_AL_Kabine_Verriegelt"; 
+
+
+      U     "IX_GEN_OM_4"; 
+      =     "I_AL_Zustimmtaste"; 
+
+
+      U     "I_AL_NEG_Not_Aus"; 
+      U     "IX_SPI_TL_CLP_CLAMPED"; 
+      =     "I_SK_Freigabe"; 
+
+
+      U     E     76.0; 
+      =     "I_AL_HYD_Druck_OK"; 
+
+
+      U     E     76.1; 
+      =     "I_GEN_HYD_PRESSURE_OK_D"; 
+
+
+      U     E     60.0; 
+      =     "I_AL_Druckluft_OK"; 
+
+
+      U     E     60.1; 
+      =     "I_GEN_CAIR_PRE_OK_D"; 
+
+
+      U     E     76.2; 
+      =     "I_AL_HYD_FUELLMAX_TEMP"; 
+
+
+      U     E     76.3; 
+      =     "I_AL_HYD_FUELL_MIN_OK"; 
+
+
+      U     E     34.5; 
+      =     "I_AL_HYD_NEG_Stoerung"; 
+
+
+      U     E     34.7; 
+      =     "I_AL_SCH_Rueckmeldung"; 
+
+
+      U     E     34.6; 
+      =     "I_AL_SCH_Fuellstand"; 
+
+
+      U     "IX_TC_DOOR_OPENED"; 
+      =     "I_AL_SCH_M26_Rueckm"; 
+
+
+      U     "IX_TC_DOOR_CLOSED"; 
+      =     "I_AL_SCH_M26_Fuellstand"; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_GEN_PWR_MODUL_TEMP_OK";  //E ;BOOL;Temperaturüberwachung Versorgungsmodul Antriebe
+//->      =     "I_AL_NEG_SAM_ER_Modul";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_AL_Tempkomp_TXD";  //E ;BOOL;TEMPERATURKOMPENSATION: Übernahme Temperaturdaten
+//->      =     "I_AL_Tempkomp_TXD";
+//->
+//--------------------------------------------------------------------------
+
+
+      U     "IX_PC_PAL_CAR_UPPER"; 
+      =     "I_AL_4ACHS_KLE_auf"; 
+
+
+      U     "IX_PC_PAL_CAR_LOWER"; 
+      =     "I_AL_4ACHS_KLE_zu"; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_GEN_AXIS4_CLAMP";  //E ;BOOL;Klemmung 4.Achse zu
+//->      =     "I_AL_4ACHS_KLE_zu";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_GEN_AXIS4_CLP_RELEASE";  //E ;BOOL;Klemmung 4.Achse auf
+//->      =     "I_AL_4ACHS_KLE_auf";
+//->
+//--------------------------------------------------------------------------
+
+
+      U     "IX_MI_TURNT_PC_RELEASED"; 
+      =     "I_TAB_POSITION_0DEG"; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_GEN_AXIS5_CLP_RELD";  //E ;BOOL;Klemmung 5.Achse gelöst
+//->      =     "I_AL_5ACHS_KLE_geloest";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_GEN_AXIS5_CLAMPED";  //E ;BOOL;Klemmung 4.Achse geklemmt
+//->      =     "I_AL_5ACHS_KLE_GEKLEMMT";
+//->
+//--------------------------------------------------------------------------
+
+
+      U     E     33.7; 
+      =     "I_AL_TASTER_WZ_SPA"; 
+
+
+      U     "IX_CU_MPS_CONTR_CABT_N"; 
+      =     "I_AL_2_Betriebsart"; 
+
+
+      U     "IX_GEN_PWR_MODUL_TEMP_OK"; 
+      =     "I_AL_3_Betriebsart"; 
+
+
+      U     "IX_GEN_OM_3"; 
+      =     "I_AL_4_Betriebsart"; 
+
+
+      U     "IX_TC_RETENTION_MOVD_OU"; 
+      =     "I_GEN_OM_BIT_0"; 
+
+
+      U     E     40.4; 
+      =     "I_GEN_OM_BIT_1"; 
+
+
+      U     E     40.5; 
+      =     "I_GEN_OM_BIT_2"; 
+
+
+      U     E     40.7; 
+      =     "I_GEN_OM_BIT_3"; 
+
+
+      U     "IX_LA_MOVED_OUT"; 
+      =     "I_GEN_OM_ID_SYNC"; 
+
+
+      U     "IX_LA_FLAP_CLOSED"; 
+      =     "I_GEN_OM_ID_CLOCK"; 
+
+
+      U     "IX_OMS_RDY"; 
+      =     "I_GEN_OM_ID_DATA_0"; 
+
+
+      U     "IX_OMS_MPS_N"; 
+      =     "I_GEN_OM_ID_DATA_1"; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_TA_KLEMMUNG_GELOEST";  //E ;BOOL;Klemmung geloest NC-Teilapparat
+//->      =     "I_TA_KLEMMUNG_GELOEST";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_TA_KLEMMUNG_GELOEST";  //E ;BOOL;Klemmung geloest NC-Teilapparat
+//->      =     "I_TA_KLEMMUNG_GELOEST";
+//->
+//--------------------------------------------------------------------------
+
+
+      U     "IX_GEN_CABIN_CLOSED"; 
+      =     "I_MT_Batterie_low"; 
+
+
+      U     "IX_GEN_BUTTON_CONFIRM"; 
+      =     "I_MT_BTB"; 
+
+
+      U     "IX_GEN_LUB_FILL_LEV_MIN"; 
+      =     "I_AL_NEG_NEBELAB_FREI"; 
+
+
+      U     "IX_GEN_LUB_PRESSURE_MON"; 
+      =     "I_AL_NEG_MSS_NEBELABSCH"; 
+
+
+      U     "IX_GEN_HYD_MPS_N"; 
+      =     "I_AL_NEBELABSCH_EIN"; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_MAS_SPANNDRUCK_OK";  //E ;BOOL;Druckschalter Spannvorrichtung gespannt
+//->      =     "I_MAS_SPANNDUCK_OK";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_MAS_NEG_SPANNDRUCK";  //E ;BOOL;Druckschalter Spannvorrichtung geloest
+//->      =     "I_MAS_NEG_SPANNDRUCK";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_GEN_AXIS_SPEED_RPM_OK";  //E ;BOOL;Ueberwachung Drehzahlbegrenzung
+//->      =     "I_AL_ACHS_Drehzahl_OK";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_AL_Sicherung_24V_OK";  //E ;BOOL;Diagnose Sicherung 24V
+//->      =     "I_AL_Sicherung_24V_OK";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_AL_SICHERUNG_230V_OK";  //E ;BOOL;Diagnose Sicherung 230V
+//->      =     "I_AL_SICHERUNG_230V_OK";
+//->
+//--------------------------------------------------------------------------
+
+
+      U     "IX_SPI_TL_CLP_RELEASED"; 
+      =     "I_M_T_H_Fkt_fertig"; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_ACHS_PNOZ_FRG";  //E ;BOOL;Freigabe Achsen Sicherheitsschaltgeraet
+//->      =     "I_ACHS_PNOZ_FRG";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_AL_WARNMELD_PWR_SAG";  //E ;BOOL;Spannungsüberwachung Netz
+//->      =     "I_AL_WARNMELD_PWR_SAG";
+//->
+//--------------------------------------------------------------------------
+
+
+      L     EW   104; 
+      T     "I_MASCH_BETT_T_KOMP"; 
+
+
+      L     EW    44; 
+      T     "I_SPI_TEMP_LAG_VORNE"; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_CU_SAVETY_EMSTP_EN";  //E ;BOOL;
+//->      =     "I_CU_SAVETY_EMSTP_EN";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_CU_SAVETYUNIT_CAB_EN";  //E ;BOOL;
+//->      =     "I_CU_SAVETYUNIT_CAB_EN";
+//->
+//--------------------------------------------------------------------------
+
+
+      U     "IX_TC_TRANSFERSTATION"; 
+      =     "I_GEN_OM_SERVICE_ACTIVE"; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      L     "IW_RESERVE_4_33";  //EW ;WORD;Dummy für Hardware 55H
+//->      T     "I_RESERVE_4_33";
+//->
+//--------------------------------------------------------------------------
+
+NETWORK
+TITLE =Eingaenge Schwenkkopf und Spindel
+
+      NOP   0; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_SH_POSITION_HOR";  //E ;BOOL;Stellung Schwenkfraeskopf waagrecht
+//->      =     "I_SK_HOR_Ebene";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_SH_POSITION_VERTICAL";  //E ;BOOL;Stellung Schwenkfraeskopf senkrecht
+//->      =     "I_SK_VER_Ebene";
+//->
+//--------------------------------------------------------------------------
+
+
+      U     E     33.0; 
+      =     "I_AL_Sternschaltung"; 
+
+
+      U     "IX_HW_SEL"; 
+      =     "I_AL_Dreieckschaltung"; 
+
+
+      U     E     32.6; 
+      =     "I_AL_NEG_SPI_VS_Halt"; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_GEN_GEAR_1_STAGE";  //E ;BOOL;Hauptantrieb 8000 U/min Getriebestellung n<1126 /min
+//->      =     "I_AL_1_Stufe_Getriebe";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_GEN_GEAR_2_STAGE";  //E ;BOOL;Hauptantrieb 8000 U/min Getriebestellung n>11126 /min
+//->      =     "I_AL_2_Stufe_Getriebe";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_SPI_CLAMPED";  //E ;BOOL;Ueberwachung Fraesspindel geklemmt
+//->      =     "I_SPI_geklemmt";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_SPI_RELEASED";  //E ;BOOL;Ueberwachung Fraesspindel geloest
+//->      =     "I_SPI_geloest";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_SH_CLAMP_CLAMPED";  //E ;BOOL;Schwenkfraeskopf Klemmung geklemmt
+//->      =     "I_SK_Klemmung_geklemmt";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_SH_CLAMP_RELEASED";  //E ;BOOL;Schwenkfraeskopf Klemmung geloest
+//->      =     "I_SK_Klemmung_geloest";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_SPI_LUB_AIR_P_OK";  //E ;BOOL;Druckueberwachung Blasluft Getriebe Hauptantrieb
+//->      =     "I_SPI_SCH_LUFTDRUCK_OK";
+//->
+//--------------------------------------------------------------------------
+
+
+      U     "IX_TC_CYL_1_HOME_POS"; 
+      =     "I_SPI_SCH_OELDRUCK_OK_1"; 
+
+
+      U     "IX_TC_CYL_1_TOOL_MAG"; 
+      =     "I_SPI_SCH_FUELLSTAND_OK"; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_TL_ML_FILL_LEV_OK";  //E ;BOOL;Minimalmengenschmierung Fuellstand ok
+//->      =     "I_WZ_MIN_SCH_Fuell_OK";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_TL_ML_PRESSURE_OK";  //E ;BOOL;Minimalmengenschmierung Druck ok
+//->      =     "I_WZ_MIN_SCH_DRUCK_OK";
+//->
+//--------------------------------------------------------------------------
+
+
+      U     E     63.4; 
+      =     "I_WZ_SPA_geloest"; 
+
+
+      U     E     63.5; 
+      =     "I_WZ-Spanner_Gesp_O_WZ"; 
+
+
+      U     E     63.5; 
+      =     "I_WZ_SPA_gespannt"; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_WZ_SPA_GESP_O_WERKZ";  //E ;BOOL;
+//->      =     "I_WZ-Spanner_Gesp_O_WZ";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      UN    "IX_WZ_SPA_GESP_O_WERKZ";  //E ;BOOL;
+//->      U     "IX_SPI_TL_CLP_CLAMPED";
+//->      =     "I_WZ-Spanner_Gesp_mit_WZ";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_WK_SPINDEL_ABDECKUNG";  //E ;BOOL;Spindel Abdeckung geschlossen
+//->      =     "I_WK_SPINDEL_ABDECKUNG";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      L     "IW_SPI_KABEL_PT100_1";  //EW ;WORD;Temperatursensor 1 Leitungsueberwachung Hauptantrieb
+//->      T     "I_SPI_KABEL_PT100_1";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      L     "IW_SPI_KABEL_PT100_2";  //EW ;WORD;Temperatursensor 2 Leitungsueberwachung Hauptantrieb
+//->      T     "I_SPI_KABEL_PT100_2";
+//->
+//--------------------------------------------------------------------------
+
+
+      L     EW    42; 
+      T     "I_SPI_TEMP"; 
+
+
+      U     E     35.5; 
+      =     "I_SPI_TEMP_RDY"; 
+
+NETWORK
+TITLE =Eingaenge Kuehlaggregat
+
+      NOP   0; 
+
+
+      U     "IX_SPI_WYE"; 
+      =     "I_AL_NEG_MSS_Kuehlung"; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_KA_NEG_Sammelfehler";  //E ;BOOL;Kuehlaggregat Stoerung
+//->      =     "I_KA_NEG_Sammelfehler";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_KA_NEG_Luftfilter";  //E ;BOOL;Kühlaggregat Störmeldung Filterverschmutzung
+//->      =     "I_KA_NEG_Luftfilter";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_KA_NEG_Wasserstand";  //E ;BOOL;Kuehlaggregat Stoerung Fuellstand
+//->      =     "I_KA_NEG_Wasserstand";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_KA_NEG_Stroemungsw";  //E ;BOOL;Kuehlaggregat Stoerung Durchflusswaechter
+//->      =     "I_KA_NEG_Stroemungsw";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_KA_NEG_Temp";  //E ;BOOL;Kühlaggregat Stoerung Temperaturregler
+//->      =     "I_KA_NEG_Temp";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_KA_NEG_ND_Fehler";  //E ;BOOL;Kuehlaggregat Stoerung Niederdruckbegrenzung
+//->      =     "I_KA_NEG_ND_Fehler";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_KA_NEG_HD_Fehler";  //E ;BOOL;Kuehlaggregat Stoerung Hochdruckbegrenzung
+//->      =     "I_KA_NEG_HD_Fehler";
+//->
+//--------------------------------------------------------------------------
+
+
+      U     "IX_GEN_CABIN_LOCKED"; 
+      =     "I_KA_NEG_STOERMELDUNG1"; 
+
+
+      U     "IX_GEN_MACHINE_ON"; 
+      =     "I_KA_NEG_STOERMELDUNG2"; 
+
+
+      U     "IX_SPI_DELTA"; 
+      =     "I_KA_NEG_WARNMELDUNG"; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_CA2_MALFUNCT_1_N";  //E ;BOOL;Kuehlaggregat 2 Störmeldung Prioritaet 1
+//->      =     "I_KA2_N_STOERMELDUNG1";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_CA2_MALFUNCT_2_N";  //E ;BOOL;Kuehlaggregat 2 Störmeldung Prioritaet 2
+//->      =     "I_KA2_N_STOERMELDUNG2";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_CA2_WARNMSG_N";  //E ;BOOL;Kuehlaggregat 2 Warnmeldung
+//->      =     "I_KA2_N_WARNMELDUNG";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_FD_N_DURCHFL_LAGER";  //E ;BOOL;Durchflusswaechter Kuehlkreislauf Lager FD-Tisch
+//->      =     "I_FD_N_DURCHFL_LAGER";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_FD_NEG_DURCHFL_STATOR";  //E ;BOOL;Durchflusswaechter Kuehlkreislauf Stator FD-Tisch
+//->      =     "I_FD_NEG_DURCHFL_STATOR";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_CA_FLOW_CONTROL_SPI_N";  //E ;BOOL;Durchflusswaechter Kuehlkreislauf Hauptantrieb
+//->      =     "I_KA_N_SPI_DURCHFLUSSW";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_KA_N_ACHS_DURCHFLUSSW";  //E ;BOOL;Durchflusswaechter Kuehlkreislauf Vorschubantriebe
+//->      =     "I_KA_N_ACHS_DURCHFLUSSW";
+//->
+//--------------------------------------------------------------------------
+
+
+NETWORK
+TITLE =Eingaenge Spannhydraulik
+
+      NOP   0; 
+
+
+      U     "IX_KA_NEG_Luftfilter"; 
+      =     "I_SP_HYD_EIN"; 
+
+
+      U     E     62.1; 
+      =     "I_SP_HYD_FUEL_OK"; 
+
+
+      U     E     62.0; 
+      =     "I_SP_HYD_NEG_STOERUNG"; 
+
+
+      U     E     62.7; 
+      =     "I_SP_HYD_RPL_LOESEN"; 
+
+
+      U     E     62.6; 
+      =     "I_SP_HYD_RPL_SPANNEN"; 
+
+
+      U     "IX_KA_NEG_Sammelfehler"; 
+      =     "I_SP_HYD_TEMP_OK"; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_SST_SUPP_CHECK_OFF";  //E ;BOOL;Schlüsselschalter Auflagekontrolle aus
+//->      =     "I_SP_RPL_ALK_AUS";
+//->
+//--------------------------------------------------------------------------
+
+
+      U     "IX_SPI_ROTRA_LUB_PRE_OK"; 
+      =     "I_SP_AUFL_ST1_GESPANNT"; 
+
+
+      U     "IX_SPI_ROTRA_LUB_FILL_OK"; 
+      =     "I_SP_AUFL_ST2_GESPANNT"; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_SP_AUFL_ST3_GESPANNT";  //E ;BOOL;Kontrolle Auflage Spannstelle 3 gespannt ok
+//->      =     "I_SP_AUFL_ST3_GESPANNT";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_SP_AUFL_ST4_GESPANNT";  //E ;BOOL;Kontrolle Auflage Spannstelle 4 gespannt ok
+//->      =     "I_SP_AUFL_ST4_GESPANNT";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_HCD_SST_CLA_POI_1_SEL";  //E ;BOOL;Spannhydraulik Anwahl Spannkreis 1   /H4-50.2
+//->      =     "I_SP_T_SPANNSTELLE_1";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_HCD_SST_CLA_POI_2_SEL";  //E ;BOOL;Spannhydraulik Anwahl Spannkreis 2   /H4-50.5
+//->      =     "I_SP_T_SPANNSTELLE_2";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_SP_RPL_SPST3_ANWAHL";  //E ;BOOL;Spannhydraulik Taster Spannstelle 3
+//->      =     "I_SP_T_SPANNSTELLE_3";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_SP_RPL_SPST4_ANWAHL";  //E ;BOOL;Spannhydraulik Taster Spannstelle 4
+//->      =     "I_SP_T_SPANNSTELLE_4";
+//->
+//--------------------------------------------------------------------------
+
+NETWORK
+TITLE =Eingaenge Spannhydraulik nur bei FD-Maschinen
+
+      NOP   0; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_SP_HYD_RPL_AUS";  //E ;BOOL;Ruestplatz Ventil Drucklos
+//->      =     "I_SP_HYD_RPL_AUS";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_HYD_NEG_FILTER_MPL";  //E ;BOOL;Spannhydraulik Filterverschmutzung Maschinenplatz
+//->      =     "I_HYD_NEG_FILTER_MPL";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_HYD_NEG_FILTER_RPL";  //E ;BOOL;Spannhydraulik Filterverschmutzung Ruestplatz
+//->      =     "I_HYD_NEG_FILTER_RPL";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_SP_SPANN_LOES";  //E ;BOOL;Wahlschalter Spannhydraulik
+//->      =     "I_SP_SPANN_LOES";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_SP_AKTIV";  //E ;BOOL;Freigabe Sicherheitsventil
+//->      =     "I_SP_AKTIV";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_SP_MA_ENTLADEN";  //E ;BOOL;Maschine Entladen
+//->      =     "I_SP_MASCHINE_ENTLADEN";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_SP_SCH_DRUCK_OK";  //E ;BOOL;Druckueberwachung Schmierung Spannfutter
+//->      =     "I_SP_SCH_DRUCK_OK";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_SP_SCH_FUELL_OK";  //E ;BOOL;Fuellstand Schmierung Spannfutter
+//->      =     "I_SP_SCH_FUELLSTAND_OK";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      L     "IW_HCD1_MAL";  //EW ;WORD;Spannhydraulik Druckueberwachung Maschine
+//->      T     "I_HCD1_MAL";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      L     "IW_HCD1_SST";  //EW ;WORD;Spannhydraulik Druckueberwachung Ruestplatz
+//->      T     "I_HCD1_SST";
+//->
+//--------------------------------------------------------------------------
+
+NETWORK
+TITLE =Eingaenge ProfiBus: HAWE-Box
+//
+//PEBs müssen ABSOLUT sein, da IBN-Tool PEB-Symbole nicht verarbeitet
+//------------------------------------------------------------------------------
+//
+//Kopiert ProfiBus-Bereich  430...469  ==> Bereich: "DB_HR".HAWE.von
+//
+//      U     "m_eins"
+//      =     L     16.0
+//      BLD   103
+//      U     "m_null"
+//      =     L     16.1
+//      BLD   103
+//      U     "DB_HR".ABST.SpannHydraulik
+//      UN    "DB_HR".ABST.SP_vorbereitet
+//      SPBNB _001
+//      CALL  "FC_UT_IO_PROFIBUS"
+//       read        :=L16.0
+//       write       :=L16.1
+//       Datenbereich:="DB_HR".HAWE.von
+//       Profibus_ADR:=430
+//_001: NOP   0
+//
+//__________________________________________________________________________
+      U     "DB_HR".ABST.SpannHydraulik; 
+      UN    "DB_HR".ABST.SP_ProfiBus_aus; 
+      SPBN  khwb; 
+
+
+      L     "IB_HCD_AV_CL_PO_1_SST_H"; 
+      T     "DB_HR".PBvonHAWE_alt.IB_SP_P_IST_ST_1_RPL_H; 
+
+
+      L     "IB_HCD_AV_CL_PO_1_SST_L"; 
+      T     "DB_HR".PBvonHAWE_alt.IB_SP_P_IST_ST_1_RPL_L; 
+
+
+      L     "IB_HCD_AV_CL_PO_2_SST_H"; 
+      T     "DB_HR".PBvonHAWE_alt.IB_SP_P_IST_ST_2_RPL_H; 
+
+
+      L     "IB_HCD_AV_CL_PO_2_SST_L"; 
+      T     "DB_HR".PBvonHAWE_alt.IB_SP_P_IST_ST_2_RPL_L; 
+
+
+      L     "IB_HCD_AV_CL_PO_3_SST_H"; 
+      T     "DB_HR".PBvonHAWE_alt.IB_SP_P_IST_ST_3_RPL_H; 
+
+
+      L     "IB_HCD_AV_CL_PO_3_SST_L"; 
+      T     "DB_HR".PBvonHAWE_alt.IB_SP_P_IST_ST_3_RPL_L; 
+
+
+      L     "IB_HCD_AV_CL_PO_4_SST_H"; 
+      T     "DB_HR".PBvonHAWE_alt.IB_SP_P_IST_ST_4_RPL_H; 
+
+
+      L     "IB_HCD_AV_CL_PO_4_SST_L"; 
+      T     "DB_HR".PBvonHAWE_alt.IB_SP_P_IST_ST_4_RPL_L; 
+
+
+      L     "IB_HCD_AV_CL_PO_1_MPL_H"; 
+      T     "DB_HR".PBvonHAWE_alt.IB_SP_P_IST_ST_1_MPL_H; 
+
+
+      L     "IB_HCD_AV_CL_PO_1_MPL_L"; 
+      T     "DB_HR".PBvonHAWE_alt.IB_SP_P_IST_ST_1_MPL_L; 
+
+
+      L     "IB_HCD_AV_CL_PO_2_MPL_H"; 
+      T     "DB_HR".PBvonHAWE_alt.IB_SP_P_IST_ST_2_MPL_H; 
+
+
+      L     "IB_HCD_AV_CL_PO_2_MPL_L"; 
+      T     "DB_HR".PBvonHAWE_alt.IB_SP_P_IST_ST_2_MPL_L; 
+
+
+      L     "IB_HCD_AV_CL_PO_3_MPL_H"; 
+      T     "DB_HR".PBvonHAWE_alt.IB_SP_P_IST_ST_3_MPL_H; 
+
+
+      L     "IB_HCD_AV_CL_PO_3_MPL_L"; 
+      T     "DB_HR".PBvonHAWE_alt.IB_SP_P_IST_ST_3_MPL_L; 
+
+
+      L     "IB_HCD_AV_CL_PO_4_MPL_H"; 
+      T     "DB_HR".PBvonHAWE_alt.IB_SP_P_IST_ST_4_MPL_H; 
+
+
+      L     "IB_HCD_AV_CL_PO_4_MPL_L"; 
+      T     "DB_HR".PBvonHAWE_alt.IB_SP_P_IST_ST_4_MPL_L; 
+
+
+      L     "IB_HCD_STATE_CL_PO_1_SST"; 
+      T     "DB_HR".PBvonHAWE_alt.IB_SP_STATE_ST_1_RPL; 
+
+
+      L     "IB_HCD_STATE_CL_PO_2_SST"; 
+      T     "DB_HR".PBvonHAWE_alt.IB_SP_STATE_ST_2_RPL; 
+
+
+      L     "IB_HCD_STATE_CL_PO_3_SST"; 
+      T     "DB_HR".PBvonHAWE_alt.IB_SP_STATE_ST_3_RPL; 
+
+
+      L     "IB_HCD_STATE_CL_PO_4_SST"; 
+      T     "DB_HR".PBvonHAWE_alt.IB_SP_STATE_ST_4_RPL; 
+
+
+      L     "IB_HCD_STATE_CL_PO_1_MPL"; 
+      T     "DB_HR".PBvonHAWE_alt.IB_SP_STATE_ST_1_MPL; 
+
+
+      L     "IB_HCD_STATE_CL_PO_2_MPL"; 
+      T     "DB_HR".PBvonHAWE_alt.IB_SP_STATE_ST_2_MPL; 
+
+
+      L     "IB_HCD_STATE_CL_PO_3_MPL"; 
+      T     "DB_HR".PBvonHAWE_alt.IB_SP_STATE_ST_3_MPL; 
+
+
+      L     "IB_HCD_STATE_CL_PO_4_MPL"; 
+      T     "DB_HR".PBvonHAWE_alt.IB_SP_STATE_ST_4_MPL; 
+
+
+      L     "IB_HCD_DIAG_SOFTWARE"; 
+      T     "DB_HR".PBvonHAWE_alt.IB_SP_DIAGNOSE_MPL_RPL; 
+
+
+      L     "IB_HCD_DIAG_MPL_SST"; 
+      T     "DB_HR".PBvonHAWE_alt.IB_SP_FUNKTION_MPL_RPL; 
+
+
+//Erweiterung für FD-Spannhydraulik
+//      L     "IB_HCD_MI_TURNT_INP"
+//      T     "DB_HR".SPH_FD.SPH_FD_INPUT_ERWEITERUNG
+
+
+
+khwb: NOP   0; 
+
+NETWORK
+TITLE =Eingaenge Handrad
+
+      NOP   0; 
+
+
+      U     E     34.4; 
+      =     "I_HR_Anwahl"; 
+
+
+      U     E     10.3; //E ;BOOL;Handrad Taste +
+      =     "I_HR_plus_Taste"; 
+
+
+      U     E     10.4; //E ;BOOL;Handrad Taste -
+      =     "I_HR_minus_Taste"; 
+
+
+      U     E     10.5; //E ;BOOL;Handrad Taste Eilgang
+      =     "I_HR_Eilgang_Taste"; 
+
+
+      U     E     10.6; //E ;BOOL;Handrad Taste F1
+      =     "I_HR_FKT_Taste_F1"; 
+
+
+      U     E     10.7; //E ;BOOL;Handrad Taste F2
+      =     "I_HR_FKT_Taste_F2"; 
+
+
+      U     E     11.0; //E ;BOOL;Handrad Taste F3
+      =     "I_HR_FKT_Taste_F3"; 
+
+
+      U     E     10.0; //E ;BOOL;GRAY-Code Achsumschaltung Bit 0
+      =     "I_HR_Achsanwahl_Bit_0"; 
+
+
+      U     E     10.1; //E ;BOOL;GRAY-Code Achsumschaltung Bit 1
+      =     "I_HR_Achsanwahl_Bit_1"; 
+
+
+      U     E     10.2; //E ;BOOL;GRAY-Code Achsumschaltung Bit 2
+      =     "I_HR_Achsanwahl_Bit_2"; 
+
+
+NETWORK
+TITLE =Eingaenge Blum-Laser
+
+      NOP   0; 
+
+
+      U     "IX_TC_GRP_1_SPINDLE"; 
+      =     "I_LA_BTB"; 
+
+
+      U     "IX_HCD_LUB_PRESSURE_OK"; 
+      =     "I_LA_ausgefahren"; 
+
+
+      U     E     69.2; 
+      =     "I_LA_eingeschwenkt"; 
+
+
+      U     "IX_TC_MOTORPROTECTSW_N"; 
+      =     "I_LA_statisches_Signal"; 
+
+
+      U     "IX_TC_GRP_1_TOOL_MAG"; 
+      =     "I_LA_dynamisches_Signal"; 
+
+
+      U     "IX_MI_TURNT_PC_CLAMPED"; 
+      =     "I_LA_Klappe_zu"; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->
+//->      U     "IX_TT_ausgeschwenkt";  //E ;BOOL;Messtaster Tisch TS27R ausgeschwenkt
+//->      =     "I_TT_ausgeschwenkt";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_TT_eingeschwenkt";  //E ;BOOL;Messtaster Tisch TS27R eingeschwenkt
+//->      =     "I_TT_eingeschwenkt";
+//->
+//--------------------------------------------------------------------------
+
+NETWORK
+TITLE =Eingaenge Werkzeugwechsler und Werkzeugmagazin
+
+      NOP   0; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_TC_MOTORPROTECTSW_N";  //E ;BOOL;Motorschutzschalter Werkzeugwechsler
+//->      =     "I_WW_NEG_MSS";
+//->
+//--------------------------------------------------------------------------
+
+
+      U     E     32.7; 
+      =     "I_WW_Freigabe"; 
+
+
+      U     "IX_TM_RELEASE"; 
+      =     "I_WW_1_Klappe_auf"; 
+
+
+      U     "IX_WM_ZUSTIMMTASTE"; 
+      =     "I_WW_1_Klappe_zu"; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_TC_GRP_1_TOOL_MAG";  //E ;BOOL;Werkzeuggreifer 1 Grundstellung Werkzeugmagazin
+//->      =     "I_WW_1GRF_MAG";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_TC_GRP_1_SPINDLE";  //E ;BOOL;Werkzeuggreifer 1 Stellung Fraesspindel
+//->      =     "I_WW_1GRF_SPI";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_TC_CYL_1_TOOL_MAG";  //E ;BOOL;Pneumatikzylinder 1 Werkzeugmagazin
+//->      =     "I_WW_1_ZYL_WZM";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_TC_CYL_1_SPINDLE";  //E ;BOOL;Werkzeugmagazin Stellung Spindel
+//->      =     "I_WW_1_ZYL_SPI";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_TC_CYL_1_HOME_POS";  //E ;BOOL;WW Pneumatikzylinder 1 Grundstellung
+//->      =     "I_WW_1_ZYL_GST";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_TC_RETENTION_HOME_POS";  //E ;BOOL;Werkzeug-Rueckhalt eingefahren
+//->      =     "I_WW_Rueck_hlt_GST";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_TC_RETENTION_MOVD_OU";  //E ;BOOL;Werkzeug-Rueckhalt ausgefahren
+//->      =     "I_WW_Rueck_hlt_AUSGEF";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_TC_TL_CLEAN_MOVED_OUT";  //E ;BOOL;Reinigung Werkzeugkegel ausgefahren
+//->      =     "I_WW_Rein_in_Rein_Pos";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_TC_TL_CLEAN_HOME_POS";  //E ;BOOL;Reinigung Werkzeugkegel eingefahren
+//->      =     "I_WW_Rein_in_GST";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_WW_Ablageplatz";  //E ;BOOL;Ueberwachung Ablageplatz Handlingsystem
+//->      =     "I_WW_Ablageplatz";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_D_WW_Ablageplatz";  //E ;BOOL;Diagnose Ueberwachung Ablageplatz
+//->      =     "I_D_WW_Ablageplatz";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_TM_MONITOR_SWITCH";  //E ;BOOL;Umschaltung Werkzeugeingabefunktion
+//->      =     "I_WM_Eing_Station";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_WW_GRF_ENTRIEGELT";  //E ;BOOL;Verriegelung Werkzeuggreifer entriegelt
+//->      =     "I_WW_GRF_ENTRIEGELT";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_TM_TOOL_CYL_UNLOCKED";  //E ;BOOL;Pneumatikzylinder Werkzeug loesen ausgefahren
+//->      =     "I_WM_WZ_ZYL_RELEASE";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_WM_WZ_MAN_Relase";  //E ;BOOL;Werkzeug manuell entriegeln
+//->      =     "I_WM_WZ_MAN_Relase";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_TM_TOOL_MAN_RELEASE";  //E ;BOOL;Werkzeug manuell loesen
+//->      =     "I_WM_WZ_MAN_RELEASE";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_TM_TOOL_CYL_LOCKED";  //E ;BOOL;Pneumatikzylinder Werkzeug loesen eingefahren Grundstellung
+//->      =     "I_WM_WZ_ZYL_CLAMP";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_TM_TOOL_SPI_LOCKED";  //E ;BOOL;Werkzeug verriegelt Wechselposition
+//->      =     "I_WM_WZ_SPI_CLAMP";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_TM_TOOL_MAN_CLAMP";  //E ;BOOL;Werkzeug manuell klemmen
+//->      =     "I_WM_WZ_MAN_CLAMP";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_TM_TOOL_SST_LOCKED";  //E ;BOOL;Werkzeug verriegelt Werkzeugeingabestation
+//->      =     "I_WM_WZ_RPL_CLAMP";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_TC_CYL_1_ENABLE";  //E ;BOOL;Freigabe drehen Werkzeugmagazin
+//->      =     "I_WW_ZYL1_FRG_MAG";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_TC_POSITION_ENABLE_TM";  //E ;BOOL;Werkzeugwechsler Position Freigabe Werkzeugmagazin
+//->      =     "I_WW_POS_FRG_WZM";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_TC_TRANSFERSTATION";  //E ;BOOL;Werkzeugerkennung Uebergabeplatz
+//->      =     "I_WW_Uebergabeplatz";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      UN    "IX_TC_TRANSFERSTATION";  //E ;BOOL;Werkzeugerkennung Uebergabeplatz
+//->      =     "I_WW_MagPlatz_frei";
+//->
+//--------------------------------------------------------------------------
+
+
+      U     E     65.6; 
+      =     "I_WW_Uebergabeplatz"; 
+
+
+      UN    E     65.6; 
+      =     "I_WW_MagPlatz_frei"; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_WM_Taste_rechts";  //E ;BOOL;Werkzeugmagazin Rechtslauf Handbetaetigung
+//->      =     "I_WM_Taste_rechts";
+//->
+//--------------------------------------------------------------------------
+
+
+      U     E     39.3; 
+      =     "I_WM_Taste_rechts"; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_WM_Taste_links";  //E ;BOOL;Werkzeugmagazin Linkslauf Handbetaetigung
+//->      =     "I_WM_Taste_links";
+//->
+//--------------------------------------------------------------------------
+
+
+      U     E     39.4; 
+      =     "I_WM_Taste_links"; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_WM_TAS_Beladung_auf";  //E ;BOOL;Freigabe Magnetverriegelung WZB (Fenster Werkzeugbestückung) oeffnen
+//->      =     "I_WM_TAS_Beladung_auf";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_WM_TAS_Beladung_zu";  //E ;BOOL;Freigabe Magnetverriegelung WZB-geschlossen
+//->      =     "I_WM_TAS_Beladung_zu";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_WM_ZUSTIMMTASTE";  //E ;BOOL;Zustimmtaste Magazin Zweihandbedienung
+//->      =     "I_WM_ZUSTIMMTASTE";
+//->
+//--------------------------------------------------------------------------
+
+
+      U     E     39.2; 
+      =     "I_WM_ZUSTIMMTASTE"; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_WM_Beladung_zu";  //E ;BOOL;Fenster Werkzeugbestückung geschlossen
+//->      =     "I_WM_Beladung_zu";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_WM_Beladung_auf";  //E ;BOOL;Werkzeugbestueckung Fenster geoffnet
+//->      =     "I_WM_Beladung_auf";
+//->
+//--------------------------------------------------------------------------
+
+
+      U     "IX_TC_RETENTION_HOME_POS"; 
+      =     "I_WM_Beladung_zu"; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_WM_1_Eingabeplatz";  //E ;BOOL;Ueberwachung Werkzeugbestueckung Platz 1
+//->      =     "I_WM_1_Eingabeplatz";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_WM_2_Eingabeplatz";  //E ;BOOL;Ueberwachung Werkzeugbestueckung Platz 2
+//->      =     "I_WM_2_Eingabeplatz";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_WM_3_Eingabeplatz";  //E ;BOOL;Ueberwachung Werkzeugbestueckung Platz 3
+//->      =     "I_WM_3_Eingabeplatz";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_WM_4_Eingabeplatz";  //E ;BOOL;Ueberwachung Werkzeugbestueckung Platz 4
+//->      =     "I_WM_4_Eingabeplatz";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_WM_TOPF_SPA_OFFEN";  //E ;BOOL;Pneumatikzylinder Werkzeugspanner geoeffnet
+//->      =     "I_WM_TOPF_SPA_OFFEN";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_WM_TOPF_SPA_ZU_MIT_WZ";  //E ;BOOL;Pneumatikzylinder Werkzeugspanner geschlossen mit Werkzeug
+//->      =     "I_WM_TOPF_SPA_ZU_MIT_WZ";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_WM_TOPF_SPA_ZU_O_WZ";  //E ;BOOL;Pneumatikzylinder Werkzeugspanner geschlossen ohne Werkzeug
+//->      =     "I_WM_TOPF_SPA_ZU_O_WZ";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_WM_WZ_einlegen";  //E ;BOOL;Quittierung Werkzeug einlegen
+//->      =     "I_WM_WZ_einlegen";
+//->
+//--------------------------------------------------------------------------
+
+
+      U     E     39.5; 
+      =     "I_WM_WZ_einlegen"; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_WM_WZ_entnehmen";  //E ;BOOL;Quittierung Werkzeug entnehmen
+//->      =     "I_WM_WZ_entnehmen";
+//->
+//--------------------------------------------------------------------------
+
+
+      U     E     39.6; 
+      =     "I_WM_WZ_entnehmen"; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_TM_COUNT_PULS";  //E ;BOOL;Zaehlimpuls Werkzeugmagazin
+//->      =     "I_WM_Zaehlimpuls";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_TM_REF_SIGNAL";  //E ;BOOL;Referenzimpuls Werkzeugmagazin
+//->      =     "I_WM_Referenzimpuls";
+//->
+//--------------------------------------------------------------------------
+
+
+      U     "IX_TP_CALIBRATION_MOV_IN"; 
+      =     "I_TM_TPU_GET_TOOL"; 
+
+
+      U     "IX_TP_CALIBRATION_MOV_OU"; 
+      =     "I_TM_TPU_RELEASE_TOOL"; 
+
+
+      U     E     64.3; 
+      =     "I_TM_TPU_TRANSFERPOS"; 
+
+
+      U     "IX_TP_CAL_FLAP_CLSD"; 
+      =     "I_TM_TPU_MAGAZINPOS"; 
+
+
+      U     E     80.1; 
+      =     "I_TM_MAG_TOOL_UNLOCK"; 
+
+
+      U     E     80.0; 
+      =     "I_TM_MAG_TOOL_LOCK"; 
+
+
+      U     E     80.3; 
+      =     "I_TM_TLOAD_TOOL_UNLOCK"; 
+
+
+      U     E     80.2; 
+      =     "I_TM_TLOAD_TOOL_LOCK"; 
+
+
+      U     E     65.5; 
+      =     "I_TM_TLOAD_PIN_LOCK"; 
+
+
+      U     E     65.4; 
+      =     "I_TM_MAG_PIN_LOCK"; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_TM_TLOAD_TOOL_INSERT";  //E ;BOOL;Positionsüberwachung Werkzeug Rüstplatz
+//->      =     "I_TM_TLOAD_TOOL_INSERT";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_WK_ZYL_1_GST";  //E ;BOOL;Werkzeugtraeger Zylinder 1 Grundstellung
+//->      =     "I_WK_GRUNDSTELL";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_WK_ZYL_1_WE_POS";  //E ;BOOL;Werkzeugtraeger Zylinder 1 Wechselposition
+//->      =     "I_WK_WECH_POS";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_WK_ZYL_2_GST";  //E ;BOOL;Werkzeugtraeger Zylinder 2 Grundstellung
+//->      =     "I_WK_ZYL_2_GST";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_WK_ZYL_2_WE_POS";  //E ;BOOL;Werkzeugtraeger Zylinder 2 Wechselposition
+//->      =     "I_WK_ZYL_2_WE_POS";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_WK_KLAPPE_AUF";  //E ;BOOL;Werkzeugklappe geoffnet
+//->      =     "I_WK_KLAPPE_AUF";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_WK_KLAPPE_ZU";  //E ;BOOL;Werkzeugklappe geschlossen
+//->      =     "I_WK_KLAPPE_ZU";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_WK_WZ_1_VORHANDEN";  //E ;BOOL;Winkelfraeskopf 1 vorhanden
+//->      =     "I_WK_WZ_1_VORHANDEN";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_WK_WZ_2_VORHANDEN";  //E ;BOOL;Winkelfraeskopf 2 vorhanden
+//->      =     "I_WK_WZ_2_VORHANDEN";
+//->
+//--------------------------------------------------------------------------
+
+
+      U     "IX_GEN_HYD_PRESSURE_OK"; 
+      =     "I_TM_PUMP_MPS"; 
+
+
+      U     E     81.4; 
+      =     "I_TM_PUMP_ON"; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_TC_POSITION_BRUSH_CLE";  //E ;BOOL;Positionsueberwachung Reinigung Werkzeugkegel
+//->      =     "I_TC_POSITION_BRUSH_CLE";
+//->
+//--------------------------------------------------------------------------
+
+NETWORK
+TITLE =Eingänge Option Teepackmaschine
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_RELEASEUNI_GET_TOOL";  //E ;BOOL;Ausrückstation Position 
+//Werkzeugkegel
+//->      =     "I_RELEASEUNI_GET_TOOL";
+//->
+//--------------------------------------------------------------------------
+//
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_RELEASEUNI_RELEASE_T";  //E ;BOOL;Ausrückstation Position 
+//Grundstellung
+//->      =     "I_RELEASEUNI_RELEASE_T";
+//->
+//--------------------------------------------------------------------------
+//
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_RELEASEUNI_TRANSPOS";  //E ;BOOL;Ausrückstation Position 
+//Übergabeposition
+//->      =     "I_RELEASEUNI_TRANSPOS";
+//->
+//--------------------------------------------------------------------------
+//
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_RELEASEUNI_MAGAZINPOS";  //E ;BOOL;Ausrückstation Position 
+//Magazinposition
+//->      =     "I_RELEASEUNI_MAGAZINPOS";
+//->
+//--------------------------------------------------------------------------
+//
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_RELU_MAG_TOOL_UNLKD";  //E ;BOOL;Ausrückstation Werkzeug im Gr
+//eifer gelöst
+//->      =     "I_RELU_MAG_TOOL_UNLKD";
+//->
+//--------------------------------------------------------------------------
+//
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_RELU_MAG_TOOL_LKD";  //E ;BOOL;Ausrückstation Werkzeug im 
+//Greifer gespannt
+//->      =     "I_RELU_MAG_TOOL_LKD";
+//->
+//--------------------------------------------------------------------------
+//
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_RELU_MAG_PIN_LKD";  //E ;BOOL;Ausrückstation Verriegelungspin 
+//Magazinplatz verriegelt
+//->      =     "I_RELU_MAG_PIN_LKD";
+//->
+//--------------------------------------------------------------------------
+//
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_RELEASEUNI_MAG_OCC";  //E ;BOOL;Ausrückstation Magazinplatz 
+//belegt
+//->      =     "I_RELEASEUNI_MAG_OCC";
+//->
+//--------------------------------------------------------------------------
+//
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_RELU_TST_TOOL_UNLKD";  //E ;BOOL;Ausrückstation Kettenverriege
+//lungszylinder ausgefahren
+//->      =     "I_RELU_TST_TOOL_UNLKD";
+//->
+//--------------------------------------------------------------------------
+//
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_RELEASEUNI_TST_OCC";  //E ;BOOL;Ausrückstation Übergabeplatz 
+//belegt
+//->      =     "I_RELEASEUNI_TST_OCC";
+//->
+//--------------------------------------------------------------------------
+//
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_RELU_TST_TOOL_LKD";  //E ;BOOL;Ausrückstation 
+//Kettenverriegelungszylinder eingefahren
+//->      =     "I_RELU_TST_TOOL_LKD";
+//->
+//--------------------------------------------------------------------------
+
+
+NETWORK
+TITLE =Eingaenge Palettenwechsler
+
+      NOP   0; 
+
+
+      U     "IX_TAB_POSITION_0DEG"; 
+      =     "I_SP_MPL_ENTKUPPELT"; 
+
+
+      U     E     85.0; 
+      =     "I_SP_MPL_GEKUPPELT"; 
+
+
+      U     E     67.6; 
+      =     "I_SP_RPL_ENTKUPPELT"; 
+
+
+      U     E     67.4; 
+      =     "I_SP_RPL_GEKUPPELT"; 
+
+
+      U     "IX_WM_Taste_rechts"; 
+      =     "I_PW_PNOZ_FREIGABE"; 
+
+
+      U     E     35.7; 
+      =     "I_PW_Freigabe"; 
+
+
+      U     E     61.4; 
+      =     "I_PW_MPL_belegt"; 
+
+
+      U     E     61.5; 
+      =     "I_PC_MPL_OCCUPIED_D"; 
+
+
+      U     "IX_WM_Taste_links"; 
+      =     "I_PW_Tueren_zu"; 
+
+
+      U     E     61.6; 
+      =     "I_PW_Palette_geklemmt"; 
+
+
+      U     E     61.6; 
+      =     "I_FD_PW_KLE_geklemmt"; 
+
+
+      U     E     61.7; 
+      =     "I_PC_MPL_PALLET_CLPED_D"; 
+
+
+      U     E     77.4; 
+      =     "I_PW_Klemmung_geloest"; 
+
+      =     "I_FD_PW_KLE_geloest"; 
+
+
+      U     E     77.5; 
+      =     "I_PC_MPL_PALLET_RELD_D"; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_PC_SST_CLAMP_PRES_OK";  //E ;BOOL;Spanndruck Ruestplatz vorhanden
+//->      =     "I_PW_RPL_SPANNDRUCK_OK";
+//->
+//--------------------------------------------------------------------------
+
+
+      U     E     82.1; 
+      =     "I_PW_RP_GELOEST"; 
+
+
+      U     "IX_PC_SST_PALLET_RELD"; 
+      =     "I_PW_RPL_PAL_GELOEST"; 
+
+
+      U     "IX_PC_SST_PALLET_CLAMPED"; 
+      =     "I_PW_RPL_PAL_GEKLEMMT"; 
+
+
+      U     E     66.1; 
+      =     "I_PW_Hub_unten"; 
+
+
+      U     E     66.2; 
+      =     "I_PW_Hub_in_Mitte"; 
+
+
+      U     E     66.3; 
+      =     "I_D_PW_HUB_IN_MITTE"; 
+
+
+      U     E     66.0; 
+      =     "I_PW_Hub_oben"; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_PC_LIFT_POSITION_4";  //E ;BOOL;Hubeinheit Palettenwechsler Hub schnell
+//->      =     "I_PW_HUB_POSITION_4";
+//->
+//--------------------------------------------------------------------------
+
+
+      U     E     82.3; 
+      =     "I_PW_0_GRAD_M61"; 
+
+
+      U     E     82.2; 
+      =     "I_PW_180_GRAD_M62"; 
+
+
+      U     E     82.0; 
+      =     "I_PW_Ruestpl_Uebergabe"; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_PC_TABLE_FLUSH_D";  //E ;BOOL;Diagnose Spaenespülung Palettenwechsler
+//->      =     "I_D_PW_Tischspuelung";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_PW_HUB_2_MITTE";  //E ;BOOL;Palettenwechsler Position vor Mitte
+//->      =     "I_PW_HUB_2_MITTE";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_PW_HUB_2_UNTEN";  //E ;BOOL;Palettenwechsler Position vor unten
+//->      =     "I_PW_HUB_2_UNTEN";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_PC_SRT_LIFT_POS_2_D";  //E ;BOOL;Palettenwechsler Diagnose Position 2
+//->      =     "I_D_PW_HUB_POS2";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_PW_HUB_POS1";  //E ;BOOL;Palettenwechsler Hub Position 1
+//->      =     "I_PW_HUB_POS1";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_PW_HUB_POS2";  //E ;BOOL;Palettenwechsler Hub Position 2
+//->      =     "I_PW_HUB_POS2";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_PW_HUB_POS3";  //E ;BOOL;Palettenwechsler Hub Position 3
+//->      =     "I_PW_HUB_POS3";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_PC_TST_OCC";  //E ;BOOL;Palette auf PW-Übergabeplatz vorhanden (bei Palettenspeicher)
+//->      =     "I_PW_UPL_PAL_VORH";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_PW_RPL_TUER_1_OFFEN";  //E ;BOOL;Rüstplatz-Tür 1 (links) offen
+//->      =     "I_PW_RP_TUER_1_OFFEN";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_PW_RPL_TUER_2_OFFEN";  //E ;BOOL;Rüstplatz-Tür 2 (rechts) offen
+//->      =     "I_PW_RP_TUER_2_OFFEN";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_PW_RPL_PAL_GEKLEMMT";  //E ;BOOL;Ruestplatz Palettenklemmung geklemmt
+//->      =     "I_PW_RPL_PAL_GEKLEMMT";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_PW_RPL_PAL_GELOEST";  //E ;BOOL;Ruestplatz Palettenklemmung geloest
+//->      =     "I_PW_RPL_PAL_GELOEST";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_PC_MPL_MCON_DENGD";  //E ;BOOL;Medienkupplung Fraes-Drehtisch eingefahren
+//->      =     "I_PW_MPL_MDK_ENTKUPPELT";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_PC_MPL_MCON_ENGAGED";  //E ;BOOL;Medienkupplung Fraes-Drehtisch ausgefahren
+//->      =     "I_PW_MPL_MDK_GEKUPPELT";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_SST_ENABLE_ROTATE";  //E ;BOOL;Antriebsfreigabe Ruestplatz
+//->      =     "I_SST_ENABLE_ROTATE";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_SST_LEFT_ROTATE";  //E ;BOOL;Ruestplatz drehen Links
+//->      =     "I_PW_RPL_links_drehen";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_SST_RIGHT_ROTATE";  //E ;BOOL;Ruestplatz drehen Rechts
+//->      =     "I_PW_RPL_rechts_drehen";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_SST_CONFIRM";  //E ;BOOL;Zustimmungstaste NC-Ruestplatz drehen
+//->      =     "I_PW_RPL_ZUSTIMMTASTE";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_PW_SCH_FUELLSTAND";  //E ;BOOL;Schmierung Palettenwechsler Überwachung Füllstand
+//->      =     "I_PW_SCH_FUELLSTAND";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_PW_SCH_RUECKMELDUNG";  //E ;BOOL;Schmierung Palettenwechsler Drucküberwachung
+//->      =     "I_PW_SCH_RUECKMELDUNG";
+//->
+//--------------------------------------------------------------------------
+
+NETWORK
+TITLE =Eingaenge Spaenefoerderer
+
+      NOP   0; 
+
+
+      U     E     35.6; 
+      =     "I_SF_NEG_MSS_Schnecken"; 
+
+
+      U     E     84.2; 
+      =     "I_SF_NEG_MSS"; 
+
+
+      U     "IX_FD_KA_NEG_Luftfilter"; 
+      =     "I_SF_PUMPE_EIN"; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_CC_PUMP_ON_D";  //E ;BOOL;Diagnose Hebepumpe ein
+//->      =     "I_D_SF_NEG_PUMPE_EIN";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_CC_PUMP_OFF";  //E ;BOOL;Hebepumpe Spaenefoerderer aus
+//->      =     "I_SF_PUMPE_AUS";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_CC_PUMP_OFF_D";  //E ;BOOL;Diagnose Hebepumpe aus
+//->      =     "I_D_SF_NEG_PUMPE_AUS";
+//->
+//--------------------------------------------------------------------------
+
+
+      U     E     69.5; 
+      =     "I_SF_SCHALTER_LINKS"; 
+
+
+      U     E     69.6; 
+      =     "I_SF_SCHALTER_RECHTS"; 
+
+
+      U     E     69.4; 
+      =     "I_SF_Automatik"; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_CC_NIVEAU_MAX";  //E ;BOOL;Hebepumpe Spaenefoerderer Not-Aus
+//->      =     "I_SF_UEBERLAUF";
+//->
+//--------------------------------------------------------------------------
+
+
+      U     "IX_FD_KA_NEG_Sammelfehle"; 
+      =     "I_SF_NEG_UEBERLAUF"; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->
+//->      U     "IX_CC_NIVEAU_MAX_N_D";  //E ;BOOL;Diagnose Hebepumpe Spaenefoerderer Not-Aus
+//->      =     "I_D_SF_NEG_UEBERLAUF";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_CC_RAKE_1_REAR";  //E ;BOOL;Spaenefoerderer -Rechen 1 Hubeinheit hinten
+//->      =     "I_SF_RECHEN_1_HINTEN";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_CC_RAKE_1_FRONT";  //E ;BOOL;Spaenefoerderer -Rechen 1 Hubeinheit vorn
+//->      =     "I_SF_RECHEN_1_VORNE";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_CC_RAKE_2_REAR";  //E ;BOOL;Spaenefoerderer -Rechen 2 Hubeinheit hinten
+//->      =     "I_SF_RECHEN_2_HINTEN";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_CC_RAKE_2_FRONT";  //E ;BOOL;Spaenefoerderer -Rechen 2 Hubeinheit vorn
+//->      =     "I_SF_RECHEN_2_VORNE";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_CC_RAKE_UNPRESS";  //E ;BOOL;Druckschalter Hauptluft Spaenefoerderer-Rechen
+//->      =     "I_SF_RECHEN_DRUCKLOS";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_CC_RAKE_UNPRESS_D";  //E ;BOOL;Diagnose Druckschalter Hauptluft Spaenefoerderer-Rechen
+//->      =     "I_SF_RECHEN_DRUCKLOS_D";
+//->
+//--------------------------------------------------------------------------
+
+
+NETWORK
+TITLE =Eingaenge Fraes-Drehtisch
+
+      NOP   0; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_FD_KA_Fuellstand";  //E ;BOOL;Kuehlaggregat Fraes-Drehtisch Fuellstand
+//->      =     "I_FD_KA_Fuellstand";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_FD_KA_Temperaturregle";  //E ;BOOL;Kuehlaggregat Fraes-Drehtisch Temperaturregler
+//->      =     "I_FD_KA_Temperaturregler";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_FD_KA_NEG_Sammelfehle";  //E ;BOOL;Motorschutzschalter Spindelkuehlung
+//->      =     "I_FD_KA_NEG_Sammelfehler";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_FD_KA_NEG_Luftfilter";  //E ;BOOL;Kuehlaggregat Fraes-Drehtisch Filterverschmutzung
+//->      =     "I_FD_KA_NEG_Luftfilter";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_MI_TURNT_FLC_COOL_N";  //E ;BOOL;Kuehlaggregat Fraes-Drehtisch Durchflusswaechter
+//->      =     "I_FD_KA_NEG_Durchflussw";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_MI_TURNT_TAB_1_RELD";  //E ;BOOL;Klemmung Fraes-Drehtisch geloest
+//->      =     "I_FD_Tisch_geloest_1";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_MI_TURNT_TAB_1_RELD";  //E ;BOOL;Klemmung Fraes-Drehtisch geloest
+//->      U     "IX_MI_TURNT_TAB_2_RELD";  //E ;BOOL;Klemmung Fraes-Drehtisch geloest Naeherungsschalter
+//->      =     "I_FD_Tisch_geloest_1";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_FD_Tisch_geklemmt";  //E ;BOOL;Klemmung Fraes-Drehtisch geklemmt
+//->      =     "I_FD_Tisch_geklemmt";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_MI_TURNT_PC_CLAMPED";  //E ;BOOL;Palettenklemmung Fraes-Drehtisch geklemmt
+//->      =     "I_FD_PW_KLE_geklemmt";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_MI_TURNT_PC_RELEASED";  //E ;BOOL;Palettenklemmung Fraes-Drehtisch geloest
+//->      =     "I_FD_PW_KLE_geloest";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_MTT_TAB_TEMP_EMSTP";  //E ;BOOL;Temperaturueberwachung Motor Fraes-Drehtisch
+//->      =     "I_FD_TISCHTEMP_NOTAUS";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_MI_TURNT_LUB_FILL_OK";  //E ;BOOL;Fuellstand Schmierstoffpumpe Fraes-Drehtisch
+//->      =     "I_FD_SCH_FUELL_OK";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_MI_TURNT_C_PULS_LUB";  //E ;BOOL;Zyklenschalter Progressievverteiler
+//->      =     "I_FD_SCH_ZYL_SCHALTER";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_FD_D_TISCH_GELOEST";  //E ;BOOL;Diagnose Klemmung geloest
+//->      =     "I_FD_D_TISCH_GELOEST";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_FD_D_TISCH_GEKLEMMT";  //E ;BOOL;Diagnose Klemmung geklemmt
+//->      =     "I_FD_D_TISCH_GEKLEMMT";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      L     "IW_FD_PT100";  //EW ;WORD;Temp.-Sensor PT100 Fraes-Drehtisch
+//->      T     "I_FD_PT100";
+//->
+//--------------------------------------------------------------------------
+
+
+NETWORK
+TITLE =Eingaenge Kuehlmittel Konzernkuehlmittelanlage
+
+      NOP   0; 
+
+
+      U     E     35.4; 
+      =     "I_KM_NEG_MSS_SSA"; 
+
+
+      U     E     63.6; 
+      =     "I_KM_Leckueberw_OK"; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_CU_MPS_SPI_TR_H_N";  //E ;BOOL;Stoermeldung Kuehlmittelanlage Vorschub Halt
+//->      =     "I_KM_NEG_MSS_KSA";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_CU_MOTOR_PAPER_ON";  //E ;BOOL;Motor Papierbandfilter Ein
+//->      =     "I_KM_TPF_MOTOR_EIN";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_KM_NEG_VOR_FUELL";  //E ;BOOL;Kühlmittelanlage Kühlmittelmangel Feinbereich
+//->      =     "I_KM_NEG_VOR_FUELL";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_KM_NEG_MIN_FUELL";  //E ;BOOL;Fuellstand Feinbereich Minimum
+//->      =     "I_KM_NEG_MIN_FUELL";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_CU_PAPER_END";  //E ;BOOL;Filterband Ende
+//->      =     "I_KM_TPF_PAPIER_ENDE";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_D_KM_TPF_PAPIER_ENDE";  //E ;BOOL;Diagnose Filterband Ende
+//->      =     "I_D_KM_TPF_PAPIER_ENDE";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_CU_PAPER_WAR_SHORTAGE";  //E ;BOOL;Warnung Filterband Ende
+//->      =     "I_KM_TPF_PAPIER_WARN";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_D_KM_TPF_PAPIER_WARN";  //E ;BOOL;Diagnose Warnung Filterband Ende
+//->      =     "I_D_KM_TPF_PAPIER_WARN";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_D_KM_TPF_MOTOR_EIN";  //E ;BOOL;Stoerung Papierbandfilter
+//->      =     "I_D_KM_TPF_MOTOR_EIN";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_CU_MALFUNCT_N";  //E ;BOOL;keine Stoerung Kuehlmittelanlage
+//->      =     "I_KM_NEG_KSA_MELDUNG";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_KM_FEINB_MIN";  //E ;BOOL;Feinbereich Fuellstand Minimum
+//->      =     "I_KM_FEINB_MIN";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_KM_KRATZER_EIN";  //E ;BOOL;Feinbereich Fuellstand Regeneration
+//->      =     "I_KM_KRATZER_EIN";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_D_KM_KRATZER_EIN";  //E ;BOOL;Diagnose Feinbereich Regeneration
+//->      =     "I_D_KM_KRATZER_EIN";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_D_KM_FEINB_MIN";  //E ;BOOL;Diagnose Feinbereich Minimum
+//->      =     "I_D_KM_FEINB_MIN";
+//->
+//--------------------------------------------------------------------------
+
+
+      U     E     62.4; 
+      =     "I_KM_SPRUEHPIST_RPL_EIN"; 
+
+
+
+NETWORK
+TITLE =Eingaenge Kuehlmittel
+
+      NOP   0; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_CU_PAPER_END_A";  //E ;BOOL;Antivalente Ueberwachung Filterband Ende
+//->      =     "I_A_KM_TPF_PAPIER_ENDE";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_CU_PAPER_WAR_SHORT_A";  //E ;BOOL;Antivalente Ueberwachung Papiermangel
+//->      =     "I_A_KM_TPF_PAPIER_WARN";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_CU_NIVEAU_MAX_D";  //E ;BOOL;Kuehlmittel Diagnose Fuellstand Maximum
+//->      =     "I_D_KM_MAX_NIVEAU";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_CU_NIVEAU_MIN_D";  //E ;BOOL;Kuehlmittel Diagnose Fuellstand Minimum
+//->      =     "I_D_KM_MIN_NIVEAU";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_CU_NIVEAU_WAR_MIN_D";  //E ;BOOL;Kuehlmittel Diagnose Warnung Minimum
+//->      =     "I_D_KM_MIN_VOR_NIVEAU";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_CU_SAFETYUNIT_CAB_EN";  //E ;BOOL;Freigabe Kuehlmittelanlage PNOZ Kabinentuer geschlossen
+//->      =     "I_KM_BTB_ALLE_PUMPEN";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_CU_SAFETY_EMSTP_EN";  //E ;BOOL;Freigabe Kuehlmittelanlage PNOZ Not-Aus
+//->      =     "I_KM_BTB_PNOZ";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_CU_NIVEAU_MAX";  //E ;BOOL;Kuehlmittel Fuellstand Maximum
+//->      =     "I_KM_MAX_NIVEAU";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_CU_NIVEAU_MIN";  //E ;BOOL;Kuehlmittel Fuellstand Minimum
+//->      =     "I_KM_MIN_NIVEAU";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_CU_NIVEAU_WAR_MIN";  //E ;BOOL;Kuehlmittel Warnung Fuellstand Minimum
+//->      =     "I_KM_MIN_VOR_NIVEAU";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_KM_VOR_MIN_NIVEAU";  //E ;BOOL;Kuehlmittel Vorwarnung Feinbereich Minimum
+//->      =     "I_KM_VOR_MIN_NIVEAU";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_KM_MIN_MAX_NIVEAU";  //E ;BOOL;Kuehlmittel Niveaukontrolle Feinbereich
+//->      =     "I_KM_MIN_MAX_NIVEAU";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_KM_FEINSTB_EIN";  //E ;BOOL;Kuehlmittel Feinstbereich Fuellstand Minimum -> Pumpe Ein
+//->      =     "I_KM_FEINSTB_EIN";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_A_KM_TPF_MOTOR_EIN";  //E ;BOOL;Kuehlmittel Diagnose Fuellstand Filtermulde
+//->      =     "I_A_KM_TPF_MOTOR_EIN";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_D_KM_MIN_MAX_NIVEAU";  //E ;BOOL;Kuehlmittel Diagnose Niveaukontrolle Feinbereich
+//->      =     "I_D_KM_MIN_MAX_NIVEAU";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_D_KM_VOR_MIN_NIVEAU";  //E ;BOOL;Kuehlmittel Diagnose Vorwarnung Feinbereich
+//->      =     "I_D_KM_VOR_MIN_NIVEAU";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_D_KM_FEINSTB_EIN";  //E ;BOOL;Kuehlmittel Diagnose Feinstbereich Minimum
+//->      =     "I_D_KM_FEINSTB_EIN";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_KM_FEINSTB_AUS";  //E ;BOOL;Kuehlmittel Feinstbereich Fuellstand Maximum
+//->      =     "I_KM_FEINSTB_AUS";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_D_KM_FEINSTB_AUS";  //E ;BOOL;Kuehlmittel Diagnose Feinstbereich Maximum
+//->      =     "I_D_KM_FEINSTB_AUS";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_KM_FEINSTB_MIN";  //E ;BOOL;Kuehlmittel Feinstbereich Fuellstand Grenzwertmeldung
+//->      =     "I_KM_FEINSTB_MIN";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_D_KM_FEINSTB_MIN";  //E ;BOOL;Kuehlmittel Diagnose Feinstbereich Grenzwertmeldung
+//->      =     "I_D_KM_FEINSTB_MIN";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_KM_DRUCK0_M7_ENABLE";  //E ;BOOL;
+//->      =     "I_KM_DRUCK0_M7_ENABLE";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_KM_DRUCK2_M7_ENABLE";  //E ;BOOL;Kuehlmittel Filterverschmutzung Feinstbereich
+//->      =     "I_KM_DRUCK2_M7_ENABLE";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_CU_M7_PRESSURE2_EN";  //E ;BOOL;
+//->      =     "I_KM_DRUCK2_M7_EIN";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_CU_M7_PRESSURE1_EN";  //E ;BOOL;
+//->      =     "I_KM_DRUCK1_M7_EIN";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_CU_M7_PRESSURE0_EN";  //E ;BOOL;
+//->      =     "I_KM_DRUCK0_M7_EIN";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_KM_WARN_KSS_TEMP";  //E ;BOOL;Kuehlmittel Warnung Temperaturueberwachung
+//->      =     "I_KM_WARN_KSS_TEMP";
+//->
+//--------------------------------------------------------------------------
+
+
+      UN    "IX_CU_ERROR_TEMP_N"; 
+      =     "I_KM_WARN_KSS_TEMP"; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->// Zusätzlicher Späneförderer KSA3
+//->
+//->      U     "IX_KM_SF_KRATZ_NIV_MAX";  //E ;BOOL;Max. Niveau-Überwachung  Kratzerförderer
+//->      =     "I_KM_SF_KRATZ_NIV_MAX";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_D_KM_SF_KRATZ_NIV_MAX";  //E ;BOOL;Diagnose Max. Niveau-Überwachung  Kratzerförderer
+//->      =     "I_D_KM_SF_KRATZ_NIV_MAX";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_KM_SF_PUMPE_EIN";  //E ;BOOL;Niveaukontrolle Schmutztank Hebepumpe „Ein“
+//->      =     "I_KM_SF_PUMPE_EIN";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_D_KM_SF_NEG_PUMPE_EIN";  //E ;BOOL;Diagnose Niveau Schmutztank Hebepumpe „Ein“
+//->      =     "I_D_KM_SF_NEG_PUMPE_EIN";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_KM_SF_PUMPE_AUS";  //E ;BOOL;Niveaukontrolle Schmutztank Hebepumpe „Aus“
+//->      =     "I_KM_SF_PUMPE_AUS";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_D_KM_SF_NEG_PUMPE_AUS";  //E ;BOOL;Diagnose Niveau Schmutztank Hebepumpe „Aus“
+//->      =     "I_D_KM_SF_NEG_PUMPE_AUS";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_KM_SF_TANK_NIV_MAX";  //E ;BOOL;Maximale Niveaukontrolle Schmutztank
+//->      =     "I_KM_SF_TANK_NIV_MAX";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_D_KM_SF_NEG_TANK_MAX";  //E ;BOOL;Diagnose Maximale Niveaukontrolle Schmutztank
+//->      =     "I_D_KM_SF_NEG_TANK_MAX";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->// IKZ-Durchfluss-Überwachung (M7)
+//->      U     "IX_SPI_IAS_MONITOR";  //E ;BOOL;C1-13.4 Durchflusswaechter Kuehlmittel 2 (M7)
+//->      =     "I_KM_DURCHFLUSS_HD_OK";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_SPI_FLOW_CONTROL_MON";  //E ;BOOL;C1-13.7 Durchflusswaechter Leitungsueberwachung (M7)
+//->      =     "I_KM_M7_DFW_LTG_OK";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->// Filter Feinst-Bereich
+//->      U     "IX_KM_FILTER_FEINB_OK";  //E ;BOOL;B3-90.3 Filter Feinst-Bereich OK
+//->      =     "I_KM_FILTER_FEINB_OK";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_CU_SERVICE";  //E ;BOOL;Filterverschmutzung Feinstbereich Warnung
+//->      =     "I_KM_WARTUNG";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->// Kühlmittelanlage mit Spaltsieb (KSA7)
+//->      U     "IX_CU_GAP_SCREEN_CL_UPP";  //E ;BOOL;Kühlmittelanlage Spaltsieb oben
+//->      =     "I_CU_GAP_SCREEN_CL_UPP";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_CU_GAP_SCREEN_CL_LOW";  //E ;BOOL;Kühlmittelanlage Spaltsieb unten
+//->      =     "I_CU_GAP_SCREEN_CL_LOW";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_CU_NEG_PRESS_MONITOR";  //E ;BOOL;Kühlmittelanlage Spaltsieb unten
+//->      =     "I_CU_NEG_PRESS_MONITOR";
+//->
+//--------------------------------------------------------------------------
+
+
+      U     E     40.6; 
+      =     "I_RPL_TASTE_DUSCHE_EIN"; 
+
+NETWORK
+TITLE =Eingaenge Wiegenfräskopf
+
+      NOP   0; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_SO_WFK_ANGEDOCKT";  //E ;BOOL;Wiegenfräskopf angedockt / Klemmposition erreicht
+//->      =     "I_SO_WFK_ANGEDOCKT";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_SO_WFK_KLE_GEKLEMMT";  //E ;BOOL;Wiegenfräskopf Klemmung geklemmt
+//->      =     "I_SO_WFK_KLE_GEKLEMMT";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_SO_WFK_KLE_GELOEST";  //E ;BOOL;Wiegenfräskopf Klemmung gelöst
+//->      =     "I_SO_WFK_KLE_GELOEST";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_TORQ_PROP_FILL_MON";  //E ;BOOL;Fuellstand Oelbehaelter Drehmomentstuetze
+//->      =     "I_SO_DMS_UEBERWACH_OEL";
+//->
+//--------------------------------------------------------------------------
+
+NETWORK
+TITLE =Eingaenge Roboter-Beladung für Maschinen mit Ruestplatz
+
+      U     E     41.6; 
+      =     "I_ROBOT_LOCK"; 
+
+
+      U     E     41.7; 
+      =     "I_ROBOT_PROT_DOOR_CLSD"; 
+
+NETWORK
+TITLE =Eingaenge Roboter-Schnittstelle - Start-Adr für DPDP-Koppler
+//Übertragen der ProfiBus-Eingänge in den Baustein für Roboter-Schnittstelle DB701
+//erfolgt im FC_ROB_MIT_RPL_MAIN mit FC_UT_IO_PROFIBUS.
+//Hier wird nur die Start-Adresse definiert.
+//nur für IBN-Tool, damit keine Fehlermeldung generiert wird
+      SPA   R_1; 
+
+      L     "IW_ROBOT_0"; 
+      T     "DB_CONFIG".ProfiBus.StartAdrPLC.IN_Robot; 
+
+
+R_1:  L     1160; 
+      T     "DB_CONFIG".ProfiBus.StartAdrPLC.IN_Robot; 
+
+NETWORK
+TITLE =Eingaenge Kuehlmittelanlage KNOLL
+
+      L     "DB_PLC_MD_DB20".UDInt._019_ANWAHL_KMTL_ANLAGE; 
+      L     7; 
+      ==I   ; 
+
+      SPBN  a01; 
+
+
+      L     "IW_TUNING_CPU_CU_0"; 
+      T     DB258.DBW   10; 
+
+
+      L     "IW_TUNING_CPU_CU_1"; 
+      T     DB258.DBW   12; 
+
+
+      L     "IW_TUNING_CPU_CU_2"; 
+      T     "DB_KMTL_KNOLL".IW_FEHLERNUMMER; 
+
+
+      L     "IW_TUNING_CPU_CU_3"; 
+      T     "DB_KMTL_KNOLL".IW_RUECKMELD_DRUCKSTUFE; 
+
+
+      L     "IW_TUNING_CPU_CU_4"; 
+      T     "DB_KMTL_KNOLL".IW_RESERVE1; 
+
+
+a01:  NOP   0; 
+
+
+      L     "DB_PLC_MD_DB20".UDInt._019_ANWAHL_KMTL_ANLAGE; 
+      L     8; 
+      ==I   ; 
+
+      O     "DB_PLC_MD_DB20".UDHex._25_Bit3_SOKO_Kuehlm; 
+      SPBN  a10; 
+
+
+      L     "IW_TUNING_CPU_CU_0"; 
+      TAW   ; 
+
+      T     DB258.DBW   10; 
+
+
+
+      L     "IW_TUNING_CPU_CU_1"; 
+      TAW   ; 
+
+      T     DB258.DBW   12; 
+
+
+      L     "IW_TUNING_CPU_CU_2"; 
+      T     "DB_KMTL_KNOLL".IW_FEHLERNUMMER; 
+
+
+
+      L     "IW_TUNING_CPU_CU_3"; 
+      TAW   ; 
+
+      T     "DB_KMTL_KNOLL".IW_RUECKMELD_DRUCKSTUFE; 
+
+
+
+      L     "IW_TUNING_CPU_CU_4"; 
+      T     "DB_KMTL_KNOLL".IW_RESERVE1; 
+
+
+a10:  NOP   0; 
+
+NETWORK
+TITLE =Eingaenge Vibrationssensor
+
+      L     "DB_PLC_MD_DB20".UDInt._044_ANWAHL_VIBRATIONSEN; 
+      L     1; 
+      >=I   ; 
+      SPBN  M010; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      L     "IW_SPI_VIBRATION";  //EW ;WORD;Analogeingang Vibrationssensor
+//->      T     "MW_Wert_Vibrsensor";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      L     "IW_VMS_VIBRATION_SPINDLE";  //EW ;WORD;
+//->      T     "MW_VMS_VIBRATION_SPINDLE";
+//->
+//--------------------------------------------------------------------------
+
+      T     "MW_Wert_Vibrsensor"; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_VMS_BEARING_ERROR";  //E ;BOOL;
+//->      =     "I_VMS_BEARING_ERROR";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_VMS_BEARING_WAR";  //E ;BOOL;
+//->      =     "I_VMS_BEARING_WAR";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_VMS_CRASH";  //E ;BOOL;
+//->      =     "I_VMS_CRASH";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_VMS_MEASURING_BEA_RDY";  //E ;BOOL;
+//->      =     "I_VMS_MEASURING_BEA_RDY";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_VMS_UNBALANCE_ERROR";  //E ;BOOL;
+//->      =     "I_VMS_UNBALANCE_ERROR";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_VMS_UNBALANCE_WAR";  //E ;BOOL;
+//->      =     "I_VMS_UNBALANCE_WAR";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_VMS_VIBRATION_FAULT_D";  //E ;BOOL;
+//->      =     "I_VMS_VIBRATION_FAULT_D";
+//->
+//--------------------------------------------------------------------------
+
+
+M010: NOP   0; 
+
+
+NETWORK
+TITLE =Eingaenge OMRON-Regalmagazin
+
+      U     "M_WZM_Regal_angewaehlt"; 
+      SPBN  NOMR; 
+
+
+      L     "IW_WMR_CNC_0"; 
+      TAW   ; 
+
+      T     DB251.DBW   14; 
+
+
+      L     "IW_WMR_CNC_1"; 
+      T     "DB_SCHNITTST_OMRON".IW_WMR_TNR_UMSETZEN; 
+
+
+      L     "IW_WMR_CNC_MAINCOMMAND"; 
+      T     "DB_SCHNITTST_OMRON".IW_WMR_CNC_MAINCOMMAND; 
+
+
+      L     "IW_WMR_CNC_SUBCOMMAND"; 
+      T     "DB_SCHNITTST_OMRON".IW_WMR_CNC_SUBCOMMAND; 
+
+
+      L     "IW_WMR_CNC_1_DATA"; 
+      T     "DB_SCHNITTST_OMRON".IW_WMR_CNC_1_DATA; 
+
+
+      L     "IW_WMR_CNC_2_DATA"; 
+      T     "DB_SCHNITTST_OMRON".IW_WMR_CNC_2_DATA; 
+
+
+      L     "IW_WMR_CNC_SENDEN"; 
+      T     "DB_SCHNITTST_OMRON".IW_WMR_CNC_SENDEN; 
+
+
+      L     "IW_WMR_CNC_EMPFANGEN"; 
+      T     "DB_SCHNITTST_OMRON".IW_WMR_CNC_EMPFANGEN; 
+
+      SLW   ; 
+
+
+NOMR: NOP   0; 
+
+
+NETWORK
+TITLE =
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->TITLE =Eingaenge Palettenspeicher
+//->
+//->      U     "IX_PS_FRG_AR_NCRPL";  //E ;BOOL;Antriebsfreigabe Arbeitsraum 
+//Rüstplatz
+//->      =     "I_PS_FRG_AR_NCRPL";
+//->
+//--------------------------------------------------------------------------
+//
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_PS_NEG_NOT_AUS";  //E ;BOOL;Rueckmeldung Not-Aus 
+//Palettenspeichersystem
+//->      =     "I_PS_NEG_NOT_AUS";
+//->
+//--------------------------------------------------------------------------
+//
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_PS_BTB_PNOZ";  //E ;BOOL;PNOZmulti Palettenspeichersystem 
+//betriebsbereit
+//->      =     "I_PS_BTB_PNOZ";
+//->
+//--------------------------------------------------------------------------
+//
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_PS_RPL_TUER_VORN_VERR";  //E ;BOOL;Ruestplatztuer 
+//Palettenspeichersystem verriegelt vorn
+//->      =     "I_PS_RPL_TUER_VORN_VERR";
+//->
+//--------------------------------------------------------------------------
+//
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_PS_SST_DOOR_REAR_LKD";  //E ;BOOL;Ruestplatztuer 
+//Palettenspeichersystem verriegelt hinten
+//->      =     "I_PS_RPL_TUER_HINT_VERR";
+//->
+//--------------------------------------------------------------------------
+//
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_PS_SST_DOOR_FRT_CLSD";  //E ;BOOL;Ruestplatztuer vorn 
+//geschlossen
+//->      =     "I_PS_RPL_TUER_VORNE_ZU";
+//->
+//--------------------------------------------------------------------------
+//
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_PS_SST_DOOR_REAR_CLSD";  //E ;BOOL;Ruestplatztuer hinten 
+//geschlossen
+//->      =     "I_PS_RPL_TUER_HINTEN_ZU";
+//->
+//--------------------------------------------------------------------------
+//
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_D_PS_RPL_PAL_VORH";  //E ;BOOL;Palette Ruestplatz vorhanden 
+//Diagnose
+//->      =     "I_D_PS_RPL_PAL_VORH";
+//->
+//--------------------------------------------------------------------------
+//
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_PS_SST_OCCUPIED";  //E ;BOOL;Palette Ruestplatz vorhanden
+//->      =     "I_PS_RPL_PAL_VORH";
+//->
+//--------------------------------------------------------------------------
+//
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_PS_SST_HOME_POS";  //E ;BOOL;Ruestplatz 
+//Palettenspeichersystem Grundstellung
+//->      =     "I_PS_RPL_GST";
+//->
+//--------------------------------------------------------------------------
+//
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_AL_Hubtuere_zu";  //E ;BOOL;Hubtuere Palettenwechsel 
+//Sicherheitsschalter
+//->      =     "I_AL_Hubtuere_zu";
+//->
+//--------------------------------------------------------------------------
+//
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_PS_TURN_STATION_OCC";  //E ;BOOL;Palette auf Schlitten 
+//vorhanden Drehachse
+//->      =     "I_PS_DREHST_PAL_GST";
+//->
+//--------------------------------------------------------------------------
+//
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_PS_STO_ST_PAL_EXI";  //E ;BOOL;Ueberwachung Palette vorhanden 
+//Ablageplatz
+//->      =     "I_PS_DREHST_PAL_VORH";
+//->
+//--------------------------------------------------------------------------
+//
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_PS_STO_ST_PAL_EXI_A";  //E ;BOOL;Ueberwachung Palette 
+//vorhanden Ablageplatz Öffner
+//->      =     "I_D_PS_DREHST_PAL_VORH";
+//->
+//--------------------------------------------------------------------------
+//
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_PS_DREHBEREICH_OK";  //E ;BOOL;Meldung Drehbereichsbegrenzung 
+//betaetigt
+//->      =     "I_PS_DREHBER_OK";
+//->
+//--------------------------------------------------------------------------
+//
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_PS_TURN_ST_LIFT_LOW";  //E ;BOOL;Sensor Dreheinheit unten
+//->      =     "I_PS_DREHST_HUB_UNTEN";
+//->
+//--------------------------------------------------------------------------
+//
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_PS_TURN_ST_LIFT_UPP";  //E ;BOOL;Sensor Dreheinheit oben
+//->      =     "I_PS_DREHST_HUB_OBEN";
+//->
+//--------------------------------------------------------------------------
+
+
+NETWORK
+TITLE =
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->TITLE =Eingaenge: EROWA / PROMOT
+//->
+//->      U     "IX_ROBOT_AUTO";  //E ;BOOL;Betriebsart Automatik Handlingsystem
+//->      =     "I_ROBOT_AUTO";
+//->
+//--------------------------------------------------------------------------
+//
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_ROBOT_LOAD_END";  //E ;BOOL;Handlingsystem Rueckmeldung 
+//Werkstueckwechsel
+//->      =     "I_ROBOT_BELADEN_ENDE";
+//->
+//--------------------------------------------------------------------------
+//
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_ROBOT_CHUCKS_CLOSED";  //E ;BOOL;Spannfutter gespannt
+//->      =     "I_ROBOT_CHUCKS_CLOSED";
+//->
+//--------------------------------------------------------------------------
+//
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_ROBOT_DOOR_CLOSED";  //E ;BOOL;Hubtuer Werkstuecklader 
+//geschlossen
+//->      =     "I_ROBOT_DOOR_CLOSED";
+//->
+//--------------------------------------------------------------------------
+//
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_ROBOT_DOOR_OPENED";  //E ;BOOL;Hubtuere Werkstuecklader offen
+//->      =     "I_ROBOT_DOOR_OPENED";
+//->
+//--------------------------------------------------------------------------
+//
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_ROBOT_NEG_ERROR";  //E ;BOOL;Fehler Handlingsystem
+//->      =     "I_ROBOT_NEG_ERROR";
+//->
+//--------------------------------------------------------------------------
+//
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_ROBOT_NEUTRAL";  //E ;BOOL;Grundstellung Handlingsystem
+//->      =     "I_ROBOT_NEUTRAL";
+//->
+//--------------------------------------------------------------------------
+//
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_WA_ENABLE_DOOR_OPEN";  //E ;BOOL;Freigabe Kabinentüre 
+//entriegeln
+//->      =     "I_WA_ENABLE_DOOR_OPEN";
+//->
+//--------------------------------------------------------------------------
+
+
+NETWORK
+TITLE =Eingaenge: Handlingsystem
+
+      L     "DB_PLC_MD_DB20".UDInt._027_ANWAHL_HANDLINGSYST; 
+      L     3; 
+      ==I   ; 
+
+      SPBN  M021; 
+
+
+      L     PEB 1150; 
+      T     #E_FMS; 
+
+
+      LAR1  P##E_FMS; 
+      U      [AR1,P#0.1]; 
+      =     "I_FMS_APC_MOVEMENT_OK"; 
+
+
+      LAR1  P##E_FMS; 
+      U      [AR1,P#0.2]; 
+      =     "I_FMS_NC_START"; 
+
+
+      LAR1  P##E_FMS; 
+      U      [AR1,P#0.3]; 
+      =     "I_FMS_AUTO_POWER_OFF"; 
+
+
+      LAR1  P##E_FMS; 
+      U      [AR1,P#0.4]; 
+      =     "I_FMS_FIXTURE_RELEASE"; 
+
+
+M021: NOP   0; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->//--------- nur für IBN-Tool, damit keine FM generiert wird -----------------------------------
+//->      U     "IX_FMS_APC_MOVEMENT_OK";  //E ;BOOL;Handlingsystem MC INPUT Byte 1 Bit 1 Handlingsystem APC movement ok
+//->      U     "IX_FMS_CNC_START";  //E ;BOOL;Handlingsystem MC INPUT Byte 1 Bit 2 CNC Start
+//->      U     "IX_FMS_AUTO_POWER_OFF";  //E ;BOOL;Handlingsystem MC INPUT Byte 1 Bit 3 Auto Power  Off
+//->      U     "IX_FMS_FIXTURE_RELEASE";  //E ;BOOL;Handlingsystem MC INPUT Byte 1 Bit 4
+//->      =     #TEMP;
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->//--------- nur für IBN-Tool, damit keine FM generiert wird -----------------------------------
+//->
+//->      U     "IX_FMS_OM_DISABLED";  //E ;BOOL;Schluesselschalter Deaktivierung Uebergabeplatz/ Maschine/Palettenspeichersystem
+//->      =     "I_FMS_OM_DISABLED";
+//->
+//--------------------------------------------------------------------------
+
+
+NETWORK
+TITLE =Eingaenge SOKO-Slave(8) DB_OUT-Signale
+//Nur für IBN-Tool (absoluter Sprung)
+//
+//Daten LESEN + SCHREIBEN erfolgt im FC_SONDER_MAIN
+//wegen Kompatibilität zu alten Maschinen ist Funktion nicht in FC_CIO_IO_RANGIER
+//verlegbar.
+//
+//SOKO-Ausgänge (Daten SOKO==>PLC):
+//SOKO-Ausgänge über Peripherie-Eingänge PEW210...PEW241 auf DB172 kopieren.
+//
+//Bei allen SOKO-Informationen, die als BYTE oder BIT interpretiert werden,
+//müssen HIGH-Byte und LOW-Byte mit TAW getauscht werden.
+//
+//SOKO-Slave(8)-Liste:
+//swic\Pfronten\Steuerungsunabhängige Dokumente\Spezifikationen\SOKO
+      SPA   SO_1; 
+
+
+      L     "IW_Tuning_CPU_0"; 
+      TAW   ; 
+
+      T     DB172.DBW    0; 
+
+
+      L     "IW_Tuning_CPU_1"; 
+      TAW   ; 
+
+      T     DB172.DBW    2; 
+
+
+      L     "IW_Tuning_CPU_2"; 
+      TAW   ; 
+
+      T     DB172.DBW    4; 
+
+
+      L     "IW_Tuning_CPU_3"; 
+      TAW   ; 
+
+      T     DB172.DBW    6; 
+
+
+      L     "IW_Tuning_CPU_4"; 
+      T     "DB_OUT".AMW_MESSAGENUMBER; 
+
+
+      L     "IW_TUNING_CPU_5"; 
+      TAW   ; 
+
+      T     DB172.DBW   10; 
+
+SO_1: NOP   0; 
+
+NETWORK
+TITLE =Eingaenge U-Achse
+
+      NOP   0; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_WK_ALARMCODE_BIT_0";  //E ;BOOL;U-Achse Alarm Bit 0
+//->      =     "I_WK_ALARMCODE_BIT_0";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_WK_ALARMCODE_BIT_1";  //E ;BOOL;U-Achse Alarm Bit 1
+//->      =     "I_WK_ALARMCODE_BIT_1";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_WK_ALARMCODE_BIT_2";  //E ;BOOL;U-Achse Alarm Bit 2
+//->      =     "I_WK_ALARMCODE_BIT_2";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_WK_ALARMCODE_BIT_3";  //E ;BOOL;U-Achse Alarm Bit 3
+//->      =     "I_WK_ALARMCODE_BIT_3";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_WK_QUIT_KOMMANDO";  //E ;BOOL;U-Achse Quittierung
+//->      =     "I_WK_QUIT_KOMMANDO";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_WK_NEG_ALARM";  //E ;BOOL;U-Achse kein Alarm
+//->      =     "I_WK_NEG_ALARM";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_WK_NEG_WZ_AKTIV";  //E ;BOOL;U-Achse keine Bearbeitung
+//->      =     "I_WK_NEG_WZ_AKTIV";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_WK_WZ_BTB";  //E ;BOOL;U-Achse Werkzeug Betriebsbereit
+//->      =     "I_WK_WZ_BTB";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_WK_REF";  //E ;BOOL;U-Achse Referenzimpuls
+//->      =     "I_WK_REF";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_WK_BTB";  //E ;BOOL;U-Achse Achse Betriebsbereit
+//->      =     "I_WK_BTB";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_WK_ENDSCHALTER_PLUS";  //E ;BOOL;U-Achse Endschalter positiv
+//->      =     "I_WK_ENDSCHALTER_PLUS";
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "IX_WK_ENDSCHALTER_MINUS";  //E ;BOOL;U-Achse Endschalter negativ
+//->      =     "I_WK_ENDSCHALTER_MINUS";
+//->
+//--------------------------------------------------------------------------
+
+NETWORK
+TITLE =Eingaenge Nicht verwendete Eingänge
+//Eingänge, die in der HW konfiguriert werden müssen, aber noch nicht verwendet
+//werden.
+      L     EW   106; 
+      T     #TEMP5; 
+
+NETWORK
+TITLE =-------------------- Ausgaenge -----------------------
+
+      BEA   ; 
+
+NETWORK
+TITLE =Ausgaenge BISC-Balluff
+//Wird noch im FC83 direkt gelesen PEW160
+//Dies sind nur Dummy Merker um im IBN Tool die Fehlermeldung zu unterdrücken.
+//
+      L     "IW_BIS_C_35"; 
+      T     "I_BIS_C_35"; 
+
+
+NETWORK
+TITLE =Ausgaenge allgemein
+//Ausgänge
+//
+M003: NOP   0; 
+
+
+      U     "O_PW_FREIGABE"; 
+      =     A     62.5; 
+
+
+      U     "O_AL_PLC_BTB"; 
+      =     A     42.0; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_AL_Manual_Betrieb";
+//->      =     "OX_AL_Manual_Betrieb";  //A ;BOOL;Handbetrieb (Manual)
+//->
+//--------------------------------------------------------------------------
+
+
+      UN    "M_Hauptachsen_stehen"; 
+      UN    "M_Hauptspindel_steht"; 
+      O     "DB_SIEM_KANAL_1".E_ProgRunn; 
+      =     A     42.1; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_AL_XACHS_Bremse_auf";
+//->      =     "OX_AL_XACHS_Bremse_auf";  //A ;BOOL;Ansteuerung Motorbremse X-Achse
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_AL_YACHS_Bremse_auf";
+//->      =     "OX_AL_YACHS_Bremse_auf";  //A ;BOOL;Ansteuerung Motorbremse Y-Achse
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_AL_ZACHS_Bremse_auf";
+//->      =     "OX_AL_ZACHS_Bremse_auf";  //A ;BOOL;Ansteuerung Motorbremse Z-Achse
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_AL_4ACHS_Bremse_auf";
+//->      =     "OX_AL_4ACHS_Bremse_auf";  //A ;BOOL;Ansteuerung Motorbremse 4-Achse
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_AL_5ACHS_Bremse_auf";
+//->      =     "OX_AL_5ACHS_Bremse_auf";  //A ;BOOL;Ansteuerung Motorbremse 5-Achse
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      UN    "O_4_Klem_Bremse_Auf";
+//->      =     "OX_AL_4ACHS_Klemmen";  //A ;BOOL;4.Achse klemmen
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      UN    "O_5_Klem_Bremse_Auf";
+//->      =     "OX_GEN_AXIS5_CLAMP";  //A ;BOOL;5.Achse klemmen
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_AL_5ACHS_KLE_LOESEN";
+//->      =     "OX_AL_5ACHS_KLE_LOESEN";  //A ;BOOL;Klemmung loesen NC-Teilapparat
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_TA_KLEMMUNG_LOESEN";
+//->      =     "OX_TA_KLEMMUNG_LOESEN";  //A ;BOOL;Klemmung loesen NC-Teilapparat
+//->
+//--------------------------------------------------------------------------
+
+
+      U     "M_SBH_AKTIV_ARBEITSRAUM"; 
+      =     A     42.4; 
+
+
+      U     "O_AL_Hydraulik_Ein"; 
+      =     "OX_AL_ZACHS_Bremse_auf"; 
+
+
+      U     "O_AL_Druckluft_ein"; 
+      =     "OX_GEN_SIGNALLAMP_RD"; 
+
+
+      U     "O_AL_Blasluft_M25"; 
+      =     "OX_AL_4ACHS_Bremse_auf"; 
+
+
+      U     "O_AL_4_BA_Selbsthaltung"; 
+      =     "OX_SH_GEAR_STAGE2"; 
+
+
+      U     "O_AL_SCH_Pumpe_ein"; 
+      =     "OX_SPI_WYE"; 
+
+
+      U     "O_AL_SCH_M26_Pumpe_ein"; 
+      =     "OX_SPI_DELTA"; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_WZ_MIN_SCH_Ums_M7";
+//->      =     "OX_TOOL_MQL_M7";  //A ;BOOL;Umschaltung Ventil Schmiersystem innere Kuehlmittelzufuhr
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_WZ_MIN_SCH_MV2";
+//->      =     "OX_TOOL_MQL_VAL_2";  //A ;BOOL;Minimalmengen Schmierung Ventil 2 Ein
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_WZ_MIN_SCH_MV1";
+//->      =     "OX_TOOL_MQL_VAL_1";  //A ;BOOL;Minimalmengen Schmierung Ventil 1 Ein
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_WZ_MIN_SCH_Ums_M8";
+//->      =     "OX_TOOL_MQL_M8";  //A ;BOOL;Umschaltung Ventil Schmiersystem Kuehlmittel 1
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_AL_Tempkomp_DSR";
+//->      =     "OX_AL_Tempkomp_DSR";  //A ;BOOL;TEMPERATURKOMPENSATION: rücksetzen Synchronisation Temperaturdaten
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_AL_Tempkomp_CTS";
+//->      =     "OX_AL_Tempkomp_CTS";  //A ;BOOL;TEMPERATURKOMPENSATION: Temperaturdaten auslesen
+//->
+//--------------------------------------------------------------------------
+
+
+      U     "O_AL_LM_RD"; 
+      =     "OX_CC_FORWARD"; 
+
+
+      U     "O_AL_LM_GN"; 
+      =     "OX_CC_WORM_ON"; 
+
+
+      U     "O_AL_LM_YE"; 
+      =     "OX_CC_BACKWARD"; 
+
+
+      U     "O_AL_LM_BU"; 
+      =     "OX_CC_WORM_2_ON"; 
+
+
+      U     "O_GEN_OM_ID_DATA_0"; 
+      =     A     43.4; 
+
+
+      U     "O_GEN_OM_ID_DATA_1"; 
+      =     A     43.5; 
+
+
+      U     "O_GEN_OPTWAVE_GN"; 
+      =     "OX_PW_Ventil_Abfrage"; 
+
+
+      U     "O_GEN_OPTWAVE_RD"; 
+      =     "OX_TC_RETENTION_EXTEND"; 
+
+
+      U     "O_GEN_OPTWAVE_BU"; 
+      =     "OX_WW_GRF_ENTRIEGELN"; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_AL_Start_Sig_Renishaw";
+//->      =     "OX_AL_Start_Sig_Renishaw";  //A ;BOOL;Messtasterfreigabe
+//->
+//--------------------------------------------------------------------------
+
+
+      U     "O_AL_Start_Sig_Renishaw"; 
+      =     A     42.6; 
+
+
+      U     "O_AL_NEBELABSCH_EIN"; 
+      =     A     33.3; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_AL_NEG_POWERSAVE_STBY";
+//->      =     "OX_GEN_POWERSAVE_N";  //A ;BOOL;Maschinenabschaltung
+//->
+//--------------------------------------------------------------------------
+
+
+      U     "O_PW_SPANNDRUCK_HYD_AUS"; 
+      =     "OX_PW_ACHS_Bremse_auf"; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_Funktion_M20";
+//->      =     "OX_AL_Funktion_M20";  //A ;BOOL;M-Funktionen M190
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "M_Ausg_M80_aktiv";
+//->      =     "OX_GEN_M_FUNCTION_M80";  //A ;BOOL;M-Funktionen M80
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "M_Ausg_M81_aktiv";
+//->      =     "OX_GEN_M_FUNCTION_M81";  //A ;BOOL;M-Funktionen M81
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "M_Ausg_M82_aktiv";
+//->      =     "OX_GEN_M_FUNCTION_M82";  //A ;BOOL;M-Funktionen M82
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "M_Ausg_M83_aktiv";
+//->      =     "OX_GEN_M_FUNCTION_M83";  //A ;BOOL;M-Funktionen M84
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "M_Ausg_M84_aktiv";
+//->      =     "OX_GEN_M_FUNCTION_M84";  //A ;BOOL;M-Funktionen M84
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "M_Ausg_M85_aktiv";
+//->      =     "OX_GEN_M_FUNCTION_M85";  //A ;BOOL;M-Funktionen M85
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "M_Ausg_M86_aktiv";
+//->      =     "OX_GEN_M_FUNCTION_M86";  //A ;BOOL;M-Funktionen M86
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "M_Ausg_M87_aktiv";
+//->      =     "OX_GEN_M_FUNCTION_M87";  //A ;BOOL;M-Funktionen M87
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "M_Ausg_M88_aktiv";
+//->      =     "OX_GEN_M_FUNCTION_M88";  //A ;BOOL;M-Funktionen M88
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "M_Ausg_M89_aktiv";
+//->      =     "OX_GEN_M_FUNCTION_M89";  //A ;BOOL;M-Funktionen M89
+//->
+//--------------------------------------------------------------------------
+
+NETWORK
+TITLE =Ausgänge für Vibrationssensor
+
+      L     "DB_PLC_MD_DB20".UDInt._044_ANWAHL_VIBRATIONSEN; 
+      L     1; 
+      >=I   ; 
+      SPBN  kVMS; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      L     "O_VMS_SPI_SPEED_RPM";
+//->      T     "OW_VMS_SPI_SPEED_RPM";  //AW ;WORD;
+//->
+//--------------------------------------------------------------------------
+
+
+      U     "O_VMS_MSG_BEA_START"; 
+      =     "OX_TC_CYL_1_SPINDLE"; 
+
+
+kVMS: NOP   0; 
+
+NETWORK
+TITLE =Ausgaenge an NCU und NC Baugruppe SOLUTIONLINE
+
+      NOP   0; 
+
+
+      U     "O_INFEED_ENABLE_NCU"; 
+      =     "OX_TC_DOOR_OPEN"; 
+
+
+      U     "O_ENABLE_OUT_3_NX_NCU"; 
+      =     "OX_TC_DOOR_CLOSE"; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_INFEED_ENABLE_NX";
+//->      =     "OX_INFEED_ENABLE_NX";  //A ;BOOL;Ansteuerung NX: Freigabe Klemme X122.1 Einspeisung ok (55/65H)
+//->
+//--------------------------------------------------------------------------
+
+NETWORK
+TITLE =Ausgaenge Schwenkkopf und Spindel
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_SPI_klemmen";
+//->      =     "OX_SPI_CLAMP";  //A ;BOOL;Fraesspindel klemmen
+//->
+//--------------------------------------------------------------------------
+//
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_SPI_loesen";
+//->      =     "OX_SPI_RELEASE";  //A ;BOOL;Fraesspindel loesen
+//->
+//--------------------------------------------------------------------------
+      U     "O_Y_Umschaltung_SPI"; 
+      =     "OX_GEN_OM_4_ENABLE"; 
+
+
+      U     "O_D_Umschaltung_SPI"; 
+      =     "OX_TLB_ENABLE"; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_SK_1_Stufe_Getriebe";
+//->      =     "OX_SH_GEAR_STAGE1";  //A ;BOOL;Drehzahlschaltung Hauptantrieb mit Getriebe    Drehzahl kle
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_SK_2_Stufe_Getriebe";
+//->      =     "OX_SH_GEAR_STAGE2";  //A ;BOOL;Drehzahlschaltung Hauptantrieb mit Getriebe    Drehzahl gr
+//->
+//--------------------------------------------------------------------------
+
+
+      U     "O_SPI_SCH_LUFT"; 
+      =     A     33.4; 
+
+
+      U     "O_SPI_SCH_OEL"; 
+      =     A     33.5; 
+
+
+      U     "O_AL_WZ_Spanner_Loesen"; 
+      O     "M_O_Anwahl_WZS_Man"; 
+      =     "OX_SH_GEAR_STAGE1"; 
+
+
+      UN    "O_AL_WZ_Spanner_Loesen"; 
+      UN    "M_Tast_Man_WZSp"; 
+      =     "OX_AL_XACHS_Bremse_auf"; 
+
+
+      U     "O_WZKegel_Blasluft"; 
+      O(    ; 
+      U     "O_Blasluft_Messtaster"; 
+      UN    "M_24aktiv"; 
+      )     ; 
+      O     "O_M7_Luftkuehlung"; 
+      O     "O_AusBlasen_IKZ"; 
+      =     A     33.2; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->
+//->      U     "O_AL_Messdose_abblasen";
+//->      =     "OX_AL_Messdose_abblasen";  //A ;BOOL;Blasluft Reinigung Werkzeugvermessung
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_SK_VER_schwenken";
+//->      =     "OX_SH_VERTICAL_SWIVEL";  //A ;BOOL;Schwenkfraeskopf senkrecht M54
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_SK_HOR_schwenken";
+//->      =     "OX_SH_HORIZONTAL_SWIVEL";  //A ;BOOL;Schwenkfraeskopf waagrecht M53
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_SK_Klemmung_loesen";
+//->      =     "OX_SH_CLAMP_RELEASE";  //A ;BOOL;Schwenkfraeskopf Klemmung loesen
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_SK_Klemmung_zu";
+//->      =     "OX_SH_CLAMP_CLAMP";  //A ;BOOL;Schwenkfraeskopf Klemmung klemmen
+//->
+//--------------------------------------------------------------------------
+
+
+      U     "O_SPI_IMP_DELETE"; 
+      =     "OX_TC_CLEAN_HOME_POS"; 
+
+
+NETWORK
+TITLE =Ausgaenge Handrad
+
+      NOP   0; 
+
+
+      U     "O_Umsch_Zustimm_HR"; 
+      =     A     42.5; 
+
+
+NETWORK
+TITLE =Ausgaenge Kuehlaggregat
+
+      NOP   0; 
+
+
+      U     "O_KA_STOERMELDUNG1"; 
+      =     "OX_WM_Beladung_entr_auf"; 
+
+
+      U     "O_KA2_STOERMELDUNG1"; 
+      =     "OX_SPI_CAIR_JETS_EXT"; 
+
+NETWORK
+TITLE =Ausgaenge Spannhydraulik
+
+      NOP   0; 
+
+
+      U     "O_SP_HYD_EIN"; 
+      =     A     34.3; 
+
+
+      U     "O_SP_HYD_RPL_LOESEDR_OK"; 
+      =     A     62.7; 
+
+
+      U     "O_SP_HYD_RPL_SPANNDR_OK"; 
+      =     A     62.6; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_SP_H_SPANNSTELLE_1";
+//->      =     "OX_HCD_SST_CL_PO_1_SEL_H";  //A ;BOOL;Spannhydraulik Rüstplatz Leuchtmelder Spannstelle 1 aktiv   /H4-50.3
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_SP_H_SPANNSTELLE_2";
+//->      =     "OX_HCD_SST_CL_PO_2_SEL_H";  //A ;BOOL;Spannhydraulik Rüstplatz Leuchtmelder Spannstelle 2 aktiv   /H4-50.6
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_SP_H_SPANNSTELLE_3";
+//->      =     "OX_SP_H_SPANNSTELLE_3";  //A ;BOOL;Spannhydraulik Lampe Spannstelle 3
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_SP_H_SPANNSTELLE_4";
+//->      =     "OX_SP_H_SPANNSTELLE_4";  //A ;BOOL;Spannhydraulik Lampe Spannstelle 4
+//->
+//--------------------------------------------------------------------------
+
+
+      U     "O_SST_FIXT_CL_PO_1_CLE"; 
+      =     "OX_LA_BARR_AIR_OFF"; 
+
+
+      U     "O_SST_SC_SENS_ACT"; 
+      =     "OX_LA_DIRT_TRAP_OPEN"; 
+
+
+      U     "O_SST_SC_CL_PO_1_STATE"; 
+      =     "OX_LA_MOVE_OUT"; 
+
+
+      U     "O_SST_SC_CL_PO_2_STATE"; 
+      =     "OX_LA_MOVE_IN"; 
+
+
+      U     "O_SP_RPL_BLASLUFT"; 
+      =     A     34.2; 
+
+
+      U     "O_SP_MPL_BLASLUFT"; 
+      =     "OX_AL_5ACHS_Bremse_auf"; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_SP_RPL_MPL_BLASLUFT";
+//->      =     "OX_SP_RPL_MPL_BLASLUFT";  //A ;BOOL;Ventil Blasluft Medienkupplung
+//->
+//--------------------------------------------------------------------------
+
+NETWORK
+TITLE =Ausgaenge Spannhydraulik nur FD-Maschinen
+
+      NOP   0; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_SP_RPL_DRUCKLOS";
+//->      =     "OX_SP_RPL_DRUCKLOS";  //A ;BOOL;Ruestplatz Ventil Drucklos
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_SP_RPL_GESPANNT";
+//->      =     "OX_SP_RPL_GESPANNT";  //A ;BOOL;Spannhydraulik Ruestplatz gespannt
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_SP_RPL_SPANNEN";
+//->      =     "OX_SP_RPL_SPANNEN";  //A ;BOOL;Spannhydraulik Ruestplatz spannen
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_SP_MPL_DRU_OK";
+//->      =     "OX_SP_MPL_DRU_OK";  //A ;BOOL;Spannvorrichtung Maschine gespannt
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_SP_MASCHINE_ENTLADEN";
+//->      =     "OX_SP_MA_ENTLADEN";  //A ;BOOL;Rueckmeldung Maschine Entladen
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_SP_SCH_EIN";
+//->      =     "OX_SP_SCH_SPANNVOR";  //A ;BOOL;Schmierstoffpumpe Spannfutter Spannvorrichtung
+//->
+//--------------------------------------------------------------------------
+
+NETWORK
+TITLE =Ausgaenge ProfiBus: HAWE-Box
+//PABs müssen ABSOLUT sein, da IBN-Tool PAB-Symbole nicht verarbeitet
+//-----------------------------------------------------------------------------
+//
+//      U     "m_null"
+//      =     L     16.0
+//      BLD   103
+//      U     "m_eins"
+//      =     L     16.1
+//      BLD   103
+//      U     "DB_HR".ABST.SpannHydraulik
+//      UN    "DB_HR".ABST.SP_vorbereitet
+//      SPBNB _003
+//      CALL  "FC_UT_IO_PROFIBUS"
+//       read        :=L16.0
+//       write       :=L16.1
+//       Datenbereich:="DB_HR".HAWE.an
+//       Profibus_ADR:=430
+//_003: NOP   0
+//
+      U     "DB_HR".ABST.SpannHydraulik; 
+      UN    "DB_HR".ABST.SP_ProfiBus_aus; 
+      SPBN  khw; 
+
+
+      L     "DB_HR".PBanHAWE_alt.OB_SP_P_SOLL_ST_1_RPL_H; 
+      T     "OB_HCD_SV_CL_PO_1_SST_H"; 
+
+
+      L     "DB_HR".PBanHAWE_alt.OB_SP_P_SOLL_ST_1_RPL_L; 
+      T     "OB_HCD_SV_CL_PO_1_SST_L"; 
+
+
+      L     "DB_HR".PBanHAWE_alt.OB_SP_P_SOLL_ST_2_RPL_H; 
+      T     "OB_HCD_SV_CL_PO_2_SST_H"; 
+
+
+      L     "DB_HR".PBanHAWE_alt.OB_SP_P_SOLL_ST_2_RPL_L; 
+      T     "OB_HCD_SV_CL_PO_2_SST_L"; 
+
+
+      L     "DB_HR".PBanHAWE_alt.OB_SP_P_SOLL_ST_3_RPL_H; 
+      T     "OB_HCD_SV_CL_PO_3_SST_H"; 
+
+
+      L     "DB_HR".PBanHAWE_alt.OB_SP_P_SOLL_ST_3_RPL_L; 
+      T     "OB_HCD_SV_CL_PO_3_SST_L"; 
+
+
+      L     "DB_HR".PBanHAWE_alt.OB_SP_P_SOLL_ST_4_RPL_H; 
+      T     "OB_HCD_SV_CL_PO_4_SST_H"; 
+
+
+      L     "DB_HR".PBanHAWE_alt.OB_SP_P_SOLL_ST_4_RPL_L; 
+      T     "OB_HCD_SV_CL_PO_4_SST_L"; 
+
+
+      L     "DB_HR".PBanHAWE_alt.OB_SP_P_SOLL_ST_1_MPL_H; 
+      T     "OB_HCD_SV_CL_PO_1_MPL_H"; 
+
+
+      L     "DB_HR".PBanHAWE_alt.OB_SP_P_SOLL_ST_1_MPL_L; 
+      T     "OB_HCD_SV_CL_PO_1_MPL_L"; 
+
+
+      L     "DB_HR".PBanHAWE_alt.OB_SP_P_SOLL_ST_2_MPL_H; 
+      T     "OB_HCD_SV_CL_PO_2_MPL_H"; 
+
+
+      L     "DB_HR".PBanHAWE_alt.OB_SP_P_SOLL_ST_2_MPL_L; 
+      T     "OB_HCD_SV_CL_PO_2_MPL_L"; 
+
+
+      L     "DB_HR".PBanHAWE_alt.OB_SP_P_SOLL_ST_3_MPL_H; 
+      T     "OB_HCD_SV_CL_PO_3_MPL_H"; 
+
+
+      L     "DB_HR".PBanHAWE_alt.OB_SP_P_SOLL_ST_3_MPL_L; 
+      T     "OB_HCD_SV_CL_PO_3_MPL_L"; 
+
+
+      L     "DB_HR".PBanHAWE_alt.OB_SP_P_SOLL_ST_4_MPL_H; 
+      T     "OB_HCD_SV_CL_PO_4_MPL_H"; 
+
+
+      L     "DB_HR".PBanHAWE_alt.OB_SP_P_SOLL_ST_4_MPL_L; 
+      T     "OB_HCD_SV_CL_PO_4_MPL_L"; 
+
+
+      L     "DB_HR".PBanHAWE_alt.OB_SP_STATE_ST_1_RPL; 
+      T     "OB_HCD_STATE_CL_PO_1_SST"; 
+
+
+      L     "DB_HR".PBanHAWE_alt.OB_SP_STATE_ST_2_RPL; 
+      T     "OB_HCD_STATE_CL_PO_2_SST"; 
+
+
+      L     "DB_HR".PBanHAWE_alt.OB_SP_STATE_ST_3_RPL; 
+      T     "OB_HCD_STATE_CL_PO_3_SST"; 
+
+
+      L     "DB_HR".PBanHAWE_alt.OB_SP_STATE_ST_4_RPL; 
+      T     "OB_HCD_STATE_CL_PO_4_SST"; 
+
+
+      L     "DB_HR".PBanHAWE_alt.OB_SP_STATE_ST_1_MPL; 
+      T     "OB_HCD_STATE_CL_PO_1_MPL"; 
+
+
+      L     "DB_HR".PBanHAWE_alt.OB_SP_STATE_ST_2_MPL; 
+      T     "OB_HCD_STATE_CL_PO_2_MPL"; 
+
+
+      L     "DB_HR".PBanHAWE_alt.OB_SP_STATE_ST_3_MPL; 
+      T     "OB_HCD_STATE_CL_PO_3_MPL"; 
+
+
+      L     "DB_HR".PBanHAWE_alt.OB_SP_STATE_ST_4_MPL; 
+      T     "OB_HCD_STATE_CL_PO_4_MPL"; 
+
+
+      L     "DB_HR".PBanHAWE_alt.OB_SP_FUNKTION_MPL_RPL; 
+      T     "OB_HCD_FCT_MPL_SST"; 
+
+
+      L     "DB_HR".PBanHAWE_alt.OB_SP_DIAGNOSE_MPL_RPL; 
+      T     "OB_HCD_DIAG_MPL_SST"; 
+
+
+      L     "DB_HR".PBanHAWE_alt.OB_SP_P_TOL_DRUCH_ERREIC; 
+      T     "OB_HCD_TOL_VAL_PRE_REA"; 
+
+
+      L     "DB_HR".PBanHAWE_alt.OB_SP_P_TOL_NACHREGELN; 
+      T     "OB_HCD_TOL_VAL_READJUST"; 
+
+
+      L     "DB_HR".PBanHAWE_alt.OB_SP_P_TOL_NOTAUS; 
+      T     "OB_HCD_TOL_VAL_EMSTP"; 
+
+
+      L     "DB_HR".PBanHAWE_alt.OB_SP_DELTA_STEUERUNG; 
+      T     "OB_HCD_DELTA_CONTROL"; 
+
+
+      L     "DB_HR".PBanHAWE_alt.OB_SP_DELTA_REGELUNG; 
+      T     "OB_HCD_DELTA_REGULATION"; 
+
+
+      L     "DB_HR".PBanHAWE_alt.OB_SP_P_LOESEDRUCK; 
+      T     "OB_HCD_PRESSURE_RELEASE"; 
+
+
+      L     "DB_HR".PBanHAWE_alt.OB_SP_P_DRUCK_RV_OEFFNEN; 
+      T     "OB_HCD_PRE_RET_VALV_OPEN"; 
+
+
+      L     "DB_HR".PBanHAWE_alt.OB_SP_P_T_VERZ_SPANNEN; 
+      T     "OB_HCD_TIME_DELAY_CLAMP"; 
+
+
+      L     "DB_HR".PBanHAWE_alt.OB_SP_P_T_RV_OEFFNEN; 
+      T     "OB_HCD_RT_RET_VAL_OPEN"; 
+
+
+khw:  NOP   0; 
+
+NETWORK
+TITLE =Ausgaenge Blum-Laser
+
+      NOP   0; 
+
+
+      U     "O_LA_ausschwenken"; 
+      =     "OX_CC_CU_PUMP"; 
+
+
+      U     "O_LA_einschwenken"; 
+      =     "OX_SPI_TL_CLAMP_RELEASE"; 
+
+
+      U     "O_LA_Sperrluft_Aus"; 
+      =     A     77.7; 
+
+
+      U     "O_LA_SCHMUTZB_AUF"; 
+      =     A     77.6; 
+
+
+      U     "O_LA_Empfaenger_Ein"; 
+      =     "OX_GEN_LUB_ON"; 
+
+
+      U     "O_LA_ENABLE_EMPFAENGER2"; 
+      =     "OX_SPI_ROTRA_LUB_ON"; 
+
+
+      U     "O_LA_Sender_Ein"; 
+      O     "O_MessDose_Start"; 
+      =     A     45.2; 
+
+
+      U     "O_LA_WZ_ABBLASEN"; 
+      =     A     77.4; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_AL_Messsignal_Umsch";
+//->      =     "OX_AL_Messsignal_Umsch";  //A ;BOOL;Umschaltung Messsignale MesstasterTS27 / Laser
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_TT_ausschwenken";
+//->      =     "OX_TT_ausschwenken";  //A ;BOOL;Messtaster Tisch TS27R ausschwenken
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_TT_einschwenken";
+//->      =     "OX_TT_einschwenken";  //A ;BOOL;Messtaster Tisch TS27R einschwenken
+//->
+//--------------------------------------------------------------------------
+
+
+NETWORK
+TITLE =Ausgaenge Werkzeugwechsler und Werkzeugmagazin
+
+      NOP   0; 
+
+
+      U     "O_WW_1_Klappe_auf"; 
+      =     A     39.4; 
+
+
+      U     "O_WW_1_Klappe_zu"; 
+      =     A     39.5; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_WW_GRF_Drehen_fast";
+//->      =     "OX_TC_GRP_FAST_ROTATE";  //A ;BOOL;Werkstueckgreifer drehen schnell
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_WW_GRF_Drehen_slow";
+//->      =     "OX_TC_GRP_SLOW_ROTATE";  //A ;BOOL;Werkstueckgreifer drehen langsam
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_WW_1GRF_MAG";
+//->      =     "OX_TC_GRP_1_TOOL_MAG";  //A ;BOOL;Werkzeuggreifer drehen Richtung Werkzeugmagazin
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_WW_1GRF_SPI";
+//->      =     "OX_TC_GRP_1_SPINDLE";  //A ;BOOL;Werkzeuggreifer drehen Richtung Spindel
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_WW_Rueck_MAG";
+//->      =     "OX_TC_RETENTION_EXTEND";  //A ;BOOL;Werkzeug-Rueckhalt ausfahren (verriegeln)
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->      NOT   ;
+//->      =     "OX_TC_RETENTION_HOME_POS";  //A ;BOOL;Werkzeug-Rueckhalt zur Grundstellung
+//->
+//--------------------------------------------------------------------------
+
+
+      U     "O_WW_1_ZYL_SPI"; 
+      =     "OX_PC_MPL_PALLET_CLAMP"; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_WW_1_ZYL_SPI";
+//->      =     "OX_TC_CYL_1_TOOL_MAG";  //A ;BOOL;Werkzeugmagazin Zylinder1 Richtung Magazin
+//->
+//--------------------------------------------------------------------------
+
+
+      U     "O_WW_1_ZYL_GST"; 
+      =     "OX_PC_MPL_PALLET_RELEASE"; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_WW_Hub_ZYL_in_Rein";
+//->      =     "OX_TC_CLEAN_EXTEND";  //A ;BOOL;Werkzeugreinigung zur Stellung Reinigen
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      UN    "O_WW_Hub_ZYL_in_Rein";
+//->      =     "OX_TC_CLEAN_HOME_POS";  //A ;BOOL;Werkzeugreinigung zur Grundstellung
+//->
+//--------------------------------------------------------------------------
+
+
+      O     "O_WM_WZ_ZYL_RELEASE"; 
+      =     "OX_SH_CLAMP_RELEASE"; 
+
+
+      O     "O_WM_WZ_ZYL_RELEASE2"; 
+      =     "O_WM_WZ_ZYL_RELEASE2"; 
+
+
+      U     "O_WM_WZ_ZYL_CLAMP"; 
+      =     A     37.4; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_WM_Freigabe_re_li";
+//->      =     "OX_WM_Freigabe_re_li";  //A ;BOOL;Freigabe Werkzeugmagazin
+//->
+//--------------------------------------------------------------------------
+
+
+      U     "O_WM_Freigabe_re_li"; 
+      =     "OX_WM_XACHS_Bremse_auf"; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "M_SBH_AKTIV_MAGAZIN";
+//->      =     "OX_WM_Beladung_entr_auf";  //A ;BOOL;Freigabe Magnetverriegelung Fenster Werkzeugbestückung (Lampe)
+//->
+//--------------------------------------------------------------------------
+
+
+      U     "M_SBH_AKTIV_MAGAZIN"; 
+      =     "OX_LA_CAIR_CLEAN"; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_WM_WZ_STAT_einlegen";
+//->      =     "OX_WM_WZ_STAT_einlegen";  //A ;BOOL;WZV: Lampe TIN (Werkzeug einlegen)
+//->
+//--------------------------------------------------------------------------
+
+
+      U     "O_WM_WZ_STAT_einlegen"; 
+      =     A     44.2; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_WM_WZ_STAT_entnehmen";
+//->      =     "OX_WM_WZ_STAT_entnehmen";  //A ;BOOL;WZV: Lampe TOUT  (Werkzeug entnehmen)
+//->
+//--------------------------------------------------------------------------
+
+
+      U     "O_WM_WZ_STAT_entnehmen"; 
+      =     A     44.3; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_TM_TPU_AIR_CLEANING";
+//->      O     "O_TC_TL_BRUSH_CLEAN";
+//->      =     "OX_TC_TL_BRUSH_CLEAN";  //A ;BOOL;Antrieb Buerste Reinigung Werkzeugkegel
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_TC_ENABLE_BRUSH_CLEAN";
+//->      =     "OX_TC_ENABLE_BRUSH_CLEAN";  //A ;BOOL;Freigabe Positionierung Reinigung
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_WM_MAG_Linkslauf";
+//->      =     "OX_TM_COUNTCLOCKWISE";  //A ;BOOL;Werkzeugmagazin Linkslauf
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_WM_MAG_Rechtslauf";
+//->      =     "OX_TM_CLOCKWISE";  //A ;BOOL;Werkzeugmagazin Rechtslauf
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_WW_GRF_ENTRIEGELN";
+//->      =     "OX_WW_GRF_ENTRIEGELN";  //A ;BOOL;Verriegelung Werkzeuggreifer entriegeln
+//->
+//--------------------------------------------------------------------------
+
+
+      U     "O_TM_TPU_GET_TOOL"; 
+      =     "OX_GEN_PLC_RDY"; 
+
+
+      U     "O_TM_TPU_RELEASE_TOOL"; 
+      =     "OX_WM_Freigabe_re_li"; 
+
+
+      U     "O_TM_TPU_TRANSFERPOS"; 
+      =     "OX_PC_DOOR_UNLOCK"; 
+
+
+      U     "O_TM_TPU_MAGAZINPOS"; 
+      =     "OX_OMS_ON"; 
+
+
+      U     "O_TM_MAG_TOOL_UNLOCK"; 
+      =     A     36.4; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_TM_MAG_TOOL_LOCK";
+//->      =     "OX_TM_MAG_TOOL_LOCK";  //A ;BOOL;Werkzeug an Magazinposition verriegeln
+//->
+//--------------------------------------------------------------------------
+
+
+      U     "O_TM_TPU_AIR_CLEANING"; 
+      =     "OX_SH_CLAMP_CLAMP"; 
+
+
+      U     "O_TM_TLOAD_TOOL_UNLOCK"; 
+      =     A     33.6; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_TM_TLOAD_TOOL_LOCK";
+//->      =     "OX_TM_TLOAD_TOOL_LOCK";  //A ;BOOL;Werkzeug am Rüstplatz verriegeln
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_WK_MAG_AUSFAHREN";
+//->      =     "OX_WK_ZYL_1_AUSF";  //A ;BOOL;Werkzeugträger Zylinder 1 ausfahren
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_WK_MAG_EINFAHREN";
+//->      =     "OX_WK_ZYL_1_EINFAHREN";  //A ;BOOL;Werkzeugträger Zylinder 1 einfahren
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_WK_ZYL_2_AUSF";
+//->      =     "OX_WK_ZYL_2_AUSF";  //A ;BOOL;Werkzeugträger Zylinder 2 ausfahren
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_WK_ZYL_2_EINFAHREN";
+//->      =     "OX_WK_ZYL_2_EINFAHREN";  //A ;BOOL;Werkzeugträger Zylinder 2 einfahren
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_WK_KLAPPE_AUF";
+//->      =     "OX_WK_KLAPPE_AUF";  //A ;BOOL;Werkzeugklappe oeffnen
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_WK_KLAPPE_ZU";
+//->      =     "OX_WK_KLAPPE_ZU";  //A ;BOOL;Werkzeugklappe schliessen
+//->
+//--------------------------------------------------------------------------
+
+
+      U     "O_TM_PUMP"; 
+      =     A     43.7; 
+
+NETWORK
+TITLE =Ausgänge Option Teepack
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_RELEASEUNI_GET_TOOL";
+//->      =     "OX_RELEASEUNI_GET_TOOL";  //A ;BOOL;Ausrückstation Hub Richtung 
+//Werkzeugkegel
+//->
+//--------------------------------------------------------------------------
+//
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_RELEASEUNI_RELEASE_T";
+//->      =     "OX_RELEASEUNI_RELEASE_T";  //A ;BOOL;Ausrückstation Hub in 
+//Grundstellung
+//->
+//--------------------------------------------------------------------------
+//
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_RELEASEUNI_TRANSPOS";
+//->      =     "OX_RELEASEUNI_TRANSPOS";  //A ;BOOL;Ausrückstation Hub Richtung 
+//Übergabeposition
+//->
+//--------------------------------------------------------------------------
+//
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_RELEASEUNI_MAGAZINPOS";
+//->      =     "OX_RELEASEUNI_MAGAZINPOS";  //A ;BOOL;Ausrückstation Richtung 
+//Magazinposition
+//->
+//--------------------------------------------------------------------------
+//
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_RELU_MAG_TOOL_UNLOC";
+//->      =     "OX_RELU_MAG_TOOL_UNLOC";  //A ;BOOL;Ausrückstation WZ Greifer 
+//entriegeln
+//->
+//--------------------------------------------------------------------------
+//
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_RELU_TST_TOOL_UNLOC";
+//->      =     "OX_RELU_TST_TOOL_UNLOC";  //A ;BOOL;Ausrückstation WZ-Pin 
+//Magazinplatz entriegeln
+//->
+//--------------------------------------------------------------------------
+//
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_RELU_TOOL_C_BL_AI";
+//->      =     "OX_RELU_TOOL_C_BL_AI";  //A ;BOOL;Ausrückstation Blasluft Kegel- 
+//und Sensorreinigung
+//->
+//--------------------------------------------------------------------------
+
+
+NETWORK
+TITLE =Ausgaenge Werkzeugbruchueberwachung
+
+      NOP   0; 
+
+
+      U     "O_WZB_WB2_REINIGEN"; 
+      =     A     37.6; 
+
+NETWORK
+TITLE =Ausgaenge Palettenwechsler
+
+      NOP   0; 
+
+
+      U     "O_PC_PAL_CAR_DOWN"; 
+      =     "OX_GEN_SIGNALLAMP_GN"; 
+
+
+      U     "O_4_Klem_Bremse_Auf"; 
+      =     "OX_GEN_SIGNALLAMP_BU"; 
+
+
+      U     "O_SP_MPL_ENTKUPPELN"; 
+      =     A     61.1; 
+
+
+      U     "O_SP_MPL_KUPPELN"; 
+      =     "OX_GEN_OPTWAVE_RD"; 
+
+
+      U     "O_SP_RPL_ENTKUPPELN"; 
+      =     "OX_GEN_OPTWAVE_BU"; 
+
+
+      U     "O_SP_RPL_KUPPELN"; 
+      =     "OX_GEN_OPTWAVE_GN"; 
+
+
+      U     "O_PW_KLE_klemmen"; 
+      =     "OX_GEN_SIGNALLAMP_YE"; 
+
+
+      U     "O_PW_KLE_loesen"; 
+      =     A     61.4; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_PW_0_Grad_Drehen";
+//->      =     "OX_PW_0_Grad_Drehen";  //A ;BOOL;Palettenwechsler schwenken 0 Grad Position
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_PW_180_Grad_Drehen";
+//->      =     "OX_PW_180_Grad_Drehen";  //A ;BOOL;Palettenwechsler schwenken 180 Grad Position
+//->
+//--------------------------------------------------------------------------
+
+
+      U     "O_PW_Hub_senken"; 
+      =     A     76.1; 
+
+
+      U     "O_PW_Hub_heben"; 
+      =     A     76.0; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_PW_HUB_2_HEBEN";
+//->      =     "OX_PC_LIFT_FAST_UP";  //A ;BOOL;Hubeinheit Palettenwechsler schnell nach oben
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_PW_HUB_2_SENKEN";
+//->      =     "OX_PC_LIFT_FAST_DOWN";  //A ;BOOL;Hubeinheit Palettenwechsler schnell nach unten
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_PW_SPANNKONEN_ABBLAS";
+//->      =     "OX_PC_CLAMP_CONE_BL_O";  //A ;BOOL;Palettenträger Spannstelle ausblasen
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_PW_ACHS_Bremse_auf";
+//->      =     "OX_PW_ACHS_Bremse_auf";  //A ;BOOL;Achse 8 (PW)  Bremse lüften
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_PW_Ventil_Abfrage";
+//->      =     "OX_PC_VALVE_REQUEST";  //A ;BOOL;Palettenwechsler Ventilabfrage Luftstrom Palette
+//->
+//--------------------------------------------------------------------------
+
+
+      U     "O_PW_N_VENTIL_ABFRAGE"; 
+      =     "OX_TC_GRP_SLOW_ROTATE"; 
+
+
+      U     "M_SBH_AKTIV_RÜSTPLATZ"; 
+      O     ; 
+      UN    "I_ROBOT_LOCK"; 
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.HASYS_ROB_BELADUNG_RPL; 
+      =     "OX_TC_GRP_FAST_ROTATE"; 
+
+
+      U     "O_RPL_TUER_OEFFNEN"; 
+      =     "OX_RPL_TUER_OEFFNEN"; 
+
+
+      U     "O_RPL_TUER_SCHLIESSEN"; 
+      =     "OX_RPL_TUER_SCHLIESSEN"; 
+
+
+      U     "O_PW_RPL_PAL_KLEMMEN"; 
+      =     A     77.1; 
+
+
+      U     "O_PW_RPL_PAL_LOESEN"; 
+      =     A     77.0; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_PW_MPL_MDK_ENTKUPPELN";
+//->      =     "OX_PC_MPL_MCON_DISENGAGE";  //A ;BOOL;Medienkupplung Fraes-Drehtisch einfahren
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_PW_MPL_MDK_KUPPELN";
+//->      =     "OX_PC_MPL_MCON_ENGAGE";  //A ;BOOL;Medienkupplung Fraes-Drehtisch ausfahren
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_PW_RPL_BREMSE_AUF";
+//->      =     "OX_PW_RPL_BREMSE_AUF";  //A ;BOOL;Bremse NC-Ruestplatz Auf
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_PW_RPL_FREIGABE_RE_LI";
+//->      =     "OX_SST_ENABLE_ROTATE";  //A ;BOOL;Freigabe NC-Ruestplatz
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_PW_SCH_PUMPE_EIN";
+//->      =     "OX_PW_SCH_PUMPE_EIN";  //A ;BOOL;Schmierung Palettenwechsler
+//->
+//--------------------------------------------------------------------------
+
+NETWORK
+TITLE =Ausgaenge Spaenefoerderer
+
+      NOP   0; 
+
+
+      U     "O_SF_Linkslauf"; 
+      =     "OX_AL_Manual_Betrieb"; 
+
+
+      U     "O_SF_Rechtslauf"; 
+      =     "OX_GEN_CAIR_ON"; 
+
+
+      U     "O_SF_Schnecke_Maschine"; 
+      =     "OX_HW_CNC_ACTIVE"; 
+
+
+      U     "O_SF_Schnecke2_Maschine"; 
+      =     "OX_AL_Start_Sig_Renishaw"; 
+
+
+      U     "O_SF_PUMPE_EIN"; 
+      =     A     42.7; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_SF_RECHEN_1_VOR";
+//->      =     "OX_CC_RAKE_1_FORWARD";  //A ;BOOL;Spaenefoerderer- Rechen 1 Hubeinheit vor
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_SF_RECHEN_1_ZURUECK";
+//->      =     "OX_CC_RAKE_1_BACKWARD";  //A ;BOOL;Spaenefoerderer- Rechen 1 Hubeinheit zurueck
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_SF_RECHEN_2_VOR";
+//->      =     "OX_CC_RAKE_2_FORWARD";  //A ;BOOL;paenefoerderer- Rechen 2 Hubeinheit vor
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_SF_RECHEN_2_ZURUECK";
+//->      =     "OX_CC_RAKE_2_BACKWARD";  //A ;BOOL;Spaenefoerderer- Rechen 2 Hubeinheit zurueck
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_SF_RECHEN_Z_VENTIL";
+//->      =     "OX_CC_RAKE_M_VALVE";  //A ;BOOL;Ventil Hauptluft Spaenefoerderer-Rechen
+//->
+//--------------------------------------------------------------------------
+
+
+NETWORK
+TITLE =Ausgaenge Fraes-Drehtisch
+
+      NOP   0; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_FD_Tisch_klemmen";
+//->      =     "OX_MI_TURNT_TAB_CLAMP";  //A ;BOOL;Klemmung Fraes-Drehtisch klemmen
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_FD_Tisch_loesen";
+//->      =     "OX_MI_TURNT_TAB_RELEASE";  //A ;BOOL;Klemmung Fraes-Drehtisch loesen
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_FD_BETRIEBSTUNDE";
+//->      =     "OX_MI_TURNT_OPER_HOUR";  //A ;BOOL;Fraes-Drehtisch Betriebsstundenzaehler
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_FD_SCH_PUMPE_EIN";
+//->      =     "OX_MI_TURNT_LUB_PUMP_ON";  //A ;BOOL;Schmierstoffpumpe ein Fraes-Drehtisch
+//->
+//--------------------------------------------------------------------------
+
+NETWORK
+TITLE =Ausgaenge Konzern-Kuehlmittelanlage
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_KM_M8_Ein";
+//->      =     "OX_CU_M8";  //A ;BOOL;Pumpe Kühlmittel 1 'Ein' (M8)
+//->
+//--------------------------------------------------------------------------
+//
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_KM_DRUCK2_M7_EIN";
+//->      =     "OX_CU_M7_STAGE_2";  //A ;BOOL;Hochdruckpumpe Kuehlmittel 2 80 bar
+//->
+//--------------------------------------------------------------------------
+//
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_KM_Spuelpumpe_ein";
+//->      =     "OX_CU_FLUSH_CABIN";  //A ;BOOL;Spaenespuelung 'Ein'
+//->
+//--------------------------------------------------------------------------
+//
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_KM_TPF_MOTOR_EIN";
+//->      =     "OX_CU_PAPER_MOVE";  //A ;BOOL;Motor Ein Papierbandfilter
+//->
+//--------------------------------------------------------------------------
+//
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_KM_Spruehpistole_ein";
+//->      =     "OX_CU_FLUSH_PISTOL";  //A ;BOOL;Pumpe Kühlmittel Spülpistole
+//->
+//--------------------------------------------------------------------------
+      U     "DB_PLC_MD_DB20".UDHex._28_Bit6_FLUSH_JET; 
+      U     "O_KM_Spuelpumpe_ein"; 
+      =     "OX_CU_FLUSH_JETS_ON"; 
+
+
+      U     "O_KM_Pumpe_Dach"; 
+      O     "O_KM_Pumpe_Dach2"; 
+      =     "OX_CU_FLUSH_ROOF_ON"; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->// Bei KSA1 gibt es nur die Klauenspülung die Dachspülungen entfallen
+//->      U     "O_KM_Pumpe_Dach";
+//->      O     "O_KM_Pumpe_Dach2";
+//->      =     "OX_CU_FLUSCH_PUMP_PC";  //A ;BOOL;Klauenspülung während PW ein
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_KM_Pumpe_Dach";
+//->      O     "O_KM_Pumpe_Dach2";
+//->      O     ;
+//->      U     "DB_PLC_MD_DB20".UDHex._28_Bit6_FLUSH_JET;
+//->      U     "O_KM_Spuelpumpe_ein";
+//->      =     "OX_CU_FLUSH_ROOF";  //A ;BOOL;Pumpe Spaenespuelung Dach
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_PW_Ventil_Tischspuel";
+//->      =     "OX_PC_TABLE_FLUSH";  //A ;BOOL;IKZ-Pumpe ein für Tischspuelung
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_KM_M7_Ein";
+//->      O     "O_KM_DRUCK1_M7_EIN";
+//->      UN    "O_KM_DRUCK2_M7_EIN";
+//->      O     ;
+//->      U     "O_KM_DRUCK2_M7_EIN";
+//->      U     "DB_PLC_MD_DB20".UDHex._44_Bit5_IKZ_2DS_1PUMPE;
+//->      =     "OX_CU_M7";  //A ;BOOL;Hochdruckpumpe Kuehlmittel 2.1
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      O     "O_KM_DRUCK1_M7_EIN";
+//->      =     "OX_CU_M7_PRESSURE1_ON";  //A ;BOOL;
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_KM_PUMPE_FILTER_FEINB";
+//->      =     "OX_KM_PUMPE_FILTER_FEINB";  //A ;BOOL;Foerderpumpe Feinstbereich
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_KM_Motor_Kratzfoerd";
+//->      =     "OX_KM_Motor_Kratzfoerd";  //A ;BOOL;Antrieb Kratzerfoerderer
+//->
+//--------------------------------------------------------------------------
+
+
+      U     "O_KM_SPRUEHPIST_RPL_EIN"; 
+      =     A     62.4; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_KM_FEINSTB_PUMPE";
+//->      =     "OX_KM_FEINSTB_PUMPE";  //A ;BOOL;Foerderpumpe Feinstbereich
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_KM_SF_KRATZER_EIN_V";
+//->      =     "OX_KM_SF_KRATZER_EIN_V";  //A ;BOOL;Antrieb Kratzerförderer „Ein“
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_KM_SF_HEBEPUMPE_EIN";
+//->      =     "OX_KM_SF_HEBEPUMPE_EIN";  //A ;BOOL;Hebepumpe Schmutztank „Ein“
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->// Kühlmittelanlage mit Spaltsieb (KSA7)
+//->      U     "O_CU_GAP_SCREEN_CLEAN";
+//->      =     "OX_CU_GAP_SCREEN_CLEAN";  //A ;BOOL;Kühlmittelanlage Spaltsieb ein / nach oben  (55/65H)
+//->
+//--------------------------------------------------------------------------
+
+
+      U     "O_SST_FLUSH_ON_H"; 
+      O     "O_KM_RP_Dusche_Ventil"; 
+      =     "OX_TC_GRP_1_TOOL_MAG"; 
+
+NETWORK
+TITLE =Ausgaenge Wiegenfräskopf
+
+      NOP   0; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_SO_WFK_KLE_KLEMMEN";
+//->      =     "OX_SO_WFK_KLE_KLEMMEN";  //A ;BOOL;Wiegenfräskopf Klemmung klemmen
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_SO_WFK_KLE_LOESEN";
+//->      =     "OX_SO_WFK_KLE_LOESEN";  //A ;BOOL;Wiegenfräskopf Klemmung lösen
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_SO_WFK_MEDIENK_REINIG";
+//->      =     "OX_SO_WFK_MEDIENK_REINIG";  //A ;BOOL;Wiegenfräskopf Medienkupplung abblasen/reinigen
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_SO_WFK_PNEUMATIK_EIN";
+//->      =     "OX_SO_WFK_PNEUMATIK_EIN";  //A ;BOOL;Wiegenfräskopf Pneumatik Ein
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_SO_DMS_PNEUMAK_EIN";
+//->      =     "OX_TORQ_PROP_CAIR_ON";  //A ;BOOL;Blasluft Drehmomentstuetze
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_SO_WFK_UMSCH_KM";
+//->      =     "OX_SO_WFK_UMSCH_KM";  //A ;BOOL;Wiegenfräskopf Kühlmittel Umschaltung
+//->
+//--------------------------------------------------------------------------
+
+
+NETWORK
+TITLE =Ausgang PROP-Ventil fuer IKZ
+
+      NOP   0; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      L     "O_KM_PROP_VENTIL1";
+//->      T     "OW_KM_PROP_VENTIL1";  //AW ;WORD;Kühlmittel Hochdruck PROP-Ventil
+//->
+//--------------------------------------------------------------------------
+
+NETWORK
+TITLE =Ausgaenge Kuehlmittelanlage KNOLL
+
+      L     "DB_PLC_MD_DB20".UDInt._019_ANWAHL_KMTL_ANLAGE; 
+      L     7; 
+      ==I   ; 
+
+      SPBN  a02; 
+
+
+      L     DB258.DBW    0; 
+      T     "OW_TUNING_CPU_CU_0"; 
+
+
+      L     DB258.DBW    2; 
+      T     "OW_TUNING_CPU_CU_1"; 
+
+
+      L     "DB_KMTL_KNOLL".OW_ANWAHL_DRUCKSTUFE; 
+      T     "OW_TUNING_CPU_CU_2"; 
+
+
+      L     "DB_KMTL_KNOLL".OW_KSA_KONFIGURATION; 
+      T     "OW_TUNING_CPU_CU_3"; 
+
+
+      L     "DB_KMTL_KNOLL".OW_FUNCTION_1; 
+      T     "OW_TUNING_CPU_CU_4"; 
+
+
+a02:  NOP   0; 
+
+
+      L     "DB_PLC_MD_DB20".UDInt._019_ANWAHL_KMTL_ANLAGE; 
+      L     8; 
+      ==I   ; 
+
+      O     "DB_PLC_MD_DB20".UDHex._25_Bit3_SOKO_Kuehlm; 
+      SPBN  a12; 
+
+
+      L     DB258.DBW    0; 
+      TAW   ; 
+
+      T     "OW_TUNING_CPU_CU_0"; 
+
+
+      L     DB258.DBW    2; 
+      TAW   ; 
+
+      T     "OW_TUNING_CPU_CU_1"; 
+
+
+      L     "DB_KMTL_KNOLL".OW_ANWAHL_DRUCKSTUFE; 
+      TAW   ; 
+
+      T     "OW_TUNING_CPU_CU_2"; 
+
+
+      L     "DB_KMTL_KNOLL".OW_KSA_KONFIGURATION; 
+      T     "OW_TUNING_CPU_CU_3"; 
+
+
+      L     "DB_KMTL_KNOLL".OW_FUNCTION_1; 
+      T     "OW_TUNING_CPU_CU_4"; 
+
+
+      L     "DB_KMTL_KNOLL".OW_PARAMETER_2; 
+      T     "OW_TUNING_CPU_CU_5"; 
+
+
+a12:  NOP   0; 
+
+NETWORK
+TITLE =Ausgaenge OMRON-Regalmagazin
+
+      U     "M_WZM_Regal_angewaehlt"; 
+      SPBN  M016; 
+
+
+      L     DB251.DBW    0; 
+      TAW   ; 
+
+      T     "OW_WMR_CNC_0"; 
+
+
+      L     "DB_SCHNITTST_OMRON".OW_WMR_CNC_MAINCOMMAND; 
+      T     "OW_WMR_CNC_MAINCOMMAND"; 
+
+
+      L     "DB_SCHNITTST_OMRON".OW_WMR_CNC_SUBCOMMAND; 
+      T     "OW_WMR_CNC_SUBCOMMAND"; 
+
+
+      L     "DB_SCHNITTST_OMRON".OW_WMR_CNC_1_DATA; 
+      T     "OW_WMR_CNC_1_DATA"; 
+
+
+      L     "DB_SCHNITTST_OMRON".OW_WMR_CNC_2_DATA; 
+      T     "OW_WMR_CNC_2_DATA"; 
+
+
+      L     "DB_SCHNITTST_OMRON".OW_WMR_CNC_SENDEN; 
+      T     "OW_WMR_CNC_SENDEN"; 
+
+
+      L     "DB_SCHNITTST_OMRON".OW_WMR_CNC_EMPFANGEN; 
+      T     "OW_WMR_CNC_EMPFANGEN"; 
+
+
+M016: NOP   0; 
+
+
+NETWORK
+TITLE =
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->TITLE =Ausgaenge Palettenrundspeicher
+//->
+//->      U     "O_PS_DREHST_BREMSE_AUF";
+//->      =     "OX_PS_DREHST_BREMSE_AUF";  //A ;BOOL;Achse 9 
+//(Palettenrundspeicher)  Bremse lüften
+//->
+//--------------------------------------------------------------------------
+//
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_PS_RPL_BREMSE_AUF";
+//->      =     "OX_PS_RPL_BREMSE_AUF";  //A ;BOOL;Bremse Rüstplatz lüften
+//->
+//--------------------------------------------------------------------------
+//
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_PS_ABZIEHS_BREMSE_AUF";
+//->      =     "OX_PS_ABZIEHS_BREMSE_AUF";  //A ;BOOL;Bremse Kette 1 
+//Palettenspeichersystem
+//->
+//--------------------------------------------------------------------------
+//
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_PS_DREHST_HUB_AB";
+//->      =     "OX_PS_TURN_STATION_DOWN";  //A ;BOOL;Ventil Dreheinheit nach 
+//unten
+//->
+//--------------------------------------------------------------------------
+//
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_PS_DREHST_HUB_AUF";
+//->      =     "OX_PS_TURN_STATION_UP";  //A ;BOOL;Ventil Dreheinheit nach oben
+//->
+//--------------------------------------------------------------------------
+//
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_PS_RPL_TUER_VORN_ENTR";
+//->      U     "M_SBH_AKTIV_RPL_PS";
+//->      =     "OX_PS_SST_DOOR_FRT_UNLOC";  //A ;BOOL;Ruestplatztuer vorn 
+//entriegeln
+//->
+//--------------------------------------------------------------------------
+//
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_PS_RPL_TUER_HINT_ENTR";
+//->      U     "M_SBH_AKTIV_RPL_PS";
+//->      =     "OX_PS_SST_DOOR_RER_UNLOC";  //A ;BOOL;Ruestplatztuer hinten 
+//entriegeln
+//->
+//--------------------------------------------------------------------------
+
+
+NETWORK
+TITLE =Ausgaenge EROWA / PROMOT
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_ROBOT_COP1";
+//->      =     "OX_ROBOT_COP1";  //A ;BOOL;Freigabe Spannfutter
+//->
+//--------------------------------------------------------------------------
+//
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_ROBOT_DOOR_CLOSE";
+//->      =     "OX_ROBOT_DOOR_CLOSE";  //A ;BOOL;Hubtuere Werkstuecklader 
+//schliessen
+//->
+//--------------------------------------------------------------------------
+//
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_ROBOT_DOOR_OPEN";
+//->      =     "OX_ROBOT_DOOR_OPEN";  //A ;BOOL;Hubtuere Werkstuecklader oeffnen
+//->
+//--------------------------------------------------------------------------
+//
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_ROBOT_START";
+//->      =     "OX_ROBOT_START";  //A ;BOOL;Startsignal Werkstueckwechsel Handlin
+//gsystem
+//->
+//--------------------------------------------------------------------------
+//
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_ROBOT_TCP1";
+//->      =     "OX_ROBOT_TCP1";  //A ;BOOL;Freigabe Werkstueckwechsel
+//->
+//--------------------------------------------------------------------------
+//
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_WA_REQUEST_DOOR_UNLOC";
+//->      =     "OX_WA_REQUEST_DOOR_UNLOC";  //A ;BOOL;Anforderung Kabinentuer ent
+//riegeln
+//->
+//--------------------------------------------------------------------------
+
+
+NETWORK
+TITLE =Ausgaenge U-Achse
+
+      NOP   0; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_WK_POSITIONIEREN";
+//->      =     "OX_WK_POSITIONIEREN";  //A ;BOOL;U-Achse Position 0
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_WK_ACHSBETRIEB";
+//->      =     "OX_WK_ACHSBETRIEB";  //A ;BOOL;U-Achse Betrieb
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_WK_QUIT_ALARM";
+//->      =     "OX_WK_QUIT_ALARM";  //A ;BOOL;U-Achse Quittierung Alarm
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_WK_PARKEN";
+//->      =     "OX_WK_PARKEN";  //A ;BOOL;U-Achse Park
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_WK_KOPF_ANGEBAUT";
+//->      =     "OX_WK_KOPF_ANGEBAUT";  //A ;BOOL;U-Achse Werkzeug angebaut
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_WK_REG_FREIGABE";
+//->      =     "OX_WK_REG_FREIGABE";  //A ;BOOL;U-Achse Reglerfreigabe
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->      U     "O_WK_NOTACHSBETRIEB";
+//->      =     "OX_WK_NOTACHSBETRIEB";  //A ;BOOL;U-Achse Not-Achsbetrieb
+//->
+//--------------------------------------------------------------------------
+
+NETWORK
+TITLE =Ausgaenge Handlingsystem
+//DB243 Instanz-DB "DI_FB_IF_FASTEMS"
+//
+//      CALL  "FB_IF_FASTEMS" , "DI_FB_IF_FASTEMS"
+//       I_Reserved              :="m_null"
+//       I_plc_Pallet_on_APC     :="I_PW_UPL_PAL_VORH"
+//       I_plc_APC_home_position :=#t_Crane_Movement_allowed
+//       I_plc_APC_A_side_out    :="DB_PW_DATA".bPW_0Grad
+//       I_plc_APC_B_Side_out    :="DB_PW_DATA".bPW_180Grad
+//       I_plc_Palletchangeactive:="M_PW_Aktiv"
+//       I_plc_oper_or_apc_door_c:=#t_oper_or_apc_door
+//       I_plc_On_line           :="M_Automatik_Betrieb"
+//       I_plc_Cycle_on          :="DB_SIEM_KANAL_1".E_ProgRunn
+//       I_plc_Feed_on           :=#t_Feed_on
+//       I_plc_Alarm             :=#t_PLC_Fehler
+//       I_FixtureonAPC          :="MX_FIXTURE_ON_APC"
+//       I_FixtureReleased       :="MX_FIXTURE_RELEASED"
+//       I_FixtureLocked         :="MX_Fixture_Locked"
+//       I_reserveByte2Bit6      :=
+//       I_reserveByte2Bit7      :=
+//       I_MMS_Reserved_for_diagc:=
+//       I_MMS_APC_movement_ok   :="I_FMS_APC_MOVEMENT_OK"
+//       I_MMS_cycle_start       :="I_FMS_NC_START"
+//       I_MMS_AutoPowerOffToMC  :="I_FMS_AUTO_POWER_OFF"
+//       I_MMS_Release_Fixture   :="I_FMS_FIXTURE_RELEASE"
+//       I_MMS_Reserve_1bit5     :=
+//       I_MMS_Reserve_1bit6     :=
+//       I_MMS_Reserve_1bit7     :=
+//       I_RPC_palett_data       :=
+//       I_RPC_command           :=
+//
+      L     "DB_PLC_MD_DB20".UDInt._027_ANWAHL_HANDLINGSYST; 
+      L     3; 
+      ==I   ; 
+
+      SPBN  M020; 
+
+
+      L     DB243.DBW    0; 
+      T     PAW 1150; 
+
+M020: NOP   0; 
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->
+//->//------------ nur für IBN-Tool, damit keine FM generiert werden ------------------
+//->      U     "OX_FMS_PALLET_ON_APC";  //A ;BOOL;MC OUTPUT Byte 1 Bit 1
+//->      U     "OX_FMS_CRANE_MOVE_OK";  //A ;BOOL;MC OUTPUT Byte 1 Bit 2
+//->      U     "OX_FMS_APC_A_SIDE_OUT";  //A ;BOOL;MC OUTPUT Byte 1 Bit 3
+//->      U     "OX_FMS_APC_B_SIDE_OUT";  //A ;BOOL;MC OUTPUT Byte 1 Bit 4
+//->      U     "OX_FMS_PALLET_CHANGE_AKT";  //A ;BOOL;MC OUTPUT Byte 1 Bit 5
+//->      U     "OX_FMS_APC_DOOR_CLOSED";  //A ;BOOL;MC OUTPUT Byte 1 Bit 6
+//->      U     "OX_FMS_OM_ENABLE";  //A ;BOOL;MC OUTPUT Byte 1 Bit 7
+//->      U     "OX_FMS_MACHINE_PGM_RUN";  //A ;BOOL;MC OUTPUT Byte 2 Bit 0
+//->      U     "OX_FMS_CUTTING";  //A ;BOOL;MC OUTPUT Byte 2 Bit 1
+//->      U     "OX_FMS_MACHINE_ERROR";  //A ;BOOL;MC OUTPUT Byte 2 Bit 2
+//->      U     "OX_FMS_FIXTURE_EXIST";  //A ;BOOL;MC OUTPUT Byte 2 Bit 3
+//->      U     "OX_FMS_FIXTURE_RELEASED";  //A ;BOOL;MC OUTPUT Byte 2 Bit 4
+//->      =     #TEMP;
+//->
+//--------------------------------------------------------------------------
+
+//------ mindestens ein E/A-Symbol steht nicht in der Zuordnungsliste ------
+//->//---------------------------------------------------------------------------------
+//->
+//->      U     "O_FMS_OM1_DISABLED";
+//->      =     "OX_FMS_OM1_DISABLED";  //A ;BOOL;Betriebsart Automatik gesperrt Palettenspeichersystem
+//->
+//--------------------------------------------------------------------------
+
+
+NETWORK
+TITLE =Ausgaenge Roboter-Schnittstelle - Start-Adr für DPDP-Koppler
+//Übertragen auf ProfiBus-Ausgänge vom Baustein für Roboter-Schnittstelle DB701
+//erfolgt im FC_ROB_MIT_RPL_MAIN mit FC_UT_IO_PROFIBUS.
+//Hier wird nur die Start-Adresse definiert.
+//nur für IBN-Tool, damit keine Fehlermeldung generiert wird
+      SPA   R_2; 
+
+      L     "DB_CONFIG".ProfiBus.StartAdrPLC.OUT_Robot; 
+      T     "OW_ROBOT_0"; 
+
+
+R_2:  L     1160; 
+      T     "DB_CONFIG".ProfiBus.StartAdrPLC.OUT_Robot; 
+
+NETWORK
+TITLE =Ausgaenge SOKO-Slave(8) DB_IN-Signale
+//Nur für IBN-Tool (absoluter Sprung)
+//
+//Daten LESEN + SCHREIBEN erfolgt im FC_SONDER_MAIN
+//wegen Kompatibilität zu alten Maschinen ist Funktion nicht in FC_CIO_IO_RANGIER
+//verlegbar.
+//
+//SOKO-Eingänge (Daten PLC==>SOKO):
+//Daten von DB171 auf Peripherie-Ausgänge PAW210...PAW241 schreiben.
+//
+//Bei allen SOKO-Informationen, die als BYTE oder BIT interpretiert werden,
+//müssen HIGH-Byte und LOW-Byte mit TAW getauscht werden.
+//
+//SOKO-Slave(8)-Liste:
+//swic\Pfronten\Steuerungsunabhängige Dokumente\Spezifikationen\SOKO
+      SPA   SO_2; 
+
+
+      L     DB171.DBW    0; 
+      TAW   ; 
+
+      T     "OW_Tuning_CPU_0"; 
+
+
+      L     DB171.DBW    2; 
+      TAW   ; 
+
+      T     "OW_Tuning_CPU_1"; 
+
+
+      L     DB171.DBW    4; 
+      TAW   ; 
+
+      T     "OW_Tuning_CPU_2"; 
+
+
+      L     DB171.DBW    6; 
+      TAW   ; 
+
+      T     "OW_Tuning_CPU_3"; 
+
+
+      L     DB171.DBW    8; 
+      TAW   ; 
+
+      T     "OW_Tuning_CPU_4"; 
+
+
+      L     "DB_IN".EMW_PARAMETER_1; 
+      T     "OW_Tuning_CPU_C0"; 
+
+
+      L     "DB_IN".EMW_PARAMETER_2; 
+      T     "OW_Tuning_CPU_C1"; 
+
+
+      L     "DB_IN".EMW_PARAMETER_3; 
+      T     "OW_Tuning_CPU_C2"; 
+
+
+      L     "DB_IN".EMW_PARAMETER_4; 
+      T     "OW_Tuning_CPU_C3"; 
+
+
+      L     DB171.DBW   18; 
+      TAW   ; 
+
+      T     "OW_Tuning_CPU_5"; 
+
+
+      L     "DB_IN".EMW_FUNCTION1; 
+      T     "OW_Tuning_CPU_6"; 
+
+
+      L     DB171.DBW   22; 
+      TAW   ; 
+
+      T     "OW_TUNING_CPU_7"; 
+
+
+      L     DB171.DBW   24; 
+      TAW   ; 
+
+      T     "OW_TUNING_CPU_8"; 
+
+
+SO_2: NOP   0; 
+
+NETWORK
+TITLE =Ein-/Aus-Gaenge für ARTIS + Toolinspect (nur für IBN-Tool)
+//nur, damit IBN-Tool keine Fehlermeldung bringt.
+//Adresszuornung erfolgt in HW-Konfiguration
+      SPA   ARTI; 
+
+      L     "IB_TOOL_CUT_FORCE_1_MON"; 
+      T     #TEMP5; 
+
+
+      L     0; 
+      T     "OB_TOOL_CUT_FORCE_1_MON"; 
+
+      T     "OB_TOOL_CUT_FORCE_2_MON"; 
+
+ARTI: NOP   0; 
+
+NETWORK
+TITLE =Ausgaenge Nicht verwendete Ausgänge
+//Ausgänge, die in der HW konfiguriert werden müssen, aber noch nicht verwendet
+//werden.
+      CLR   ; 
+
+      =     "OX_GEN_AXIS4_CLAMP"; 
+
+NETWORK
+TITLE =----- Ende normale Abarbeitung -----
+
+      BEA   ; 
+
+NETWORK
+TITLE =BISC_Balluf
+//Wird noch  im FC 83 direkt auf PAW160 geschrieben
+//Dies sind nur Dummy Merker um im IBN Tool die Fehlermeldung zu unterdrücken.
+//
+      L     "O_BIS_C_35"; 
+      T     "OW_BIS_C_35"; 
+
+NETWORK
+TITLE =Schnelle Eingaenge
+
+M004: L     "DB_PLC_MD_DB20".UDInt._010_ANWAHL_WERZEUGBRUCH; 
+      L     0; 
+      >I    ; 
+      SPBN  M018; 
+
+
+// Schnellabschaltung Werkzeugbruch
+// Es muss von der Hardwarekonstruktion immer das EB41 verwendet werden
+      L     PEB   41; 
+      T     "MB_Werkzeugbruch"; 
+
+
+      U     "IX_TLB_BIT_0"; 
+      =     "I_WZB_Bit_0"; 
+
+
+      U     "IX_TLB_BIT_1"; 
+      =     "I_WZB_Bit_1"; 
+
+
+      U     "IX_TLB_BIT_2"; 
+      =     "I_WZB_Bit_2"; 
+
+
+      U     "IX_TLB_BIT_3"; 
+      =     "I_WZB_Bit_3"; 
+
+
+      U     "IX_TLB_MEASURING_END"; 
+      =     "I_WZB_Messung_Ende"; 
+
+
+      U     "IX_TLB_HOME_POS"; 
+      =     "I_WZB_Parkstellung"; 
+
+
+// Schnellabschaltung Palettenwechsler mitte
+// Es muss von der Hardwarekobstruktion immer der E66.2 für "IX_PC_LIFT_MID" verwendet werden
+M018: L     PEB   66; 
+      T     "MB_PERIPHERIE_E_BYTE66"; 
+
+
+      U     "M_PC_LIFT_MID_PERIPH_E"; 
+      =     "I_PW_Hub_in_Mitte"; 
+
+
+NETWORK
+TITLE =Baustein-Ende
+
+      BEA   ; 
+
+NETWORK
+TITLE =Schnelle Ausgaenge
+
+M005: L     "DB_PLC_MD_DB20".UDInt._010_ANWAHL_WERZEUGBRUCH; 
+      L     0; 
+      >I    ; 
+      SPBN  M019; 
+
+
+// Schnellabschaltung Werkzeugbruch
+// Es muss von der Hardwarekonstruktion immer der A43.6 für "OX_TLB_ENABLE" verwendet werden
+      U     "O_WZB_Messung_Start"; 
+      =     A     43.6; 
+
+
+
+      L     AB    43; 
+      T     PAB   43; 
+
+
+
+// Schnellabschaltung Palettenwechsler mitte
+// Es muss von der Hardwarekonstruktion immer der A76.0 u A76.1 für "OX_PC_LIFT_DOWN" und "OX_PC_LIFT_UP" verwendet werden
+M019: U     "O_PW_Hub_senken"; 
+      =     A     76.1; 
+
+
+      U     "O_PW_Hub_heben"; 
+      =     A     76.0; 
+
+
+      L     AB    76; 
+      T     PAB   76; 
+
+
+NETWORK
+TITLE =Baustein-Ende
+
+M006: BEA   ; 
+
+END_FUNCTION
+

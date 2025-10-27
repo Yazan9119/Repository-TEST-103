@@ -1,0 +1,148 @@
+FUNCTION "FC_ACHS_18" : VOID
+TITLE =
+//$Revision: 1.5 $
+//$Date: 2008/10/11 09:27:13CEST $
+//$Author: hgc $
+//
+//Querhub Werkzeugwechsler
+{ S7_language := '7(1) Deutsch (Deutschland)  26.03.2008  08:00:15' }
+VERSION : 0.1
+
+
+VAR_TEMP
+  Tx_Override_aktiv : BOOL ;	
+  TX_DUMMY : BOOL ;	
+  Tx_Vorschub_Halt_Mag : BOOL ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =18-Achse: Aktivierung Softwarenocken nachdem Achse referiert ist
+
+      U     "DB_ACHSE18".E_RefSyn1; 
+      =     "DB_ACHSE18".A_SWCam; 
+NETWORK
+TITLE =Override aktivieren
+
+      O     "DB_PLC_MD_DB20".UDHex._04_BIT4_EINRICHT_BETR; 
+      O     "DB_PLC_MD_DB20".UDHex._04_BIT0_OVR_HILFSACHSEN; 
+      O     "DB_OEM".Einrichten_Aktiv; 
+      =     #Tx_Override_aktiv; 
+NETWORK
+TITLE =Clear TX_DUMMY
+
+      U     "m_null"; 
+      =     #TX_DUMMY; 
+NETWORK
+TITLE =Leistung steht an
+
+      U     "M_Leistung_Steht_an"; 
+      =     "DB_ACHSE_WZW_QUER".MX_Ax_Leistung_Aktiv; 
+NETWORK
+TITLE =Vorschub Halt
+
+      O     "M_Vorschub_Halt_Asyn1"; 
+      O     "M_Vorschub_Halt_Asyn4"; 
+      =     #Tx_Vorschub_Halt_Mag; 
+NETWORK
+TITLE =Freigabe Regler
+
+      O     "O_INFEED_ENABLE_NCU"; 
+      O     "DB_ACHSE_WZW_QUER".MX_Ax_Leistung_Aktiv; 
+      =     "m_vke_uebertrag_1"; 
+NETWORK
+TITLE =18-Achse: Aufruf FC_ACHSE_HILF Querhub Werkzeugwechsler
+
+      CALL "FC_ACHSE_HILF" (
+           EX_EN                    := TRUE,
+           EX_UDHex_00_IB_Bit_Achse := "DB_PLC_MD_DB20".UDHex._40_Bit3_ACHSE18_AUSBLEN,
+           EX_UDHex_01_Ax_Messystem := FALSE,//"DB_PLC_MD_DB20".UDHex._42_Bit3_ACHSE18_MESSYST
+           EX_UDHex_RPF_Richtung    := FALSE,
+           EX_Option_Safety         := "O_INFEED_ENABLE_NCU",// Bei Solutionline bleibt RF und ImpFrg für 3 Sek. nach Not-Aus anstehen
+           EX_Safe_Bremsentest      := FALSE,
+           EX_Safe_StopC_aktiv      := FALSE,
+           EX_Safe_StopA_aktiv      := "DB_ACHSE18".E_StopAB,
+           EX_Safe_Teststop_laeuft  := "DB_SPL".IPLC_ZD_GR1_RUN,
+           EX_Maschine_Ein          := "M_MA_Maschine_Ein",
+           EX_Antrieb_Sperre        := FALSE,//"DB_FAMILIEN_MODUL".Achssperre_extern.E_Ax_14
+           EX_Freigabe_Regler       := "m_vke_uebertrag_1",
+           EX_Leistung_steht_an     := "DB_ACHSE_WZW_QUER".MX_Ax_Leistung_Aktiv,
+           EX_VSHalt_EinzelAchse    := "DB_FAMILIEN_MODUL".Gesamt.A_Vorschub_Halt_14_Achse,
+           EX_VSHalt_Gruppe         := #Tx_Vorschub_Halt_Mag,
+           EX_VSHalt_Kanal          := "DB_FAMILIEN_MODUL".Gesamt.A_Vorschub_Halt_Kanal,
+           EX_RefPkt_Achse          := FALSE,
+           EX_Abbruch_Positionieren := "DB_ACHSE_WZW_QUER".MX_Abbruch_Positionieren,
+           EX_Ax_KorrWirksam_1x7    := #Tx_Override_aktiv,
+           EX_Ax_E_RefSyn1_60x4     := "DB_ACHSE18".E_RefSyn1,
+           EX_Ax_E_FahrAF_61x0      := "DB_ACHSE18".E_TravRequ,
+           EX_Ax_E_Steht_61x4       := "DB_ACHSE18".E_Stat,
+           EX_Ax_E_LageRegler_61x5  := "DB_ACHSE18".E_PositContr,
+           EX_Ax_E_DrehzRegler_61x6 := "DB_ACHSE18".E_SpeedContr,
+           EX_Ax_E_StromRegler_61x7 := "DB_ACHSE18".E_CurrentContr,
+           EX_Ax_E_PLC_Achse_63x1   := "DB_ACHSE18".E_PLCCtrlAx,
+           EX_Ax_E_FBMinus_64x6     := "DB_ACHSE18".E_TCMinus,
+           EX_Ax_E_FBPlus_64x7      := "DB_ACHSE18".E_TCPlus,
+           EX_Ax_E_ChPoss_68x5      := "DB_ACHSE18".E_ChPoss,
+           EX_Ax_E_NeutrASp_68x6    := "DB_ACHSE18".E_NeutrASp,
+           EX_Ax_E_MotOK_93x5       := "DB_ACHSE18".E_MotOK,
+           EX_Ax_E_IntSperr_93x6    := "DB_ACHSE18".E_IntegratDisable,
+           EX_Ax_E_ImpFrei_93x7     := "DB_ACHSE18".E_PulseEnable,
+           EX_Ax_E_MTempWarn_94x0   := "DB_ACHSE18".E_MTempWarn,
+           EX_Ax_E_KTempWarn_94x1   := "DB_ACHSE18".E_HTempWarn,
+           EX_FahrAnf_Positiv       := "DB_ACHSE_WZW_QUER".MX_FahrAnf_Plus,
+           EX_FahrAnf_Negativ       := "DB_ACHSE_WZW_QUER".MX_FahrAnf_Minus,
+           EX_Inch_Umrechnen        := "DB_SIEM_NCK".E_SystemInchDim,
+           EB_Achs_Typ              := B#16#3,//3=Linearachse
+           EB_MSST_Vorschub_OVR     := "MSST_Vorschub_OVR",
+           EB_Positierung           := B#16#0,//0=Absolutposition
+           EI_Teilung               := 0,
+           EI_Achs_Nr               := 18,
+           ER_SollPosition          := "DB_ACHSE_WZW_QUER".MR_SollPosition,
+           ER_Istposition           := "DB_ACHSE_WZW_QUER".MR_IstPosition,
+           ER_Geschwindigkeit       := "DB_ACHSE_WZW_QUER".MR_Achsgeschwindigkeit,//0.000000e+000
+           ET_Timer_Ax_Freigabe     := "Te_Achs18",
+           EAX_Ax_Anforderung_Pos   := "DB_ACHSE_WZW_QUER".MX_Anf_Positionieren,
+           EAX_Ax_Rueckmeldung_Pos  := "DB_ACHSE_WZW_QUER".MX_Rueck_Positionieren,
+           EAX_Ax_Fehler_Pos        := "DB_ACHSE_WZW_QUER".MX_Fehler_Positionieren,
+           EAX_Ax_Anf_Referenzieren := "DB_ACHSE_WZW_QUER".MX_Anf_Referieren,
+           EAX_Ax_A_ASpSperre_1x3   := "DB_ACHSE18".A_ASpDisable,
+           EAX_Ax_A_NachfBetr_1x4   := "DB_ACHSE18".A_Follow_upMode,
+           EAX_Ax_A_LageMess1_1x5   := "DB_ACHSE18".A_PosMeas1,
+           EAX_Ax_A_LageMess2_1x6   := "DB_ACHSE18".A_PosMeas2,
+           EAX_Ax_A_KorrW_1x7       := "DB_ACHSE18".A_ORactive,
+           EAX_Ax_A_ReglerFrei_2x1  := "DB_ACHSE18".A_ContrEnable,
+           EAX_Ax_A_RestWegRe_2x2   := "DB_ACHSE18".A_DelDTGSpReset,
+           EAX_Ax_A_VSSpHalt_4x3    := "DB_ACHSE18".A_FDSpStop,
+           EAX_Ax_A_Minus_4x6       := "DB_ACHSE18".A_Minus,
+           EAX_Ax_A_Plus_4x7        := "DB_ACHSE18".A_Plus,
+           EAX_Ax_A_NCASpChA_8x0    := "DB_ACHSE18".A_NCASpChanA,
+           EAX_Ax_A_NCASpStrobe_8x4 := "DB_ACHSE18".A_NCASpStrobe,
+           EAX_Ax_A_PLCASp_8x7      := "DB_ACHSE18".A_PLCASp,
+           EAX_Ax_A_RefVerzoeg_12x7 := "DB_ACHSE18".A_DelayRef,
+           EAX_Ax_A_ImpFrei_21x7    := "DB_ACHSE18".A_PulseEnable,
+           EAX_Ax_A_PLC_Achse_28x7  := "DB_ACHSE18".A_PLCAxis,
+           EAX_AX_RefSync1          := "DB_ACHSE_WZW_QUER".MX_Achs_Referiert,
+           EAX_Alarm_Regler         := "DB_FEHLERMELDUNG".Spi_VS_Halt1._510012_18_IMP_REGFRG_0S,
+           EAX_Alarm_VSSP_Mot_Temp  := "DB_FEHLERMELDUNG".Spi_VS_Halt._700141_18_TEMP_ZU_HOCH,
+           EAX_Alarm_VSSP_KK_Temp   := "DB_FEHLERMELDUNG".Spi_VS_Halt1._510207_18_KK_TEMP_ZH,
+           EAX_Alarm_NA_MotOK       := "DB_FEHLERMELDUNG".Spi_VS_Halt3._701149_18_DR_READY_0,
+           EAX_Alarm_FehlerPos      := #TX_DUMMY,//"DB_FEHLERMELDUNG".Warnung._701915_Rueckm_Achs_8_un
+           EAX_M_Bremse_oeffnen     := #TX_DUMMY,
+           EAX_Anf_Lesen_AxPos      := "DB_ACHSE_WZW_QUER".MX_Ax_Position_Lesen,
+           EAX_Rdy_Lesen_AxPos      := "DB_ACHSE_WZW_QUER".M_Ax_Pos_Lesen_Fertig,
+           EAX_Achse_Fahranf        := "DB_ACHSE_WZW_QUER".MX_Ax_FahrAnf,
+           EAX_Achse_InPosition     := "DB_ACHSE_WZW_QUER".MX_Ax_InPosition,
+           EAX_Achse_Fehler_Pos     := "DB_ACHSE_WZW_QUER".MX_Ax_Fehler_Pos,
+           EAX_Achse_Positioniert   := "DB_ACHSE_WZW_QUER".MX_Ax_Positioniert,
+           EAX_InPos_Merker         := "DB_ACHSE_WZW_QUER".MX_FP_Achse_in_Pos,
+           EAB_Ax_VS_Korrektur_DBB0 := "DB_ACHSE18".A_FD_OR,
+           EAB_SKZ_Achse            := "DB_ACHSE_WZW_QUER".MB_SKZ_Achse);
+
+NETWORK
+TITLE =Achse Reset Fahranforderung
+
+      U     "DB_ACHSE_WZW_QUER".MX_Abbruch_Positionieren; 
+      =     "DB_ACHSE18".A_AxReset; 
+      R     "DB_ACHSE_WZW_QUER".MX_Abbruch_Positionieren; 
+      R     "DB_ACHSE_WZW_QUER".MX_Ax_FahrAnf; 
+END_FUNCTION
+

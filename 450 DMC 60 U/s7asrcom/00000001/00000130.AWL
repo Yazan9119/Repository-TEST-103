@@ -1,0 +1,668 @@
+FUNCTION_BLOCK "FB_U_ACHSE"
+TITLE =
+//$Revision: 1.5 $
+//$Date: 2008/09/03 14:27:24CEST $
+//$Author: riedlh $
+
+//
+//Schnittstelle zu KomTronic U-Achswerkzeug
+//
+//________________________________________________________________________________
+//--- All rights reserved ---
+//Erstellt: 29.04.2005 / SPAC_SLH
+//Quelle  : Neu
+//Bst.Info: Verwaltung der Schnittstelle zu Komet-KomTronic-U-Achswerkzeug
+//        : Die Fehler:
+//        :   #ioFLzCmd  = Laufzeitfehler
+//        :   #ioFUnklar = db2Fehler:Kommando nicht erkannt
+//        :   #ioFbb     = db2Fehler:ni.bereit/man.Eingriff
+//        :   #ioFNoRdy  = db2Fehler:Komet Ready fehlt
+//        :  sowie bei Kommando Achsbetrieb und (kein iAxReady oder Alarm von
+//        :  Komet "ioAlWord")
+//        : bewirken Einlesesperre.
+//        : Für die Cmd.Ausgabe muss das NcPrg.laufen, das Wzg.muss in die
+//        : Spindel eingewechselt sein (iUAxISp), kein Satzsuchlauf darf
+//        : aktiv sein.
+//        : Anordnung der Komet-Fehlernr.im ioAlWord:Byte n+0=FNr.0-7,
+//        : Byte n+0=FNr.8-15
+//        : 
+//Änderung: Datum / Abteilung / Name / Version x.y
+//Änderung: 05.08.2005/ SPAC / slh / Version 0.2
+//        :a) Signal #WartBusy darf bei M148 nicht nochmal kommen, wenn Komet
+//        : Achsbetrieb bereits aktiv ist, da dadurch Cmd Achsbetrieb kurz 
+//        : weggenommen würde "#iAxRdy" eingefügt.
+//        :b) M148 darf erst quittiert werden, wenn die U-Achse auch Nc-seitig
+//        : bereit ist: Neuer Fb-Eingang "#iNcAxbb" (U-Achse Reglerfrg und 
+//        : Lageregler sowie Drehzahlregler aktiv)
+//        : 
+//Änderung: 08.09.2005/ KC / FUH / Version 0.3
+//        : BA Jog im Pfad #PrgLft herausgenommen, wegen ASUP Start
+//================================================================================
+//direkte Zugriffe auf Globaldaten:
+//"m_eins"              M  0.1       immer Status 1
+//"DB_SIEM_BAG".E_JOG   DB11.dbx6.2  aktive BetrArt Jog
+//
+//aufgerufene Funktionen:
+//"TIME_TCK"            SFC64
+AUTHOR : SLH
+FAMILY : FST
+NAME : KOMET
+VERSION : 0.2
+
+
+VAR_INPUT
+  iEnable : BOOL ;	
+  iAlrm2e0 : BOOL ;	//KometUAchse:Alarmcode Bit 0
+  iAlrm2e1 : BOOL ;	//KometUAchse:Alarmcode Bit 1
+  iAlrm2e2 : BOOL ;	//KometUAchse:Alarmcode Bit 2
+  iAlrm2e3 : BOOL ;	//KometUAchse:Alarmcode Bit 3
+  iAlarm0 : BOOL ;	//KometUAchse:Störung, active low*
+  iBusy0 : BOOL ;	//KometUAchse:Wzg.aktiv, active low*
+  iReady : BOOL ;	//KometUAchse:Werkzeug bereit
+  iRef : BOOL ;	//KometUAchse:RefNocken
+  iAxRdy : BOOL ;	//KometUAchse:Achse bereit
+  iLimPos : BOOL ;	//KometUAchseVorendschalter+
+  iLimNeg : BOOL ;	//KometUAchseVorendschalter-
+  iNotBtr : BOOL ;	//Notbetrieb von Bediener gewählt
+  iUAxISp : BOOL ;	//Komet-UAchsWzg.in Spi.vorhanden
+  iNcAxbb : BOOL ;	//vonNc:U-Achse bereit (RegF+Achse in Regelung)
+  iChDb : BLOCK_DB ;	//DB NC-Kanal
+END_VAR
+VAR_OUTPUT
+  oSpWzw : BOOL ;	//Wzw sperren, da Komet U-Achse aktiv
+  oKWzISp : BOOL ;	//Hinweis:KometWz aktivieren ni.möglich, da ni. in Spindel
+  oKNAxAkt : BOOL ;	//Hinweis:Anwahl Notbetrieb ni.möglich:Achsbetrieb aktiv
+  oWtWzAkt : BOOL ;	//Hinweis:U-Achssystem wartet auf Aktivierung mit M148
+END_VAR
+VAR_IN_OUT
+  ioAlWord : WORD ;	//db2Fehler:dekod.Alarm von Komet (1aus16)
+  ioNotBtr : BOOL ;	//anKometUAchse:Notachsbetrieb
+  ioCmdAx : BOOL ;	//anKometUAchse:Achsbetrieb
+  ioAlq : BOOL ;	//anKometUAchse:Alarmquittierung
+  ioFbb : BOOL ;	//db2Fehler:ni.bereit/man.Eingriff
+  ioFUnklar : BOOL ;	//db2Fehler:Kommando nicht erkannt
+  ioFLzCmd : BOOL ;	//db2Fehler:LaufzÜberschrBeiKommando
+  ioFNoRdy : BOOL ;	//db2Fehler:Komet Ready fehlt
+  ioLesesp : BOOL ;	//Einlesesperre an NC
+END_VAR
+VAR
+  SwT : ARRAY  [0 .. 3 ] OF //SwZeitzelle[n]
+  TIME ;	
+  fk : ARRAY  [0 .. 15 ] OF //Flankenhilfsmerker [n]
+  BOOL  := FALSE;	
+  SuchlfSp : BOOL ;	//Speicher Satzsuchlauf aktiv
+  WartBusy : BOOL ;	//Warten auf Komet bereit/Wzg.aktiv
+  CmdNot : BOOL ;	//Kommando Achsnotbetrieb (=ohne RefFahren)
+  CmdAx : BOOL ;	//Kommando Achsbetrieb
+  zioCmdAx : BOOL ;	//Hilfssignal Kommando Achsbetrieb
+END_VAR
+VAR_TEMP
+  aktTime : TIME ;	//ausgeleseneSysZeitVonTime_tck SFC64
+  chE : STRUCT 	//Signale von Kanal
+   AbarbExt : BOOL ;	//dbx32.0 Abarbeiten von extern aktiv
+   RetMove : BOOL ;	//dbx32.1 Rückwärts fahren aktiv
+   Move : BOOL ;	//dbx32.2 Vorwärts fahrt aktiv
+   ActBlock : BOOL ;	//dbx32.3  Aktionssatz aktiv
+   BegBlock : BOOL ;	//dbx32.4 Anfahrsatz aktiv
+   M01 : BOOL ;	//dbx32.5 M0/M1 aktiv
+   f32_6 : BOOL ;	//dbx32.6
+   Overdrive : BOOL ;	//dbx32.7 Überlagerung aktiv
+   Ref : BOOL ;	//dbx33.0 Referieren aktiv
+   f33_1 : BOOL ;	//dbx33.1
+   UmdrVS : BOOL ;	//dbx33.2 Umdrehungsvorschub aktiv
+   HRUeberlag : BOOL ;	//dbx33.3 Handradüberlagerung aktiv
+   Suchlauf : BOOL ;	//dbx33.4 Satzsuchlauf aktiv
+   M30 : BOOL ;	//dbx33.5 M2/M30 aktiv
+   Transform : BOOL ;	//dbx33.6 Transformation aktiv
+   ProgTest : BOOL ;	//dbx33.7 Programmtest aktiv
+   OEMKanal : BYTE ;	//dbb35 OemKanalsignale Rückmeldungen
+   ProgLaeuft : BOOL ;	//dbx35.0 Programm läuft
+   ProgWartet : BOOL ;	//dbx35.1 Programm wartet
+   ProgHalt : BOOL ;	//dbx35.2 Programm angehalten
+   ProgUnterbr : BOOL ;	//dbx35.3 Programm unterbrochen
+   ProgAbgebr : BOOL ;	//dbx35.4 Programm abgebrochen
+   KanalAktiv : BOOL ;	//dbx35.5 Kanal aktiv
+   KanalUnterbr : BOOL ;	//dbx35.6  Kanal unterbrochen
+   KanalReset : BOOL ;	//dbx35.7 Kanal-Reset
+  END_STRUCT ;	
+  chA : STRUCT 	//Signale an Kanal
+   VSKorr : BYTE ;	//dbb4 Vorschubkorrektur
+   EGKorr : BYTE ;	//dbb5 Eilgangkorrektur
+   VSSperre : BOOL ;	//dbx6.0 Vorschubsperre
+   ELSperre : BOOL ;	//dbx6.1 Einlesesperre
+   RWLoeschen : BOOL ;	//dbx6.2 Restweg löschen
+   SP_Clear : BOOL ;	//dbx6.3 UP durchlaufzahl löschen
+   ProgAbbruch : BOOL ;	//dbx6.4 Programmebenenabbruch
+   F_Limit : BOOL ;	//dbx6.5 BahngeschwBegrenzung
+   EGKorrW : BOOL ;	//dbx6.6 Eilgangkorrektur wirksam
+   VSKorrW : BOOL ;	//dbx6.7 Vorschubkorrektur wirksam
+   NCStartSperre : BOOL ;	//dbx7.0 NC-Startsperre
+   NCStart : BOOL ;	//dbx7.1 NC-Start
+   NCStopSatz : BOOL ;	//dbx7.2 NC-Stop an Satzgrenze
+   NCStop : BOOL ;	//dbx7.3 NC-Stop
+   NCStopASp : BOOL ;	//dbx7.4 NC-Stop Achsen plus Spindel
+   f7_5 : BOOL ;	//dbx7.5
+   f7_6 : BOOL ;	//dbx7.6
+   Reset : BOOL ;	//dbx7.7 Reset
+  END_STRUCT ;	
+  svAr1 : DWORD ;	
+  HiBit : ARRAY  [0 .. 15 ] OF //Hilfsbits für Decodierung
+  BOOL ;	
+  AlWord : WORD ;	//dedodierter Alarm von Komet (1aus16)
+  loopctr : BYTE ;	//Schleifenzähler
+  Ready : BOOL ;	//KometUAchse:Werkzeug bereit
+  Alarm : BOOL ;	//KometUAchse:Störung, active high
+  Busy : BOOL ;	//KometUAchse:Wkzg.aktiv, active high
+  PrgLft : BOOL ;	//Programm läuft
+  VSpKorr0 : BOOL ;	//VorschubHalt oder VsKorr.=0%
+  FrgCmd : BOOL ;	//gemeinsame Frg.Kommando ausgeben
+  CmdAgg : BOOL ;	//Kommando ausgegeben
+  seEingang : BOOL ;	//SwTimer se Eingang
+  seFpEing : BOOL ;	//SwTimer se Eingang pos.Flanke
+  seAbgel : BOOL ;	//SwTimer se abgelaufen
+  seAusgang : BOOL ;	//SwTimer se Ausgang
+  LOp1 : BOOL ;	//lokaler Operationsmerker1
+  fpAlarm : BOOL ;	//pos.Flanke:Komet Störung
+  SAlarm : BOOL ;	//Sammelsignal Alarm
+  AnfAx : BOOL ;	//Achsbetrieb gefordert
+  fpCmdNot : BOOL ;	//pos.Flanke:Kommando Notbetrieb
+  fpiNotBtr : BOOL ;	//pos.Flanke:Anforderung Notbetrieb
+  RsetCmdF : BOOL ;	//Reset Kommando bei Störung quittieren
+END_VAR
+BEGIN
+NETWORK
+TITLE =Clr.Ausgangssignale, wenn keine Bausteinfreigabe
+
+      UN    #iEnable; 
+      SPBNB _001; 
+      L     W#16#0; 
+      T     #ioAlWord; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+_001: U     BIE; 
+      R     #ioFbb; 
+      R     #ioFUnklar; 
+      R     #ioFLzCmd; 
+      R     #ioFNoRdy; 
+      R     #ioNotBtr; 
+      R     #ioCmdAx; 
+      R     #ioAlq; 
+      R     #ioLesesp; 
+      R     #oSpWzw; 
+      R     #oKWzISp; 
+      R     #oKNAxAkt; 
+      R     #oWtWzAkt; 
+NETWORK
+TITLE =Ende, wenn keine Bausteinfreigabe
+
+      UN    #iEnable; 
+      SAVE  ; 
+      BEB   ; 
+NETWORK
+TITLE =Lokaldaten löschen+laden
+
+      TAR1  #svAr1; 
+      LAR1  P#0.0; 
+      L     6; 
+s001: L     0; 
+      T     LD [AR1,P#0.0]; //Lokaldaten clr
+      +AR1  P#4.0; 
+      TAK   ; 
+      LOOP  s001; 
+      AUF   #iChDb; 
+      LAR1  P##chE; 
+      L     DBD   32; 
+      T     LD [AR1,P#0.0]; 
+      LAR1  P##chA; 
+      L     DBD    4; 
+      T     LD [AR1,P#0.0]; 
+      LAR1  #svAr1; 
+NETWORK
+TITLE =Eingangssignale laden
+
+      U     "m_eins"; 
+      =     L     24.0; 
+      U     L     24.0; 
+      U     #iReady; 
+      =     #Ready; 
+      U     L     24.0; 
+      UN    #iAlarm0; 
+      =     L     24.1; 
+      U     L     24.1; 
+      BLD   102; 
+      =     #Alarm; 
+      U     L     24.1; 
+      U     #Ready; 
+      FP    #fk[15]; 
+      =     #fpAlarm; 
+      U     L     24.0; 
+      UN    #iBusy0; 
+      =     #Busy; 
+      U     L     24.0; 
+      U     #iNotBtr; 
+      FP    #fk[13]; 
+      =     #fpiNotBtr; 
+      U     L     24.0; 
+      BLD   102; 
+      S     "DB_DM_M_FUNKTION".MX_QuitPflicht[144]; 
+      U     L     24.0; 
+      BLD   102; 
+      S     "DB_DM_M_FUNKTION".MX_QuitPflicht[145]; 
+NETWORK
+TITLE =Alarm von Komet dekodieren, am ioAlWord ausgeben;Sammelalarm
+
+      UN    #fpAlarm; 
+      SPB   e001; 
+      U     #iAlrm2e0; 
+      =     #HiBit[8]; 
+      U     #iAlrm2e1; 
+      =     #HiBit[9]; 
+      U     #iAlrm2e2; 
+      =     #HiBit[10]; 
+      U     #iAlrm2e3; 
+      =     #HiBit[11]; 
+      TAR1  #svAr1; 
+      LAR1  P##HiBit; 
+      L     LW [AR1,P#0.0]; 
+      UW    W#16#F; 
+      LAR1  P##AlWord; 
+      +AR1  ; 
+      SET   ; 
+      S     L [AR1,P#0.0]; 
+      LAR1  #svAr1; 
+      L     #AlWord; 
+      L     #ioAlWord; 
+      OW    ; 
+      T     #ioAlWord; 
+e001: L     0; 
+      L     #AlWord; 
+      <>I   ; 
+      O     #ioFbb; 
+      O     #ioFUnklar; 
+      O     #ioFLzCmd; 
+      O     #ioFNoRdy; 
+      =     #SAlarm; 
+NETWORK
+TITLE =Nc-Prg.läuft
+
+      UN    #chE.KanalReset; 
+      U     #chE.KanalAktiv; 
+      UN    #chE.KanalUnterbr; 
+      UN    #chE.ProgHalt; 
+      =     #PrgLft; 
+NETWORK
+TITLE =Speicher Satzsuchlauf aktiv
+
+      U     #chE.Suchlauf; 
+      S     #SuchlfSp; 
+      U(    ; 
+      O     #chA.Reset; 
+      O     #chE.M30; 
+      O     #chE.ProgLaeuft; 
+      )     ; 
+      R     #SuchlfSp; 
+      NOP   0; 
+NETWORK
+TITLE =Ausgabe Kommando Achsbetrieb
+
+      U(    ; 
+      O     #ioNotBtr; 
+      O     #Busy; 
+      )     ; 
+      U     #CmdNot; 
+      UN    #WartBusy; 
+      O     #zioCmdAx; 
+      =     #ioCmdAx; 
+NETWORK
+TITLE =Kommando Notbetrieb
+
+      U(    ; 
+      U     #iNotBtr; 
+      UN    #CmdAx; 
+      UN    #ioCmdAx; 
+      UN    #Busy; 
+      U     #iUAxISp; 
+      =     #LOp1; 
+      U     #LOp1; 
+      S     #CmdNot; 
+      U(    ; 
+      UN    #iNotBtr; 
+      UN    #CmdAx; 
+      UN    #ioNotBtr; 
+      O(    ; 
+      U(    ; 
+      ON    #Busy; 
+      ON    #Ready; 
+      O     #SAlarm; 
+      ON    #iAxRdy; 
+      )     ; 
+      U     "M_Ruecksetze_Fehler"; 
+      =     #RsetCmdF; 
+      U     #RsetCmdF; 
+      )     ; 
+      ON    "M_Leistung_Steht_an"; 
+      )     ; 
+      R     #CmdNot; 
+      U     #CmdNot; 
+      )     ; 
+      FP    #fk[14]; 
+      =     #fpCmdNot; 
+NETWORK
+TITLE =Ausgabe Kommando Notbetrieb
+
+      U     #LOp1; 
+      S     #ioNotBtr; 
+      U(    ; 
+      U     #ioNotBtr; 
+      U     #ioCmdAx; 
+      U     #Busy; 
+      O     #RsetCmdF; 
+      ON    "M_Leistung_Steht_an"; 
+      )     ; 
+      R     #ioNotBtr; 
+      NOP   0; 
+NETWORK
+TITLE =Hilfssignal:Ausgabe Kommando Achsbetrieb
+
+      UN    #WartBusy; 
+      U     #CmdAx; 
+      =     #zioCmdAx; 
+NETWORK
+TITLE =Kommando Achsbetrieb
+
+      U     "DB_DM_M_FUNKTION".MX_M[144]; 
+      UN    #SuchlfSp; 
+      U     #PrgLft; 
+      =     #AnfAx; 
+      U     #AnfAx; 
+      U     #iUAxISp; 
+      S     #CmdAx; 
+      U(    ; 
+      O     #RsetCmdF; 
+      O     "DB_DM_M_FUNKTION".MX_M[145]; 
+      ON    "M_Leistung_Steht_an"; 
+      )     ; 
+      R     #CmdAx; 
+      NOP   0; 
+NETWORK
+TITLE =Quittierung M148:Komet Achsbetrieb aktivieren
+
+      U     "DB_DM_M_FUNKTION".MX_M[144]; 
+      U     #zioCmdAx; 
+      U     #Busy; 
+      U     #iAxRdy; 
+      U     #Ready; 
+      U     #iNcAxbb; 
+      S     "DB_DM_M_FUNKTION".MX_Quitt[144]; 
+      R     "DB_DM_M_FUNKTION".MX_M[144]; 
+NETWORK
+TITLE =Quittierung M149:Komet Achsbetrieb deaktivieren
+
+      U     "DB_DM_M_FUNKTION".MX_M[145]; 
+      UN    #zioCmdAx; 
+      UN    #Busy; 
+      UN    #iAxRdy; 
+      UN    #CmdAx; 
+      S     "DB_DM_M_FUNKTION".MX_Quitt[145]; 
+      R     "DB_DM_M_FUNKTION".MX_M[145]; 
+NETWORK
+TITLE =NcReset M148, M149
+
+      U     "M_Reset_Taste"; 
+      R     "DB_DM_M_FUNKTION".MX_Quitt[144]; 
+      R     "DB_DM_M_FUNKTION".MX_M[144]; 
+      R     "DB_DM_M_FUNKTION".MX_Quitt[145]; 
+      R     "DB_DM_M_FUNKTION".MX_M[145]; 
+NETWORK
+TITLE =Hinweis:KometWz.aktivieren ni.möglich da nicht in Spindel
+
+      U(    ; 
+      O     #AnfAx; 
+      O     #iNotBtr; 
+      )     ; 
+      UN    #iUAxISp; 
+      S     #oKWzISp; 
+      U     "M_Ruecksetze_Fehler"; 
+      R     #oKWzISp; 
+      NOP   0; 
+NETWORK
+TITLE =Hinweis:Anwahl Notbetrieb ni.möglich da Achsbetrieb aktiv
+
+      U(    ; 
+      O     #CmdAx; 
+      O     #ioCmdAx; 
+      )     ; 
+      U     #fpiNotBtr; 
+      U     #iUAxISp; 
+      S     #oKNAxAkt; 
+      U     "M_Ruecksetze_Fehler"; 
+      UN    #iNotBtr; 
+      R     #oKNAxAkt; 
+      NOP   0; 
+NETWORK
+TITLE =Warte auf Komet bereit
+
+      U(    ; 
+      O     #Busy; 
+      ON    #Ready; 
+      O     #Alarm; 
+      )     ; 
+      U(    ; 
+      U     #CmdAx; 
+      U     "DB_DM_M_FUNKTION".MX_IM[144]; 
+      UN    #iAxRdy; 
+      O     #fpCmdNot; 
+      )     ; 
+      S     #WartBusy; 
+      U(    ; 
+      UN    #Busy; 
+      U     #Ready; 
+      UN    #Alarm; 
+      O     "M_Ruecksetze_Fehler"; 
+      )     ; 
+      R     #WartBusy; 
+      NOP   0; 
+NETWORK
+TITLE =Kommando ausgegeben
+
+      O     #ioNotBtr; 
+      O     #zioCmdAx; 
+      =     #CmdAgg; 
+NETWORK
+TITLE =Ausgabe Alarmquittierung an Komet U-Achse
+
+      U     #Alarm; 
+      U     "M_Ruecksetze_Fehler"; 
+      S     #ioAlq; 
+      UN    #Alarm; 
+      R     #ioAlq; 
+      NOP   0; 
+NETWORK
+TITLE =Systemzeit auslesen für Softwarezeiten
+
+      CALL "TIME_TCK" (
+           RET_VAL                  := #aktTime);
+      NOP   0; 
+NETWORK
+TITLE =Fehler: Laufzeitüberschreitung bei Kommando
+
+      U     #ioCmdAx; 
+      UN    #iAxRdy; 
+      =     #seEingang; 
+//*** SwZeit ***
+      CLR   ; 
+      =     #seAbgel; 
+      U     #seEingang; 
+      FP    #fk[0]; 
+      =     #seFpEing; 
+      UN    #seEingang; 
+      SPB   t0e0; 
+      L     #aktTime; 
+      UN    #seFpEing; 
+      SPB   t0m1; 
+      T     #SwT[0]; 
+t0m1: L     #SwT[0]; 
+      -D    ; 
+      SPPZ  t0m2; 
+      L     L#2147483647; 
+      +D    ; 
+t0m2: L     T#30S; //30 Sek.bei Achsbetr. lt.Komet U-AchsDoku V4.4 vom 24.03.2005
+      >=D   ; 
+      =     #seAbgel; 
+t0e0: U     #seEingang; 
+      U     #seAbgel; 
+      =     #seAusgang; 
+//*** Ende SwZeit ***
+      U     #seAusgang; 
+      S     #ioFLzCmd; 
+NETWORK
+TITLE =Fehler: Kommando wurde vom Komet-System nicht erkannt
+
+      U     #CmdAgg; 
+      UN    #Busy; 
+      =     #seEingang; 
+//*** SwZeit 1 ***
+      CLR   ; 
+      =     #seAbgel; 
+      U     #seEingang; 
+      FP    #fk[1]; 
+      =     #seFpEing; 
+      UN    #seEingang; 
+      SPB   t1e0; 
+      L     #aktTime; 
+      UN    #seFpEing; 
+      SPB   t1m1; 
+      T     #SwT[1]; 
+t1m1: L     #SwT[1]; 
+      -D    ; 
+      SPPZ  t1m2; 
+      L     L#2147483647; 
+      +D    ; 
+t1m2: L     T#2S; //2 Sekunden
+      >=D   ; 
+      =     #seAbgel; 
+t1e0: U     #seEingang; 
+      U     #seAbgel; 
+      =     #seAusgang; 
+//*** Ende SwZeit ***
+      U     #seAusgang; 
+      S     #ioFUnklar; 
+NETWORK
+TITLE =Fehler: Komet-System nicht bereit oder manueller Eingriff
+
+      U     #WartBusy; 
+      =     #seEingang; 
+//*** SwZeit 2 ***
+      CLR   ; 
+      =     #seAbgel; 
+      U     #seEingang; 
+      FP    #fk[2]; 
+      =     #seFpEing; 
+      UN    #seEingang; 
+      SPB   t2e0; 
+      L     #aktTime; 
+      UN    #seFpEing; 
+      SPB   t2m1; 
+      T     #SwT[2]; 
+t2m1: L     #SwT[2]; 
+      -D    ; 
+      SPPZ  t2m2; 
+      L     L#2147483647; 
+      +D    ; 
+t2m2: L     T#10S; //10 Sekunden lt.Komet U-AchsDoku V4.4 vom 24.03.2005
+      >=D   ; 
+      =     #seAbgel; 
+t2e0: U     #seEingang; 
+      U     #seAbgel; 
+      =     #seAusgang; 
+//*** Ende SwZeit ***
+      U     #seAusgang; 
+      S     #ioFbb; 
+NETWORK
+TITLE =SwZeit 3, Reserve
+
+      CLR   ; 
+      =     #seEingang; 
+//*** SwZeit 3 ***
+      CLR   ; 
+      =     #seAbgel; 
+      U     #seEingang; 
+      FP    #fk[3]; 
+      =     #seFpEing; 
+      UN    #seEingang; 
+      SPB   t3e0; 
+      L     #aktTime; 
+      UN    #seFpEing; 
+      SPB   t3m1; 
+      T     #SwT[3]; 
+t3m1: L     #SwT[3]; 
+      -D    ; 
+      SPPZ  t3m2; 
+      L     L#2147483647; 
+      +D    ; 
+t3m2: L     T#3M; 
+      >=D   ; 
+      =     #seAbgel; 
+t3e0: U     #seEingang; 
+      U     #seAbgel; 
+      =     #seAusgang; 
+//*** Ende SwZeit ***
+NETWORK
+TITLE =Fehler: Komet Ready fehlt
+
+      U     #CmdAgg; 
+      UN    #Ready; 
+      S     #ioFNoRdy; 
+NETWORK
+TITLE =Einlesesperre
+
+      U(    ; 
+      O     #SAlarm; 
+      ON    #iAxRdy; 
+      )     ; 
+      U     #CmdAx; 
+      O     #ioFLzCmd; 
+      O     #ioFUnklar; 
+      O     #ioFbb; 
+      O     #ioFNoRdy; 
+      =     #ioLesesp; 
+NETWORK
+TITLE =an Nc:Wzw sperren, da Komet U-Achse aktiv
+
+      O     #CmdAx; 
+      O     #CmdNot; 
+      O     #iAxRdy; 
+      O     #Busy; 
+      =     #oSpWzw; 
+NETWORK
+TITLE =Hinweis:U-Achssystem wartet auf Aktivierung durch M148
+
+      U(    ; 
+      ON    #zioCmdAx; 
+      ON    #iAxRdy; 
+      ON    #Busy; 
+      )     ; 
+      UN    #CmdNot; 
+      U     #iUAxISp; 
+      UN    #SAlarm; 
+      U     #Ready; 
+      U     "M_Leistung_Steht_an"; 
+      =     #oWtWzAkt; 
+NETWORK
+TITLE =Clr.Alarme, Meldungen bei Störung quitt.
+
+      U     "M_Ruecksetze_Fehler"; 
+      SPBNB _002; 
+      L     W#16#0; 
+      T     #ioAlWord; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+_002: U     BIE; 
+      R     #ioFbb; 
+      R     #ioFUnklar; 
+      R     #ioFLzCmd; 
+      R     #ioFNoRdy; 
+END_FUNCTION_BLOCK
+

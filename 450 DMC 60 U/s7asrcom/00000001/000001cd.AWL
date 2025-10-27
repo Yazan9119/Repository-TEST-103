@@ -1,0 +1,294 @@
+FUNCTION "FC_CI_NCK_PLC" : VOID
+TITLE =
+//$Revision: 1.21 $
+//$Date: 2008/10/21 14:55:57CEST $
+//$Author: fuh $
+VERSION : 0.1
+
+
+VAR_INPUT
+  E_Enable : BOOL ;	
+  E_EN_ReadNCK : BOOL ;	
+END_VAR
+VAR_TEMP
+  start_read : BOOL ;	
+  Error_FC21_read : BOOL ;	
+  ErrCode_FC21_read : INT ;	
+  FB2_Error : BOOL ;	
+  FB2_NDR : BOOL ;	
+  FB2_State : WORD ;	
+  t_NUM : INT ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =Bausteinfreigabe
+// Netzwerk-Übersicht
+// ==================
+// NW 1: Bausteinfreigabe
+// NW 2: DUAL-Port-RAM: 092..099 - Werkzeugverschleiss
+// NW 3: DUAL-Port-RAM: 100..119 - PW / WZW
+// NW 4: DUAL-Port-RAM: 120..143 - WerkzeugVerwaltung
+// NW 5: DUAL-Port-RAM: 268..268 - WiKo
+// NW 6: DUAL-Port-RAM: 270..273 - WiKo
+// NW 7: DUAL-Port-RAM: 312..312 - ESR
+// NW 8: DUAL-Port-RAM: 314..363 - Allg NC-Eingänge alle Projekte
+// NW 9: Maschinendaten lesen beim Hochlauf
+// NW 10: Digitale Ein- Ausgänge NC   $A_OUT[24]
+      UN    #E_Enable; 
+      BEB   ; 
+
+NETWORK
+TITLE =DUAL-Port-RAM: 092..099 - Werkzeugverschleiss
+
+      U     #E_EN_ReadNCK; 
+      S     #start_read; 
+
+//DUAL-Port-RAM: 92..99
+      CALL "FC_SIEM_PLC_NCK" (
+           Enable                   := #start_read,
+           Funct                    := B#16#3,
+           S7Var                    := "DB_NC_PLC".WZVS,
+           IVAR1                    := 92,
+           IVAR2                    := -1,
+           Error                    := #Error_FC21_read,
+           ErrCode                  := #ErrCode_FC21_read);
+
+      SET   ; 
+      R     #start_read; 
+
+NETWORK
+TITLE =DUAL-Port-RAM: 100..119 - PW / WZW
+
+      U     #E_EN_ReadNCK; 
+      S     #start_read; 
+
+//DUAL-Port-RAM: 100..119
+      CALL "FC_SIEM_PLC_NCK" (
+           Enable                   := #start_read,
+           Funct                    := B#16#3,
+           S7Var                    := P#DB70.DBX100.0 BYTE 20,
+           IVAR1                    := 100,
+           IVAR2                    := -1,
+           Error                    := #Error_FC21_read,
+           ErrCode                  := #ErrCode_FC21_read);
+
+      SET   ; 
+      R     #start_read; 
+
+NETWORK
+TITLE =DUAL-Port-RAM: 120..143 - WerkzeugVerwaltung
+
+      U     #E_EN_ReadNCK; 
+      S     #start_read; 
+
+//DUAL-Port-RAM: 120..143
+      CALL "FC_SIEM_PLC_NCK" (
+           Enable                   := #start_read,
+           Funct                    := B#16#3,
+           S7Var                    := P#DB70.DBX 120.0 REAL 6,
+           IVAR1                    := 120,
+           IVAR2                    := -1,
+           Error                    := #Error_FC21_read,
+           ErrCode                  := #ErrCode_FC21_read);
+
+      SET   ; 
+      R     #start_read; 
+
+NETWORK
+TITLE =DUAL-Port-RAM: 268..268 - WiKo
+
+      U     #E_EN_ReadNCK; 
+      S     #start_read; 
+
+//DUAL-Port-RAM: 268..268
+      CALL "FC_SIEM_PLC_NCK" (
+           Enable                   := #start_read,
+           Funct                    := B#16#3,
+           S7Var                    := P#DB70.DBX268.0 BYTE 1,
+           IVAR1                    := 268,
+           IVAR2                    := -1,
+           Error                    := #Error_FC21_read,
+           ErrCode                  := #ErrCode_FC21_read);
+
+      SET   ; 
+      R     #start_read; 
+NETWORK
+TITLE =DUAL-Port-RAM: 270..273 - WiKo
+
+      U     #E_EN_ReadNCK; 
+      S     #start_read; 
+
+//DUAL-Port-RAM: 270..273
+      CALL "FC_SIEM_PLC_NCK" (
+           Enable                   := #start_read,
+           Funct                    := B#16#3,
+           S7Var                    := P#DB70.DBX270.0 BYTE 4,
+           IVAR1                    := 270,
+           IVAR2                    := -1,
+           Error                    := #Error_FC21_read,
+           ErrCode                  := #ErrCode_FC21_read);
+
+      SET   ; 
+      R     #start_read; 
+NETWORK
+TITLE =DUAL-Port-RAM: 312..312 - ESR
+
+      U     #E_EN_ReadNCK; 
+      S     #start_read; 
+
+//DUAL-Port-RAM:312
+      CALL "FC_SIEM_PLC_NCK" (
+           Enable                   := #start_read,
+           Funct                    := B#16#3,
+           S7Var                    := "DB_NC_PLC".DM_ESR_AKTIV,
+           IVAR1                    := 312,
+           IVAR2                    := -1,
+           Error                    := #Error_FC21_read,
+           ErrCode                  := #ErrCode_FC21_read);
+
+      U     DB70.DBX  312.0; 
+      =     "O_AL_ESR_AKTIV"; 
+
+      SET   ; 
+      R     #start_read; 
+
+NETWORK
+TITLE =DUAL-Port-RAM: 314..363 - Allg NC-Eingänge alle Projekte
+
+      U     #E_EN_ReadNCK; 
+      S     #start_read; 
+
+//DUAL-Port-RAM: 314..323
+      CALL "FC_SIEM_PLC_NCK" (
+           Enable                   := #start_read,
+           Funct                    := B#16#3,
+           S7Var                    := P#DB70.DBX314.0 BYTE 10,//"DB_NC_PLC".Zusatz.NC_an_PLC
+           IVAR1                    := 314,
+           IVAR2                    := -1,
+           Error                    := #Error_FC21_read,
+           ErrCode                  := #ErrCode_FC21_read);
+
+      SET   ; 
+      R     #start_read; 
+
+NETWORK
+TITLE =
+
+      U     #E_EN_ReadNCK; 
+      S     #start_read; 
+
+//DUAL-Port-RAM: 324..327
+      CALL "FC_SIEM_PLC_NCK" (
+           Enable                   := #start_read,
+           Funct                    := B#16#3,
+           S7Var                    := "DB_NC_PLC".Zusatz.NC_an_PLC.Offset_Kegelreinigung_VM,
+           IVAR1                    := 324,
+           IVAR2                    := -1,
+           Error                    := #Error_FC21_read,
+           ErrCode                  := #ErrCode_FC21_read);
+
+      SET   ; 
+      R     #start_read; 
+
+
+NETWORK
+TITLE =
+
+      U     #E_EN_ReadNCK; 
+      S     #start_read; 
+
+//DUAL-Port-RAM: 328..363
+      CALL "FC_SIEM_PLC_NCK" (
+           Enable                   := #start_read,
+           Funct                    := B#16#3,
+           S7Var                    := P#DB70.DBX328.0 BYTE 36,//"DB_NC_PLC".Zusatz.NC_an_PLC
+           IVAR1                    := 328,
+           IVAR2                    := -1,
+           Error                    := #Error_FC21_read,
+           ErrCode                  := #ErrCode_FC21_read);
+
+      SET   ; 
+      R     #start_read; 
+
+
+NETWORK
+TITLE =DUAL-Port-RAM: 414, 428..443 - WZVS (Omative ACM) --> PLC
+
+      U     #E_EN_ReadNCK; 
+      S     #start_read; 
+
+//DUAL-Port-RAM: 414
+      CALL "FC_SIEM_PLC_NCK" (
+           Enable                   := #start_read,
+           Funct                    := B#16#3,
+           S7Var                    := "DB_NC_PLC".Zusatz.WZVS_DPR.Monitoring_Parameter,
+           IVAR1                    := 414,
+           IVAR2                    := -1,
+           Error                    := #Error_FC21_read,
+           ErrCode                  := #ErrCode_FC21_read);
+
+//DUAL-Port-RAM: 428..443
+      CALL "FC_SIEM_PLC_NCK" (
+           Enable                   := #start_read,
+           Funct                    := B#16#3,
+           S7Var                    := "DB_NC_PLC".Zusatz.WZVS_DPR.WZVS_an_PLC,
+           IVAR1                    := 428,
+           IVAR2                    := -1,
+           Error                    := #Error_FC21_read,
+           ErrCode                  := #ErrCode_FC21_read);
+
+      SET   ; 
+      R     #start_read; 
+
+NETWORK
+TITLE =Maschinendaten lesen beim Hochlauf
+
+      U     "m_neustart"; 
+      S     "M_MD_lesen_Hochlauf"; 
+
+      L     6; 
+
+      UN    "DB_SIEM_STARTUP".ActivAxis[14]; 
+      SPB   NUM; 
+
+      L     7; 
+NUM:  T     #t_NUM; 
+
+      CALL "FB_SIEM_GET" , "DI_FB2_RD_MD" (
+           Req                      := "M_MD_lesen_Hochlauf",
+           NumVar                   := #t_NUM,
+           Addr1                    := "DB_NC_VAR".A4_M_ROT_IS_MODULO_30310,
+           Addr2                    := "DB_NC_VAR".A6_M_IS_VIRTUAL_AX_30132,
+           Addr3                    := "DB_NC_VAR".A7_M_JOG_VELO_32020,
+           Addr4                    := "DB_NC_VAR".A7_M_JOG_VELORAPID_32010,
+           Addr5                    := "DB_NC_VAR".A6_GEAR_CH_ENABLE_35010,
+           Addr6                    := "DB_NC_VAR".A7_INDEX_ASSIGNPOS_30500,
+           Addr7                    := "DB_NC_VAR".A14_M_JOGVELORAPID_32010,
+           Error                    := #FB2_Error,
+           NDR                      := #FB2_NDR,
+           State                    := #FB2_State,
+           RD1                      := "DB_REMANENT".Achse_4_modulo,
+           RD2                      := "DB_REMANENT".Achse_6_virtuell,
+           RD3                      := "DB_REMANENT".A7_JOG_VELO,
+           RD4                      := "DB_REMANENT".A7_JOG_VELO_RAPID,
+           RD5                      := "DB_REMANENT".A6_gear_change_enable,
+           RD6                      := "DB_REMANENT".A7_INDEX_ASIGN_POS_TAB,
+           RD7                      := "DB_REMANENT".A14_JOG_VELO_RAPID);
+
+      O     #FB2_Error; 
+      O     #FB2_NDR; 
+      R     "M_MD_lesen_Hochlauf"; 
+
+NETWORK
+TITLE =Digitale Ein- Ausgänge NC   $A_OUT[24]
+
+      U     "DB_SIEM_NCK".E_Setpoint_Out24; // Digitaler Ausgang Nr. 33
+      =     "M_NC_Konus_ausblasen"; 
+
+      U     "M_Reset_Taste"; //Reset
+      O     "DB_SIEM_KANAL_1".E_M30; 
+      =     "DB_SIEM_NCK".A_OvMask_Out24; // Übernahme DBX 144.0 -> DBX 193.0 (Ausgang 24)
+
+
+END_FUNCTION
+

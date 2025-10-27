@@ -1,0 +1,297 @@
+FUNCTION "FC_DMC_ROB_Sonder" : VOID
+TITLE =
+//$Revision:  $
+//$Date: 2008/02/20 07:13:58CET $
+//$Author: riedlh $
+//
+//Ablauf Sonderfunktionen für BoschRexroth
+//========================================
+{ S7_language := '7(1) Deutsch (Deutschland)  26.03.2008  08:00:15' }
+VERSION : 0.1
+
+
+VAR_INPUT
+  i_MEL_ROB_T1_entladen : BOOL ;	//Roboter-Meldung: Werkstück 1 ist entladen
+  i_MEL_ROB_T1_beladen : BOOL ;	//Roboter-Meldung: Werkstück 1 ist beladen
+  i_MEL_ROB_T2_entladen : BOOL ;	//Roboter-Meldung: Werkstück 2 ist entladen
+  i_MEL_ROB_T2_beladen : BOOL ;	//Roboter-Meldung: Werkstück 2 ist beladen
+  i_BEF_ROB_PWFG : BOOL ;	//Roboter-Befehl: PW-Freigabe auslösen
+  i_St1_Entlade_FG : BOOL ;	//an Roboter: Entlade-FG für Spannstelle 1
+  i_St1_Belade_FG : BOOL ;	//an Roboter: Belade-FG für Spannstelle 1
+  i_PW_aktiv : BOOL ;	//PW-Ablauf ist aktiv
+  i_PalV_MPL_T1_belegt : BOOL ;	//PalVerw: MPL Werkstück 1 ist belegt
+  i_PalV_MPL_T2_belegt : BOOL ;	//PalVerw: MPL Werkstück 2 ist belegt
+END_VAR
+VAR_OUTPUT
+  o_Be_Entlade_FG : BOOL ;	//Be- bzw. Entladebereitschaft
+  o_MPL_T1_bearbeitet : BOOL ;	//MPL Pal-Status: Teil 1 ist bearbeitet
+  o_MPL_T1_NIO : BOOL ;	//MPL Pal-Status: Teil 1 Teil niO
+  o_MPL_T2_bearbeitet : BOOL ;	//MPL Pal-Status: Teil 2 ist bearbeitet
+  o_MPL_T2_NIO : BOOL ;	//MPL Pal-Status: Teil 2 Teil niO
+  o_ROB_T1_belegt : BOOL ;	//PLC>>>ROB: Teil 1 belegt
+  o_ROB_T1_bearbeitet : BOOL ;	//PLC>>>ROB: Teil 1 bearbeitet
+  o_ROB_T1_niO : BOOL ;	//PLC>>>ROB: Teil 1 nicht in Ordnung
+  o_ROB_T2_belegt : BOOL ;	//PLC>>>ROB: Teil 2 belegt
+  o_ROB_T2_bearbeitet : BOOL ;	//PLC>>>ROB: Teil 2 bearbeitet
+  o_ROB_T2_niO : BOOL ;	//PLC>>>ROB: Teil 2 nicht in Ordnung
+END_VAR
+VAR_IN_OUT
+  io_RPL_T1_belegt : BOOL ;	//RPL Pal-Status: Werkstück 1 ist belegt
+  io_RPL_T1_bearbeitet : BOOL ;	//RPL Pal-Status: Werkstück 1 ist bearbeitet
+  io_RPL_T1_NIO : BOOL ;	//RPL Pal-Status: Werkstück 1 Teil niO
+  io_RPL_T2_belegt : BOOL ;	//RPL Pal-Status: Werkstück 2 ist belegt
+  io_RPL_T2_bearbeitet : BOOL ;	//RPL Pal-Status: Werkstück 2 ist bearbeitet
+  io_RPL_T2_NIO : BOOL ;	//RPL Pal-Status: Werkstück 2 Teil niO
+END_VAR
+VAR_TEMP
+  t_BOOL : BOOL ;	
+  t_PI_Entladen_T1 : BOOL ;	//pos.Flanke Teil 1 entladen
+  t_PI_Beladen_T1 : BOOL ;	//pos.Flanke Teil 1 beladen
+  t_PI_Entladen_T2 : BOOL ;	//pos.Flanke Teil 2 entladen
+  t_PI_Beladen_T2 : BOOL ;	//pos.Flanke Teil 2 beladen
+  t_WIZ_SK_FG : BOOL ;	//WIZZARD Softkey-Freigabe
+  t_INT : INT ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =Netzwerk-Übersicht
+// Netzwerk-Übersicht
+// ==================
+// NW 1: Netzwerk-Übersicht
+// NW 2: pos.Flanke Teil 1 entladen
+// NW 3: pos.Flanke Teil 1 beladen
+// NW 4: pos.Flanke Teil 2 entladen
+// NW 5: pos.Flanke Teil 2 beladen
+// NW 6: RPL-STATUS: Werkstück 1 "belegt"
+// NW 7: RPL-STATUS: Werkstück 1 "bearbeitet" / "niO"
+// NW 8: RPL-STATUS: Werkstück 2 "belegt"
+// NW 9: RPL-STATUS: Werkstück 2 "bearbeitet" / "niO"
+// NW 10: Meldung an ROB: Be- bzw. Ent-Ladefreigabe
+// NW 11: PLC>>>ROB: Status-Übergabe an Roboter-Schnittstelle
+// NW 12: Daten-Übergabe: PalVerw ===> DualPortRam
+// NW 13: Daten-Übergabe: PalVerw ===> DualPortRam
+// NW 14: Daten-Übergabe: DualPortRam ===> PalVerw
+// NW 15: Daten-Übergabe: DualPortRam ===> PalVerw
+// NW 16: WIZZARD: Softkey-Freigabe
+// NW 17: PalVerw >>> WIZZARD-Daten
+// NW 18: WIZZARD-Daten >>> PalVerw
+
+      NOP   0; 
+
+NETWORK
+TITLE =pos.Flanke Teil 1 entladen
+
+      U     #i_MEL_ROB_T1_entladen; 
+      FP    "DB_HR".ROB_Interface.HM_PI_Rob_entladen_T1; 
+      =     #t_PI_Entladen_T1; 
+NETWORK
+TITLE =pos.Flanke Teil 1 beladen
+
+      U     #i_MEL_ROB_T1_beladen; 
+      FP    "DB_HR".ROB_Interface.HM_PI_Rob_beladen_T1; 
+      =     #t_PI_Beladen_T1; 
+NETWORK
+TITLE =pos.Flanke Teil 2 entladen
+
+      U     #i_MEL_ROB_T2_entladen; 
+      FP    "DB_HR".ROB_Interface.HM_PI_Rob_entladen_T2; 
+      =     #t_PI_Entladen_T2; 
+NETWORK
+TITLE =pos.Flanke Teil 2 beladen
+
+      U     #i_MEL_ROB_T2_beladen; 
+      FP    "DB_HR".ROB_Interface.HM_PI_Rob_beladen_T2; 
+      =     #t_PI_Beladen_T2; 
+NETWORK
+TITLE =RPL-STATUS: Werkstück 1 "belegt"
+
+      U     #t_PI_Beladen_T1; 
+      S     #io_RPL_T1_belegt; 
+      U     #t_PI_Entladen_T1; 
+      R     #io_RPL_T1_belegt; 
+      NOP   0; 
+NETWORK
+TITLE =RPL-STATUS: Werkstück 1 "bearbeitet" / "niO"
+//Signale "bearbeitet" und "niO" werden im NC-Programm gesetzt.
+      U     #t_PI_Entladen_T1; 
+      R     #io_RPL_T1_bearbeitet; 
+      R     #io_RPL_T1_NIO; 
+NETWORK
+TITLE =RPL-STATUS: Werkstück 2 "belegt"
+
+      U     #t_PI_Beladen_T2; 
+      S     #io_RPL_T2_belegt; 
+      U     #t_PI_Entladen_T2; 
+      R     #io_RPL_T2_belegt; 
+      NOP   0; 
+NETWORK
+TITLE =RPL-STATUS: Werkstück 2 "bearbeitet" / "niO"
+//Signale "bearbeitet" und "niO" werden im NC-Programm gesetzt.
+      U     #t_PI_Entladen_T2; 
+      R     #io_RPL_T2_bearbeitet; 
+      R     #io_RPL_T2_NIO; 
+NETWORK
+TITLE =Meldung an ROB: Be- bzw. Ent-Ladefreigabe
+
+      U(    ; 
+      O     #i_St1_Entlade_FG; 
+      O     #i_St1_Belade_FG; 
+      )     ; 
+      S     #o_Be_Entlade_FG; 
+      U     #i_BEF_ROB_PWFG; 
+      R     #o_Be_Entlade_FG; 
+      NOP   0; 
+NETWORK
+TITLE =PLC>>>ROB: Status-Übergabe an Roboter-Schnittstelle
+
+      U     #i_PW_aktiv; 
+      SPB   kAkt; 
+
+      U     #io_RPL_T1_belegt; 
+      =     #o_ROB_T1_belegt; 
+
+      U     #io_RPL_T1_bearbeitet; 
+      =     #o_ROB_T1_bearbeitet; 
+
+      U     #io_RPL_T1_NIO; 
+      =     #o_ROB_T1_niO; 
+
+      U     #io_RPL_T2_belegt; 
+      =     #o_ROB_T2_belegt; 
+
+      U     #io_RPL_T2_bearbeitet; 
+      =     #o_ROB_T2_bearbeitet; 
+
+      U     #io_RPL_T2_NIO; 
+      =     #o_ROB_T2_niO; 
+
+kAkt: NOP   0; 
+NETWORK
+TITLE =Daten-Übergabe: PalVerw ===> DualPortRam
+//Mit "PW_aktiv"=1 (M60) werden die Daten von der PalVerw
+//in den DualPortRam (DPR) geschrieben:
+//- Werkstück 1 belegt     DPR: 384.0
+//- Werkstück 2 belegt     DPR: 384.1
+      U     #i_PW_aktiv; 
+      U     #i_PalV_MPL_T1_belegt; 
+      S     "DB_NC_PLC".Zusatz.PLC_an_NC.PalVerw_MPL_Status.Teil_1_belegt; 
+      U     #i_PW_aktiv; 
+      UN    #i_PalV_MPL_T1_belegt; 
+      R     "DB_NC_PLC".Zusatz.PLC_an_NC.PalVerw_MPL_Status.Teil_1_belegt; 
+      NOP   0; 
+NETWORK
+TITLE =Daten-Übergabe: PalVerw ===> DualPortRam
+//Mit "PW_aktiv"=1 (M60) werden die Daten von der PalVerw
+//in den DualPortRam (DPR) geschrieben:
+//- Werkstück 1 belegt     DPR: 384.0
+//- Werkstück 2 belegt     DPR: 384.1
+      U     #i_PW_aktiv; 
+      U     #i_PalV_MPL_T2_belegt; 
+      S     "DB_NC_PLC".Zusatz.PLC_an_NC.PalVerw_MPL_Status.Teil_2_belegt; 
+      U     #i_PW_aktiv; 
+      UN    #i_PalV_MPL_T2_belegt; 
+      R     "DB_NC_PLC".Zusatz.PLC_an_NC.PalVerw_MPL_Status.Teil_2_belegt; 
+      NOP   0; 
+NETWORK
+TITLE =Daten-Übergabe: DualPortRam ===> PalVerw
+//Mit "PW_aktiv"=0 werden die Daten vom DualPortRam (DPR)
+//in die PalVerw geschrieben
+      UN    #i_PW_aktiv; 
+      SPBN  DPR; 
+NETWORK
+TITLE =Daten-Übergabe: DualPortRam ===> PalVerw
+
+      UN    #i_PW_aktiv; 
+      =     L      4.0; 
+      U     L      4.0; 
+      U     "DB_NC_PLC".Zusatz.NC_an_PLC.PalVerw_MPL_Status.Teil_1_bearbeitet; 
+      =     #o_MPL_T1_bearbeitet; 
+      U     L      4.0; 
+      U     "DB_NC_PLC".Zusatz.NC_an_PLC.PalVerw_MPL_Status.Teil_1_niO; 
+      =     #o_MPL_T1_NIO; 
+      U     L      4.0; 
+      U     "DB_NC_PLC".Zusatz.NC_an_PLC.PalVerw_MPL_Status.Teil_2_bearbeitet; 
+      =     #o_MPL_T2_bearbeitet; 
+      U     L      4.0; 
+      U     "DB_NC_PLC".Zusatz.NC_an_PLC.PalVerw_MPL_Status.Teil_2_niO; 
+      =     #o_MPL_T2_NIO; 
+NETWORK
+TITLE =WIZZARD: Softkey-Freigabe
+
+
+
+DPR:  U     "m_eins"; 
+      =     #t_WIZ_SK_FG; 
+NETWORK
+TITLE =PalVerw >>> WIZZARD-Daten
+//Status   STRUCT   Erweiterung für Roboter-Schnittstelle BoschRexroth
+//  T1_belegt       BOOL   Teil 1 ist belegt
+//  T1_bearbeitet   BOOL   Teil 1 ist bearbeitet
+//  T1_niO          BOOL   Teil 1 nicht in Ordnung
+//  T1              BOOL
+//  T2_belegt       BOOL   Teil 2 ist belegt
+//  T2_bearbeitet   BOOL   Teil 2 ist bearbeitet
+//  T2_niO          BOOL   Teil 2 nicht in Ordnung
+//  T2              BOOL
+//  T3_belegt       BOOL   Teil 3 ist belegt
+//  T3_bearbeitet   BOOL   Teil 3 ist bearbeitet
+//  T3_niO          BOOL   Teil 3 nicht in Ordnung
+//  T3              BOOL
+//  T4_belegt       BOOL   Teil 4 ist belegt
+//  T4_bearbeitet   BOOL   Teil 4 ist bearbeitet
+//  T4_niO          BOOL   Teil 4 nicht in Ordnung
+//  T4              BOOL
+//END_STRUCT
+      U(    ; 
+      UN    "DB_ANWENDER_SOFTKEY".Roboter.WIZ_Daten_Aenderung; 
+      SPBNB _001; 
+      CALL "BLKMOVE" (
+           SRCBLK                   := "DB_PV_SpH".SpH_Erw[1].Stelle[1].Status,
+           RET_VAL                  := #t_INT,
+           DSTBLK                   := "DB_ANWENDER_SOFTKEY".Roboter.RPL_Status);
+_001: U     BIE; 
+      )     ; 
+      SPBNB _002; 
+      CALL "BLKMOVE" (
+           SRCBLK                   := "DB_PV_SpH".SpH_Erw[0].Stelle[1].Status,
+           RET_VAL                  := #t_INT,
+           DSTBLK                   := "DB_ANWENDER_SOFTKEY".Roboter.MPL_Status);
+_002: NOP   0; 
+NETWORK
+TITLE =WIZZARD-Daten >>> PalVerw
+//Status   STRUCT   Erweiterung für Roboter-Schnittstelle BoschRexroth
+//  T1_belegt       BOOL   Teil 1 ist belegt
+//  T1_bearbeitet   BOOL   Teil 1 ist bearbeitet
+//  T1_niO          BOOL   Teil 1 nicht in Ordnung
+//  T1              BOOL
+//  T2_belegt       BOOL   Teil 2 ist belegt
+//  T2_bearbeitet   BOOL   Teil 2 ist bearbeitet
+//  T2_niO          BOOL   Teil 2 nicht in Ordnung
+//  T2              BOOL
+//  T3_belegt       BOOL   Teil 3 ist belegt
+//  T3_bearbeitet   BOOL   Teil 3 ist bearbeitet
+//  T3_niO          BOOL   Teil 3 nicht in Ordnung
+//  T3              BOOL
+//  T4_belegt       BOOL   Teil 4 ist belegt
+//  T4_bearbeitet   BOOL   Teil 4 ist bearbeitet
+//  T4_niO          BOOL   Teil 4 nicht in Ordnung
+//  T4              BOOL
+//END_STRUCT
+      U(    ; 
+      U     "DB_ANWENDER_SOFTKEY".Roboter.WIZ_Daten_Aenderung; 
+      SPBNB _003; 
+      CALL "BLKMOVE" (
+           SRCBLK                   := "DB_ANWENDER_SOFTKEY".Roboter.RPL_Status,
+           RET_VAL                  := #t_INT,
+           DSTBLK                   := "DB_PV_SpH".SpH_Erw[1].Stelle[1].Status);
+_003: U     BIE; 
+      )     ; 
+      SPBNB _004; 
+      CALL "BLKMOVE" (
+           SRCBLK                   := "DB_ANWENDER_SOFTKEY".Roboter.MPL_Status,
+           RET_VAL                  := #t_INT,
+           DSTBLK                   := "DB_PV_SpH".SpH_Erw[0].Stelle[1].Status);
+_004: U     BIE; 
+      R     "DB_ANWENDER_SOFTKEY".Roboter.WIZ_Daten_Aenderung; 
+END_FUNCTION
+

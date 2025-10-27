@@ -1,0 +1,68 @@
+FUNCTION "FC_SHOPMILL_NAHT_SL" : VOID
+TITLE =
+//$Revision: 1.1 $
+//$Date: 2007/09/04 12:49:39CEST $
+//$Author: riedlh $
+//
+//
+VERSION : 5.2
+
+BEGIN
+NETWORK
+TITLE =ShopMill Bedienart Manuell
+//Mit der neuen Software-Version(7.0) von ShopMill entfällt das 
+//ShopMill-PLC-Programm sowie die zugehörigen ShopMill-Nahtstelle DB82.
+//Die Signale werden durch diesen Baustein nach der Vorgabe von Siemens 
+//nachgebildet.
+      U     "DB_SIEM_BAG".E_JOG; 
+      =     "DB_CMM_PLC".CMM_OUT.base_sig.main_mode_mill.manual; 
+NETWORK
+TITLE =ShopMill Bedienart Automatik
+
+      U     "DB_SIEM_BAG".E_AUTO; 
+      =     "DB_CMM_PLC".CMM_OUT.base_sig.main_mode_mill.automatic; 
+NETWORK
+TITLE =Zyklus aktiv
+
+      U     "DB_SIEM_KANAL_1".E_ProgRunn; 
+      =     "DB_CMM_PLC".CMM_OUT.base_sig.nc_cycle_activ; 
+NETWORK
+TITLE =Spindel-Start angefordert
+
+      O     "DB_ACHSE6_SPINDEL".E_TCMinus; 
+      O     "DB_ACHSE6_SPINDEL".E_TCPlus; 
+      =     "DB_CMM_PLC".CMM_OUT.spindle_start_req; 
+NETWORK
+TITLE =Spindel-Stop angefordert
+
+      UN    "DB_ACHSE6_SPINDEL".E_TCMinus; 
+      UN    "DB_ACHSE6_SPINDEL".E_TCPlus; 
+      =     "DB_CMM_PLC".CMM_OUT.spindle_stop_req; 
+NETWORK
+TITLE =Spindeldrehrichtung rechts vorgewählt
+
+      U     "DB_ACHSE6_SPINDEL".E_TCMinus; 
+      =     "DB_CMM_PLC".CMM_OUT.spindle_right; 
+NETWORK
+TITLE =Spindeldrehrichtung links vorgewählt
+
+      U     "DB_ACHSE6_SPINDEL".E_TCPlus; 
+      =     "DB_CMM_PLC".CMM_OUT.spindle_left; 
+NETWORK
+TITLE =Funktion Programmtest aktiv
+
+      U     "DB_SIEM_KANAL_1".E_ProgTest; 
+      =     "DB_CMM_PLC".CMM_OUT.program_test_activ; 
+NETWORK
+TITLE =Funktion DryRun ist aktiv
+
+      U     DB21.DBX  318.6; 
+      =     "DB_CMM_PLC".CMM_OUT.dry_run_activ; 
+NETWORK
+TITLE =aktuelle Bildnummer von ShopMill
+
+      L     DB19.DBW   24; 
+      T     "DB_CMM_PLC".CMM_OUT.mask_number; 
+      NOP   0; 
+END_FUNCTION
+

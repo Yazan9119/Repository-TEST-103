@@ -1,0 +1,398 @@
+FUNCTION_BLOCK "FB_TM_LEERPLATZ"
+TITLE =
+//$Revision: 1.8 $
+//$Date: 2008/05/29 06:57:22CEST $
+//$Author: hgc $
+//
+//LE_SUCH
+//
+// Fehler-Nr. in Ausgangsparameter State:
+// 1 = Fehler FB2 interne T-Nummer lesen
+// 2 = Kein Werkzeug in LocNr_ZW vorhanden
+// 3 = Fehler FB4 PI-Dienst TMFDPL
+// 4 = Fehler FB2 Rückgabeparameter lesen
+// 5 = Leerplatzsucheauftrag mit Fehler beendet
+//     Rückmeldung PI-Dienst von Variablen 
+// 6 = Schrittnummer unzulaessig
+// 7 = Fehler Variable numPlaceParams lesen 
+//     -> Neustart erforderlich
+// 8 = Fehler FB4 PI-Dienst MMCSEM
+VERSION : 2.0
+
+
+VAR_INPUT
+  Start : BOOL ;	// Start Leerplatz suchen für WZ in Zwischensp. mit pos.Flanke
+  MagNr_ZW : INT ;	// Magazin-Nr. Zwischenspeicher
+  LocNr_ZW : INT ;	// Platz-Nr. Zwischenspeicher
+  MagNr : INT ;	// Magazin-Nr. der Leerplatzsuche  
+END_VAR
+VAR_OUTPUT
+  Activ : BOOL ;	// Baustein aktiv, Leerplatzsuche läuft
+  Done : BOOL ;	// Leerplatz gefunden  
+  Error : BOOL ;	// Fehler
+  State : WORD ;	// Fehler-Nummer
+  MagNr_Empty : INT ;	// Magazin-Nr. Leerplatz
+  LocNr_Empty : INT ;	// Platz-Nr. Leerplatz
+END_VAR
+VAR
+  TOANr : BYTE  := B#16#1;	// TOA-Bereich	
+  TNr_FB2 : INT ;	// T-Nummer Magazinplatz
+  TNr_write : BOOL ;	// Status=1:T-Nummer von Anwender versorgt 
+  MMCSEM : BOOL ;	// Status=1:Semaphoren nicht setzen  	
+  numMagPlaceParams : WORD ;	// Anzahl Parameter eines Magzinplatzes
+  numPlacePar_read : BOOL ;	//Variable nummagplaceparams lesen nach Neustart 
+  numPlacePar_Error : BOOL ;	// Fehler bei Variable nummagplaceparams lesen 
+  numPlacePar_ok : BOOL ;	// Variable numMagPlaceParams gelesen ohne Fehler
+  HM_Fehler : BOOL ;	
+  Schrittregister : BYTE ;	
+  StateFB2_TNrGesp : WORD ;	// Ausgang State FB2 T-Nr. lesen gespeichert   
+  StateFB2_ParGesp : WORD ;	// Ausgang State FB2 Parameter lesen gespeichert
+  StateFB4_Gesp : WORD ;	// Ausgang State FB4 PI-Dienst Leerplatz suchen gespeichert
+  BeZustdMag : WORD ;	// Bereich Befehlszustand des Magazins bei Par. lesen
+  MagNrLeerplatz : WORD ;	// Bereich Magazin-Nummer Leerplatz bei Par.lesen
+  PlNrLeerplatz : WORD ;	// Bereich Platz-Nummer Leerplatz bei Par. lesen
+  Value : WORD ;	// Semaphore Value 
+  Zaehler : INT ;	// Zähler für Zeitüberwachung State 3 bei 
+  GET_FB2 : "FB_SIEM_GET";	
+  PI_Dienste_FB4 : "FB_SIEM_PI";	
+END_VAR
+VAR_TEMP
+  Error_FB2 : BOOL ;	// Error FB2
+  NDR_FB2 : BOOL ;	// Auftrag beendet FB2
+  Error_FB4 : BOOL ;	// Error FB4
+  Done_FB4 : BOOL ;	// Auftrag beendet FB4
+  LocLine : WORD ;	// Zeilenadresse Log. T-Nr. lesen
+  Column_FB2 : WORD ;	// Spaltenadresse FB2	    
+  State_FB2 : WORD ;	// Fehler-Nr. FB2 T-Nr. lesen 
+  State_FB4 : WORD ;	// Fehler-Nr. FB4 
+  TOA : INT ;	// Eingang Unit FB4 PI-Dienst Leerplatz suchen 
+  TNr : WORD ;	// Eingang WVar1 FB4 PI-Dienst Leerplatz suchen 
+  PlNrWohin : WORD ;	// Eingang WVar2 FB4 PI-Dienst Leerplatz suchen
+  MagNrWohin : WORD ;	// Eingang WVar3 FB4 PI-Dienst Leerplatz suchen 
+  PlNr_Bez : WORD ;	// Eingang WVar4 FB4 PI-Dienst Leerplats suchen	
+  MagNr_Bez : WORD ;	// Eingang WVar5 FB4 PI-Dienst Leerplats suchen	
+END_VAR
+BEGIN
+NETWORK
+TITLE =
+//28.02.2008 gs
+//Anzahl der Magazinplatzdaten laden
+//
+      UN    "m_neustart"; // un   "DB_SIEM_SYSTEM4".bits[8]
+      SPB   ANF1; // Neustart ? Nein ->
+      CALL #GET_FB2 (
+           Req                      := FALSE);
+
+      CALL #PI_Dienste_FB4 (
+           Req                      := FALSE);
+
+      SET   ; 
+      R     #numPlacePar_Error; 
+      S     #numPlacePar_read; 
+      R     #numPlacePar_ok; 
+      SPA   LOEP; 
+ANF1: UN    #numPlacePar_read; 
+      SPB   ANF2; 
+      CALL #GET_FB2 (// -- Anzahl Parameter eines Magazinplatz lesen --
+           Req                      := TRUE,// Variable lesen
+           NumVar                   := 1,// Anzahl der zu lesenden Variablen
+           Addr1                    := "DB_TM_VAR".N_Y_numMagPlaceParams_27,// Variable numMagPlaceParams
+           Error                    := #Error_FB2,// NC_VAR lesen beendet mit Fehler
+           NDR                      := #NDR_FB2,// NC_VAR lesen beendet ohne Fehler
+           State                    := #State_FB2,// Fehler-Nummer bei Error = 1
+           RD1                      := #numMagPlaceParams);// Wert in numMagPlaceParams 
+
+// numMagPlaceParams speichern
+      L     #numMagPlaceParams; 
+      T     "MW_numMagPlaceParam"; 
+
+
+// "M_numMagPlaceParam" 10 bei SL NC V1.5
+      U(    ; 
+      L     "MW_numMagPlaceParam"; 
+      L     W#16#A; 
+      ==I   ; 
+      )     ; 
+      SPBN  k15; 
+
+// "DB_GREIFER_DATEN" Zeilenindex vorbesetzen für SL NC V1.5 
+      L     W#16#D; 
+      T     "DB_GREIFER_DATEN".T1_TP_placeData11_9998.zeile; 
+      L     W#16#17; 
+      T     "DB_GREIFER_DATEN".T1_TP_placeData19_9998.zeile; 
+      L     W#16#3; 
+      T     "DB_GREIFER_DATEN".T1_TP_placeData3_9998.zeile; 
+      L     W#16#21; 
+      T     "DB_GREIFER_DATEN".T1_TP_placeData4_9998.zeile; 
+      SPA   next; 
+
+// "DB_GREIFER_DATEN" Zeilenindex vorbesetzen für PL und SL NC V1.4
+k15:  L     W#16#B; 
+      T     "DB_GREIFER_DATEN".T1_TP_placeData11_9998.zeile; 
+      L     W#16#13; 
+      T     "DB_GREIFER_DATEN".T1_TP_placeData19_9998.zeile; 
+      L     W#16#3; 
+      T     "DB_GREIFER_DATEN".T1_TP_placeData3_9998.zeile; 
+      L     W#16#1B; 
+      T     "DB_GREIFER_DATEN".T1_TP_placeData4_9998.zeile; 
+
+next: UN    #NDR_FB2; // Lesen beendet ohne Fehler 
+      UN    #Error_FB2; // Lesen beendet mit Fehler
+      SPB   ENDE; // Lesen beendet ? Nein ->
+
+      CALL #GET_FB2 (// FB2 freigeben
+           Req                      := FALSE);
+
+      UN    #Error_FB2; 
+      R     #numPlacePar_read; 
+      S     #numPlacePar_ok; 
+      SPB   ENDE; // Lesen beendet mit Fehler ? Nein ->
+      L     6; 
+      L     #State_FB2; 
+      ==I   ; 
+      SPB   ENDE; // FIFO voll -> Lesen wiederholen 
+      S     #numPlacePar_Error; 
+      R     #numPlacePar_read; 
+      T     #StateFB2_TNrGesp; // Fehlernummer speichern
+      SPA   ENDE; 
+ANF2: U     #Start; 
+      SPB   ANF; 
+LOEP: R     #Done; // Ausgangsparameter Done nur 1 PLC-Zyklus        
+      R     #Error; // Ausgangsparameter Error nur 1 PLC-Zyklus
+      R     #Activ; 
+      L     0; 
+      T     #State; // Fehler-Nr. = 0
+      SPA   ENDE; 
+ANF:  U     #Activ; 
+      SPB   SPRG; // Baustein aktiv ? Ja ->                      
+      U     #numPlacePar_Error; 
+      ON    #numPlacePar_ok; 
+      L     7; 
+      SPB   FEHL; // Fehler bei Variable numMagPlaceParams lesen -> 
+      S     #Activ; // Hilfsvariable vorbesetzen 
+      R     #Done; 
+      R     #Error; 
+      R     #HM_Fehler; 
+      L     0; 
+      T     #Zaehler; 
+      T     #State; // Fehler-Nr. = 0
+      T     #MagNr_Empty; 
+      T     #LocNr_Empty; 
+      T     #Schrittregister; 
+SPRG: L     #Schrittregister; 
+      SPL   FEHS; // Sprungverteiler
+      SPA   SR1; // T-Nr. lesen
+      SPA   SR2; // Semaphore setzen
+      SPA   SR3; // Start PI-Dienst Leerplatz suchen
+      SPA   SR4; // Rückgabeparameter lesen
+      SPA   SR5; // Semaphore freigeben  
+FEHS: L     6; 
+      SPA   FEHL; 
+SR1:  U     #TNr_write; 
+      SPB   QFEH; // T-Nummer von Anwender -> keine TNr lesen       
+      L     #MagNr_ZW; // ----Schritt 1: T-Nr. lesen --------------------
+      T     #Column_FB2; // Spalte Addr1 = Magazin-Nummer
+      L     #LocNr_ZW; // Platz-Nr. Zwischenspeicher 
+      +     -1; 
+      L     #numMagPlaceParams; // Anzahl Parameter pro MagPlatz
+      *I    ; // (PlatzNr.-1)*numMagPlaceParams+Parameter-Nr. 
+      +     3; 
+      T     #LocLine; // Zeile Addr1 = T-Nr. von Platz 3
+      CALL #GET_FB2 (// -- Magazinplatzdaten lesen --
+           Req                      := TRUE,// Variable lesen
+           NumVar                   := 1,// Anzahl der zu lesenden Variablen
+           Addr1                    := "DB_TM_VAR".T0_TP_placeData0_0,// T-Nummer von WZ in Zwischenspeicher
+           Unit1                    := #TOANr,// Bereich = TOA 1
+           Column1                  := #Column_FB2,
+           Line1                    := #LocLine,// Zeilenadresse
+           Error                    := #Error_FB2,
+           NDR                      := #NDR_FB2,// NC_VAR lesen beendet mit Fehler
+           State                    := #State_FB2,// NC_VAR lesen beendet ohne Fehler
+           RD1                      := #TNr_FB2);// Fehler-Nummer bei Error = 1
+
+      UN    #NDR_FB2; 
+      UN    #Error_FB2; // Lesen beendet ohne Fehler 
+      SPB   ENDE; // Lesen beendet mit Fehler
+      CALL #GET_FB2 (// Lesen beendet ? Nein ->
+           Req                      := FALSE);// FB2 freigeben
+
+      UN    #Error_FB2; 
+      SPB   QFEH; 
+      L     6; // Lesen beendet mit Fehler ? Nein ->
+      L     #State_FB2; 
+      ==I   ; 
+      SPB   ENDE; 
+      T     #StateFB2_TNrGesp; 
+      L     1; // Fehlernummer speichern
+      SPA   FEHL; // Fehler-Nummer FB 91 = 1
+QFEH: L     #TNr_FB2; 
+      L     0; // logische T-Nummer von WZ in Zwischenspeicher 
+      ==I   ; 
+      L     2; 
+      SPB   FEHL; 
+      U     #MMCSEM; // T-Nr. in Zwischensp. = 0 ? -> Kein Leerplatz suchen
+      SPB   SR3A; 
+      L     1; // Semaphoren nicht setzen ->                     
+      T     #Schrittregister; 
+      T     #Value; 
+SR2:  L     #TOANr; 
+      T     #TOA; 
+      CALL #PI_Dienste_FB4 (
+           Req                      := TRUE,// -- PI-Dienst Semaphoren starten --
+           PIService                := "DB_SIEM_PI".MMCSEM,// Start PI-Dienst
+           Unit                     := #TOA,// PI-Dienst Leerplatz suchen
+           WVar1                    := W#16#2,
+           WVar2                    := #Value,// FunctionNumber =2
+           Error                    := #Error_FB4,
+           Done                     := #Done_FB4,
+           State                    := #State_FB4);
+      UN    #Error_FB4; 
+      UN    #Done_FB4; 
+      SPB   ENDE; 
+      CALL #PI_Dienste_FB4 (// Leerplatzsuche beendet ? Nein ->
+           Req                      := FALSE);// -- PI-Dienst Leerplatz suchen  beenden --
+
+      UN    #Error_FB4; 
+      SPB   QFE1; 
+      L     #State_FB4; // Leerplatzsuche beendet mit Fehler ? Nein -> 
+      T     #StateFB4_Gesp; 
+      L     3; // Fehler-Nummer FB 4 speichern 
+      <>I   ; 
+      L     8; 
+      SPB   FEHL; // Fehler-Nummer FB 91 = 8 
+      L     1; 
+      L     #Schrittregister; 
+      <>I   ; 
+      L     8; 
+      SPB   FEHL; 
+      L     #Zaehler; // Fehler bei Abwahl Semaphore    
+      +     1; 
+      T     #Zaehler; 
+      L     300; 
+      >=I   ; 
+      L     8; 
+      SPB   FEHL; 
+      SPA   ENDE; // Wartezeit ´überschritten ->
+QFE1: U     #HM_Fehler; // Semaphore setzen wiederholen bis kein Fehler kommt
+      SPB   FEH2; 
+      L     4; 
+      L     #Schrittregister; 
+      ==I   ; 
+      SPB   SR5E; 
+SR3A: L     2; // Schritt 5 aktiv ? ->                   
+      T     #Schrittregister; // --- Schritt 3: Start PI-Dienst Leerplatz suchen
+SR3:  L     #TOANr; 
+      T     #TOA; 
+      L     #TNr_FB2; // TO-Nummer
+      T     #TNr; 
+      L     -1; // T-Nummer 
+      T     #PlNrWohin; 
+      L     #MagNr; // Platz-Nummer Ziel = -1 -> nach Platznummer suchen
+      T     #MagNrWohin; 
+      L     #LocNr_ZW; // Magazinnummer = 1
+      T     #PlNr_Bez; 
+      L     #MagNr_ZW; // Platz-Nummer Wz für Leerplatzsuche
+      T     #MagNr_Bez; 
+      CALL #PI_Dienste_FB4 (// Magazin-Nummer Wz für Leerplatzsuche   
+           Req                      := TRUE,// -- PI-Dienst Leerplatz suchen starten --
+           PIService                := "DB_SIEM_PI".TMFDPL,// Start PI-Dienst
+           Unit                     := #TOA,// PI-Dienst Leerplatz suchen
+           WVar1                    := #TNr,
+           WVar2                    := #PlNrWohin,// logische T-Nummer 
+           WVar3                    := #MagNrWohin,// Platz-Nummer Ziel
+           WVar4                    := #PlNr_Bez,// Magazin-Nummer Ziel
+           WVar5                    := #MagNr_Bez,// Platz-Nummer Werkzeug 
+           Error                    := #Error_FB4,
+           Done                     := #Done_FB4,
+           State                    := #State_FB4);
+      UN    #Error_FB4; 
+      UN    #Done_FB4; 
+      SPB   ENDE; 
+      CALL #PI_Dienste_FB4 (// Leerplatzsuche beendet ? Nein ->
+           Req                      := FALSE);// -- PI-Dienst Leerplatz suchen  beenden --
+
+      UN    #Error_FB4; 
+      SPB   QFE2; 
+      L     #State_FB4; // Leerplatzsuche beendet mit Fehler ? Nein -> 
+      T     #StateFB4_Gesp; 
+      L     3; // Fehler-Nummer FB 4 speichern 
+      SPA   FEH1; // Fehler-Nummer FB 91 = 3 
+QFE2: L     3; 
+      T     #Schrittregister; // --- Schritt 4: Rückmeldungen über Variblendienst lesen
+SR4:  CALL #GET_FB2 (
+           Req                      := TRUE,// Variable Rückgabeparameter lesen
+           NumVar                   := 3,
+           Addr1                    := "DB_TM_VAR".T0_TMC_magCBCmd1_0,
+           Unit1                    := #TOANr,// Befehlszustand des Magazins
+           Column1                  := W#16#8,// Bereich = TOA 
+           Addr2                    := "DB_TM_VAR".T0_TMC_magCBCmd1_0,
+           Unit2                    := #TOANr,// Magazin-Nummer Leerplatz
+           Column2                  := W#16#9,// Bereich = TOA 
+           Addr3                    := "DB_TM_VAR".T0_TMC_magCBCmd1_0,
+           Unit3                    := #TOANr,// Platz-Nummer Leerplatz
+           Column3                  := W#16#A,// Bereich = TOA 
+           Error                    := #Error_FB2,
+           NDR                      := #NDR_FB2,
+           State                    := #State_FB2,
+           RD1                      := #BeZustdMag,
+           RD2                      := #MagNrLeerplatz,// Bereich Befehlszustand des Magazins
+           RD3                      := #PlNrLeerplatz);// Bereich Magazin-Nummer Leerplatz
+// Spaltenadresse
+// Spaltenadresse
+
+      UN    #Error_FB2; 
+      UN    #NDR_FB2; 
+      SPB   ENDE; 
+      CALL #GET_FB2 (//  Rückgabeparameter lesen beendet ? nein ->
+           Req                      := FALSE);// Variable Rückgabeparameter lesen beenden
+
+      UN    #Error_FB2; 
+      SPB   QFE3; 
+      L     6; // Par. Lesen mit Fehler beendet ? Nein ->
+      L     #State_FB2; 
+      ==I   ; 
+      SPB   ENDE; 
+      T     #StateFB2_ParGesp; 
+      L     4; // Fehler-Nr. FB2 speichern 
+FEH1: T     #State; // Fehler-Nr. FB91 = 4
+      U     #MMCSEM; 
+      SPB   FEHL; 
+      S     #HM_Fehler; // Ohne Semaphoren ->              
+      SPA   SR41; 
+QFE3: L     3; 
+      L     #BeZustdMag; 
+      <>I   ; 
+      SPB   Weit; 
+      U     #MMCSEM; // Ende Korrekt ? Nein ->
+      SPB   SR5E; 
+SR41: L     4; // Ohne Semaphoren ->              
+      T     #Schrittregister; // Schritt 5 anwählen     
+      L     0; 
+      T     #Value; // Semaphore freigeben  
+      U     #HM_Fehler; 
+      SPB   ENDE; 
+SR5:  SPA   SR2; 
+SR5E: S     #Done; // Schritt 5: Semaphore freigeben         
+      R     #Activ; 
+      L     #MagNrLeerplatz; 
+      T     #MagNr_Empty; // Magazin-Nummer Leerplatz
+      L     #PlNrLeerplatz; 
+      T     #LocNr_Empty; // Platz-Nummer Leerplatz
+      L     0; 
+      T     #Schrittregister; 
+      SPA   ENDE; // Schrittregister auf Anfang     
+Weit: L     4; 
+      <>I   ; 
+      SPB   ENDE; 
+      L     5; // Leerplatzsuche beendet mit Fehler ? Nein -> 
+      S     #HM_Fehler; // Ja
+      SPA   SR41; 
+FEHL: T     #State; 
+FEH2: S     #Error; // Fehler-Nummer FB91 ausgeben
+      R     #Activ; 
+      L     0; 
+      T     #Schrittregister; 
+ENDE: NOP   0; // Schrittregister auf Anfang     
+
+END_FUNCTION_BLOCK
+

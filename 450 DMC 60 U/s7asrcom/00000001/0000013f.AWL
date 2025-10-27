@@ -1,0 +1,143 @@
+FUNCTION_BLOCK "FB_TM_Get_TNR"
+TITLE =
+//$Revision: 1.8 $
+//$Date: 2008/05/28 07:02:36CEST $
+//$Author: hgc $
+////erstellt: 10.12.01 AB
+//
+//Beschreibung:
+//der BAustein liest die T-Nummer, die Bezeichnung und die Duplonummer des zu 
+//beladenden und entladenden Werkzeugs
+//und 
+//und schreibt sie in GUD _WZBEZ
+//
+//von dort wird sie von der PCU20 wieder eingelesen
+//
+//Es funktioniert kein direktes Lesen aus der Wz-verwaltung mit dem PCU 20
+//
+//28.02.2008 gs
+//Feste Anzahl der Magazinplatzdaten(7) geäandert.
+//Daten werden mit "M_numMagPlaceParam" berechnet.
+//zZ ist der Wert 8
+VERSION : 0.1
+
+
+VAR_IN_OUT
+  TNR_FB228 : INT ;	
+  Request_FB228 : BOOL ;	
+  Done_FB228 : BOOL ;	
+END_VAR
+VAR
+  fb2_get_tnr : "FB_SIEM_GET";	
+  Req_Fb2_tnr : BOOL ;	
+  Error_Fb2_tnr : BOOL ;	
+  Done_Fb2_tnr : BOOL ;	
+  TNR : INT ;	
+  req_Fb2_Bez : BOOL ;	
+  Error_Fb2_Bez : BOOL ;	
+  Done_Fb2_Bez : BOOL ;	
+  Bezeichner : STRING  [34 ];	
+  Duplo : INT ;	
+  T1_TP_placeData1_1 : STRUCT 	
+   SYNTAX_ID : BYTE  := B#16#82;	
+   bereich_u_einheit : BYTE  := B#16#81;	
+   spalte : WORD  := W#16#1;	
+   zeile : WORD  := W#16#1;	
+   bausteintyp : BYTE  := B#16#28;	
+   ZEILENANZAHL : BYTE  := B#16#1;	
+   typ : BYTE  := B#16#4;	
+   laenge : BYTE  := B#16#2;	
+  END_STRUCT ;	
+  T1_TD_duploNo1_2 : STRUCT 	
+   SYNTAX_ID : BYTE  := B#16#82;	
+   bereich_u_einheit : BYTE  := B#16#81;	
+   spalte : WORD  := W#16#2;	
+   zeile : WORD  := W#16#1;	
+   bausteintyp : BYTE  := B#16#21;	
+   ZEILENANZAHL : BYTE  := B#16#1;	
+   typ : BYTE  := B#16#4;	
+   laenge : BYTE  := B#16#2;	
+  END_STRUCT ;	
+  T1_TD_toolIdent1_1 : STRUCT 	
+   SYNTAX_ID : BYTE  := B#16#82;	
+   bereich_u_einheit : BYTE  := B#16#81;	
+   spalte : WORD  := W#16#1;	
+   zeile : WORD  := W#16#1;	
+   bausteintyp : BYTE  := B#16#21;	
+   ZEILENANZAHL : BYTE  := B#16#1;	
+   typ : BYTE  := B#16#13;	
+   laenge : BYTE  := B#16#20;	
+  END_STRUCT ;	
+  req_fb5 : BOOL ;	
+  done_fb5 : BOOL ;	
+  error_fb5 : BOOL ;	
+  GUDVar : STRING  [6 ] := '_WZBEZ';	
+  GUDInhalt : STRING  [32 ];	
+  GUDVART : STRUCT 	
+   SYNTAX_ID : BYTE  := B#16#82;	
+   bereich_u_einheit : BYTE  := B#16#81;	
+   spalte : WORD  := W#16#1;	
+   zeile : WORD  := W#16#1;	
+   bausteintyp : BYTE  := B#16#21;	
+   ZEILENANZAHL : BYTE  := B#16#1;	
+   typ : BYTE  := B#16#13;	
+   laenge : BYTE  := B#16#20;	
+  END_STRUCT ;	
+  req_fb3 : BOOL ;	
+  done_fb3 : BOOL ;	
+  Error_fb3 : BOOL ;	
+  FP_Beladen : BOOL ;	
+  FP_Entladen : BOOL ;	
+  Platz : INT ;	
+  Mag : INT ;	
+END_VAR
+VAR_TEMP
+  Zeile : WORD ;	
+  Zeile1 : WORD ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =
+//      L     "TMLoadIF".IF[2].SLoc
+      L     2; 
+      T     #Platz; 
+      L     9999; 
+      T     #Mag; 
+
+      L     #Platz; // Platz
+      DEC   1; 
+      L     "MW_numMagPlaceParam"; // Berechnung der Zeilennummer:
+      *I    ; // (PlatzNr.-1) * numMagPlaceParam + Parameter-Nr. 
+      L     3; 
+      +I    ; 
+      T     #Zeile; // TNR von Platz in Mag.1
+      T     #T1_TP_placeData1_1.zeile; 
+      L     #Mag; 
+      T     #T1_TP_placeData1_1.spalte; 
+
+      U     #Request_FB228; 
+      FP    #FP_Beladen; 
+      S     #Req_Fb2_tnr; 
+
+
+      CALL #fb2_get_tnr (
+           Req                      := #Req_Fb2_tnr,
+           NumVar                   := 1,
+           Addr1                    := #T1_TP_placeData1_1,
+           Error                    := #Error_Fb2_tnr,
+           NDR                      := #Done_Fb2_tnr,
+           RD1                      := #TNR);
+
+
+      O     #Error_Fb2_tnr; 
+      O     #Done_Fb2_tnr; 
+      R     #Req_Fb2_tnr; 
+      R     #Request_FB228; 
+      S     #Done_FB228; 
+
+      L     #TNR; 
+      T     #TNR_FB228; 
+
+      NOP   0; 
+END_FUNCTION_BLOCK
+

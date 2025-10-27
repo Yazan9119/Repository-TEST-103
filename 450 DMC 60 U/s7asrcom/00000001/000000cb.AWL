@@ -1,0 +1,344 @@
+FUNCTION "FC_KMTL_KSA3" : VOID
+TITLE =
+//$Revision: 1.13 $
+//$Date: 2008/03/07 12:59:28CET $
+//$Author: rieds $
+//
+//KSA_3
+VERSION : 0.1
+
+
+VAR_INPUT
+  i_I_KM_MAX_NIVEAU : BOOL ;	
+  i_I_KM_MIN_NIVEAU : BOOL ;	
+  i_I_KM_MIN_VOR_NIVEAU : BOOL ;	
+  i_I_A_KM_TPF_PAPIER_ENDE : BOOL ;	
+  i_I_A_KM_TPF_PAPIER_WARN : BOOL ;	
+  i_I_D_KM_MAX_NIVEAU : BOOL ;	
+  i_I_D_KM_MIN_NIVEAU : BOOL ;	
+  i_I_D_KM_MIN_VOR_NIVEAU : BOOL ;	
+  i_I_D_PW_Tischspuelung : BOOL ;	
+  i_I_KM_BTB_ALLE_PUMPEN : BOOL ;	
+  i_I_KM_BTB_PNOZ : BOOL ;	
+  i_I_KM_NEG_KSA_MELDUNG : BOOL ;	
+  i_I_KM_NEG_MSS_KSA : BOOL ;	
+  i_I_KM_NEG_MSS_SSA : BOOL ;	
+  i_I_KM_TPF_PAPIER_WARN : BOOL ;	
+  i_I_KM_TPF_PAPIER_ENDE : BOOL ;	
+  i_I_KM_TPF_MOTOR_EIN : BOOL ;	
+  i_O_KM_Spuelpumpe_ein : BOOL ;	
+  i_O_KM_Pumpe_Dach : BOOL ;	
+  i_O_KM_Pumpe_Dach2 : BOOL ;	
+  i_O_KM_M8_Ein : BOOL ;	
+  i_O_KM_M7_Ein : BOOL ;	
+  i_Timer_max : TIMER ;	
+  i_Timer_min : TIMER ;	
+  i_Timer_vorw : TIMER ;	
+  i_Timer_vorw_reaktion : TIMER ;	
+  i_Timer_Vlies_max_Laufz : TIMER ;	
+  i_Timer_entpr_Vlies_ein : TIMER ;	
+  i_Timer_Laufzeit_Vlies : TIMER ;	
+  i_Counter_min_Zwangstakt : COUNTER ;	
+  i_Counter_sec_Zwangstakt : COUNTER ;	
+  i_O_SF_PUMPE_EIN : BOOL ;	
+  i_Timer_Entprell_KSA_Mel : TIMER ;	
+END_VAR
+VAR_IN_OUT
+  io_M_Fehler_Kmtl_Anlage : BOOL ;	
+  io_M_M97_M98_unterd : BOOL ;	
+  io_Mel_max : BOOL ;	
+  io_Mel_min : BOOL ;	
+  io_Mel_vorwaerts : BOOL ;	
+  io_Mel_BTB_PNOZ : BOOL ;	
+  io_Mel_Papiermangel : BOOL ;	
+  io_Mel_Papierband_Ende : BOOL ;	
+  io_Mel_KSA : BOOL ;	
+  io_Mel_SSA : BOOL ;	
+  io_SPVHLT : BOOL ;	
+  io_O_KM_TPF_MOTOR_EIN : BOOL ;	
+  io_Mel_Schalter_Defekt : BOOL ;	
+  io_Mel_BTB_Alle_Pumpen : BOOL ;	
+  io_Mel_Vlies_Trans_Defe : BOOL ;	
+  io_Temp_Meldung_VORW : BOOL ;	
+  io_Temp_Motor_Aus : BOOL ;	
+  io_KSA_SammelFehler : BOOL ;	
+  io_MSS_KSA : BOOL ;	
+END_VAR
+VAR_TEMP
+  t_Zwangstakt : BOOL ;	
+  t_Zaehltakt : BOOL ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =KM: Ksa_3 Füllstand Vorwarnung
+//------ KSA_3 -- Bürener -------------------------------------------------------
+      U     "M_Ruecksetze_Fehler"; 
+      R     #io_Mel_max; 
+      R     #io_Mel_min; 
+      R     #io_Mel_vorwaerts; 
+      R     #io_SPVHLT; 
+      R     #io_Mel_Schalter_Defekt; 
+      R     #io_Mel_BTB_Alle_Pumpen; 
+      R     #io_Mel_BTB_PNOZ; 
+      R     #io_Mel_KSA; 
+      R     #io_MSS_KSA; 
+      R     #io_Mel_Vlies_Trans_Defe; 
+      R     #io_Mel_Papierband_Ende; 
+      R     #io_Mel_Papiermangel; 
+NETWORK
+TITLE =KMTL: Fehler in Kühlmittelanlage
+//------ Füllstand Überwachung 
+//-------------------------------------------------------------------------
+//
+// -------  MAX -------------
+      U     #i_I_KM_MAX_NIVEAU; 
+      L     S5T#1S500MS; 
+      SE    #i_Timer_max; 
+
+      U     #i_Timer_max; 
+      S     #io_Mel_max; 
+
+//----- MIN -------------
+      U     #i_I_KM_MIN_NIVEAU; 
+      L     S5T#1S500MS; 
+      SE    #i_Timer_min; 
+
+      U     #i_Timer_min; 
+      S     #io_Mel_min; 
+
+// ----- Vorwarung -------------------------
+
+      U     #i_I_KM_MIN_VOR_NIVEAU; 
+      L     S5T#1S500MS; 
+      SE    #i_Timer_vorw; 
+
+      L     8192; // Zeitbasis 1s laden
+      L     "DB_PLC_MD_DB20".UDInt._158_KSA3_Fuellst_Vorw; // MD in BCD wandeln und mit Zeitbasis
+      ITB   ; // verodern
+      OW    ; 
+
+      U     #i_Timer_vorw; 
+      SE    #i_Timer_vorw_reaktion; 
+      S     #io_Mel_vorwaerts; 
+
+      U     #i_Timer_vorw_reaktion; 
+      O     "M_G00_aktiv"; 
+      U     #i_I_KM_MIN_VOR_NIVEAU; 
+      UN(   ; 
+      L     "DB_PLC_MD_DB20".UDInt._158_KSA3_Fuellst_Vorw; //Wenn keine Zeit dann M8/M7 nicht abgeschaltet
+      L     0; 
+      ==I   ; 
+      )     ; 
+      S     #io_Temp_Meldung_VORW; 
+
+NETWORK
+TITLE = Diagnoseschalter Niveau
+//----- Diagnoseschalter Niveau 
+//--------------------------------------------------------------------------------
+//-----
+      UN    #i_I_D_KM_MAX_NIVEAU; 
+      ON    #i_I_D_KM_MIN_NIVEAU; 
+      ON    #i_I_D_KM_MIN_VOR_NIVEAU; 
+      S     #io_Mel_Schalter_Defekt; 
+
+NETWORK
+TITLE =
+
+      UN    #i_I_KM_BTB_ALLE_PUMPEN; 
+      U     #i_O_KM_M7_Ein; //Soll nur bei M7 angezeigt werden
+      S     #io_Mel_BTB_Alle_Pumpen; 
+
+      UN    #i_I_KM_BTB_PNOZ; 
+      U(    ; 
+      O     #i_O_KM_M7_Ein; 
+      O     #i_O_KM_M8_Ein; 
+      )     ; 
+      S     #io_Mel_BTB_PNOZ; 
+NETWORK
+TITLE =Bandfilter
+// Motor Ein
+//
+// Zwangstaktung des Bandfilters
+      L     0; // untere Grenze
+      L     "DB_PLC_MD_DB20".UDInt._129_KSA3_Zwangstakt_TPF; 
+      >=I   ; 
+      O(    ; 
+      L     999; // obere Grenze
+      >I    ; 
+      )     ; 
+      O     #i_I_KM_TPF_MOTOR_EIN; 
+      R     #t_Zwangstakt; 
+      R     #i_Counter_min_Zwangstakt; 
+      R     #i_Counter_sec_Zwangstakt; 
+      SPB   a00; 
+
+      U     "M_Takt_1s"; 
+      U     #i_O_SF_PUMPE_EIN; 
+      UN    #io_O_KM_TPF_MOTOR_EIN; 
+      =     #t_Zaehltakt; 
+
+      L     C#60; 
+      UN    #i_Counter_sec_Zwangstakt; 
+      U     #t_Zaehltakt; 
+      S     #i_Counter_sec_Zwangstakt; 
+
+      L     "DB_PLC_MD_DB20".UDInt._129_KSA3_Zwangstakt_TPF; 
+      ITB   ; 
+      UN    #i_Counter_min_Zwangstakt; 
+      U     #t_Zaehltakt; 
+      S     #i_Counter_min_Zwangstakt; 
+
+      U     #t_Zaehltakt; 
+      ZR    #i_Counter_sec_Zwangstakt; 
+
+      UN    #i_Counter_sec_Zwangstakt; 
+      ZR    #i_Counter_min_Zwangstakt; 
+
+      UN    #i_Counter_sec_Zwangstakt; 
+      UN    #i_Counter_min_Zwangstakt; 
+      U     #t_Zaehltakt; 
+      =     #t_Zwangstakt; 
+
+a00:  L     S5T#2S; 
+      U     #i_I_KM_TPF_MOTOR_EIN; 
+      SE    #i_Timer_entpr_Vlies_ein; 
+
+      U(    ; 
+      O     #i_Timer_entpr_Vlies_ein; 
+      O     #t_Zwangstakt; 
+      )     ; 
+      UN    #io_Mel_Papierband_Ende; 
+      UN    #io_Temp_Motor_Aus; 
+      UN    #io_Mel_Vlies_Trans_Defe; 
+      S     #io_O_KM_TPF_MOTOR_EIN; 
+
+//Laufzeit Vlies
+      L     8192; // Zeitbasis 1s laden
+      L     "DB_PLC_MD_DB20".UDInt._117_KM_Laufzeit_Vlies; // MD in BCD wandeln und mit Zeitbasis
+      ITB   ; // verodern
+      OW    ; 
+
+      U     #io_O_KM_TPF_MOTOR_EIN; 
+      SV    #i_Timer_Laufzeit_Vlies; 
+
+      UN    #i_Timer_Laufzeit_Vlies; 
+      R     #io_O_KM_TPF_MOTOR_EIN; 
+
+
+//Überwachung Füllstandschalter Vlies
+      L     8192; // Zeitbasis 1s laden
+      L     "DB_PLC_MD_DB20".UDInt._182_VLIESS_SCHALT_DEF; // MD in BCD wandeln und mit Zeitbasis
+      ITB   ; // verodern
+      OW    ; 
+
+      U     #io_O_KM_TPF_MOTOR_EIN; 
+      SS    #i_Timer_Vlies_max_Laufz; 
+
+      UN    #i_I_KM_TPF_MOTOR_EIN; 
+      UN    #io_O_KM_TPF_MOTOR_EIN; 
+      R     #i_Timer_Vlies_max_Laufz; 
+
+      U     #i_Timer_Vlies_max_Laufz; 
+      U     #i_I_KM_TPF_MOTOR_EIN; 
+      S     #io_Mel_Vlies_Trans_Defe; 
+
+//----------------------------------------------------------
+
+      U     #i_I_KM_TPF_PAPIER_ENDE; 
+      S     #io_Mel_Papierband_Ende; 
+
+      U     #i_I_KM_TPF_PAPIER_ENDE; 
+      U     #i_I_A_KM_TPF_PAPIER_ENDE; 
+      O(    ; 
+      UN    #i_I_KM_TPF_PAPIER_ENDE; 
+      UN    #i_I_A_KM_TPF_PAPIER_ENDE; 
+      )     ; 
+      S     #io_Mel_Schalter_Defekt; 
+      =     #io_Temp_Motor_Aus; 
+
+      U     #i_I_KM_TPF_PAPIER_WARN; 
+      UN    #i_I_A_KM_TPF_PAPIER_WARN; 
+      S     #io_Mel_Papiermangel; 
+
+      U     #i_I_KM_TPF_PAPIER_WARN; 
+      U     #i_I_A_KM_TPF_PAPIER_WARN; 
+      O(    ; 
+      UN    #i_I_KM_TPF_PAPIER_WARN; 
+      UN    #i_I_A_KM_TPF_PAPIER_WARN; 
+      )     ; 
+      S     #io_Mel_Schalter_Defekt; 
+
+NETWORK
+TITLE =Motorschutzschalter
+
+
+      L     S5T#3S; 
+      UN    #i_I_KM_NEG_KSA_MELDUNG; 
+      SE    #i_Timer_Entprell_KSA_Mel; 
+
+      U     #i_Timer_Entprell_KSA_Mel; 
+      S     #io_Mel_KSA; 
+
+      UN    #i_I_KM_NEG_MSS_KSA; 
+      S     #io_MSS_KSA; 
+
+      UN    #i_I_KM_NEG_MSS_SSA; 
+      S     #io_Mel_SSA; 
+NETWORK
+TITLE =KSA Sammelfehler
+
+      U     #io_Mel_min; 
+      O     #io_Mel_max; 
+      O     #io_Temp_Meldung_VORW; 
+      O     #io_Mel_Schalter_Defekt; 
+      O     #io_Mel_BTB_Alle_Pumpen; 
+      O     #io_Mel_BTB_PNOZ; 
+      O     #io_Mel_KSA; 
+      O     #io_MSS_KSA; 
+      O     #io_Mel_Papierband_Ende; 
+      =     #io_KSA_SammelFehler; 
+NETWORK
+TITLE =Auswertung Fehlerreaktion M8 M7
+// M7/M8 aktiv
+      U     #i_O_KM_M7_Ein; 
+      O     #i_O_KM_M8_Ein; 
+      O     #io_SPVHLT; 
+      SPBN  a01; 
+
+      U     #io_Mel_min; 
+      O     #io_Mel_max; 
+      O     #io_Temp_Meldung_VORW; 
+      O     #io_Mel_Schalter_Defekt; 
+      O     #io_Mel_BTB_Alle_Pumpen; 
+      O     #io_Mel_BTB_PNOZ; 
+      O     #io_MSS_KSA; 
+      O     #io_Mel_Papierband_Ende; 
+      S     #io_SPVHLT; 
+
+a01:  NOP   0; 
+
+
+NETWORK
+TITLE =Auswertung Fehlerreaktion M98 M97
+// M97/98 aktiv
+      U     #i_O_KM_Spuelpumpe_ein; 
+      O     #i_O_KM_Pumpe_Dach; 
+      O     #i_O_KM_Pumpe_Dach2; 
+      O     #io_M_M97_M98_unterd; 
+      SPBN  a02; 
+
+      U     #io_Mel_min; 
+      O     #io_Mel_max; 
+      O     #io_Mel_vorwaerts; 
+      O     #io_Mel_Schalter_Defekt; 
+      O     #io_Mel_KSA; 
+      O     #io_MSS_KSA; 
+      O     #io_Mel_SSA; 
+      O     #io_Mel_Papierband_Ende; 
+      =     #io_M_M97_M98_unterd; 
+
+a02:  NOP   0; 
+
+
+END_FUNCTION
+

@@ -1,0 +1,156 @@
+FUNCTION "FC_ROB_RPL_STAT_ERW" : VOID
+TITLE =
+//$Revision: 1.2 $
+//$Date: 2009/02/20 12:35:23CET $
+//$Author: riedlh $
+//
+//Ablauf Sonderfunktionen für BoschRexroth
+//========================================
+{ S7_language := '7(1) Deutsch (Deutschland)  26.03.2008  08:00:15' }
+VERSION : 0.1
+
+
+VAR_INPUT
+  i_MEL_ROB_T1_entladen : BOOL ;	//Roboter-Meldung: Werkstück 1 ist entladen
+  i_MEL_ROB_T1_beladen : BOOL ;	//Roboter-Meldung: Werkstück 1 ist beladen
+  i_MEL_ROB_T2_entladen : BOOL ;	//Roboter-Meldung: Werkstück 2 ist entladen
+  i_MEL_ROB_T2_beladen : BOOL ;	//Roboter-Meldung: Werkstück 2 ist beladen
+  i_BEF_ROB_PWFG : BOOL ;	//Roboter-Befehl: PW-Freigabe auslösen
+  i_St1_Entlade_FG : BOOL ;	//an Roboter: Entlade-FG für Spannstelle 1
+  i_St1_Belade_FG : BOOL ;	//an Roboter: Belade-FG für Spannstelle 1
+  i_PW_aktiv : BOOL ;	//PW-Ablauf ist aktiv
+END_VAR
+VAR_OUTPUT
+  o_Be_Entlade_FG : BOOL ;	//Be- bzw. Entladebereitschaft
+  o_ROB_T1_belegt : BOOL ;	//PLC>>>ROB: Teil 1 belegt
+  o_ROB_T1_bearbeitet : BOOL ;	//PLC>>>ROB: Teil 1 bearbeitet
+  o_ROB_T1_niO : BOOL ;	//PLC>>>ROB: Teil 1 nicht in Ordnung
+  o_ROB_T2_belegt : BOOL ;	//PLC>>>ROB: Teil 2 belegt
+  o_ROB_T2_bearbeitet : BOOL ;	//PLC>>>ROB: Teil 2 bearbeitet
+  o_ROB_T2_niO : BOOL ;	//PLC>>>ROB: Teil 2 nicht in Ordnung
+END_VAR
+VAR_IN_OUT
+  io_RPL_T1_belegt : BOOL ;	//RPL Pal-Status: Werkstück 1 ist belegt
+  io_RPL_T1_bearbeitet : BOOL ;	//RPL Pal-Status: Werkstück 1 ist bearbeitet
+  io_RPL_T1_NIO : BOOL ;	//RPL Pal-Status: Werkstück 1 Teil niO
+  io_RPL_T2_belegt : BOOL ;	//RPL Pal-Status: Werkstück 2 ist belegt
+  io_RPL_T2_bearbeitet : BOOL ;	//RPL Pal-Status: Werkstück 2 ist bearbeitet
+  io_RPL_T2_NIO : BOOL ;	//RPL Pal-Status: Werkstück 2 Teil niO
+END_VAR
+VAR_TEMP
+  t_BOOL : BOOL ;	
+  t_PI_Entladen_T1 : BOOL ;	//pos.Flanke Teil 1 entladen
+  t_PI_Beladen_T1 : BOOL ;	//pos.Flanke Teil 1 beladen
+  t_PI_Entladen_T2 : BOOL ;	//pos.Flanke Teil 2 entladen
+  t_PI_Beladen_T2 : BOOL ;	//pos.Flanke Teil 2 beladen
+  t_INT : INT ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =Netzwerk-Übersicht
+// Netzwerk-Übersicht
+// ==================
+// NW 1: Netzwerk-Übersicht
+// NW 2: pos.Flanke Teil 1 entladen
+// NW 3: pos.Flanke Teil 1 beladen
+// NW 4: pos.Flanke Teil 2 entladen
+// NW 5: pos.Flanke Teil 2 beladen
+// NW 6: RPL-STATUS: Werkstück 1 "belegt"
+// NW 7: RPL-STATUS: Werkstück 1 "bearbeitet" / "niO"
+// NW 8: RPL-STATUS: Werkstück 2 "belegt"
+// NW 9: RPL-STATUS: Werkstück 2 "bearbeitet" / "niO"
+// NW 10: Meldung an ROB: Be- bzw. Ent-Ladefreigabe
+// NW 11: PLC>>>ROB: Status-Übergabe an Roboter-Schnittstelle
+
+      NOP   0; 
+
+NETWORK
+TITLE =pos.Flanke Teil 1 entladen
+
+      U     #i_MEL_ROB_T1_entladen; 
+      FP    "DB_HR".ROB_Interface.HM_PI_Rob_entladen_T1; 
+      =     #t_PI_Entladen_T1; 
+NETWORK
+TITLE =pos.Flanke Teil 1 beladen
+
+      U     #i_MEL_ROB_T1_beladen; 
+      FP    "DB_HR".ROB_Interface.HM_PI_Rob_beladen_T1; 
+      =     #t_PI_Beladen_T1; 
+NETWORK
+TITLE =pos.Flanke Teil 2 entladen
+
+      U     #i_MEL_ROB_T2_entladen; 
+      FP    "DB_HR".ROB_Interface.HM_PI_Rob_entladen_T2; 
+      =     #t_PI_Entladen_T2; 
+NETWORK
+TITLE =pos.Flanke Teil 2 beladen
+
+      U     #i_MEL_ROB_T2_beladen; 
+      FP    "DB_HR".ROB_Interface.HM_PI_Rob_beladen_T2; 
+      =     #t_PI_Beladen_T2; 
+NETWORK
+TITLE =RPL-STATUS: Werkstück 1 "belegt"
+
+      U     #t_PI_Beladen_T1; 
+      S     #io_RPL_T1_belegt; 
+      U     #t_PI_Entladen_T1; 
+      R     #io_RPL_T1_belegt; 
+      NOP   0; 
+NETWORK
+TITLE =RPL-STATUS: Werkstück 1 "bearbeitet" / "niO"
+//Signale "bearbeitet" und "niO" werden im NC-Programm gesetzt.
+      U     #t_PI_Entladen_T1; 
+      R     #io_RPL_T1_bearbeitet; 
+      R     #io_RPL_T1_NIO; 
+NETWORK
+TITLE =RPL-STATUS: Werkstück 2 "belegt"
+
+      U     #t_PI_Beladen_T2; 
+      S     #io_RPL_T2_belegt; 
+      U     #t_PI_Entladen_T2; 
+      R     #io_RPL_T2_belegt; 
+      NOP   0; 
+NETWORK
+TITLE =RPL-STATUS: Werkstück 2 "bearbeitet" / "niO"
+//Signale "bearbeitet" und "niO" werden im NC-Programm gesetzt.
+      U     #t_PI_Entladen_T2; 
+      R     #io_RPL_T2_bearbeitet; 
+      R     #io_RPL_T2_NIO; 
+NETWORK
+TITLE =Meldung an ROB: Be- bzw. Ent-Ladefreigabe
+
+      U(    ; 
+      O     #i_St1_Entlade_FG; 
+      O     #i_St1_Belade_FG; 
+      )     ; 
+      S     #o_Be_Entlade_FG; 
+      U     #i_BEF_ROB_PWFG; 
+      R     #o_Be_Entlade_FG; 
+      NOP   0; 
+NETWORK
+TITLE =PLC>>>ROB: Status-Übergabe an Roboter-Schnittstelle
+
+      U     #i_PW_aktiv; 
+      SPB   kAkt; 
+
+      U     #io_RPL_T1_belegt; 
+      =     #o_ROB_T1_belegt; 
+
+      U     #io_RPL_T1_bearbeitet; 
+      =     #o_ROB_T1_bearbeitet; 
+
+      U     #io_RPL_T1_NIO; 
+      =     #o_ROB_T1_niO; 
+
+      U     #io_RPL_T2_belegt; 
+      =     #o_ROB_T2_belegt; 
+
+      U     #io_RPL_T2_bearbeitet; 
+      =     #o_ROB_T2_bearbeitet; 
+
+      U     #io_RPL_T2_NIO; 
+      =     #o_ROB_T2_niO; 
+
+kAkt: NOP   0; 
+END_FUNCTION
+

@@ -1,0 +1,637 @@
+TYPE "UDT_NC_PLC_DB70"
+//$Revision: 1.48 $
+//$Date: 2008/06/25 07:32:01CEST $
+//$Author: fuh $
+//
+
+
+  STRUCT 	
+   Semaphor : ARRAY  [1 .. 8 ] OF BYTE ;	
+   Experten : BOOL ;	
+   ASUP_Schrittkette : ARRAY  [1 .. 2 ] OF BYTE ;	
+   Reserve2 : INT ;	
+   WWT_Ablauf : STRUCT 	//Kommunikations-Wort WW-Ablauf
+    Klappe_offen : BOOL ;	//DPR 14.0: Wechslerklappe ist offen
+    Spanner_geloest : BOOL ;	//DPR 14.1: WZ-Spanner ist geloest
+    Spanner_gespannt : BOOL ;	//DPR 14.2: WZ-Spanner ist gespannt MIToderOHNE Werkzeug
+    Mag1_inPos_WST : BOOL ;	//DPR 14.3: Werkzeugmagazin 1 in Position Wechselstelle
+    Bedingung_WZ_ablegen : BOOL ;	//DPR 14.4: Bedingung Werkzeug ablegen
+    Magazinplatz_frei : BOOL ;	//DPR 14.5: Magazinplatz ist frei
+    frei_1 : BOOL ;	//DPR 14.6: 
+    FG_Oeffnen_Klappe : BOOL ;	//DPR 14.7: Freigabe zum Öffnen der Magazinklappe
+    Zange_geoeffnet : BOOL ;	//DPR 15.0: Zange geöffnet - Spindelseitig
+    Zange_geschlossen : BOOL ;	//DPR 15.1: Zange geschlossen - Spindelseitig
+    gespannt_mit_WZ : BOOL ;	//DPR 15.2: WZ-Spanner gespannt MIT Werkzeug
+    gespannt_ohne_WZ : BOOL ;	//DPR 15.3: WZ-Spanner gespannt OHNE Werkzeug
+    Hub_weg_von_Spindel : BOOL ;	//DPR 15.4: Hub weg von Spindel
+    Hub_in_Spindelstellung : BOOL ;	//DPR 15.5: Hub in Spindelstellung
+    frei_2 : BOOL ;	//DPR 15.6:
+    frei_3 : BOOL ;	//DPR 15.7:
+   END_STRUCT ;	
+   Daten1 : REAL ;	
+   Daten2 : REAL ;	
+   Adresse : INT ;	
+   kommunikation : ARRAY  [1 .. 2 ] OF BYTE ;	
+   Betriebsart_Maschine : BOOL ;	
+   BM_28_1 : BOOL ;	
+   BM_28_2 : BOOL ;	
+   BM_28_3 : BOOL ;	
+   BM_28_4 : BOOL ;	
+   BM_28_5 : BOOL ;	
+   BM_28_6 : BOOL ;	
+   BM_28_7 : BOOL ;	
+   Rettung_FktNr : BYTE ;	
+   WZW_Typ : BYTE ;	
+   WZW_310 : BOOL ;	
+   WZW31_1 : BOOL ;	
+   WZW31_2 : BOOL ;	
+   WZW31_3 : BOOL ;	
+   WZW_Rad_in_WZW_Pos : BOOL ;	//Rad in Wechselstellung nach Be./Enladen an Beladestelle
+   WZW_Hub_Grdst : BOOL ;	
+   WZW_Grf2_entriegelt : BOOL ;	
+   WZW_Grf2_verriegelt : BOOL ;	
+   WZW_PLC_Freigabe : BOOL ;	
+   WZW_MANWZW_Freigabe : BOOL ;	
+   WZW_WZ_Einwechseln : BOOL ;	
+   WZW_WZ_Vollwechsel : BOOL ;	
+   WZW_WZ_Auswechseln : BOOL ;	
+   WZW_WZ_AUS_EINWechseln : BOOL ;	
+   WZW_WZ_Hand_Ein : BOOL ;	
+   WZW_WZ_Hand_Aus : BOOL ;	
+   WZW_MANWZW_Beendet : BOOL ;	
+   WZW_WZ_Vorbereitet : BOOL ;	
+   WZW_WZW_Beendet : BOOL ;	
+   WZW_Spanner_Zu : BOOL ;	
+   WZW_Spanner_Auf : BOOL ;	
+   WZW_T_Aktiv : BOOL ;	
+   WZW_PLC_Aktiv : BOOL ;	
+   WZW_Tuere_offen : BOOL ;	
+   WZW_Bearb_Ebene_WZW : BOOL ;	
+   WZW_Grei1_SPi : BOOL ;	
+   WZW_Grei2_SPi : BOOL ;	
+   WZWBe_entladen_aktiv : BOOL ;	
+   WZW_Vorbereiten_aktiv : BOOL ;	
+   WZW_Ablegen_aktiv : BOOL ;	
+   WZW_T_Prepare_aktiv : BOOL ;	
+   WZW_AnforderungZD : BOOL ;	
+   WZW_TPU_in_Uebergabe : BOOL ;	
+   WZWasA : BOOL ;	
+   FD_Achse4_geloest : BOOL ;	
+   FD_Achse4_geklemmt : BOOL ;	
+   FD_Spindel_geloest : BOOL ;	
+   FD_Spindel_geklemmt : BOOL ;	
+   FD_Turn_aktiv : BOOL ;	
+   WZW_GR_Drehen_links : BOOL ;	
+   WFK_SpAbdeckung_montiert : BOOL ;	
+   M10_aktiv : BOOL ;	
+   M11_aktiv : BOOL ;	
+   M22_aktiv : BOOL ;	
+   M23_aktiv : BOOL ;	
+   M32_aktiv : BOOL ;	
+   M33_aktiv : BOOL ;	
+   M_Funktion_aktiv : BOOL ;	
+   WZW37_0 : BOOL ;	
+   WZW_AusEin_Einwechsel : BOOL ;	
+   WZW37_2 : BOOL ;	
+   WZW37_3 : BOOL ;	
+   WZW37_4 : BOOL ;	
+   WZW37_5 : BOOL ;	
+   WZW37_6 : BOOL ;	
+   Wiko_angedockt : BOOL ;	
+   TNR_REGAL_UMSETZEN : INT ;	
+   Magazin_Load : BYTE ;	
+   Magazin_Unload : BYTE ;	
+   Magazin_Platz_Load : BYTE ;	
+   Magazin_Platz_Unload : BYTE ;	
+   WZW44_0 : BOOL ;	
+   WZW44_1 : BOOL ;	
+   WZW44_2 : BOOL ;	
+   WZW44_3 : BOOL ;	
+   WZW44_4 : BOOL ;	
+   WZW44_5 : BOOL ;	
+   WZW44_6 : BOOL ;	
+   WZW44_7 : BOOL ;	
+   WZW45_0 : BOOL ;	
+   WZW45_1 : BOOL ;	
+   WZW45_2 : BOOL ;	
+   WZW45_3 : BOOL ;	
+   WZW45_4 : BOOL ;	
+   WZW45_5 : BOOL ;	
+   WZW45_6 : BOOL ;	
+   WZW45_7 : BOOL ;	
+   WZW46_0 : BOOL ;	
+   WZW46_1 : BOOL ;	
+   WZW46_2 : BOOL ;	
+   WZW46_3 : BOOL ;	
+   WZW46_4 : BOOL ;	
+   WZW46_5 : BOOL ;	
+   WZW46_6 : BOOL ;	
+   WZW46_7 : BOOL ;	
+   PW_Anwahl : BOOL ;	
+   PW_PLC_Freigabe : BOOL ;	
+   PW_Beenden : BOOL ;	
+   PW_Spuelung : BOOL ;	
+   PW_Beendet : BOOL ;	
+   PW_Hub_oben : BOOL ;	
+   PW_Richtung_0Grad : BOOL ;	
+   PW_Kopf_Vertikal : BOOL ;	
+   PW_NC_Axis_vorhanden : BOOL ;	
+   PW_Kopf_Axis_vorhanden : BOOL ;	
+   PW_Dreh_in_0Grad : BOOL ;	
+   PW_Dreh_in_180Grad : BOOL ;	
+   PW_Schwenktisch_vorhande : BOOL ;	
+   PW_Tisch_Drehposition : BOOL ;	
+   PW_Tisch_Wechselposition : BOOL ;	
+   PW_RP_PAl_vorhanden : BOOL ;	
+   PW_Trockenbearbeitung : BOOL ;	
+   PW_NPV_aktiv : BOOL ;	//externe NullPunktVerschiebung ist aktiv (<> 0)
+   PW_Spanndr_MA_nicht_ok : BOOL ;	//Spanndruck in Maschinenraum nicht ok
+   PW_SPH_MA_entladen : BOOL ;	//Funktion Spannhydraulik: Maschine entladen mit nicht gespannter Palette
+   PW49_4 : BOOL ;	
+   PW49_5 : BOOL ;	
+   PW49_6 : BOOL ;	
+   PW49_7 : BOOL ;	
+   PW_WiKo_gedockt : BOOL ;	//WiKo angedockt Bearbeitung mit aktiven Wiegenkopf
+   PW_WiKo_UPlatz : BOOL ;	//WiKo ist auf Übergabeplatz
+   PW_WiKo_geklemmt : BOOL ;	//WiKo geklemmt
+   PW_WiKo_geloest : BOOL ;	//WiKo geloest
+   PW_WiKo_APlatz : BOOL ;	//WiKo ist im Arbeitsraum
+   PW_WiKo_Bit5 : BOOL ;	
+   PW_WiKo_Bit6 : BOOL ;	
+   PW_WiKo_Bit7 : BOOL ;	
+   WZV_Aktiv : BOOL ;	//Messtaster aktiv
+   PW51_1 : BOOL ;	
+   PW51_2 : BOOL ;	
+   PW51_3 : BOOL ;	
+   PW51_4 : BOOL ;	
+   PW51_5 : BOOL ;	
+   PW51_6 : BOOL ;	
+   PW51_7 : BOOL ;	
+   PW52_0 : BOOL ;	
+   PW52_1 : BOOL ;	
+   PW52_2 : BOOL ;	
+   PW52_3 : BOOL ;	
+   PW52_4 : BOOL ;	
+   PW52_5 : BOOL ;	
+   PW52_6 : BOOL ;	
+   PW52_7 : BOOL ;	
+   WZW53_0 : BOOL ;	
+   WZW53_1 : BOOL ;	
+   WZW53_2 : BOOL ;	
+   WZW53_3 : BOOL ;	
+   WZW53_4 : BOOL ;	
+   WZW53_5 : BOOL ;	
+   WZW53_6 : BOOL ;	
+   WZW53_7 : BOOL ;	
+   WZW54_0 : BOOL ;	
+   WZW54_1 : BOOL ;	
+   WZW54_2 : BOOL ;	
+   WZW54_3 : BOOL ;	
+   WZW54_4 : BOOL ;	
+   WZW54_5 : BOOL ;	
+   WZW54_6 : BOOL ;	
+   WZW54_7 : BOOL ;	
+   WZW_Getriebe_Kopf : BOOL ;	
+   WZW55_1 : BOOL ;	
+   WZW55_2 : BOOL ;	
+   WZW55_3 : BOOL ;	
+   WZW55_4 : BOOL ;	
+   WZW55_5 : BOOL ;	
+   WZW55_6 : BOOL ;	
+   WZW55_7 : BOOL ;	
+   WZW56_0 : BOOL ;	
+   WZW56_1 : BOOL ;	
+   WZW56_2 : BOOL ;	
+   WZW56_3 : BOOL ;	
+   WZW56_4 : BOOL ;	
+   WZW56_5 : BOOL ;	
+   WZW56_6 : BOOL ;	
+   WZW56_7 : BOOL ;	
+   WZW57_0 : BOOL ;	//WZ-Vermessung aktiv 0=aus 1=ein
+   WZW57_1 : BOOL ;	
+   WZW57_2 : BOOL ;	
+   WZW57_3 : BOOL ;	
+   WZW57_4 : BOOL ;	
+   WZW57_5 : BOOL ;	
+   WZW57_6 : BOOL ;	
+   WZW57_7 : BOOL ;	
+   WZW_WZ_Bruch : BOOL ;	//Werkzeugbruch: Werkzeug gebrochen
+   WZW_WZ_Bruch_Mess_fertig : BOOL ;	//Werkzeugbruch: Werkzeug gemessen
+   WZW58_2 : BOOL ;	
+   WZW58_3 : BOOL ;	
+   WZW58_4 : BOOL ;	
+   WZW58_5 : BOOL ;	
+   WZW58_6 : BOOL ;	
+   WZW58_7 : BOOL ;	
+   WZW59_0 : BOOL ;	//Ebene Werkzeugwechsel: 0=Vertikal, 1=Horizonzal
+   WZW59_1 : BOOL ;	
+   WZW59_2 : BOOL ;	
+   WZW59_3 : BOOL ;	
+   WZW59_4 : BOOL ;	
+   WZW59_5 : BOOL ;	
+   WZW59_6 : BOOL ;	
+   WZW59_7 : BOOL ;	
+   STANGE_Anwahl : BOOL ;	
+   STANGE60_1 : BOOL ;	
+   STANGE60_2 : BOOL ;	
+   STANGE60_3 : BOOL ;	
+   STANGE60_4 : BOOL ;	
+   STANGE60_5 : BOOL ;	
+   STANGE60_6 : BOOL ;	
+   STANGE60_7 : BOOL ;	
+   STANGE_PLC_Freigabe : BOOL ;	
+   STANGE61_1 : BOOL ;	
+   STANGE61_2 : BOOL ;	
+   STANGE61_3 : BOOL ;	
+   STANGE61_4 : BOOL ;	
+   STANGE61_5 : BOOL ;	
+   STANGE61_6 : BOOL ;	
+   STANGE61_7 : BOOL ;	
+   STANGE_NC_Beenden : BOOL ;	
+   STANGE62_1 : BOOL ;	
+   STANGE62_2 : BOOL ;	
+   STANGE62_3 : BOOL ;	
+   STANGE62_4 : BOOL ;	
+   STANGE62_5 : BOOL ;	
+   STANGE62_6 : BOOL ;	
+   STANGE62_7 : BOOL ;	
+   STANGE_neue_WS_Laenge : BOOL ;	//neue WS Laenge wurde vom Stangenlader gelesen
+   STANGE63_1 : BOOL ;	
+   STANGE63_2 : BOOL ;	
+   STANGE63_3 : BOOL ;	
+   STANGE63_4 : BOOL ;	
+   STANGE63_5 : BOOL ;	
+   STANGE63_6 : BOOL ;	
+   STANGE63_7 : BOOL ;	
+   PW_Vorpos : BOOL ;	//Reststueck wurde entsorgt, jetzt auf Nachschiebposition fahren
+   PW64_1 : BOOL ;	
+   PW64_2 : BOOL ;	
+   PW64_3 : BOOL ;	
+   PW64_4 : BOOL ;	
+   PW64_5 : BOOL ;	
+   PW64_6 : BOOL ;	
+   PW64_7 : BOOL ;	
+   STANGE_PLC_Beendet : BOOL ;	
+   PW65_1 : BOOL ;	
+   PW65_2 : BOOL ;	
+   PW65_3 : BOOL ;	
+   PW65_4 : BOOL ;	
+   PW65_5 : BOOL ;	
+   PW65_6 : BOOL ;	
+   PW65_7 : BOOL ;	
+   frei : BOOL ;	
+   STANGE66_1 : BOOL ;	
+   STANGE66_11 : BOOL ;	
+   STANGE66_12 : BOOL ;	
+   STANGE66_13 : BOOL ;	
+   STANGE66_14 : BOOL ;	
+   STANGE66_15 : BOOL ;	
+   STANGE66_16 : BOOL ;	
+   PW_Pal_Nummer : BYTE ;	
+   Anwahl_WZ_Vermessung : BYTE ;	
+   LASER_Freigabe : BOOL ;	
+   unbeaufsichtigte_Bearb : BOOL ;	
+   WZM69_2 : BOOL ;	
+   WZM69_3 : BOOL ;	
+   WZM69_4 : BOOL ;	
+   WZM69_5 : BOOL ;	
+   WZM69_6 : BOOL ;	
+   WZM69_7 : BOOL ;	
+   SK_SK_Typ : BOOL ;	
+   SK70_1 : BOOL ;	
+   SK70_2 : BOOL ;	
+   SK70_3 : BOOL ;	
+   SK70_4 : BOOL ;	
+   SK70_5 : BOOL ;	
+   SK70_6 : BOOL ;	
+   SK70_7 : BOOL ;	
+   SK_Anwahl : BOOL ;	
+   SK71_1 : BOOL ;	
+   SK71_2 : BOOL ;	
+   SK71_3 : BOOL ;	
+   SK71_4 : BOOL ;	
+   SK71_5 : BOOL ;	
+   SK71_6 : BOOL ;	
+   SK71_7 : BOOL ;	
+   SK_PLC_Freigabe : BOOL ;	
+   SK72_1 : BOOL ;	
+   SK72_2 : BOOL ;	
+   SK72_3 : BOOL ;	
+   SK72_4 : BOOL ;	
+   SK72_5 : BOOL ;	
+   SK72_6 : BOOL ;	
+   SK72_7 : BOOL ;	
+   SK_Kopf_Vertikal : BOOL ;	
+   SK73_1 : BOOL ;	
+   SK73_2 : BOOL ;	
+   SK73_3 : BOOL ;	
+   SK73_4 : BOOL ;	
+   SK73_5 : BOOL ;	
+   SK73_6 : BOOL ;	
+   SK73_7 : BOOL ;	
+   SK_Kopf_Horizontal : BOOL ;	
+   SK74_1 : BOOL ;	
+   SK74_2 : BOOL ;	
+   SK74_3 : BOOL ;	
+   SK74_4 : BOOL ;	
+   SK74_5 : BOOL ;	
+   SK74_6 : BOOL ;	
+   SK74_7 : BOOL ;	
+   LASER_eingeschwenkt : BOOL ;	
+   SK75_1 : BOOL ;	
+   SK75_2 : BOOL ;	
+   SK75_3 : BOOL ;	
+   SK75_4 : BOOL ;	
+   SK75_5 : BOOL ;	
+   SK75_6 : BOOL ;	
+   SK75_7 : BOOL ;	
+   SK76_0 : BOOL ;	
+   SK76_1 : BOOL ;	
+   SK76_2 : BOOL ;	
+   SK76_3 : BOOL ;	
+   SK76_4 : BOOL ;	
+   SK76_5 : BOOL ;	
+   SK76_6 : BOOL ;	
+   SK76_7 : BOOL ;	
+   SK77_0 : BOOL ;	
+   SK77_1 : BOOL ;	
+   SK77_2 : BOOL ;	
+   SK77_3 : BOOL ;	
+   SK77_4 : BOOL ;	
+   SK77_5 : BOOL ;	
+   SK77_6 : BOOL ;	
+   SK77_7 : BOOL ;	
+   SK_M78_Aktiv : BOOL ;	
+   SK78_1 : BOOL ;	
+   SK78_2 : BOOL ;	
+   SK78_3 : BOOL ;	
+   SK78_4 : BOOL ;	
+   SK78_5 : BOOL ;	
+   SK78_6 : BOOL ;	
+   SK78_7 : BOOL ;	
+   CYCLE_800_aktiv : BOOL ;	
+   SK79_1 : BOOL ;	
+   SK79_2 : BOOL ;	
+   SK79_3 : BOOL ;	
+   SK79_4 : BOOL ;	
+   SK79_5 : BOOL ;	
+   SK79_6 : BOOL ;	
+   SK97_7 : BOOL ;	
+   Jobbetrieb : BOOL ;	
+   FB80_1 : BOOL ;	
+   FB80_2 : BOOL ;	
+   FB80_3 : BOOL ;	
+   FB80_4 : BOOL ;	
+   FB80_5 : BOOL ;	
+   FB80_6 : BOOL ;	
+   FB80_7 : BOOL ;	
+   FB_PLC_Freigabe : BOOL ;	
+   FB81_1 : BOOL ;	
+   FB81_2 : BOOL ;	
+   FB81_3 : BOOL ;	
+   FB81_4 : BOOL ;	
+   FB81_5 : BOOL ;	
+   FB81_6 : BOOL ;	
+   FB81_7 : BOOL ;	
+   H67_Jobfunktionen : BOOL ;	
+   PW82_1 : BOOL ;	
+   PW82_2 : BOOL ;	
+   PW82_3 : BOOL ;	
+   PW82_4 : BOOL ;	
+   PW82_5 : BOOL ;	
+   PW82_6 : BOOL ;	
+   PW82_7 : BOOL ;	
+   PW83_0 : BOOL ;	
+   PW83_1 : BOOL ;	
+   PW83_2 : BOOL ;	
+   PW83_3 : BOOL ;	
+   PW83_4 : BOOL ;	
+   PW83_5 : BOOL ;	
+   PW83_6 : BOOL ;	
+   PW83_7 : BOOL ;	
+   VSP_Anwahl : BOOL ;	
+   FB84_1 : BOOL ;	
+   FB84_2 : BOOL ;	
+   FB84_3 : BOOL ;	
+   FB84_4 : BOOL ;	
+   FB84_5 : BOOL ;	
+   FB84_6 : BOOL ;	
+   FB84_7 : BOOL ;	
+   KMTL_M7 : BOOL ;	
+   KMTL_M8 : BOOL ;	
+   KMTL_M9 : BOOL ;	
+   KMTL_M72 : BOOL ;	
+   KMTL_M73 : BOOL ;	
+   KMTL_M97 : BOOL ;	
+   KMTL_M98 : BOOL ;	
+   KMTL_M96 : BOOL ;	
+   KMTL_M34 : BOOL ;	
+   KMTL_M35 : BOOL ;	
+   KMTL_DS1 : BOOL ;	
+   KMTL_DS2 : BOOL ;	
+   KMTL_4 : BOOL ;	
+   KMTL_5 : BOOL ;	
+   KMTL_6 : BOOL ;	
+   KMTL_7 : BOOL ;	
+   KMTL_M391 : BOOL ;	
+   KMTL_M392 : BOOL ;	
+   Comara : DINT ;	
+   WZVS : STRUCT 	
+    Daten_1 : INT ;	//Werkzeugverschleiss Daten 1
+    Daten_2 : INT ;	//Werkzeugverschleiss Daten 2
+    Daten_3 : INT ;	//Werkzeugverschleiss Daten 3
+    Daten_4 : INT ;	//Werkzeugverschleiss Daten 4
+   END_STRUCT ;	
+   PW_SKZ : BYTE ;	//Schrittkette Palettenwechsler oder Stange
+   ZustZaehlerSK : BYTE ;	//Schrittkette Schwenkkopf
+   PW_NC_Aktiv : BOOL ;	//Palettenwechsel-Zyklus aktiv
+   PW_Dreh_Fertig : BOOL ;	
+   PW_Start_Spuelung : BOOL ;	//PW-Dachspülung starten, wenn Spülposition erreicht
+   PW_Tisch_Bewegung_Fertig : BOOL ;	
+   PW_Start_Spuelung_Sofort : BOOL ;	//PW-Dachspülung sofort bei PW-Aktiv starten
+   PW102_5 : BOOL ;	
+   PW102_6 : BOOL ;	
+   PW102_7 : BOOL ;	
+   ZustZaehlerWZW : BYTE ;	//Schrittkette WZW
+   DM_SPCL_AKTIV : BOOL ;	//Zyklus DM_SPCL ist aktiv --> FD: Spindelklemmung
+   RES_104_1 : BOOL ;	
+   RES_104_2 : BOOL ;	
+   RES_104_3 : BOOL ;	
+   RES_104_4 : BOOL ;	
+   RES_104_5 : BOOL ;	
+   RES_104_6 : BOOL ;	
+   RES_104_7 : BOOL ;	
+   WZW_NC_EINW_beendet : BOOL ;	
+   WZW105_1 : BOOL ;	
+   WZW105_2 : BOOL ;	
+   WZW105_3 : BOOL ;	
+   WZW105_4 : BOOL ;	
+   WZW105_5 : BOOL ;	
+   WZW105_6 : BOOL ;	
+   WZW105_7 : BOOL ;	
+   MFunktion_256 : BYTE ;	//Aktuelle M-Funktion 256-300 (+255)
+   MFunktion : BYTE ;	//Aktuelle M-Funktion 1-255
+   SKZ_LASER : BYTE ;	
+   SK_NC_Aktiv : BOOL ;	
+   SK109_1 : BOOL ;	
+   SK109_2 : BOOL ;	
+   SK109_3 : BOOL ;	
+   SK109_4 : BOOL ;	
+   SK109_5 : BOOL ;	
+   SK109_6 : BOOL ;	
+   SK109_7 : BOOL ;	
+   FB_Fehler_Ausgeben : BYTE ;	
+   WZW_NC_Aktiv : BOOL ;	
+   WZW111_1 : BOOL ;	
+   WZW111_2 : BOOL ;	
+   WZW111_3 : BOOL ;	
+   WZW111_4 : BOOL ;	
+   WZW111_5 : BOOL ;	
+   WZW111_6 : BOOL ;	
+   WZW111_7 : BOOL ;	
+   WZW_NC_Beenden : BOOL ;	
+   WZW112_1 : BOOL ;	
+   WZW112_2 : BOOL ;	
+   WZW112_3 : BOOL ;	
+   WZW112_4 : BOOL ;	
+   WZW112_5 : BOOL ;	
+   WZW112_6 : BOOL ;	
+   WZW112_7 : BOOL ;	
+   MANWZW_NC_Aktiv : BOOL ;	
+   MWZW113_1 : BOOL ;	
+   MWZW113_2 : BOOL ;	
+   MWZW113_3 : BOOL ;	
+   MWZW113_4 : BOOL ;	
+   MWZW113_5 : BOOL ;	
+   MWZW113_6 : BOOL ;	
+   MWZW113_7 : BOOL ;	
+   FB_NC_Aktiv : BOOL ;	
+   FB114_1 : BOOL ;	
+   FB114_2 : BOOL ;	
+   FB114_3 : BOOL ;	
+   FB114_4 : BOOL ;	
+   FB114_5 : BOOL ;	
+   FB114_6 : BOOL ;	
+   FB114_7 : BOOL ;	
+   NC_WZW_SPOS : BOOL ;	
+   NC_115_01 : BOOL ;	//frei
+   NC_115_02 : BOOL ;	//frei
+   NC_115_03 : BOOL ;	//frei
+   NC_115_04 : BOOL ;	//frei
+   NC_115_05 : BOOL ;	//frei
+   NC_115_06 : BOOL ;	//frei
+   NC_115_07 : BOOL ;	//frei
+   LASER_Aktiv : BOOL ;	
+   LASER_1 : BOOL ;	
+   LASER_2 : BOOL ;	
+   LASER_3 : BOOL ;	
+   LASER_4 : BOOL ;	
+   LASER_5 : BOOL ;	
+   LASER_6 : BOOL ;	
+   LASER_7 : BOOL ;	
+   LASER_FEHLER : BOOL ;	
+   LASER_FEHLER_1 : BOOL ;	
+   LASER_FEHLER_2 : BOOL ;	
+   LASER_FEHLER_3 : BOOL ;	
+   LASER_FEHLER_4 : BOOL ;	
+   LASER_FEHLER_5 : BOOL ;	
+   LASER_FEHLER_6 : BOOL ;	
+   LASER_FEHLER_7 : BOOL ;	
+   WZW_Vollwechsel_beendet : BOOL ;	
+   BildWuchten_Anwahl : BOOL ;	
+   res2 : BOOL ;	
+   res3 : BOOL ;	
+   res4 : BOOL ;	
+   res5 : BOOL ;	
+   res6 : BOOL ;	
+   res7 : BOOL ;	
+   FD_DM_TURN_AKTIV : BOOL ;	
+   res8 : BOOL ;	
+   res9 : BOOL ;	
+   Wz : STRUCT 	
+    Typ : REAL ;	//Typ des Wz in der Spindel
+    LaengeMax : REAL ;	//max. Laenge des Wz in der Spindel
+    RadiusMax : REAL ;	//Radius des Wz in der Spindel
+   END_STRUCT ;	
+   WzVorb : STRUCT 	
+    Typ : REAL ;	
+    LaengeMax : REAL ;	//max. Laenge des Wz in der Spindel
+    RadiusMax : REAL ;	//Radius des Wz in der Spindel
+   END_STRUCT ;	
+   Red_Geschw_OVR : REAL ;	//red. Geschwindigkeit in BA/3/4
+   Komet_UAchse_aktiv : BOOL ;	//U-Achse/Kometkopf aktiv
+   Komet_148_1 : BOOL ;	
+   Komet_148_2 : BOOL ;	
+   Komet_148_3 : BOOL ;	
+   Komet_148_4 : BOOL ;	
+   Komet_148_5 : BOOL ;	
+   Komet_148_6 : BOOL ;	
+   Komet_148_7 : BOOL ;	
+   DatenReserve : BYTE ;	
+   ACC_OVR : INT ;	
+   Teile_Nr : DINT ;	
+   Greifer_Geschwindigkeit : REAL ;	
+   DatenRes : ARRAY  [1 .. 20 ] OF INT ;	
+   PLC_Achsen_Offset0_X : REAL ;	// PLC >> NC
+   PLC_Achsen_Offset1_Y : REAL ;	// PLC >> NC
+   PLC_Achsen_Offset2_Z : REAL ;	// PLC >> NC
+   PLC_Drehzahl_Offset : REAL ;	// PLC >> NC
+   PLC_Offset_1 : REAL ;	// Reserve PLC >> NC
+   PLC_Offset_2 : REAL ;	// Reserve PLC >> NC
+   PLC_Offset_3 : REAL ;	// Reserve PLC >> NC
+   PLC_Offset_4 : REAL ;	// Reserve PLC >> NC
+   PLC_Offset_5 : REAL ;	// Reserve PLC >> NC
+   TempKompWert0_X : REAL ;	// berechnet durch IDS NC >> PLC
+   TempKompWert1_Y : REAL ;	// berechnet durch IDS NC >> PLC
+   TempKompWert2_Z : REAL ;	// berechnet durch IDS NC >> PLC
+   TempKompWert_1 : REAL ;	// Reserve NC >> PLC
+   TempKompWert_2 : REAL ;	// Reserve NC >> PLC
+   TempKompWert_3 : REAL ;	// Reserve NC >> PLC
+   TempKompWert_4 : REAL ;	// Reserve NC >> PLC
+   TempKompWert_5 : REAL ;	
+   PW_WiKo_start : BOOL ;	//WiKo Schrittkettenstart
+   PW_WiKo_spuel : BOOL ;	//WiKo spülen
+   PW_WiKo_blas : BOOL ;	//WiKo ausblasen
+   PW_WiKo_SNRneu : BOOL ;	//WiKo neue SchrittNr. von NC
+   PW_WiKo_WZ_VORH : BOOL ;	//WiKo Übergabeplatz belegt --> IX_WFK_WZ_1_VORHANDEN
+   PW_WiKo_Bit_A5 : BOOL ;	
+   PW_WiKo_Bit_A6 : BOOL ;	
+   PW_WiKo_Bit_A7 : BOOL ;	
+   PW_WiKo_SNR : BYTE ;	//WiKo SchrittNummer
+   PW_WiKo_Nr : BYTE ;	//WiKo Palettennummer / WiKo-Nummer
+   PW_Wiko_NCSNR : BYTE ;	
+   NCanPLC_ATC : STRUCT 	
+    ATC_1_1 : BOOL ;	//ATC-Einstellung 1.1 aktiv
+    ATC_1_2 : BOOL ;	//ATC-Einstellung 1.2 aktiv
+    ATC_1_3 : BOOL ;	//ATC-Einstellung 1.3 aktiv
+    ATC_2_1 : BOOL ;	//ATC-Einstellung 2.1 aktiv
+    ATC_2_2 : BOOL ;	//ATC-Einstellung 2.2 aktiv
+    ATC_2_3 : BOOL ;	//ATC-Einstellung 2.3 aktiv
+    ATC_3_1 : BOOL ;	//ATC-Einstellung 3.1 aktiv
+    ATC_3_2 : BOOL ;	//ATC-Einstellung 3.2 aktiv
+    ATC_3_3 : BOOL ;	//ATC-Einstellung 3.3 aktiv
+    ATC_frei1 : BOOL ;	
+    ATC_frei2 : BOOL ;	
+    ATC_frei3 : BOOL ;	
+    ATC_frei4 : BOOL ;	
+    ATC_frei5 : BOOL ;	
+    ATC_frei6 : BOOL ;	
+    ATC_frei7 : BOOL ;	
+    Reserve1 : REAL ;	
+    Reserve2 : REAL ;	
+    Reserve3 : REAL ;	
+    Reserve4 : REAL ;	
+    Reserve5 : REAL ;	
+    Reserve6 : REAL ;	
+    Reserve7 : INT ;	
+   END_STRUCT ;	
+   PLCanNC_TAB_TISCH : STRUCT 	
+    PLC_Achs_Tisch_Offset0_X : REAL ;	
+    PLC_Achs_Tisch_Offset1_Y : REAL ;	
+    PLC_Achs_Tisch_Offset2_Z : REAL ;	
+   END_STRUCT ;	
+   DM_ESR_AKTIV : BYTE ;	//Zyklus DM_ESR für erweitertes Stillsetzen und Rückziehen ist aktiv
+   Zusatz : "UDT_NC_PLC_Zusatz";	
+  END_STRUCT ;	
+END_TYPE
+

@@ -1,0 +1,2411 @@
+FUNCTION_BLOCK "FB_TM_QUITT_FC8"
+TITLE =
+//$Revision: 1.22 $
+//$Date: 2008/11/05 18:34:35CET $
+//$Author: schmoelp $
+//
+//QUIT_WZV
+//-------------------------------------------------------------------------
+//Änderung: Datum     / Abteilung / Name  / Version x.y
+//Änderung: 11.06.2007 /          / slh   / 
+//        : Wz.umsetzen mit Bewegung, SS29 (neu)
+//Änderung:          /            /      / 
+//        : 
+//-------------------------------------------------------------------------
+//Eingangsvariablen:
+//1. VarBereit: Bei Werkzeug-Wechsel von Wechselplatz -> 9998,4
+//                                                    9998,6
+//                                                    9998,5 
+//   muß in VarBereit die Nummer des Bereitstellungsplatzes (4,5,6) abgelegt 
+//   werden.
+//   Bei Wechsel von Spi -> 9998,3 muß diese Variable wieder gelöscht werden (0).
+//2. GrWz            : Kennung neues oder altes Werzeug ist übergroß
+//3. MagGrWz         : Magazin wo das gr.Werkzeugs abgelegt wurde
+//4. PlacePosGrWz    : Pos. wo das Gr.Werkzeug abgelegt wurde
+//5. MagazinNr       : aktuelle MagazinNr.
+//5. IstPos          : aktuelle Istposition des angewählen Magazins 
+//6. IstPosMag       : aktuelle Istpositionen der 8 Magazine wird bei Änderung 
+//                     übertragen um den Cursor richtig zu stellen 
+//7. neuesWzWechselSt: Kennung 
+//                     1 = einzuwechselndes Wz liegt an der Wechselstelle
+//                     0 = ist noch im Bereitstellungsplatz und wird wieder 
+//                         geholt.
+VERSION : 2.0
+
+
+VAR_INPUT
+  MagazinNr : INT ;	//angewähltes Magazin
+  IstPos : INT ;	//Istposition des angewählten Magazins 
+  GrWz : BOOL ;	
+  MagPosGrWz : INT ;	//Magazin des gr. Werkzeugs
+  PlacePosGrWz : INT ;	//Poket des gr. Werkzeugs
+  IstPosMag : ARRAY  [1 .. 8 ] OF //Istposition von Magazin 1..8
+  INT ;	
+  neuesWzWechselSt : BOOL ;	//neues Werkzeug an Wechselstelle
+  E_Modus_Spi_Mag : BOOL ;	//Modus Spindel wird direkt ins Magazin bewegt
+  E_Spi_Mag : BOOL ;	//Spi->direkt->Mag dann Gr1 -> Spi 
+  USortAkt : BOOL ;	
+  ANF_HWZ_unload_M6 : BOOL ;	
+  VarBereit : INT ;	
+  Nr_Bereitst_Platz : INT ;	
+END_VAR
+VAR_IN_OUT
+  AUSEIN_Einvorgang : BOOL ;	
+END_VAR
+VAR
+  ASS : ARRAY  [1 .. 32 ] OF BOOL ;	
+  Fehler : BOOL ;	// Fehlerbit
+  FehlerNr : INT ;	// Error von FC8 gespeichert
+  Reserve1 : INT ;	// Reservewort 1
+  IstPosWechselstMag1 : INT ;	// Magazin-Istposition Wechselstelle Mag 1
+  IstPosWechselstMag2 : INT ;	// Magazin-Istposition Wechselstelle Mag 2
+  IstPosWechselstGr1 : INT ;	// Magazin-Istposition Wechselstelle Greifer 1
+  IstPosWechselstGr2 : INT ;	// Magazin-Istposition Wechselstelle Greifer 2
+  Reserve2 : INT ;	// Reservewort 2
+  TaskIdent : BYTE ;	// TaskIdent an FC8 
+  TaskIdentNo : BYTE ;	// TaskIdentNo an FC8
+  NewToolMag : INT ;	// NewToolMag an FC8    
+  NewToolLoc : INT ;	// NewToolLoc an FC8
+  OldToolMag : INT ;	// OldToolMag an FC8
+  OldToolLoc : INT ;	// OldToolLoc an FC8
+  Status : INT ;	// Status von FC8
+  NewToolMag_Wechsel_S1 : INT ;	// NewToolMag im Wechsel Spindel 1
+  NewToolLoc_Wechsel_S1 : INT ;	// NewToolLoc im Wechsel Spindel 1
+  OldToolMag_Wechsel_S1 : INT ;	// OldToolMag im Wechsel Spindel 1
+  OldToolLoc_Wechsel_S1 : INT ;	// OldToolLoc im Wechsel Spindel 1
+  NewToolMag_Wechsel_S2 : INT ;	// NewToolMag im Wechsel Spindel 2
+  NewToolLoc_Wechsel_S2 : INT ;	// NewToolLoc im Wechsel Spindel 2
+  OldToolMag_Wechsel_S2 : INT ;	// OldToolMag im Wechsel Spindel 2
+  OldToolLoc_Wechsel_S2 : INT ;	// OldToolLoc im Wechsel Spindel 2
+  ASS_alt : DINT ;	// Anwenderschnittst. Altwert
+  ASS_Aenderung : DINT ;	// Änderung ASS
+  ASS_aktiv : DINT ;	// Anwenderschnittstelle aktiv
+  Start : BOOL ;	// Start an FC8  
+  Ready : BOOL ;	// Ready von FC8
+  Start_Diagnose : BOOL ;	//Trigger für FB199
+  Error : INT ;	// Error von FC8    
+  SchrittNr : BYTE ;	// Schrittnummer Sprungverteiler
+  AltPosMag : ARRAY  [1 .. 8 ] OF INT ;	
+  FlankenAnstoss : DWORD ;	
+  Umsp_Gr1_Spdl : BOOL ;	
+  Umsp_Gr2_Spdl : BOOL ;	
+  Umsp_Spdl_Gr1 : BOOL ;	
+  Umsp_Spdl_Gr2 : BOOL ;	
+  Umsp_Gr2_TPU : BOOL ;	
+  Umsp_Gr1_TPU : BOOL ;	
+  Umsp_TPU_Gr1 : BOOL ;	
+  Umsp_TPU_Gr2 : BOOL ;	
+END_VAR
+VAR_TEMP
+  ASS_TEMP : DINT ;	// Anwenderschnittstelle temporär
+  Addr1 : INT ;	
+  MagNr : DWORD ;	
+  ZwSpeichNr : INT ;	//temp Speicher für ZwischenspeicherNr.
+  ZwSpeichZiel : INT ;	
+  NewToolMagTemp : INT ;	
+  NewToolLocTemp : INT ;	
+  OldToolMagTemp : INT ;	
+  OldToolLocTemp : INT ;	
+  PIstpos : WORD ;	
+  PAddr1 : WORD ;	
+  t_NewToolLoc : INT ;	
+  t_OldToolLoc : INT ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =Flankenauswertung
+// Netzwerk-Übersicht
+// ==================
+// NW 1: Flankenauswertung
+// NW 2: Sprungverteiler
+// NW 3: SS1: Quittung Beladen Magazin/Spindel/TDS
+// NW 4: SS2: Quittung Entladen Magazin/Spindel/TDS
+// NW 5: SS3: Abbruch Beladen/Entladen SS6: Spindel/Magazin/TDS
+// NW 6: SS4: WW Spindel -> Magazin
+// NW 7: SS5: WW Magazin -> Spindel
+// NW 8: SS6: Umspeichern Gr1 -> Mag   nur asynchron ablegen möglich
+// NW 9: SS7,SS8: Quittung / Abbruch Wechsel vorbereiten  
+// NW 10: SS9,SS10,SS12: Umspeichern Wechselstelle -> 9998,2/3/4  
+// NW 11: SS11: Greifer 1 od. 2 nach TPU und Greifer 1 od. 2 nach Spindel
+// NW 12: SS13: Umspeichern Wechselstelle -> Spindel
+// NW 13: SS14: Umspeichern Greifer 2 (9998,3) -> Wechselstelle
+// NW 14: SS15: Umspeichern von 9998,4 TPU -> Wechselstelle
+// NW 15: SS16: TPU 9998,4 -> Gr 9998,2/3 und Spindel -> Gr 9998,2/3
+// NW 16: SS17: Umspeichern von 9998,4 -> 9998,2
+// NW 17: SS18: Umspeichen 9998,1 Spindel -> 9998,2
+// NW 18: SS19: Umspeichen 9998,3 -> 9998,1 Spindel Gr2 -> Spindel
+// NW 19: SS20: Umspeichen 9998,2 -> 9998,1 Spindel Gr1 -> Spindel
+// NW 20: SS21: Umspeichen 9998,1 Spindel -> 9998,3
+// NW 21: SS22: WW Spindel -> Magazin
+// NW 22: SS23: Abbruch Wechsel durchführen
+// NW 23: SS24:
+// NW 24: SS25,SS26,SS27,SS28: Änderung Istposition Mag 1,2,3,4
+// NW 25: SS29:Quittung Umsetzen mit Bewegung, physik.Umsetzen
+// NW 26: SS30: Quittung Umladen MMC
+// NW 27: SS31/SS32: Quittung/Abbruch positionieren zur Beladestelle
+// NW 28: Aufruf FC8
+// NW 29: Auswertung Status FC8
+//
+      L     P##ASS; 
+      LAR1  ; 
+      UN    "m_neustart"; 
+      SPB   ANF; // Neustart ? ->
+      L     0; 
+      T     D [AR1,P#0.0]; //#ASS_neu   Anwenderschnittstelle
+      T     #ASS_alt; // Anwenderschnittst. Altwert
+      T     #ASS_Aenderung; // Änderung ASS
+      T     #ASS_aktiv; // Anwenderschnittstelle aktiv
+      R     #Start; // Start an FC8    
+      R     #Ready; // Ready von FC8
+      R     #Fehler; 
+      BEA   ; 
+ANF:  L     D [AR1,P#0.0]; //#ASS_neu   Anwenderschnittstelle
+      L     #ASS_alt; // Altwert ASS
+      XOD   ; // Flanke
+      L     D [AR1,P#0.0]; //#ASS_neu   Anwenderschnittstelle
+      T     #ASS_alt; 
+      UD    ; 
+      L     #ASS_Aenderung; // Änderung
+      OD    ; 
+      T     #ASS_Aenderung; // Alle Änderungen
+      U     #Start; // Start FC8
+      SPB   FC8; // FC 8 aktiv ? Ja ->
+      L     0; 
+      ==D   ; 
+      O     #Fehler; // Fehler ? Ja -> Abbruch
+      SPB   ENDE; // Änderung ? Nein -> Abbruch
+NETWORK
+TITLE =Sprungverteiler
+
+      L     #ASS_Aenderung; // Änderungen
+      T     #ASS_TEMP; 
+      L     0; 
+      T     #SchrittNr; // Schritt-Nr. auf 0
+      L     1; 
+      T     #ASS_aktiv; // Aktive Bitleiste auf 1
+LOOP: L     #ASS_TEMP; 
+      SRD   1; 
+      SPP   SPL; // Sprung wenn geschobenes Bit = 1
+      T     #ASS_TEMP; 
+      L     #ASS_aktiv; 
+      SLD   1; // Aktive Bitleiste nachführen
+      T     #ASS_aktiv; 
+      L     #SchrittNr; 
+      INC   1; // Schritt-Nr. + 1
+      T     #SchrittNr; 
+      L     32; 
+      >I    ; 
+      SPB   ENDE; // Schritt-Nr. > 32? Abbruch ->
+      SPA   LOOP; 
+
+SPL:  L     DB71.DBB    0; //Abfrage Bit 0 --> Beladestelle Spindel
+      SRD   1; 
+      SPP   Bit0; 
+      SRD   1; //Abfrage Bit 1 --> Beladestelle Magazin
+      SPP   Bit1; 
+      SRD   1; //Abfrage Bit 0 --> Beladestelle TDS
+      SPP   Bit2; 
+Bit0: L     1; 
+      SPA   next; 
+Bit1: L     2; 
+      SPA   next; 
+Bit2: L     3; 
+next: T     #Addr1; // Berechnung der Adresse für Quitierdaten 
+      DEC   1; 
+      L     30; 
+      *I    ; 
+      SLD   3; // Zeiger auf Beladestellenoffset  
+      T     #PAddr1; 
+
+      L     0; 
+      L     #MagazinNr; 
+      <I    ; 
+      SPBN  EDEC; 
+      DEC   1; 
+EDEC: L     2; 
+      *I    ; 
+      SLD   3; 
+      L     P##IstPosMag; 
+      +D    ; 
+      T     #PIstpos; 
+
+      L     #SchrittNr; 
+      SPL   END1; 
+      SPA   SS25; //SchrittNr 0 Änderung Istposition Mag 1 (nicht benutzt )
+      SPA   SS26; //SchrittNr 1 Änderung Istposition Mag 2 (nicht benutzt )
+      SPA   SS27; //SchrittNr 2 Änderung Istposition Mag 3 (nicht benutzt )
+      SPA   SS28; //SchrittNr 3 Änderung Istposition Mag 4 (nicht benutzt )
+      SPA   SS29; //SchrittNr 4 Quittung umladen mit Bewegung
+      SPA   SS30; //SchrittNr 5 Umspeichern am MMC
+      SPA   SS31; //SchrittNr 6 Quittung positionieren zur Beladestelle
+      SPA   SS32; //SchrittNr 7 Abbruch positionieren zur Beladestelle
+      SPA   SS17; //SchrittNr 8 Umspeichern von 9998,4 -> 9998,2 (nicht benutzt )
+      SPA   SS18; //SchrittNr 9 Spindel -> Gr1
+      SPA   SS19; //SchrittNr 10 Gr2 -> Spindel
+      SPA   SS20; //SchrittNr 11 Gr1 -> Spindel
+      SPA   SS21; //SchrittNr 12 Spindel -> Gr2
+      SPA   SS22; //SchrittNr 13 Spindel -> Magazin ( Handwerkzeugwechsel )
+      SPA   SS23; //SchrittNr 14 Abbruch Wechsel durchführen
+      SPA   SS24; //SchrittNr 15 Auftrag löschen ( nicht benutzt )
+      SPA   SS9; //SchrittNr 16 Mag -> Gr1 9998,2
+      SPA   SS10; //SchrittNr 17 Mag -> Gr2 9998,3
+      SPA   SS11; //SchrittNr 18 Gr1/Gr2 -> TPU 9998,4
+      SPA   SS12; //SchrittNr 19 Mag -> TPU 9998,4
+      SPA   SS13; //SchrittNr 20 Mag -> Spindel
+      SPA   SS14; //SchrittNr 21 Gr2 -> Magazin
+      SPA   SS15; //SchrittNr 22 TPU 9998,4 -> Magazin
+      SPA   SS16; //SchrittNr 23 TPU 9998,4 -> Gr1/Gr2
+      SPA   SS1; //SchrittNr 24 Quittung Beladen Magazin/Spindel/TDS
+      SPA   SS2; //SchrittNr 25 Quittung Entladen Magazin/Spindel/TDS
+      SPA   SS3; //SchrittNr 26 Abbruch Beladen/Entladen 
+      SPA   SS4; //SchrittNr 27 WW Spindel <-> Magazin ( nicht benutzt )
+      SPA   SS5; //SchrittNr 28 WW Magazin -> Spindel ( nicht benutzt )
+      SPA   SS6; //SchrittNr 29 Umspeichern Gr1 -> Mag   nur asynchron ablegen möglich
+      SPA   SS7; //SchrittNr 30 Quittung Wechsel vorbereiten
+      SPA   SS8; //SchrittNr 31 Abbruch Wechsel vorbereiten
+END1: SPA   ENDE; 
+NETWORK
+TITLE =SS1: Quittung Beladen Magazin/Spindel/TDS
+
+SS1:  L     1; // Status = 1 bei beendet
+      T     #Status; 
+      L     1; 
+      T     #TaskIdent; 
+      L     #Addr1; // TaskIdentNo = 1 Beladestelle Spindel
+      T     #TaskIdentNo; // TaskIdentNo = 2 Beladestelle Magazin
+      AUF   "TMLoadIF"; 
+      L     #PAddr1; 
+      LAR1  ; 
+      L     DBW [AR1,P#28.0]; // Magazin-Nr. Beladen Mag/Beladen Spi
+      T     #NewToolMag; 
+      L     DBW [AR1,P#30.0]; // Platz.-Nr. Beladen
+      T     #NewToolLoc; 
+      L     0; 
+      T     #OldToolMag; 
+      T     #OldToolLoc; 
+      U     "TMLoadIF".IF[1].Loading; 
+      R     "TMLoadIF".IF[1].Loading; 
+      L     #PAddr1; 
+      L     P#60.0; 
+      <D    ; 
+      SPB   s1_1; 
+      U     "TMLoadIF".IF[3].Loading; 
+      R     "TMLoadIF".IF[3].Loading; 
+s1_1: L     #PAddr1; 
+      L     P#30.0; 
+      <D    ; 
+      SPB   s1e; 
+      U     "TMLoadIF".IF[2].Loading; 
+      R     "TMLoadIF".IF[2].Loading; 
+
+s1e:  SPA   FC8S; 
+NETWORK
+TITLE =SS2: Quittung Entladen Magazin/Spindel/TDS
+
+SS2:  L     1; // Status = 1 bei beendet
+      T     #Status; 
+      L     1; 
+      T     #TaskIdent; 
+      L     #Addr1; 
+      T     #TaskIdentNo; // TaskIdentNo = 2 Beladestelle Magazin
+      L     0; 
+      T     #NewToolMag; 
+      T     #NewToolLoc; 
+      AUF   "TMLoadIF"; 
+      L     #PAddr1; 
+      LAR1  ; 
+      L     DBW [AR1,P#20.0]; // Magazin-Nr. Entladen
+      T     #OldToolMag; 
+      L     DBW [AR1,P#22.0]; // Platz-Nr. Entladen
+      T     #OldToolLoc; 
+      U     "TMLoadIF".IF[1].Unloading; 
+      R     "TMLoadIF".IF[1].Unloading; 
+      L     #PAddr1; 
+      L     P#60.0; 
+      <D    ; 
+      SPB   s2_1; 
+      U     "TMLoadIF".IF[3].Unloading; 
+      R     "TMLoadIF".IF[3].Unloading; 
+s2_1: L     #PAddr1; 
+      L     P#30.0; 
+      <D    ; 
+      SPB   s2e; 
+      U     "TMLoadIF".IF[2].Unloading; 
+      R     "TMLoadIF".IF[2].Unloading; 
+s2e:  SPA   FC8S; 
+
+NETWORK
+TITLE =SS3: Abbruch Beladen/Entladen SS6: Spindel/Magazin/TDS
+
+SS3:  L     #Addr1; 
+      T     #TaskIdentNo; 
+      L     3; // Status = 3 bei Reset
+      T     #Status; 
+      L     1; 
+      T     #TaskIdent; 
+      L     0; 
+      T     #NewToolMag; 
+      T     #NewToolLoc; 
+      T     #OldToolMag; 
+      T     #OldToolLoc; 
+      L     0; 
+      T     DB71.DBB    4; 
+      L     #PAddr1; 
+      L     P#60.0; 
+      <D    ; 
+      SPB   s3_1; 
+      L     0; 
+      T     DB71.DBB   64; 
+s3_1: L     #PAddr1; 
+      L     P#30.0; 
+      <D    ; 
+      SPB   s3e; 
+      L     0; 
+      T     DB71.DBB   34; 
+s3e:  SPA   FC8S; 
+NETWORK
+TITLE =SS4: WW Spindel -> Magazin
+
+SS4:  U     "TMSpindleIF".IFNo[1]; // Spindel Nr.1 
+      SPBN  AS4; // Synchron  
+      L     2; 
+      T     #TaskIdent; // TaskIdent = 2 (DB72)
+      L     1; 
+      T     #TaskIdentNo; // TaskIdentNo = 1 (SS 1)
+
+      L     "TMSpindleIF".IF[1].SLoc; // Platz-Nr. neues Werkzeug
+      L     0; 
+      ==I   ; 
+      SPBN  NB4; 
+
+//--- T0 programmiert ----
+//--- Spindelwerkzeug ins Magazin
+      L     1; 
+      T     #Status; 
+      L     0; 
+      T     #NewToolMag; 
+      T     #NewToolLoc; 
+      L     #MagazinNr; 
+      T     #OldToolMag; 
+      L     #PIstpos; 
+      LAR1  ; 
+      L     DIW [AR1,P#0.0]; // Platz-Nr. Ziel = Istposition Magazin
+      T     #OldToolLoc; 
+      SPA   FC8S; 
+
+// --- Spindel-Wz in Magazin ablegen
+NB4:  L     105; 
+      T     #Status; 
+      L     "TMSpindleIF".IF[1].SMag; 
+      T     #NewToolMag; 
+      L     "TMSpindleIF".IF[1].SLoc; 
+      T     #NewToolLoc; 
+      L     #MagazinNr; 
+      T     #OldToolMag; 
+      L     #PIstpos; 
+      LAR1  ; 
+      L     DIW [AR1,P#0.0]; // Platz-Nr. Ziel = Istposition Magazin
+      T     #OldToolLoc; 
+      SPA   FC8S; 
+
+// --- asynchron Umspeichern ------------------------------
+AS4:  UN    "TMSpindleIF".IFNo[1]; // Asynchron 
+      SPBN  F4; 
+      L     1; // Status = 1 
+      T     #Status; 
+      L     4; 
+      T     #TaskIdent; // TaskIdent = 5 (Auftrag von PLC)
+      L     1; 
+      T     #TaskIdentNo; // TaskIdentNo = 1 (Kanal 1)
+      L     #MagazinNr; // Magazin-Nr. Ziel
+      T     #NewToolMag; 
+      L     #PIstpos; 
+      LAR1  ; 
+      L     DIW [AR1,P#0.0]; // Platz-Nr. Ziel = Istposition Magazin
+      T     #NewToolLoc; 
+      L     9998; // Magazin-Nr. Quelle = Zwischenspeicher
+      T     #OldToolMag; 
+      L     1; // Platz-Nr. Quelle 
+      T     #OldToolLoc; 
+      SPA   FC8S; 
+F4:   NOP   0; 
+NETWORK
+TITLE =SS5: WW Magazin -> Spindel
+
+SS5:  U     "TMSpindleIF".IFNo[1]; // Spindel Nr.1 
+      SPBN  AS5; // Synchron  
+      L     2; 
+      T     #TaskIdent; // TaskIdent = 2 (DB72)
+      L     1; 
+      T     #TaskIdentNo; // TaskIdentNo = 1 (SS 1)
+
+// --- neues Werkzeug in Spindel
+      L     1; 
+      T     #Status; 
+      L     9998; 
+      T     #NewToolMag; 
+      L     1; 
+      T     #NewToolLoc; 
+      L     "TMSpindleIF".IF[1].TMag; 
+      T     #OldToolMag; 
+      L     "TMSpindleIF".IF[1].TLoc; 
+      T     #OldToolLoc; 
+      SPA   FC8S; 
+
+// --- asynchron Umspeichern ------------------------------
+AS5:  UN    "TMSpindleIF".IFNo[1]; // Asynchron 
+      SPBN  F5; 
+      L     1; // Status = 1 
+      T     #Status; 
+      L     4; 
+      T     #TaskIdent; // TaskIdent = 5 (Auftrag von PLC)
+      L     1; 
+      T     #TaskIdentNo; // TaskIdentNo = 1 (Kanal 1)
+      L     9998; // Magazin-Nr. Quelle = Zwischenspeicher
+      T     #NewToolMag; 
+      L     1; // Platz-Nr. Quelle 
+      T     #NewToolLoc; 
+      L     #MagazinNr; // Magazin-Nr. Ziel
+      T     #OldToolMag; 
+      L     #PIstpos; 
+      LAR1  ; 
+      L     DIW [AR1,P#0.0]; // Platz-Nr. Ziel = Istposition Magazin
+      T     #OldToolLoc; 
+      SPA   FC8S; 
+F5:   NOP   0; 
+NETWORK
+TITLE =SS6: Umspeichern Gr1 -> Mag   nur asynchron ablegen möglich
+
+SS6:  U     "TMSpindleIF".IFNo[1]; // Spindel Nr.1 
+      U     "TMSpindleIF".IF[1].Prepare; // Wechsel vorbereiten steht an
+      U(    ; 
+      L     "TMSpindleIF".IF[1].SMag; // neues Wz in Greifer 1
+      L     9998; 
+      ==I   ; 
+      )     ; 
+      U(    ; 
+      L     "TMSpindleIF".IF[1].SLoc; 
+      L     2; 
+      ==I   ; 
+      )     ; 
+      SPBN  F206; // Synchron Fall 1 neues Werkzeug ist in Gr1
+      L     #MagazinNr; 
+      T     #NewToolMagTemp; 
+
+      U     "M_WZM_Regal_angewaehlt"; 
+      SPB   B206; 
+      L     #PIstpos; 
+      LAR1  ; // PIstPos
+      L     DIW [AR1,P#0.0]; // Platz-Nr. Ziel = Istposition Magazin
+      T     #NewToolLocTemp; 
+      SPA   C206; 
+
+B206: L     "DI_WZV_ABL_REGAL".TLoc_Save; 
+      T     #NewToolLocTemp; 
+C206: L     "TMSpindleIF".IF[1].IdentBuff; 
+      T     #OldToolMagTemp; 
+      L     "TMSpindleIF".IF[1].NoBuff; 
+      T     #OldToolLocTemp; 
+      SPA   ST6; 
+
+F206: U     "TMSpindleIF".IFNo[1]; // Synchron Fall 2 Gr.Wz
+      U     "TMSpindleIF".IF[1].Perform; // Wechsel steht an
+      U     #GrWz; // Synchron WW mit Gr.Werkzeug -->
+      SPBN  AS6; 
+      L     "TMSpindleIF".IF[1].SMag; 
+      T     #NewToolMagTemp; 
+      L     "TMSpindleIF".IF[1].SLoc; 
+      T     #NewToolLocTemp; 
+      L     #MagPosGrWz; 
+      T     #OldToolMagTemp; 
+      L     #PlacePosGrWz; 
+      T     #OldToolLocTemp; 
+
+      U     "M_WZM_Regal_angewaehlt"; 
+      SPB   K217; 
+      L     #MagPosGrWz; 
+      T     #OldToolMagTemp; 
+      L     #PlacePosGrWz; 
+      T     #OldToolLocTemp; 
+      SPA   ST6; 
+K217: L     "DI_WZV_ABL_REGAL".TMag_Save; 
+      T     #OldToolMagTemp; 
+      L     "DI_WZV_ABL_REGAL".TLoc_Save; 
+      T     #OldToolLocTemp; 
+
+ST6:  L     105; // Status = 105
+      T     #Status; 
+      L     2; 
+      T     #TaskIdent; // TaskIdent = 2 (DB72)
+      L     1; 
+      T     #TaskIdentNo; // TaskIdentNo = 1 (SS 1)
+      L     "TMSpindleIF".IF[1].TLoc; // Platz-Nr. altes Werkzeug
+      L     0; 
+      <>I   ; 
+      SPB   OL6; // Werkzeug in Spindel ? Ja ->
+      L     #NewToolMagTemp; // ---- kein Wz in Spindel ---
+      T     #NewToolMag; 
+      L     #NewToolLocTemp; 
+      T     #NewToolLoc; 
+      L     0; 
+      T     #OldToolMag; 
+      T     #OldToolLoc; 
+
+      SPA   FC8S; 
+
+OL6:  L     #NewToolMagTemp; //---- Werkzeug in Spindel ----
+      T     #NewToolMag; 
+      L     #NewToolLocTemp; 
+      T     #NewToolLoc; 
+
+      L     #OldToolMagTemp; 
+      T     #OldToolMag; 
+      L     #OldToolLocTemp; 
+      T     #OldToolLoc; 
+      SPA   FC8S; 
+
+AS6:  UN    "TMSpindleIF".IFNo[1]; 
+      UN    #USortAkt; 
+      O(    ; 
+      O(    ; 
+      L     "TMSpindleIF".IF[1].SMag; 
+      L     9998; 
+      <>I   ; 
+      )     ; 
+      O(    ; 
+      L     "TMSpindleIF".IF[1].SLoc; 
+      L     2; 
+      <>I   ; 
+      )     ; 
+      U     "TMSpindleIF".IFNo[1]; 
+      U     "TMSpindleIF".IF[1].Prepare; 
+      )     ; 
+      SPBN  s6a0; 
+      L     1; // Status = 1 
+      T     #Status; 
+      T     #TaskIdentNo; // TaskIdentNo = 1 (Kanal 1)
+      L     4; 
+      T     #TaskIdent; // TaskIdent = 5 (Auftrag von PLC)
+s6a1: L     #MagazinNr; // Magazin-Nr. Ziel
+      T     #NewToolMag; 
+
+      U     "M_WZM_Regal_angewaehlt"; 
+      SPB   G206; 
+      L     #PIstpos; 
+      LAR1  ; // PIstPos
+      L     DIW [AR1,P#0.0]; // Platz-Nr. Ziel = Istposition Magazin
+      T     #NewToolLoc; 
+      SPA   H206; 
+G206: L     "DI_WZV_ABL_REGAL".TLoc_Save; // "TMSpindleIF".IF[1].TLoc
+H206: T     #NewToolLoc; 
+// asynchron abgelegt Merken zum sofort wieder holen
+      L     9998; // Magazin-Nr. Quelle = Zwischenspeicher
+      T     #OldToolMag; 
+      L     2; // Platz-Nr. Quelle 
+      T     #OldToolLoc; 
+      SPA   FC8S; 
+s6a0: U     #USortAkt; 
+      SPBN  F6; 
+      L     105; // Status = 105
+      T     #Status; 
+      L     B#16#1; 
+      T     #TaskIdent; 
+      T     #TaskIdentNo; 
+      SPA   s6a1; 
+F6:   NOP   0; 
+NETWORK
+TITLE =SS7,SS8: Quittung / Abbruch Wechsel vorbereiten  
+
+SS8:  L     3; // Status 3 bei Abbruch
+      SPA   STA8; 
+SS7:  L     1; 
+STA8: T     #Status; 
+      L     2; 
+      T     #TaskIdent; // TaskIdent = 2 (DB72)
+      L     1; 
+      T     #TaskIdentNo; // TaskIdentNo = 1 (SS 1)
+      L     "TMSpindleIF".IF[1].SMag; // Magazin-Nr. neues Werkzeug
+      T     #NewToolMag; 
+      T     #NewToolMag_Wechsel_S1; 
+      L     "TMSpindleIF".IF[1].SLoc; // Platz-Nr. neues Werkzeug
+      T     #NewToolLoc; 
+      T     #NewToolLoc_Wechsel_S1; 
+      U     "TMSpindleIF".IF[1].Prepare; 
+      R     "TMSpindleIF".IF[1].Prepare; 
+
+      UN    "M_WZV_T-Daten_req"; //     UN    M    497.1                  // DB72 Daten aus T-Befehl sind falsch
+      SPB   xx8; 
+      L     1; 
+      T     #NewToolMag; 
+      L     "WZV_T-Daten"; 
+      T     #NewToolLoc; 
+      R     "M_WZV_T-Daten_req"; //R     M    497.1
+
+xx8:  L     "TMSpindleIF".IF[1].TLoc; // Platz-Nr. altes Werkzeug
+      L     0; 
+      <>I   ; 
+      SPB   OLD8; // Werkzeug in Spindel ? ja ->
+      T     #OldToolMag; 
+      T     #OldToolLoc; 
+      T     #OldToolMag_Wechsel_S1; 
+      T     #OldToolLoc_Wechsel_S1; 
+
+      SPA   FC8S; 
+OLD8: L     "TMSpindleIF".IF[1].IdentBuff; // Magazin-Nr. Spindel
+      T     #OldToolMag; 
+      T     #OldToolMag_Wechsel_S1; 
+      L     "TMSpindleIF".IF[1].NoBuff; // Platz-Nr. Spindel
+      T     #OldToolLoc; 
+      T     #OldToolLoc_Wechsel_S1; 
+      SPA   FC8S; 
+NETWORK
+TITLE =SS9,SS10,SS12: Umspeichern Wechselstelle -> 9998,2/3/4  
+
+SS9:  L     2; 
+      SPA   STA9; 
+SS10: L     3; 
+      SPA   STA9; 
+SS12: L     4; 
+STA9: T     #ZwSpeichNr; 
+
+      UN    "TMSpindleIF".IFNo[1]; // Spindel Nr.1 
+      SPB   s9a0; //slh, 11.06.2007
+      L     1; // Status = 1 vorbereiten fertig
+      T     #Status; 
+      L     2; 
+      T     #TaskIdent; // TaskIdent = 2 (DB72)
+      L     1; 
+      T     #TaskIdentNo; // TaskIdentNo = 1 (SS 1)
+      L     9998; 
+      T     #NewToolMag; 
+      T     #NewToolMag_Wechsel_S1; 
+      L     #ZwSpeichNr; 
+      T     #NewToolLoc; 
+      T     #NewToolLoc_Wechsel_S1; 
+
+      U     "TMSpindleIF".IF[1].Prepare; // vorbereiten
+      UN    "TMSpindleIF".IF[1].Perform; // nicht wechsel
+      R     "TMSpindleIF".IF[1].Prepare; // T-Befehle Wechsel vorbereiten
+      SPB   St_9; 
+      L     105; 
+      T     #Status; 
+St_9: L     "TMSpindleIF".IF[1].TLoc; // Platz-Nr. altes Werkzeug
+      L     0; 
+      <>I   ; 
+      SPB   OL_9; // Werkzeug in Spindel ? Ja ->
+      T     #OldToolMag; 
+      T     #OldToolMag_Wechsel_S1; 
+      T     #OldToolLoc; 
+      T     #OldToolLoc_Wechsel_S1; 
+      SPA   FC8S; 
+
+OL_9: U     #GrWz; // Großes Werkzeug
+      UN(   ; 
+      U     "M_WZM_Regal_angewaehlt"; 
+      U     "DI_WZV_ABL_REGAL".A_ANF_HWZ_unload_M6; 
+      )     ; 
+      SPB   Grw9; 
+      L     "TMSpindleIF".IF[1].IdentBuff; // Magazin-Nr. altes Werkzeug 
+      T     #OldToolMag; 
+      T     #OldToolMag_Wechsel_S1; 
+      L     "TMSpindleIF".IF[1].NoBuff; // Platz-Nr. altes Werkzeug
+      T     #OldToolLoc; 
+      T     #OldToolLoc_Wechsel_S1; 
+      SPA   FC8S; 
+
+Grw9: U     "M_WZM_Regal_angewaehlt"; 
+      SPB   Gr9a; 
+      L     "TMSpindleIF".IF[1].IdentBuff; // Magazin-Nr. altes Werkzeug 
+      L     #MagPosGrWz; 
+      T     #OldToolMag; 
+      T     #OldToolMag_Wechsel_S1; 
+      L     "TMSpindleIF".IF[1].NoBuff; // Platz-Nr. altes Werkzeug
+      L     #PlacePosGrWz; // Platz-Nr. altes Werkzeug
+      T     #OldToolLoc; 
+      T     #OldToolLoc_Wechsel_S1; 
+
+      U     "DB_NC_PLC".WZW_WZ_AUS_EINWechseln; 
+      UN    "DB_NC_PLC".WZW_WZ_Hand_Aus; 
+      S     #AUSEIN_Einvorgang; 
+
+      SPA   FC8S; 
+
+Gr9a: L     "TMSpindleIF".IF[1].IdentBuff; // Magazin-Nr. altes Werkzeug 
+      L     #MagPosGrWz; 
+      L     "DI_WZV_ABL_REGAL".TMag_Save; 
+      T     #OldToolMag; 
+      T     #OldToolMag_Wechsel_S1; 
+      L     "TMSpindleIF".IF[1].NoBuff; // Platz-Nr. altes Werkzeug
+      L     #PlacePosGrWz; // Platz-Nr. altes Werkzeug
+      L     "DI_WZV_ABL_REGAL".TLoc_Save; 
+      T     #OldToolLoc; 
+      T     #OldToolLoc_Wechsel_S1; 
+      SPA   FC8S; 
+
+s9a0: UN    #USortAkt; 
+      SPB   ASY9; 
+      L     105; 
+      T     #Status; 
+      L     B#16#1; 
+      T     #TaskIdent; 
+      T     #TaskIdentNo; 
+      SPA   s9a2; 
+
+ASY9: L     1; // Status = 1 
+      T     #Status; 
+      T     #TaskIdentNo; // TaskIdentNo = 1 (Kanal 1)
+      L     5; 
+      T     #TaskIdent; // TaskIdent = 5 (Auftrag von PLC)
+
+s9a2: L     #MagazinNr; // Magazin-Nr. Quelle
+      T     #OldToolMag; 
+      U     "M_WZM_Regal_angewaehlt"; 
+      SPB   n10a; 
+      L     #PIstpos; 
+      LAR1  ; // PIstPos
+      L     DIW [AR1,P#0.0]; // Platz-Nr. Quelle = Istposition Magazin
+      SPA   n10b; 
+n10a: L     "DI_WZV_ABL_REGAL".SLoc_Save; //xxxxxxxxx
+n10b: T     #OldToolLoc; 
+      L     9998; // Magazin-Nr. Ziel = Zwischenspeicher
+      T     #NewToolMag; 
+      L     #ZwSpeichNr; // Platz-Nr. Ziel 
+      T     #NewToolLoc; 
+      SPA   FC8S; 
+NETWORK
+TITLE =SS11: Greifer 1 od. 2 nach TPU und Greifer 1 od. 2 nach Spindel
+
+SS11: U     "TMSpindleIF".IFNo[1]; 
+      U     "TMSpindleIF".IF[1].Perform; 
+      SPBN  AS11; 
+      L     1; // Status = 1 
+      T     #Status; 
+      L     2; 
+      T     #TaskIdent; // TaskIdent = 2 (DB72)
+      L     1; 
+      T     #TaskIdentNo; // TaskIdentNo = 1 (SS 1)
+
+      ON    "DB_NC_PLC".WZW_WZ_AUS_EINWechseln; 
+      O     "DB_NC_PLC".WZW_WZ_Hand_Ein; 
+      O     "DB_NC_PLC".WZW_WZ_Hand_Aus; 
+      SPBN  a_e4; 
+
+      L     "TMSpindleIF".IF[1].SLoc; // Auswechseln: T0
+      L     0; 
+      <>I   ; 
+      SPB   N11; 
+      L     0; 
+      T     #NewToolMag; 
+      T     #NewToolLoc; 
+      SPA   O11; 
+
+// Mischwechsel MagazinWZ aus und HandWZ ein
+N11:  L     "TMSpindleIF".IF[1].SMag; // Vollwechsel: externes WZ programmiert
+      L     9999; 
+      ==I   ; 
+      SPBN  S111; 
+      L     105; 
+      T     #Status; 
+      L     "TMSpindleIF".IF[1].SMag; 
+      T     #NewToolMag; 
+      L     "TMSpindleIF".IF[1].SLoc; 
+      T     #NewToolLoc; 
+      SPA   O11; 
+
+S111: L     9998; // sonst: WZ in der Spindel
+      T     #NewToolMag; 
+      L     1; 
+      T     #NewToolLoc; 
+
+O11:  L     "TMSpindleIF".IF[1].TLoc; // Einwechseln: kein WZ in der Spindel
+      L     0; 
+      <>I   ; 
+      SPB   OL11; // Werkzeug in Spindel ? Ja ->
+      L     0; 
+      T     #OldToolMag; 
+      T     #OldToolLoc; 
+      SPA   FC8S; 
+
+OL11: L     "TMSpindleIF".IF[1].TMag; // Einwechseln: externes WZ war in der Spindel
+      L     9999; 
+      ==I   ; 
+      SPBN  N112; 
+      L     -1; 
+      T     #OldToolMag; 
+      T     #OldToolLoc; 
+      SPA   FC8S; 
+
+N112: L     9998; // Aus.-Vollwechsel: Werkzeug war in Spindel 
+      T     #OldToolMag; 
+      L     4; 
+      T     #OldToolLoc; 
+      SPA   FC8S; 
+
+a_e4: U     #AUSEIN_Einvorgang; 
+      SPB   a_e5; 
+//Aus-Ein Wechsel --> Auswechsel
+      L     105; 
+      T     #Status; 
+
+      L     "TMSpindleIF".IF[1].SMag; 
+      T     #NewToolMag; 
+      L     "TMSpindleIF".IF[1].SLoc; 
+      T     #NewToolLoc; 
+
+      L     9998; 
+      T     #OldToolMag; 
+      L     4; 
+      T     #OldToolLoc; 
+
+      SPA   FC8S; 
+a_e5: NOP   0; 
+//Aus-Ein Wechsel --> Einwechsel
+      L     1; 
+      T     #Status; 
+
+      L     9998; 
+      T     #NewToolMag; 
+      L     1; 
+      T     #NewToolLoc; 
+
+
+      L     #MagPosGrWz; 
+      T     #OldToolMag; 
+      L     #PlacePosGrWz; 
+      T     #OldToolLoc; 
+
+      R     #AUSEIN_Einvorgang; 
+
+      SPA   FC8S; 
+
+//-----------------asynchron Umspeichern---------------------------------
+AS11: L     1; //Status 1: (Bewegung vollendet)
+      T     #Status; 
+      L     4; 
+      T     #TaskIdent; // TaskIdent = 4 (Auftrag von PLC)
+      L     1; 
+      T     #TaskIdentNo; // TaskIdentNo = 1 (Kanal 1)
+      L     9998; 
+      T     #OldToolMag; 
+      U     "M_WZW_Gre1_Pos_Mag"; //if Gr.1 bei Tpu
+      L     B#16#2; //..ZwiSpAdr.von Gr.1 
+      SPB   bas1; 
+      L     B#16#3; //.. else ZwiSpAdr.von Gr.2
+bas1: T     #OldToolLoc; //.. nach #OldToolLoc
+      L     9998; // Magazin-Nr. Ziel = Zwischenspeicher
+      T     #NewToolMag; 
+      L     4; // Platz-Nr. Ziel 
+      T     #NewToolLoc; 
+      SPA   FC8S; 
+
+//-----------------asynchron Umspeichern mit Folgeauftrqag--------------
+      L     1; // Status = 1 
+      T     #Status; 
+      L     4; 
+      T     #TaskIdent; // TaskIdent = 4 (Auftrag von PLC)
+      L     1; 
+      T     #TaskIdentNo; // TaskIdentNo = 1 (Kanal 1)
+      L     9998; 
+      T     #NewToolMag; 
+      T     #OldToolMag; 
+
+      U     #Umsp_Gr1_TPU; 
+      U     "M_WZGr1_belegt"; 
+      SPBN  A111; 
+
+// Folgeauftrag Umspeichern Greifer 2 -> Spindel
+
+      U     "M_WZGr2_belegt"; 
+      S     #Umsp_Gr2_Spdl; 
+
+// Greifer 1 -> TPU
+
+      L     4; // TPU
+      T     #NewToolLoc; // Ziel
+      L     2; // Greifer 1
+      T     #OldToolLoc; // Quelle
+      SPA   FC8S; 
+
+A111: U     #Umsp_Gr2_TPU; 
+      U     "M_WZGr2_belegt"; 
+      SPBN  A112; 
+
+// Folgeauftrag Umspeichern Greifer 1 -> Spindel
+
+      U     "M_WZGr1_belegt"; 
+      S     #Umsp_Gr1_Spdl; 
+
+// Greifer 2 -> TPU
+
+      L     4; // TPU
+      T     #NewToolLoc; // Ziel
+      L     3; // Greifer 2
+      T     #OldToolLoc; // Quelle
+      SPA   FC8S; 
+
+A112: U     #Umsp_Gr1_TPU; 
+      U     "M_WZGr2_belegt"; 
+      SPBN  A113; 
+
+// Greifer 2 -> Spindel
+
+      L     1; // TPU
+      T     #NewToolLoc; // Ziel
+      L     3; // Greifer 2
+      T     #OldToolLoc; // Quelle
+      SPA   FC8S; 
+
+A113: U     #Umsp_Gr2_TPU; 
+      U     "M_WZGr1_belegt"; 
+      SPBN  A114; 
+
+// Greifer 1 -> Spindel
+
+      L     1; // TPU
+      T     #NewToolLoc; // Ziel
+      L     2; // Greifer 1
+      T     #OldToolLoc; // Quelle
+      SPA   FC8S; 
+
+A114: NOP   0; 
+
+NETWORK
+TITLE =SS13: Umspeichern Wechselstelle -> Spindel
+
+SS13: UN    "TMSpindleIF".IFNo[1]; 
+      SPB   AS13; 
+      L     1; // Status = 1 Wechsel beendet
+      T     #Status; 
+      L     2; 
+      T     #TaskIdent; // TaskIdent = 2 (DB72)
+      L     1; 
+      T     #TaskIdentNo; // TaskIdentNo = 1 (SS 1)
+      L     "TMSpindleIF".IF[1].IdentBuff; // Zielposition neues Werkzeug Magazin
+      T     #NewToolMag; 
+      T     #NewToolMag_Wechsel_S1; 
+      L     "TMSpindleIF".IF[1].NoBuff; // Zielposition neues Werkzeug Platz
+      T     #NewToolLoc; 
+      T     #NewToolLoc_Wechsel_S1; 
+
+      U     "M_WZM_Regal_angewaehlt"; 
+      SPBN  s13; 
+
+      U     "DB_NC_PLC".WZW_WZ_Hand_Ein; 
+      SPBN  s13a; 
+      L     "TMSpindleIF".IF[1].TMag; // Magazin-Nr. altes Werkzeug 
+      T     #OldToolMag; 
+      T     #OldToolMag_Wechsel_S1; 
+      L     "TMSpindleIF".IF[1].TLoc; // Platz-Nr. altes Werkzeug = Istposition
+      T     #OldToolLoc; 
+      T     #OldToolLoc_Wechsel_S1; 
+      SPA   FC8S; 
+
+s13a: L     #OldToolMag_Wechsel_S1; 
+      T     #OldToolMag; 
+      T     #OldToolMag_Wechsel_S1; 
+      L     #OldToolLoc_Wechsel_S1; 
+      T     #OldToolLoc; 
+      T     #OldToolLoc_Wechsel_S1; 
+
+      SPA   FC8S; 
+
+s13:  U     "DB_NC_PLC".WZW_WZ_Hand_Ein; 
+      SPBN  n13a; 
+      L     "TMSpindleIF".IF[1].TMag; // Magazin-Nr. altes Werkzeug 
+      T     #OldToolMag; 
+      T     #OldToolMag_Wechsel_S1; 
+      L     "TMSpindleIF".IF[1].TLoc; // Platz-Nr. altes Werkzeug = Istposition
+      T     #OldToolLoc; 
+      T     #OldToolLoc_Wechsel_S1; 
+      SPA   FC8S; 
+
+n13a: L     #OldToolMag_Wechsel_S1; 
+      T     #OldToolMag; 
+      T     #OldToolMag_Wechsel_S1; 
+      L     #OldToolLoc_Wechsel_S1; 
+      T     #OldToolLoc; 
+      T     #OldToolLoc_Wechsel_S1; 
+      SPA   FC8S; 
+//------------------asynchron---------------------------------------------------
+AS13: L     1; // Status = 1 
+      T     #Status; 
+      L     5; 
+      T     #TaskIdent; // TaskIdent = 5 (Auftrag von PLC)
+      L     1; 
+      T     #TaskIdentNo; // TaskIdentNo = 1 (Kanal 1)
+      L     #MagazinNr; // Magazin-Nr. Quelle
+      T     #OldToolMag; 
+      L     #PIstpos; 
+      LAR1  ; // PIstPos
+      L     DIW [AR1,P#0.0]; // Platz-Nr. Quelle = Istposition Magazin
+      T     #OldToolLoc; 
+      L     9998; // Magazin-Nr. Ziel = Zwischenspeicher
+      T     #NewToolMag; 
+      L     1; // Platz-Nr. Ziel 
+      T     #NewToolLoc; 
+      SPA   FC8S; 
+NETWORK
+TITLE =SS14: Umspeichern Greifer 2 (9998,3) -> Wechselstelle
+
+SS14: U     "TMSpindleIF".IFNo[1]; // Spindel Nr.1 
+      U     "TMSpindleIF".IF[1].Prepare; // Wechsel vorbereiten steht an
+      U(    ; 
+      L     "TMSpindleIF".IF[1].SMag; // neuese Wz in Greifer 2 
+      L     9998; 
+      ==I   ; 
+      )     ; 
+      U(    ; 
+      L     "TMSpindleIF".IF[1].SLoc; 
+      L     3; 
+      ==I   ; 
+      )     ; 
+      SPBN  F214; // Synchron Fall 1 neues Werkzeug ist in Gr2
+      L     #MagazinNr; 
+      T     #NewToolMagTemp; 
+      U     "M_WZM_Regal_angewaehlt"; 
+      SPB   B214; 
+      L     #PIstpos; 
+      LAR1  ; // PIstPos
+      L     DIW [AR1,P#0.0]; // Platz-Nr. Ziel = Istposition Magazin
+      T     #NewToolLocTemp; 
+
+      T     "M_WZV_Gr2_WST"; // 04.09.00 AB
+      SPA   C214; 
+
+B214: L     "DI_WZV_ABL_REGAL".TLoc_Save; 
+      T     #NewToolLocTemp; 
+
+C214: L     "TMSpindleIF".IF[1].IdentBuff; 
+      T     #OldToolMagTemp; 
+      L     "TMSpindleIF".IF[1].NoBuff; 
+      T     #OldToolLocTemp; 
+
+      SPA   ST14; 
+
+F214: U     "TMSpindleIF".IFNo[1]; // Synchron Fall 2 Gr.Wz
+      U     "TMSpindleIF".IF[1].Perform; // Wechsel steht an
+      U     #GrWz; // Synchron WW mit Gr.Werkzeug -->
+      SPBN  AS14; 
+      L     "TMSpindleIF".IF[1].SMag; 
+      T     #NewToolMagTemp; 
+      L     "TMSpindleIF".IF[1].SLoc; 
+      T     #NewToolLocTemp; 
+
+      U     "M_WZM_Regal_angewaehlt"; 
+      SPB   K214; 
+      L     #MagPosGrWz; 
+      T     #OldToolMagTemp; 
+      L     #PlacePosGrWz; 
+      T     #OldToolLocTemp; 
+      SPA   ST14; 
+K214: L     "DI_WZV_ABL_REGAL".TMag_Save; 
+      T     #OldToolMagTemp; 
+      L     "DI_WZV_ABL_REGAL".TLoc_Save; 
+      T     #OldToolLocTemp; 
+
+ST14: L     105; // Status = 105
+      T     #Status; 
+      L     2; 
+      T     #TaskIdent; // TaskIdent = 2 (DB72)
+      L     1; 
+      T     #TaskIdentNo; // TaskIdentNo = 1 (SS 1)
+      L     "TMSpindleIF".IF[1].TLoc; // Platz-Nr. altes Werkzeug
+      L     0; 
+      <>I   ; 
+      SPB   OL14; // Werkzeug in Spindel ? Ja ->
+      L     #NewToolMagTemp; // ---- kein Wz in Spindel ---
+      T     #NewToolMag; 
+      L     #NewToolLocTemp; 
+      T     #NewToolLoc; 
+      L     0; 
+      T     #OldToolMag; 
+      T     #OldToolLoc; 
+
+      SPA   FC8S; 
+
+OL14: L     #NewToolMagTemp; //---- Werkzeug in Spindel ----
+      T     #NewToolMag; 
+      L     #NewToolLocTemp; 
+      T     #NewToolLoc; 
+      L     #OldToolMagTemp; 
+      T     #OldToolMag; 
+      L     #OldToolLocTemp; 
+      T     #OldToolLoc; 
+      SPA   FC8S; 
+
+AS14: UN    "TMSpindleIF".IFNo[1]; 
+      UN    #USortAkt; 
+      O(    ; 
+      O(    ; 
+      L     "TMSpindleIF".IF[1].SMag; 
+      L     9998; 
+      <>I   ; 
+      )     ; 
+      O(    ; 
+      L     "TMSpindleIF".IF[1].SLoc; 
+      L     3; 
+      <>I   ; 
+      )     ; 
+      U     "TMSpindleIF".IFNo[1]; 
+      U     "TMSpindleIF".IF[1].Prepare; 
+      )     ; 
+      SPBN  sea0; 
+      L     1; // Status = 1 
+      T     #Status; 
+      T     #TaskIdentNo; // TaskIdentNo = 1 (Kanal 1)
+      L     4; 
+      T     #TaskIdent; // TaskIdent = 5 (Auftrag von PLC)
+sea1: L     #MagazinNr; // Magazin-Nr. Ziel
+      T     #NewToolMag; 
+      U     "M_WZM_Regal_angewaehlt"; 
+      SPB   G214; 
+      L     #PIstpos; 
+      LAR1  ; // PIstPos
+      L     DIW [AR1,P#0.0]; // Platz-Nr. Ziel = Istposition Magazin
+      T     #NewToolLoc; 
+      SPA   H214; 
+G214: L     "DI_WZV_ABL_REGAL".TLoc_Save; 
+H214: T     #NewToolLoc; 
+      T     "M_WZV_Gr2_WST"; // 04.09.00 AB
+// asynchron abgelegt Merken zum sofort wieder holen
+      L     9998; // Magazin-Nr. Quelle = Zwischenspeicher
+      T     #OldToolMag; 
+      L     3; // Platz-Nr. Quelle 
+      T     #OldToolLoc; 
+      SPA   FC8S; 
+sea0: U     #USortAkt; 
+      SPBN  F14; 
+      L     105; // Status = 105
+      T     #Status; 
+      L     B#16#1; 
+      T     #TaskIdent; 
+      T     #TaskIdentNo; 
+      SPA   sea1; 
+F14:  NOP   0; 
+NETWORK
+TITLE =SS15: Umspeichern von 9998,4 TPU -> Wechselstelle
+
+SS15: L     4; 
+      T     #ZwSpeichNr; 
+
+      U     "TMSpindleIF".IFNo[1]; // Spindel Nr.1 
+      U     "TMSpindleIF".IF[1].Prepare; 
+      U(    ; 
+      L     "TMSpindleIF".IF[1].SMag; 
+      L     9998; 
+      ==I   ; 
+      )     ; 
+      U(    ; 
+      O(    ; 
+      L     3; 
+      L     "TMSpindleIF".IF[1].SLoc; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     #ZwSpeichNr; 
+      ==I   ; 
+      )     ; 
+      )     ; 
+      SPBN  F215; // Synchron Fall 1 angewählte Wz in Zwischenspeicher
+      L     #MagazinNr; //#MagNr
+      T     #NewToolMagTemp; 
+      L     #PIstpos; 
+      LAR1  ; // PIstPos
+      L     DIW [AR1,P#0.0]; // Platz-Nr. Ziel = Istposition Magazin
+      T     #NewToolLocTemp; 
+      L     "TMSpindleIF".IF[1].IdentBuff; 
+      T     #OldToolMagTemp; 
+      L     "TMSpindleIF".IF[1].NoBuff; 
+      T     #OldToolLocTemp; 
+      SPA   ST15; 
+
+F215: U     "TMSpindleIF".IFNo[1]; // Synchron Fall 2 Gr.Werkzeug in Magazin
+      U     DBX    4.1; 
+      U     #GrWz; 
+      U     #neuesWzWechselSt; 
+      SPBN  F315; 
+      L     "TMSpindleIF".IF[1].SMag; 
+      T     #NewToolMagTemp; 
+      L     "TMSpindleIF".IF[1].SLoc; 
+      T     #NewToolLocTemp; 
+      L     #MagPosGrWz; 
+      T     #OldToolMagTemp; 
+      L     #PlacePosGrWz; 
+      T     #OldToolLocTemp; 
+      SPA   ST15; 
+
+F315: U     "TMSpindleIF".IFNo[1]; // Synchron Fall  Gr.Werkzeug in Bereitstellungsplatz
+      U     DBX    4.1; 
+      U     #GrWz; 
+      UN    #neuesWzWechselSt; 
+      SPBN  AS15; 
+      L     9998; 
+      T     #NewToolMagTemp; 
+      L     #VarBereit; 
+      T     #NewToolLocTemp; 
+      L     #MagPosGrWz; 
+      T     #OldToolMagTemp; 
+      L     #PlacePosGrWz; 
+      T     #OldToolLocTemp; 
+
+ST15: L     105; // Status = 105
+      T     #Status; 
+      L     2; 
+      T     #TaskIdent; // TaskIdent = 2 (DB72)
+      L     1; 
+      T     #TaskIdentNo; // TaskIdentNo = 1 (SS 1)
+
+      L     "TMSpindleIF".IF[1].TLoc; // Platz-Nr. altes Werkzeug
+      L     0; 
+      <>I   ; 
+      SPB   OL15; // Werkzeug in Spindel ? Ja ->
+      L     #MagazinNr; // ---- kein Wz in Spindel ---
+      T     #NewToolMag; 
+      L     #PIstpos; 
+      LAR1  ; // PIstPos
+      L     DIW [AR1,P#0.0]; // Platz-Nr. Ziel = Istposition Magazin
+      T     #NewToolLoc; 
+      L     0; 
+      T     #OldToolMag; 
+      T     #OldToolLoc; 
+      SPA   FC8S; 
+
+OL15: L     #NewToolMagTemp; //---- Werkzeug in Spindel ----
+      T     #NewToolMag; 
+      L     #NewToolLocTemp; 
+      T     #NewToolLoc; 
+      L     #OldToolMagTemp; 
+      T     #OldToolMag; 
+      L     #OldToolLocTemp; 
+      T     #OldToolLoc; 
+      SPA   FC8S; 
+
+//----asynchron Umspeichern------------------------------------------------------------------------
+
+AS15: UN    "TMSpindleIF".IFNo[1]; // Asynchron 
+      O     ; 
+      U     "TMSpindleIF".IFNo[1]; 
+      U     "TMSpindleIF".IF[1].Prepare; 
+      U(    ; 
+      L     "TMSpindleIF".IF[1].SMag; 
+      L     9998; 
+      <>I   ; 
+      )     ; 
+      U(    ; 
+      O(    ; 
+      L     3; 
+      L     "TMSpindleIF".IF[1].SLoc; 
+      <>I   ; 
+      )     ; 
+      O(    ; 
+      L     #ZwSpeichNr; 
+      <>I   ; 
+      )     ; 
+      )     ; 
+      SET   ; 
+      SPBN  F15; 
+      L     1; // Status = 1 
+      T     #Status; 
+      L     4; 
+      T     #TaskIdent; // TaskIdent = 5 (Auftrag von PLC)
+      L     1; 
+      T     #TaskIdentNo; // TaskIdentNo = 1 (Kanal 1)
+      L     #MagazinNr; // Magazin-Nr. Ziel
+      T     #NewToolMag; 
+      T     #NewToolMag_Wechsel_S2; 
+      L     #PIstpos; 
+      LAR1  ; // PIstPos
+      L     DIW [AR1,P#0.0]; // Platz-Nr. Ziel = Istposition Magazin
+      T     #NewToolLoc; 
+      T     #NewToolLoc_Wechsel_S2; 
+      L     9998; // Magazin-Nr. Quelle = Zwischenspeicher
+      T     #OldToolMag; 
+      L     #ZwSpeichNr; // Platz-Nr. Quelle 
+      T     #OldToolLoc; 
+      SPA   FC8S; 
+F15:  NOP   0; 
+
+NETWORK
+TITLE =SS16: TPU 9998,4 -> Gr 9998,2/3 und Spindel -> Gr 9998,2/3
+
+SS16: U     #Umsp_TPU_Gr1; 
+      SPBN  S16a; 
+      L     2; 
+      T     #t_NewToolLoc; // Ziel TPU
+      L     3; 
+      T     #t_OldToolLoc; // Ziel Spindel
+      SPA   S16b; 
+
+S16a: L     3; 
+      T     #t_NewToolLoc; 
+      L     2; 
+      T     #t_OldToolLoc; 
+S16b: NOP   0; 
+
+      UN    "TMSpindleIF".IFNo[1]; 
+      SPB   AS16; 
+
+      L     2; 
+      T     #TaskIdent; // TaskIdent = 2 (DB72)
+      L     1; 
+      T     #TaskIdentNo; // TaskIdentNo = 1 (SS 1)
+      L     105; 
+      T     #Status; 
+
+      ON    "DB_NC_PLC".WZW_WZ_AUS_EINWechseln; 
+      O     "DB_NC_PLC".WZW_WZ_Hand_Ein; 
+      O     "DB_NC_PLC".WZW_WZ_Hand_Aus; 
+      SPBN  a_e1; 
+
+      L     "TMSpindleIF".IF[1].SLoc; // Neues Werkzeug T0
+      L     0; 
+      <>I   ; 
+      SPB   N16; //--T0
+
+      L     0; 
+      T     #NewToolMag; 
+      T     #NewToolLoc; 
+      SPA   O16; 
+
+N16:  L     "TMSpindleIF".IF[1].SMag; // Neues WZ ist ein Handwerkzeug
+      L     9999; 
+      ==I   ; 
+      SPBN  S162; 
+
+      L     "TMSpindleIF".IF[1].SMag; 
+      T     #NewToolMag; 
+      L     "TMSpindleIF".IF[1].SLoc; 
+      T     #NewToolLoc; 
+      SPA   O16; 
+
+S162: L     9998; // Kein T0, Neues WZ in GR1
+      T     #NewToolMag; 
+      L     #t_NewToolLoc; 
+      T     #NewToolLoc; 
+
+O16:  L     "TMSpindleIF".IF[1].TLoc; // Platz-Nr. altes Werkzeug
+      L     0; 
+      <>I   ; 
+      SPB   OL16; // Werkzeug in Spindel ? Ja ->
+
+      L     0; // ---- kein Wz in Spindel ---
+      T     #OldToolMag; //Unload ->
+      T     #OldToolLoc; 
+      SPA   FC8S; //-> Unload
+
+OL16: L     "TMSpindleIF".IF[1].TMag; // Platz-Nr. altes Werkzeug ist extern
+      L     9999; 
+      ==I   ; 
+      SPBN  N162; 
+
+      L     -1; 
+      T     #OldToolMag; 
+      T     #OldToolLoc; 
+      SPA   FC8S; //-> Unload
+
+N162: L     9998; //---- Werkzeug war in Spindel ----
+      T     #OldToolMag; 
+      L     #t_OldToolLoc; //--> Greifer 2
+      T     #OldToolLoc; 
+      SPA   FC8S; //-> Unload
+
+a_e1: L     "DB_GREIFER_DATEN".TNR_Spindel; 
+      L     0; 
+      <>I   ; 
+      SPBN  a_e2; 
+
+//Aus-Ein Wechsel --> Auswechsel
+      L     "TMSpindleIF".IF[1].SMag; 
+      T     #NewToolMag; 
+      L     "TMSpindleIF".IF[1].SLoc; 
+      T     #NewToolLoc; 
+
+      L     9998; 
+      T     #OldToolMag; 
+      L     #t_OldToolLoc; 
+      T     #OldToolLoc; 
+      SPA   FC8S; //-> Unload
+
+//Aus-Ein Wechsel --> Einwechsel
+a_e2: L     #OldToolMag_Wechsel_S2; 
+      L     #MagPosGrWz; 
+      T     #OldToolMag; 
+      L     #OldToolLoc_Wechsel_S2; 
+      L     #PlacePosGrWz; 
+      T     #OldToolLoc; 
+
+      L     9998; 
+      T     #NewToolMag; 
+      L     #t_NewToolLoc; 
+      T     #NewToolLoc; 
+
+      S     #AUSEIN_Einvorgang; 
+
+      SPA   FC8S; //-> Unload
+
+//----------------------------- asynchron Umspeichern ---------------------------------
+
+AS16: L     1; // Status = 1 
+      T     #Status; 
+      L     4; 
+      T     #TaskIdent; // TaskIdent = 4 (Auftrag von PLC)
+      L     1; 
+      T     #TaskIdentNo; // TaskIdentNo = 1 (Kanal 1)
+      L     9998; 
+      T     #NewToolMag; 
+      T     #OldToolMag; 
+
+      L     "DB_GREIFER_DATEN".TNR_TPU; 
+      L     0; 
+      <>I   ; 
+      SPBN  A161; 
+
+      L     "DB_GREIFER_DATEN".TNR_Spindel; 
+      L     0; 
+      <>I   ; 
+      SPBN  EFOL; 
+
+// Folgeauftrag Umspeichern Spindel ->  Greifer 1 oder 2
+
+      U     #Umsp_TPU_Gr1; 
+      S     #Umsp_Spdl_Gr2; 
+
+      U     #Umsp_TPU_Gr2; 
+      S     #Umsp_Spdl_Gr1; 
+
+EFOL: NOP   0; 
+
+// TPU belegt: TPU -> Greifer 1 oder 2
+
+      L     #t_NewToolLoc; // Ziel TPU
+      T     #NewToolLoc; // Ziel
+      L     4; 
+      T     #OldToolLoc; // Quelle
+      SPA   FC8S; 
+
+      L     "DB_GREIFER_DATEN".TNR_Spindel; 
+      L     0; 
+      <>I   ; 
+      SPBN  A161; 
+
+// Spindel belegt: Spindel -> Greifer 1 oder 2
+
+A161: L     #t_OldToolLoc; // Ziel Spindel
+      T     #NewToolLoc; // Ziel
+      L     1; 
+      T     #OldToolLoc; // Quelle
+      SPA   FC8S; 
+
+      NOP   0; 
+
+NETWORK
+TITLE =SS17: Umspeichern von 9998,4 -> 9998,2
+
+SS17: U     "TMSpindleIF".IFNo[1]; // Spindel Nr.1 
+      U     "TMSpindleIF".IF[1].Perform; 
+      UN    #GrWz; 
+      SPBN  F217; // Synchron Fall normales Wz.
+      L     "TMSpindleIF".IF[1].IdentBuff; 
+      T     #OldToolMagTemp; 
+      L     "TMSpindleIF".IF[1].NoBuff; 
+      T     #OldToolLocTemp; 
+      SPA   ST17; 
+
+F217: U     "TMSpindleIF".IFNo[1]; // Synchron Fall Großes Wz.
+      U     "TMSpindleIF".IF[1].Perform; 
+      U     #GrWz; 
+      SPBN  AS17; 
+      L     #MagPosGrWz; 
+      T     #OldToolMagTemp; 
+      L     #PlacePosGrWz; 
+      T     #OldToolLocTemp; 
+ST17: L     105; // Status = 105
+      T     #Status; 
+      L     2; 
+      T     #TaskIdent; // TaskIdent = 2 (DB72)
+      L     1; 
+      T     #TaskIdentNo; // TaskIdentNo = 1 (SS 1)
+      L     "TMSpindleIF".IF[1].TLoc; // Platz-Nr. altes Werkzeug
+      L     0; 
+      <>I   ; 
+      SPB   OL17; // Werkzeug in Spindel ? Ja ->
+      L     9998; // ---- kein Wz in Spindel ---
+      T     #NewToolMag; 
+      L     2; 
+      T     #NewToolLoc; 
+      L     0; 
+      T     #OldToolMag; 
+      T     #OldToolLoc; 
+      SPA   FC8S; 
+
+OL17: L     9998; //---- Werkzeug in Spindel ----
+      T     #NewToolMag; 
+      L     2; 
+      T     #NewToolLoc; 
+      L     #OldToolMagTemp; 
+      T     #OldToolMag; 
+      L     #OldToolLocTemp; 
+      T     #OldToolLoc; 
+      SPA   FC8S; 
+
+//--------asynchron Umspeichern------------------------------------------
+
+AS17: UN    "TMSpindleIF".IFNo[1]; // Asynchron 
+      SPBN  F17; 
+      L     1; // Status = 1 
+      T     #Status; 
+      L     4; 
+      T     #TaskIdent; // TaskIdent = 5 (Auftrag von PLC)
+      L     1; 
+      T     #TaskIdentNo; // TaskIdentNo = 1 (Kanal 1)
+      L     9998; // Magazin-Nr. Ziel
+      T     #NewToolMag; 
+      L     2; // Platz-Nr. Ziel = Istposition Magazin
+      T     #NewToolLoc; 
+      L     9998; // Magazin-Nr. Quelle = Zwischenspeicher
+      T     #OldToolMag; 
+      L     4; // Platz-Nr. Quelle 
+      T     #OldToolLoc; 
+      SPA   FC8S; 
+F17:  NOP   0; 
+NETWORK
+TITLE =SS18: Umspeichen 9998,1 Spindel -> 9998,2
+
+SS18: U     "TMSpindleIF".IFNo[1]; // Spindel Nr.1 
+      U(    ; 
+      U     "TMSpindleIF".IF[1].Perform; // Wechsel durchführen
+      O     "TMSpindleIF".IF[1].T0; 
+      )     ; 
+      UN    #GrWz; // kein Gr. Werkzeug
+      SPBN  F218; // Synchron Fall 1
+      L     9998; 
+      T     #NewToolMagTemp; 
+      L     3; 
+      T     #NewToolLocTemp; 
+      SPA   ST18; 
+
+F218: U     "TMSpindleIF".IFNo[1]; // Synchron Fall 2
+      U(    ; 
+      U     "TMSpindleIF".IF[1].Perform; // Wechsel durchführen
+      O     "TMSpindleIF".IF[1].T0; 
+      )     ; 
+      U     #GrWz; // Gr. Werkzeug
+      U     #neuesWzWechselSt; // neues Wz ist an Wechselstelle (nicht an Bereitstellungsplatz)
+      SPBN  F318; 
+      L     "TMSpindleIF".IF[1].SMag; 
+      T     #NewToolMagTemp; 
+      L     "TMSpindleIF".IF[1].SLoc; 
+      T     #NewToolLocTemp; 
+      SPA   ST18; 
+F318: U     "TMSpindleIF".IFNo[1]; // Synchron Fall 2
+      U(    ; 
+      U     "TMSpindleIF".IF[1].Perform; // Wechsel durchführen
+      O     "TMSpindleIF".IF[1].T0; 
+      )     ; 
+      U     #GrWz; // Gr. Werkzeug
+      UN    #neuesWzWechselSt; // neues Wz ist an Bereitstellungsplatz (nicht an Wechselstelle)
+      SPBN  AS18; 
+      L     9998; 
+      T     #NewToolMagTemp; 
+      L     #VarBereit; 
+      T     #NewToolLocTemp; 
+ST18: L     2; 
+      T     #TaskIdent; // TaskIdent = 2 (DB72)
+      L     1; 
+      T     #TaskIdentNo; // TaskIdentNo = 1 (SS 1)
+      L     "TMSpindleIF".IF[1].SLoc; 
+      L     0; 
+      <>I   ; 
+      SPB   T018; // kein T0 programmiert ? ->
+      L     1; 
+      T     #Status; 
+      L     9998; 
+      T     #OldToolMag; 
+      L     2; 
+      T     #OldToolLoc; 
+      L     0; 
+      T     #NewToolMag; 
+      T     #NewToolLoc; 
+      SPA   FC8S; 
+T018: L     "TMSpindleIF".IF[1].TLoc; // Platz-Nr. altes Werkzeug
+      L     0; 
+      <>I   ; 
+      SPB   OL18; // Werkzeug in Spindel ? Ja ->
+      L     1; 
+      T     #Status; 
+      L     #NewToolMagTemp; // ---- kein Wz in Spindel ---
+      T     #NewToolMag; 
+      L     #NewToolLocTemp; 
+      T     #NewToolLoc; 
+      L     0; 
+      T     #OldToolMag; 
+      T     #OldToolLoc; 
+      SPA   FC8S; 
+OL18: L     105; //---- Werkzeug in Spindel und neues Wz kommt ----
+      T     #Status; 
+      L     9998; 
+      T     #OldToolMag; 
+      T     #OldToolMag_Wechsel_S1; //xxxxxxx
+      L     2; 
+      T     #OldToolLoc; 
+      T     #OldToolLoc_Wechsel_S1; //xxxxxxx
+
+      U     "M_WZM_Regal_angewaehlt"; 
+      U(    ; 
+      UN    "DI_WZV_ABL_REGAL".A_Anf_change_M6; 
+      O     "DI_WZV_ABL_REGAL".A_Anf_HWZ_load_M6; 
+      )     ; 
+      SPB   n16a; 
+      L     #NewToolMagTemp; 
+      T     #NewToolMag; 
+      L     #NewToolLocTemp; 
+      T     #NewToolLoc; 
+      SPA   FC8S; 
+
+n16a: L     "DI_WZV_ABL_REGAL".SMag_Save; 
+      T     #NewToolMag; 
+      L     "DI_WZV_ABL_REGAL".SLoc_Save; 
+      T     #NewToolLoc; 
+      SPA   FC8S; 
+
+//----------------------------- asynchron Umspeichern ---------------------------------
+AS18: UN    "TMSpindleIF".IFNo[1]; // Asynchron 
+      SPBN  F18; 
+      L     1; // Status = 1 
+      T     #Status; 
+      L     4; 
+      T     #TaskIdent; // TaskIdent = 5 (Auftrag von PLC)
+      L     1; 
+      T     #TaskIdentNo; // TaskIdentNo = 1 (Kanal 1)
+      L     9998; // Magazin-Nr. Ziel
+      T     #NewToolMag; 
+      L     2; // Platz-Nr. Ziel = Istposition Magazin
+      T     #NewToolLoc; 
+      L     9998; // Magazin-Nr. Quelle = Zwischenspeicher
+      T     #OldToolMag; 
+      L     1; // Platz-Nr. Quelle 
+      T     #OldToolLoc; 
+      SPA   FC8S; 
+F18:  NOP   0; //SPA   FC8S
+
+
+NETWORK
+TITLE =SS19: Umspeichen 9998,3 -> 9998,1 Spindel Gr2 -> Spindel
+
+SS19: U     "TMSpindleIF".IFNo[1]; // Spindel Nr.1 
+      U     "TMSpindleIF".IF[1].Perform; 
+      UN    #GrWz; 
+      SPBN  F219; // Synchron Fall 1
+
+// Gr1 wurde bereits abgelegt (eigener Modus)
+      U     #E_Modus_Spi_Mag; 
+      SPBN  dd22; 
+      L     #MagazinNr; 
+      T     #OldToolMagTemp; 
+      L     #PIstpos; 
+      LAR1  ; // PIstPos
+      L     DIW [AR1,P#0.0]; // Platz-Nr. Ziel = Istposition Magazin
+      T     #OldToolLocTemp; 
+      SPA   ST19; 
+
+// altes Wz noch in Gr1
+dd22: L     9998; 
+      T     #OldToolMagTemp; 
+      L     2; 
+      T     #OldToolLocTemp; 
+      SPA   ST19; 
+
+F219: U     "TMSpindleIF".IFNo[1]; // Synchron Fall 2
+      U     "TMSpindleIF".IF[1].Perform; 
+      U     #GrWz; 
+      SPBN  AS19; 
+
+      O     "DI_WZV_ABL_REGAL".A_ANF_HWZ_unload_M6; 
+      O     #ANF_HWZ_unload_M6; 
+      SPBN  G219; 
+      L     9999; //#MagPosGrWz
+      T     #OldToolMagTemp; 
+      L     1; //#PlacePosGrWz
+      T     #OldToolLocTemp; 
+      SPA   ST19; 
+
+G219: L     #MagPosGrWz; 
+      T     #OldToolMagTemp; 
+      L     #PlacePosGrWz; 
+      T     #OldToolLocTemp; 
+      SPA   ST19; 
+
+ST19: L     1; // Status = 1 
+      T     #Status; 
+      L     2; 
+      T     #TaskIdent; // TaskIdent = 2 (DB72)
+      L     1; 
+      T     #TaskIdentNo; // TaskIdentNo = 1 (SS 1)
+
+      L     "TMSpindleIF".IF[1].TMag; 
+      L     2; 
+      ==I   ; 
+      U(    ; 
+      L     "TMSpindleIF".IF[1].TLoc; 
+      L     0; 
+      <>I   ; 
+      )     ; 
+      U     "DB_PLC_MD_DB20".UDHex._28_Bit3_WFK_Anwahl; 
+      SPBN  X219; 
+      L     "TMSpindleIF".IF[1].IdentBuff; // ---- kein Wz in Spindel ---
+      T     #NewToolMag; 
+      L     "TMSpindleIF".IF[1].NoBuff; 
+      T     #NewToolLoc; 
+      L     0; 
+      T     #OldToolMag; 
+      T     #OldToolLoc; 
+      T     #OldToolMag_Wechsel_S1; 
+      T     #OldToolLoc_Wechsel_S1; 
+      L     9998; 
+      T     #NewToolMag_Wechsel_S1; 
+      L     3; 
+      T     #NewToolLoc_Wechsel_S1; 
+      SPA   FC8S; 
+
+X219: L     "TMSpindleIF".IF[1].TLoc; // Platz-Nr. altes Werkzeug
+      L     0; 
+      <>I   ; 
+      SPB   OL19; // Werkzeug in Spindel ? Ja ->
+
+// in Spindel war kein Werkzeug
+      L     "TMSpindleIF".IF[1].IdentBuff; // ---- kein Wz in Spindel ---
+      T     #NewToolMag; 
+      L     "TMSpindleIF".IF[1].NoBuff; 
+      T     #NewToolLoc; 
+      L     0; 
+      T     #OldToolMag; 
+      T     #OldToolLoc; 
+      SPA   FC8S; 
+
+// in Spindel war ein Werkzeug
+OL19: L     "TMSpindleIF".IF[1].IdentBuff; //---- Werkzeug in Spindel ----
+      T     #NewToolMag; 
+      L     "TMSpindleIF".IF[1].NoBuff; 
+      T     #NewToolLoc; 
+
+      U     "M_WZM_Regal_angewaehlt"; 
+      U     "DI_WZV_ABL_REGAL".A_Anf_unload_load_M6; 
+      SPB   O19a; 
+      L     #OldToolMagTemp; 
+      T     #OldToolMag; 
+      L     #OldToolLocTemp; 
+      T     #OldToolLoc; 
+      SPA   FC8S; 
+
+O19a: L     "DI_WZV_ABL_REGAL".TMag_Save; 
+      T     #OldToolMag; 
+      L     "DI_WZV_ABL_REGAL".TLoc_Save; 
+      T     #OldToolLoc; 
+      SPA   FC8S; 
+//-----------------asynchron Umspeichern---------------------------------
+
+AS19: UN    "TMSpindleIF".IFNo[1]; // Asynchron 
+      SPBN  F19; 
+      L     1; // Status = 1 
+      T     #Status; 
+      L     4; 
+      T     #TaskIdent; // TaskIdent = 5 (Auftrag von PLC)
+      L     1; 
+      T     #TaskIdentNo; // TaskIdentNo = 1 (Kanal 1)
+      L     9998; // Magazin-Nr. Ziel
+      T     #NewToolMag; 
+      L     1; 
+      T     #NewToolLoc; 
+      L     9998; // Magazin-Nr. Quelle = Zwischenspeicher
+      T     #OldToolMag; 
+      L     3; // Platz-Nr. Quelle 
+      T     #OldToolLoc; 
+      SPA   FC8S; 
+F19:  NOP   0; 
+
+
+NETWORK
+TITLE =SS20: Umspeichen 9998,2 -> 9998,1 Spindel Gr1 -> Spindel
+
+SS20: U     "TMSpindleIF".IFNo[1]; // Spindel Nr.1 
+      U     "TMSpindleIF".IF[1].Perform; 
+      UN    #GrWz; 
+      SPBN  F220; // Synchron Fall 1
+
+// Gr2 wurde bereits abgelegt (eigener Modus)
+      U     #E_Modus_Spi_Mag; 
+      SPBN  cc22; 
+      L     #MagazinNr; 
+      T     #OldToolMagTemp; 
+      L     #PIstpos; 
+      LAR1  ; // PIstPos
+      L     DIW [AR1,P#0.0]; // Platz-Nr. Ziel = Istposition Magazin
+      T     #OldToolLocTemp; 
+      SPA   ST20; 
+
+// altes Wz noch in Gr2
+cc22: L     9998; 
+      T     #OldToolMagTemp; 
+      L     3; 
+      T     #OldToolLocTemp; 
+      SPA   ST20; 
+
+F220: U     "TMSpindleIF".IFNo[1]; // Synchron Fall 2
+      U     "TMSpindleIF".IF[1].Perform; 
+      U     #GrWz; 
+      SPBN  AS20; 
+      O     "DI_WZV_ABL_REGAL".A_ANF_HWZ_unload_M6; 
+      O     #ANF_HWZ_unload_M6; 
+      SPBN  G220; 
+      L     9999; //#MagPosGrWz
+      T     #OldToolMagTemp; 
+      L     1; //#PlacePosGrWz
+      T     #OldToolLocTemp; 
+      SPA   ST20; 
+
+G220: L     #MagPosGrWz; 
+      T     #OldToolMagTemp; 
+      L     #PlacePosGrWz; 
+      T     #OldToolLocTemp; 
+      SPA   ST20; 
+
+ST20: L     1; // Status = 1 
+      T     #Status; 
+      L     2; 
+      T     #TaskIdent; // TaskIdent = 2 (DB72)
+      L     1; 
+      T     #TaskIdentNo; // TaskIdentNo = 1 (SS 1)
+
+      L     "TMSpindleIF".IF[1].TMag; 
+      L     2; 
+      ==I   ; 
+      U(    ; 
+      L     "TMSpindleIF".IF[1].TLoc; 
+      L     0; 
+      <>I   ; 
+      )     ; 
+      U     "DB_PLC_MD_DB20".UDHex._28_Bit3_WFK_Anwahl; 
+      SPBN  X220; 
+      L     "TMSpindleIF".IF[1].IdentBuff; // ---- kein Wz in Spindel ---
+      T     #NewToolMag; 
+      L     "TMSpindleIF".IF[1].NoBuff; 
+      T     #NewToolLoc; 
+      L     0; 
+      T     #OldToolMag; 
+      T     #OldToolLoc; 
+      T     #OldToolMag_Wechsel_S1; 
+      T     #OldToolLoc_Wechsel_S1; 
+      L     9998; 
+      T     #NewToolMag_Wechsel_S1; 
+      L     2; 
+      T     #NewToolLoc_Wechsel_S1; 
+      SPA   FC8S; 
+
+X220: L     "TMSpindleIF".IF[1].TLoc; // Platz-Nr. altes Werkzeug
+      L     0; 
+      <>I   ; 
+      SPB   OL20; // Werkzeug in Spindel ? Ja ->
+// in Spindel war kein Werkzeug
+      L     "TMSpindleIF".IF[1].IdentBuff; // ---- kein Wz in Spindel ---
+      T     #NewToolMag; 
+      L     "TMSpindleIF".IF[1].NoBuff; 
+      T     #NewToolLoc; 
+      L     0; 
+      T     #OldToolMag; 
+      T     #OldToolLoc; 
+      SPA   FC8S; 
+
+// in Spindel war ein Werkzeug
+OL20: L     "TMSpindleIF".IF[1].IdentBuff; //---- Werkzeug in Spindel ----
+      T     #NewToolMag; 
+      L     "TMSpindleIF".IF[1].NoBuff; 
+      T     #NewToolLoc; 
+      L     #OldToolMagTemp; 
+      T     #OldToolMag; 
+      L     #OldToolLocTemp; 
+      T     #OldToolLoc; 
+      SPA   FC8S; 
+
+//-----------------asynchron Umspeichern---------------------------------
+
+AS20: UN    "TMSpindleIF".IFNo[1]; // Asynchron 
+      SPBN  F20; 
+      L     1; // Status = 1 
+      T     #Status; 
+      L     4; 
+      T     #TaskIdent; // TaskIdent = 5 (Auftrag von PLC)
+      L     1; 
+      T     #TaskIdentNo; // TaskIdentNo = 1 (Kanal 1)
+      L     9998; // Magazin-Nr. Ziel
+      T     #NewToolMag; 
+      L     1; 
+      T     #NewToolLoc; 
+      L     9998; // Magazin-Nr. Quelle = Zwischenspeicher
+      T     #OldToolMag; 
+      L     2; // Platz-Nr. Quelle 
+      T     #OldToolLoc; 
+      SPA   FC8S; 
+F20:  NOP   0; 
+NETWORK
+TITLE =SS21: Umspeichen 9998,1 Spindel -> 9998,3
+
+SS21: U     "TMSpindleIF".IFNo[1]; // Spindel Nr.1 
+      U(    ; 
+      U     "TMSpindleIF".IF[1].Perform; // Wechsel durchführen
+      O     "TMSpindleIF".IF[1].T0; 
+      )     ; 
+      UN    #GrWz; // kein Gr. Werkzeug
+      SPBN  F221; // Synchron Fall 1
+      L     9998; 
+      T     #NewToolMagTemp; 
+      L     2; 
+      T     #NewToolLocTemp; 
+      SPA   ST21; 
+
+F221: U     "TMSpindleIF".IFNo[1]; // Synchron Fall 2
+      U(    ; 
+      U     "TMSpindleIF".IF[1].Perform; // Wechsel durchführen
+      O     "TMSpindleIF".IF[1].T0; 
+      )     ; 
+      U     #GrWz; // Gr. Werkzeug
+      U     #neuesWzWechselSt; // neues Wz ist an Wechselstelle (nicht an Bereitstellungsplatz)
+      SPBN  F321; 
+      L     "TMSpindleIF".IF[1].SMag; 
+      T     #NewToolMagTemp; 
+      L     "TMSpindleIF".IF[1].SLoc; 
+      T     #NewToolLocTemp; 
+      SPA   ST21; 
+F321: U     "TMSpindleIF".IFNo[1]; // Synchron Fall 2
+      U(    ; 
+      U     "TMSpindleIF".IF[1].Perform; // Wechsel durchführen
+      O     "TMSpindleIF".IF[1].T0; 
+      )     ; 
+      U     #GrWz; // Gr. Werkzeug
+      UN    #neuesWzWechselSt; // neues Wz ist an Bereitstellungsplatz (nicht an Wechselstelle)
+      SPBN  F421; 
+      L     9998; 
+      T     #NewToolMagTemp; 
+      L     #VarBereit; 
+      T     #NewToolLocTemp; 
+      SPA   ST21; 
+
+F421: U     "TMSpindleIF".IFNo[1]; // Synchron Fall 3
+      U     "TMSpindleIF".IF[1].Prepare; 
+      U     #GrWz; // Gr. Werkzeug
+      SPBN  AS21; 
+      L     105; //---- Werkzeug in Spindel und neues Wz kommt ----
+      T     #Status; 
+      L     9998; 
+      T     #OldToolMag; 
+      L     3; 
+      T     #OldToolLoc; 
+      L     "TMSpindleIF".IF[1].SMag; 
+      T     #NewToolMag; 
+      L     "TMSpindleIF".IF[1].SLoc; 
+      T     #NewToolLoc; 
+      SPA   FC8S; 
+
+ST21: L     2; 
+      T     #TaskIdent; // TaskIdent = 2 (DB72)
+      L     1; 
+      T     #TaskIdentNo; // TaskIdentNo = 1 (SS 1)
+      L     "TMSpindleIF".IF[1].SLoc; 
+      L     0; 
+      <>I   ; 
+      SPB   T021; // kein T0 programmiert ? ->
+      L     1; 
+      T     #Status; 
+      L     9998; 
+      T     #OldToolMag; 
+      L     3; 
+      T     #OldToolLoc; 
+      L     0; 
+      T     #NewToolMag; 
+      T     #NewToolLoc; 
+      SPA   FC8S; 
+T021: L     "TMSpindleIF".IF[1].TLoc; // Platz-Nr. altes Werkzeug
+      L     0; 
+      <>I   ; 
+      SPB   OL21; // Werkzeug in Spindel ? Ja ->
+      L     1; 
+      T     #Status; 
+      L     #NewToolMagTemp; // ---- kein Wz in Spindel ---
+      T     #NewToolMag; 
+      L     #NewToolLocTemp; 
+      T     #NewToolLoc; 
+      L     0; 
+      T     #OldToolMag; 
+      T     #OldToolLoc; 
+      SPA   FC8S; 
+OL21: L     105; //---- Werkzeug in Spindel und neues Wz kommt ----
+      T     #Status; 
+      L     9998; 
+      T     #OldToolMag; 
+      T     #OldToolMag_Wechsel_S1; //xxxxxx
+      L     3; 
+      T     #OldToolLoc; 
+      T     #OldToolLoc_Wechsel_S1; //xxxxxxx
+
+      U     "M_WZM_Regal_angewaehlt"; 
+      U(    ; 
+      UN    "DI_WZV_ABL_REGAL".A_Anf_change_M6; 
+      O     "DI_WZV_ABL_REGAL".A_Anf_HWZ_load_M6; 
+      )     ; 
+      SPB   n19a; 
+      L     #NewToolMagTemp; 
+      T     #NewToolMag; 
+      L     #NewToolLocTemp; 
+      T     #NewToolLoc; 
+      SPA   FC8S; 
+
+n19a: L     "DI_WZV_ABL_REGAL".SMag_Save; 
+      T     #NewToolMag; 
+      L     "DI_WZV_ABL_REGAL".SLoc_Save; 
+      T     #NewToolLoc; 
+      SPA   FC8S; 
+//----------------------------- asynchron Umspeichern ---------------------------------
+AS21: UN    "TMSpindleIF".IFNo[1]; // Asynchron 
+      SPBN  F21; 
+      L     1; // Status = 1 
+      T     #Status; 
+      L     4; 
+      T     #TaskIdent; // TaskIdent = 5 (Auftrag von PLC)
+      L     1; 
+      T     #TaskIdentNo; // TaskIdentNo = 1 (Kanal 1)
+      L     9998; // Magazin-Nr. Ziel
+      T     #NewToolMag; 
+      L     3; // Platz-Nr. Ziel = Istposition Magazin
+      T     #NewToolLoc; 
+      L     9998; // Magazin-Nr. Quelle = Zwischenspeicher
+      T     #OldToolMag; 
+      L     1; // Platz-Nr. Quelle 
+      T     #OldToolLoc; 
+      SPA   FC8S; 
+F21:  NOP   0; 
+NETWORK
+TITLE =SS22: WW Spindel -> Magazin
+
+SS22: U     "TMSpindleIF".IFNo[1]; // Spindel Nr.1 
+      SPBN  AS22; // Synchron  
+      L     2; 
+      T     #TaskIdent; // TaskIdent = 2 (DB72)
+      L     1; 
+      T     #TaskIdentNo; // TaskIdentNo = 1 (SS 1)
+
+      L     "TMSpindleIF".IF[1].SLoc; // Platz-Nr. altes Werkzeug
+      L     0; 
+      <>I   ; 
+      SPB   OL22; 
+
+//--- T0 programmiert ----
+      L     1; 
+      T     #Status; 
+      L     "TMSpindleIF".IF[1].TMag; 
+      T     #OldToolMag; 
+      L     "TMSpindleIF".IF[1].TLoc; 
+      T     #OldToolLoc; 
+      L     0; 
+      T     #NewToolMag; 
+      T     #NewToolLoc; 
+      SPA   FC8S; 
+
+OL22: U     #E_Spi_Mag; 
+      UN(   ; 
+      L     "TMSpindleIF".IF[1].SMag; // neues Wz ist HWZ
+      L     9999; 
+      ==I   ; 
+      )     ; 
+      SPB   xx22; 
+
+// --- neues Wz in Mag und altes Wz in Spindel---für HandWzw 
+      L     105; 
+      T     #Status; 
+      L     "TMSpindleIF".IF[1].SMag; 
+      L     #NewToolMag_Wechsel_S1; //05.08.03 FUH
+      T     #NewToolMag; 
+      L     "TMSpindleIF".IF[1].SLoc; 
+      L     #NewToolLoc_Wechsel_S1; //05.08.03 FUH
+      T     #NewToolLoc; 
+      L     "TMSpindleIF".IF[1].TMag; 
+      T     #OldToolMag; 
+      T     #OldToolMagTemp; //03.02.04 FUH
+      L     "TMSpindleIF".IF[1].TLoc; 
+      T     #OldToolLoc; 
+      T     #OldToolLocTemp; //03.02.04 FUH
+      SPA   FC8S; 
+
+// --- neues Wz in Gr.1 und altes Wz in Spindel 15.01.02 AB
+xx22: L     105; 
+      T     #Status; 
+      L     9998; 
+      T     #NewToolMag; 
+
+      U     "M_WZM_Regal_angewaehlt"; 
+      SPB   x22r; 
+      L     #Nr_Bereitst_Platz; //2
+      T     #NewToolLoc; 
+      L     #MagazinNr; // Magazin-Nr. Ziel
+      T     #OldToolMag; 
+      L     #PIstpos; 
+      LAR1  ; 
+      L     DIW [AR1,P#0.0]; // Platz-Nr. Ziel = Istposition Magazin
+      T     #OldToolLoc; 
+
+      L     "TMSpindleIF".IF[1].TMag; 
+      L     9999; 
+      ==I   ; 
+      SPBN  x22t; 
+      L     9999; 
+      T     #OldToolMag; 
+      L     1; 
+      T     #OldToolLoc; 
+
+x22t: SPA   x22s; 
+
+x22r: L     "DI_WZV_ABL_REGAL".E_Nr_Bereitst_Platz; //2
+      T     #NewToolLoc; 
+      L     "TMSpindleIF".IF[1].TMag; // Magazin-Nr. Ziel
+      T     #OldToolMag; 
+      L     "TMSpindleIF".IF[1].TLoc; 
+      T     #OldToolLoc; 
+
+
+x22s: NOP   0; 
+      SPA   FC8S; 
+
+// --- asynchron Umspeichern ------------------------------
+AS22: UN    "TMSpindleIF".IFNo[1]; // Asynchron 
+      SPBN  F22; 
+      L     1; // Status = 1 
+      T     #Status; 
+      L     4; 
+      T     #TaskIdent; // TaskIdent = 5 (Auftrag von PLC)
+      L     1; 
+      T     #TaskIdentNo; // TaskIdentNo = 1 (Kanal 1)
+      L     #MagazinNr; // Magazin-Nr. Ziel
+      T     #NewToolMag; 
+      L     #PIstpos; 
+      LAR1  ; 
+      L     DIW [AR1,P#0.0]; // Platz-Nr. Ziel = Istposition Magazin
+      T     #NewToolLoc; 
+      L     9998; // Magazin-Nr. Quelle = Zwischenspeicher
+      T     #OldToolMag; 
+      L     1; // Platz-Nr. Quelle 
+      T     #OldToolLoc; 
+      SPA   FC8S; 
+F22:  NOP   0; 
+NETWORK
+TITLE =SS23: Abbruch Wechsel durchführen
+
+SS23: L     3; // Status = 1 
+      T     #Status; 
+      L     2; 
+      T     #TaskIdent; // TaskIdent = 5 (Auftrag von PLC)
+      L     1; 
+      T     #TaskIdentNo; // TaskIdentNo = 1 (Kanal 1)
+      L     0; // Magazin-Nr. Ziel
+      T     #NewToolMag; 
+      T     #NewToolLoc; 
+      T     #OldToolMag; 
+      T     #OldToolLoc; 
+      SPA   FC8S; 
+NETWORK
+TITLE =SS24:
+
+SS24: SPA   LOE1; 
+
+NETWORK
+TITLE =SS25,SS26,SS27,SS28: Änderung Istposition Mag 1,2,3,4
+
+SS25: L     #IstPosMag[1]; 
+      T     #NewToolLoc; 
+      L     1; // Magazin-Nr. Ziel = 1
+      T     #NewToolMag; 
+      SPA   ST25; 
+SS26: L     #IstPosMag[2]; 
+      T     #NewToolLoc; 
+      L     2; // Magazin-Nr. Ziel = 1
+      T     #NewToolMag; 
+      SPA   ST25; 
+SS27: L     #IstPosMag[3]; 
+      T     #NewToolLoc; 
+      L     3; // Magazin-Nr. Ziel = 1
+      T     #NewToolMag; 
+      SPA   ST25; 
+SS28: L     #IstPosMag[4]; 
+      T     #NewToolLoc; 
+      L     4; // Magazin-Nr. Ziel = 1
+      T     #NewToolMag; 
+
+ST25: L     5; // Status = 5 
+      T     #Status; 
+      L     4; 
+      T     #TaskIdent; // TaskIdent = 4 (Auftrag von PLC)
+      L     1; 
+      T     #TaskIdentNo; // TaskIdentNo = 1 (Kanal 1)
+      L     9998; // Magazin-Nr. Quelle = Zwischenspeicher
+      T     #OldToolMag; 
+      L     1; // Platz-Nr. Quelle = Spindel
+      T     #OldToolLoc; 
+      SPA   FC8S; 
+NETWORK
+TITLE =SS29:Quittung Umsetzen mit Bewegung, physik.Umsetzen
+
+SS29: L     B#16#1; 
+      T     #Status; 
+      T     #TaskIdent; 
+      T     #TaskIdentNo; 
+      L     -1; 
+      T     #NewToolMag; 
+      T     #NewToolLoc; 
+      T     #OldToolMag; 
+      T     #OldToolLoc; 
+      SPA   FC8S; 
+NETWORK
+TITLE =SS30: Quittung Umladen MMC
+
+SS30: L     1; 
+      T     #Status; 
+      T     #TaskIdent; // TaskIdent = 1 (DB 71)
+      T     #TaskIdentNo; // TaskIdentNo = 2 Beladestelle Magazin
+      L     "TMLoadIF".IF[1].TMag; // Magazin-Nr. Ziel = Magazin-Nr. der Beladestelle
+      T     #NewToolMag; 
+      L     "TMLoadIF".IF[1].TLoc; // Platz-Nr. Ziel = Platz-Nr. der Beladestelle
+      T     #NewToolLoc; 
+      L     0; 
+      T     #OldToolMag; // Magazin-Nr. = 0        
+      T     #OldToolLoc; // Platz-Nr. = 0
+      SPA   FC8S; 
+NETWORK
+TITLE =SS31/SS32: Quittung/Abbruch positionieren zur Beladestelle
+
+SS32: L     3; // Status = 3 Abbruch
+      SPA   ST31; 
+SS31: L     5; // Status = 5 
+ST31: T     #Status; 
+      L     1; 
+      T     #TaskIdent; // TaskIdent = 1 (DB 71)
+      L     2; 
+      T     #TaskIdentNo; // TaskIdentNo = 2 Beladestelle Magazin
+      L     "TMLoadIF".IF[2].IdentLoad; // Magazin-Nr. Ziel = Magazin-Nr. der Beladestelle
+      T     #NewToolMag; 
+      L     "TMLoadIF".IF[2].NoLoad; // Platz-Nr. Ziel = Platz-Nr. der Beladestelle
+      T     #NewToolLoc; 
+      L     0; 
+      T     #OldToolMag; // Magazin-Nr. = 0        
+      T     #OldToolLoc; // Platz-Nr. = 0
+      U     "TMLoadIF".IF[2].Positioning; 
+      R     "TMLoadIF".IF[2].Positioning; 
+      SPA   FC8S; 
+
+NETWORK
+TITLE =Aufruf FC8
+
+FC8S: SET   ; 
+      S     #Start; // Start FC8
+      S     #Start_Diagnose; 
+
+FC8:  CALL "FC_SIEM_TM_TRANS" (
+           Start                    := #Start,
+           TaskIdent                := #TaskIdent,
+           TaskIdentNo              := #TaskIdentNo,
+           NewToolMag               := #NewToolMag,
+           NewToolLoc               := #NewToolLoc,
+           OldToolMag               := #OldToolMag,
+           OldToolLoc               := #OldToolLoc,
+           Status                   := #Status,
+           Ready                    := #Ready,
+           Error                    := #Error);
+
+      L     #Status; 
+      T     "MW_Status_TM_TRANS"; 
+
+      U     #Ready; 
+      =     "MX_Ready_TM_TRANS"; 
+
+      L     #Error; 
+      T     "MW_ERROR_TM_TRANS"; 
+
+NETWORK
+TITLE =Auswertung Status FC8
+
+      UN    #Start; 
+      SPB   ENDE; // FC 8 aktiv ? Nein ->
+      UN    #Ready; 
+      SPB   ERRO; // Ready FC 8 = 1 ? Nein ->
+      R     #Start; 
+      L     #Status; 
+      L     3; 
+      ==I   ; 
+      SPB   ENDE; // bei Status 3 kein Loeschen
+      SPA   LOE; 
+ERRO: L     0; 
+      L     #Error; // Fehler-Wort
+      ==I   ; 
+      SPB   ENDE; // Auftrag mit Fehler beendet
+      T     #FehlerNr; // Fehler-Nr. speichern
+      R     #Start; 
+      L     #Status; 
+      L     3; 
+      <>I   ; // bei Status 3 kein Fehlerbit setzen 
+      S     #Fehler; 
+LOE:  L     P##ASS; 
+      LAR1  ; 
+      L     #ASS_aktiv; // Aktivleiste
+      INVD  ; // Invertieren
+      L     D [AR1,P#0.0]; //#ASS_neu   Anwenderschnittstelle
+      UD    ; 
+      T     D [AR1,P#0.0]; //#ASS_neu   Anwenderschnittstelle
+
+LOE1: L     #ASS_Aenderung; // Änderung
+      L     #ASS_aktiv; 
+      INVD  ; 
+      UD    ; 
+      T     #ASS_Aenderung; //Bearbeitetes Änderungsbit löschen 
+      L     #ASS_alt; 
+      L     #ASS_aktiv; 
+      INVD  ; 
+      UD    ; 
+      T     #ASS_alt; //Bearbeitetes Alt-SS löschen
+ENDE: NOP   0; 
+NETWORK
+TITLE =WZ Bewegung melden an Fertigungsleitrechner Fastems V3.3
+//Wenn WZ von Mag in TPU, von TPU in Mag oder neu ins Mag beladen wird
+//dann Meldung an FLR mittels RPC ausgeben
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.HASYS_FASTEMS_V3X_RPC; 
+      U     #Start; 
+      FP    "M_FP_START_FC8"; //"M_FP_START_FC8"
+      SPBN  cdfe; 
+
+//NewTool 21 melden
+      U     "M_Umsp_Wst_TPU"; 
+      O     ; 
+      U     "M_WZV_Beladen_ende"; 
+      U(    ; 
+      L     #NewToolMag; 
+      L     1; 
+      ==I   ; 
+      )     ; 
+      S     "DI_FB_IF_FASTEMS".req_tool_to_TPU_or_load; 
+      SPBN  xx1; 
+
+      L     #NewToolMag; 
+      T     "DI_FB_IF_FASTEMS".magnum_to_TPU_or_load; // "DB_TEEPACK_MERKER".Magnr_newtool_21
+
+      L     #NewToolLoc; 
+      T     "DI_FB_IF_FASTEMS".platznum_to_TPU_or_load; // "DB_TEEPACK_MERKER".Platznr_newtool_21
+
+//OldTool 21 melden
+xx1:  U     "M_Umsp_TPU_WST"; 
+
+      S     "DI_FB_IF_FASTEMS".req_tool_from_TPU; //"DB_TEEPACK_MERKER".oldtoolmelden_21    // altes Werkzeug mit 22 melden
+      SPBN  cdfe; 
+
+      L     #NewToolMag; 
+      T     "DI_FB_IF_FASTEMS".magnum_from_TPU; //"DB_TEEPACK_MERKER".Magnr_oldtool21
+      L     #NewToolLoc; 
+      T     "DI_FB_IF_FASTEMS".platznum_from_TPU; // "DB_TEEPACK_MERKER".Platznr_oldtool21
+
+cdfe: NOP   0; 
+END_FUNCTION_BLOCK
+

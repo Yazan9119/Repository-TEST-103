@@ -1,0 +1,96 @@
+FUNCTION "FC_SAFE_MAIN" : VOID
+TITLE =
+//$Revision: 1.2 $
+//$Date: 2007/10/24 14:24:11CEST $
+//$Author: hgc $
+//
+//Baustein für Solutionline DMx55-125x2
+VERSION : 0.1
+
+
+VAR_INPUT
+  OB1_Scan_1 : BOOL ;	
+END_VAR
+VAR_TEMP
+  T_ST_geschlossen : BOOL ;	
+  T_BLK_Verriegeln : BOOL ;	
+  T_Taste_BLK_entriegeln : BOOL ;	
+  T_Err_FC8 : BOOL ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =Zeitvorgaben für Zwangsdynamisierungen eintragen
+
+      U     #OB1_Scan_1; 
+      SPBN  xx1; 
+// Bereich 1 Maschine
+      L     480; 
+      T     "DB_SAFE_ZD_INST".Ber1.Zeit_Tuere; 
+      L     360; 
+      T     "DB_SAFE_ZD_INST".Ber1.Zeit_WZW; 
+// Bereich 2 Palettenspeicher
+      L     480; 
+      T     "DB_SAFE_ZD_INST".Ber2.Zeit_Tuere; 
+      L     360; 
+      T     "DB_SAFE_ZD_INST".Ber2.Zeit_PW; 
+xx1:  NOP   0; 
+NETWORK
+TITLE =SPL ok
+
+      U     "DB_SPL".SPL_STATE14; // SPL fertig durchlaufen ab NCK 6.4.15
+      U     "DB_SIEM_NCK".E_NCKready; // State14 ist erst aktuell wenn NCKready
+      =     "DB_SAFE_ALLG1".SPL_NC_OK; 
+NETWORK
+TITLE =Meldung SPL läuft noch nicht -> Startsperre
+
+      UN    "DB_SAFE_ALLG1".SPL_NC_OK; 
+      =     "DB_SAFE_ALLG1".SPL_Startspere; // Startsperre
+      =     "DB_FEHLERMELDUNG".SAFE_MELD._701506_SPL_RUN; //Meldung SPL läuft noch nicht
+NETWORK
+TITLE =SPL läuft noch nicht, dann überspringen
+
+      U     "DB_FEHLERMELDUNG".SAFE_MELD._701506_SPL_RUN; // SPL nicht fertig durchlaufen 
+      SPB   nspl; 
+NETWORK
+TITLE =Aufruf SPL PLC
+
+      CALL "FC_SPL_PLC1" ;
+      NOP   0; 
+NETWORK
+TITLE =Aufruf Zwangsdynamisierungen inklusive Bremsentest
+
+      U     "M_Takt_1s"; 
+      =     L      1.0; 
+      BLD   103; 
+      U     "M_MA_Maschine_Ein"; 
+      =     L      1.1; 
+      BLD   103; 
+      U     "M_Kabine_verriegeln"; 
+      =     L      1.2; 
+      BLD   103; 
+      CALL "FB_SPL_ZD" , "DB_SAFE_ZD_INST" (
+           E_Sec_Imp                := L      1.0,
+           E_Maschine_ein           := L      1.1,
+           E_Tuer_verriegeln        := L      1.2);
+      NOP   0; 
+NETWORK
+TITLE =Aufruf Safe Allgemein (Auswertung der Achszustände)
+
+nspl: CALL "FC_SAFE_ALLG" ;
+      NOP   0; 
+NETWORK
+TITLE =DP-Slavediagnose sichern
+
+      U     "m_null"; 
+      =     L      1.0; 
+      BLD   103; 
+      CALL "FC_DIAG_SICHERN" (
+           Alarm_OB                 := L      1.0);
+      NOP   0; 
+NETWORK
+TITLE =ASUP Maschine starten
+
+      UN    "DB_SAFE_ALLG1".SPL_Startspere; // Startsperre
+      S     "DB_SAFE_ALLG1".M_Start_Asup_SPL; //"M_Start_Asup_SPL"; // ASUP - Maschine initialisieren
+END_FUNCTION
+

@@ -1,0 +1,934 @@
+FUNCTION "FC_MAG_HAUPT_ZH" : VOID
+TITLE =
+//$Revision: 1.35 $
+//$Date: 2008/01/07 10:01:46CET $
+//$Author: hgc $
+//
+//27.01.00 SJA - Baustein angelegt
+//
+//31.10.01 SCH - Schnittstelle erweitert
+//17.01.03 FUH - Schnittstelle erweitert und neue Zweihandbedienung eingebracht
+{ S7_language := '7(1) Deutsch (Deutschland)  26.03.2008  08:00:15' }
+AUTHOR : SJA
+FAMILY : MAGAZIN
+NAME : MAG_MAIN
+VERSION : 0.1
+
+
+VAR_INPUT
+  E_Enabled : BOOL ;	//Enabled Modul
+  E_Maschine_ein : BOOL ;	//Maschine ein
+  E_Reset : BOOL ;	//Reset Modul
+  E_RettFunkt_Aktiv : BOOL ;	//Rettungsfunktion aktiv
+  E_Mag_laeuft : BOOL ;	//Magazin läuft
+  E_FehlerQuitt : BOOL ;	//Quit Error
+  E_MD_WZW_TYP : INT ;	//Anw WZW-Typ:0=aus,1=60V,2=125V,3=60H,4=125H,5=200V,6=Regal,7=Pickup Hub,8=PU
+  E_MD_Anwahl_Magazin : INT ;	//Anwahl Magazin: 0=aus,1=getakted,2=geregelt,3=Omron,4=Rad,5=Zusatz,6=Mast-Slv 
+  E_MD_MAG_Zweihand : BOOL ;	//Anwahl Magazin Zweihandbedienung: 0=2 Richtungstaster, 1=Knebeltaster
+  E_MD_MAG_ZH_Ueb : INT ;	//Magazin Überwachungszeit Zweihandbedienung
+  E_M6_Funktion_Aktiv : BOOL ;	//M6 Aktiv (A115.6)
+  E_T_Funktion_Aktiv : BOOL ;	//Tool Request
+  E_TDS_WRT_REQ : BOOL ;	//ToolDialogsystem request
+  E_Wzw_Grundstg : BOOL ;	//Wzw  in Grundstellung
+  E_Tool_in_Wzw : BOOL ;	//Werkzeug in Greifer
+  E_I_Ext_EnergieFRG_WZM : BOOL ;	//Energiefreigabe Werkzeugmagazin (m336.4)
+  E_I_Mag_Ta_Zweihand : BOOL ;	//Taste Zweihandbedienung
+  E_I_Mag_Tuer_zu : BOOL ;	//Magazin Tuer geschlossen (m336.0)
+  E_I_Fenst_WZ_Mag_entrieg : BOOL ;	//Eingang Magazintuer entriegeln
+  E_Ta_Magazin_links : BOOL ;	//Taste Magazin links MSST (E7.4)
+  E_Ta_Magazin_rechts : BOOL ;	//Taste Magazin rechts MSST (E7.3)
+  E_I_Ext_Tast_WZM_Links : BOOL ;	//ext. Taste Masgazin links (m337.0)
+  E_I_Ext_Tast_WZM_Rechts : BOOL ;	//ext. Taste Magazin rechts (m336.7)
+  E_Ta_HCU_Mag_links : BOOL ;	//Handbedienpult Magazin links
+  E_Ta_HCU_Mag_rechts : BOOL ;	//Handbedienpult Magazin rechts
+  E_Magazin_Sperre : BOOL ;	//Sperre Magazin
+  E_Sperre_entriegeln : BOOL ;	//Sperre entriegeln Beladetür
+  E_MD_Mag_Groesse : INT ;	//Magazingroesse
+  E_Mag_Haelfte : WORD ;	//halbe Magazingroesse
+  E_MP_Ist : WORD ;	//Istposition des Magazins
+END_VAR
+VAR_IN_OUT
+  EA_Mag_Anforderung : BOOL ;	//WZW Magazin Anforderung
+  EA_Mag_Fertig : BOOL ;	//WZW Magazin Fertig
+  EA_TMag_Anforderung : BOOL ;	//T Magazin Anforderung
+  EA_TMAG_Fertig : BOOL ;	//T Magazin Fertigmeldung
+  EA_TMMag_Anforderung : BOOL ;	//ToolManagement Magazin Anforderung
+  EA_TMMAg_Fertig : BOOL ;	//ToolManagement Fertigmeldung
+  EA_MAG_Start : BOOL ;	//Fahranforderun Mag. start
+  EA_Mag_Fehler : BOOL ;	//MAgazin Fehler steht an
+  EA_Mag_Freigabe : BOOL ;	//Magazin Freigabe
+  EA_Cmd_Links : BOOL ;	//Anforderung Magazin Drehen links
+  EA_Cmd_Rechts : BOOL ;	//Anforderung Magazin Drehen rechts
+  EA_Mag_Ref_Gefunden : BOOL ;	//Referenzpunkt gefunden
+  EA_Trigger_Ref_Found : BOOL ;	//positive Flanke Ref. gefunden
+  EA_Trigger_Tuer_Ver : BOOL ;	//Flanke Tuer verriegeln
+  EA_Trigger_SKR : BOOL ;	//Flanke fuer SKR
+  EA_Mag_Inposition : BOOL ;	//Meldung "Magazin in Position"
+  EA_Mag_Stop : BOOL ;	//Magazin Stop
+  EA_Man_Mag_Rechts : BOOL ;	//Magazin Drehen Rechts
+  EA_Man_Mag_Links : BOOL ;	//Magazin Drehen links
+  EA_Fehler_WZW : BOOL ;	//WZ in Greifer oder WZW nicht in Grundstellung 
+  EA_Warnung_WZW : BOOL ;	//WZ in Greifer oder WZW nicht in Grundstellung 
+  EA_Fehler_Energfreigabe : BOOL ;	//Energiefreigabe fehlt
+  EA_Warnung_Energfreigabe : BOOL ;	//Energiefreigabe fehlt
+  EA_Fehler_Tuer_offen : BOOL ;	//Fehler offene Magazintuere
+  EA_Warnung_Tuer_offen : BOOL ;	//Warnung Magazin Tuer offen
+  EA_Fehler_Zweihandbed : BOOL ;	//Fehler Zweihandbedienung
+  EA_SKZ_Mag : BYTE ;	//Schrittkette Magazin Zaehler
+  EA_SKZ_Unterbrechung : BYTE ;	//Schrittkettenzaehler fuer Unterbrechungen 
+  EA_Anforderung : BYTE ;	//Aktive Anforderung (1=WZW,2=T,3=TM)
+  EA_Ext_FRG_Magazin : BOOL ;	//Externe Energiefreigabe Werkzeugmagazin (neue Zweihandbedienung)
+  EA_O_WZ_Tuer_oeff_moegl : BOOL ;	//Anzeige Tuerverriegelung Öffnen möglich
+  EA_MAG_Trigg1 : BOOL ;	//Trigger 1
+  EA_MAG_Trigg2 : BOOL ;	
+  EA_MAG_Trigg3 : BOOL ;	
+  EA_MAG_Trigg4 : BOOL ;	
+  EA_MAG_Trigg5 : BOOL ;	
+  EA_MP_Anforderung : WORD ;	//Anfrage des Magazinplatz nr.
+  EA_TMP_Anforderung : WORD ;	//Sollposition von T-Befehl
+  EA_TMMP_Anforderung : WORD ;	//Sollposition von ToolManagement
+  EA_MP_Soll : WORD ;	//Sollposition des Magazins           
+END_VAR
+VAR_TEMP
+  T_Reset : BOOL ;	
+  TX_Mag_Anforderung : BOOL ;	
+  tx_FN_I_MAGAZIN : BOOL ;	
+  PI_I_MAG_Ta_Zweihand : BOOL ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =Netzwerk-Übersicht
+// Netzwerk-Übersicht
+// ==================
+// NW 1: Netzwerk-Übersicht
+// NW 2: Zeitverzögerung Verriegeln Tuer
+// NW 3: Zeitverzögerung Verriegeln Tuer
+// NW 4: Magazin verfahren neue Zweihandbedienung
+// NW 5: Energiefreigabe Ueberwachung
+// NW 6: Magazintuerueberwachung
+// NW 7: Ruecksetzen der Module und Merker 
+// NW 8: Schritt 0
+// NW 9: Schritt 1
+// NW 10: Schritt 2
+// NW 11: Schritt 3
+// NW 12: Schritt 4 
+// NW 13: Schritt 5
+// NW 14: Schritt 6
+// NW 15: Schritt 10 
+// NW 16: Schritt 11
+// NW 17: Unterbrechungen des Magazinlaufs
+// NW 18: 
+// NW 19: Baustein-Ende
+      CLR   ; 
+      =     #TX_Mag_Anforderung; 
+
+      L     4; 
+      L     #E_MD_Anwahl_Magazin; 
+      ==I   ; 
+      U     #E_Enabled; 
+      SPB   M001; 
+      O(    ; 
+      L     1; 
+      L     #E_MD_Anwahl_Magazin; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     2; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     #E_MD_Anwahl_Magazin; 
+      L     3; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     #E_MD_Anwahl_Magazin; 
+      L     6; 
+      ==I   ; 
+      )     ; 
+      U     #E_Enabled; 
+      SPBN  ENDE; 
+      O     #EA_Mag_Anforderung; 
+      O     #EA_TMag_Anforderung; 
+      O     #EA_TMMag_Anforderung; 
+      =     #TX_Mag_Anforderung; 
+NETWORK
+TITLE =Zeitverzögerung Verriegeln Tuer
+//Magazintuerverriegelung
+// 
+// Anzeige Lampe Tuerverriegelung 
+//
+//
+//----------Neue Zweihandbedienung-----------
+//Entriegeln und Anzeige entriegelt
+//Türe entriegeln
+M001: U     #E_I_Mag_Ta_Zweihand; 
+      FN    "HM_NI_Taste_MAG_Zweihand"; // #tx_FN_I_MAGAZIN
+      UN    #E_M6_Funktion_Aktiv; 
+      UN    "DB_NC_PLC".WZW_NC_Aktiv; 
+      UN    #E_Mag_laeuft; //"DB_NC_PLC".WZW_T_Aktiv
+      UN    "M_WZ_Reinigen_Aktiv"; 
+      UN    "DB_ACHS7_WZM".MX_Anf_Referieren; 
+      ON    #E_Maschine_ein; 
+      O     ; 
+      U(    ; 
+      L     #E_MP_Ist; 
+      L     #EA_TMMP_Anforderung; 
+      ==I   ; 
+      )     ; 
+      U(    ; 
+      O     "DB_FEHLERMELDUNG".Meldung._702026_Quit_Beladen; 
+      O     "DB_FEHLERMELDUNG".Meldung._702105_Quit_Entladen; 
+      )     ; 
+      S     #EA_O_WZ_Tuer_oeff_moegl; 
+
+
+//Türe verriegeln
+      L     S5T#500MS; 
+      U     #E_I_Mag_Tuer_zu; 
+      U     #E_Maschine_ein; 
+      SE    "Te_MagTuer_Ver"; 
+
+      U     "Te_MagTuer_Ver"; 
+      UN    "DB_FEHLERMELDUNG".Meldung._702026_Quit_Beladen; 
+      UN    "DB_FEHLERMELDUNG".Meldung._702105_Quit_Entladen; 
+      FP    #EA_Trigger_Tuer_Ver; 
+      O(    ; 
+      U     #E_I_Mag_Tuer_zu; 
+      U(    ; 
+      U     #E_Mag_laeuft; 
+      O     #E_Ta_Magazin_links; 
+      O     #E_Ta_Magazin_rechts; 
+      O     #TX_Mag_Anforderung; 
+      )     ; 
+      )     ; 
+      U     #E_Maschine_ein; 
+      UN    "DB_FEHLERMELDUNG".Meldung._702026_Quit_Beladen; 
+      UN    "DB_FEHLERMELDUNG".Meldung._702105_Quit_Entladen; 
+      O     #E_Sperre_entriegeln; 
+      R     #EA_O_WZ_Tuer_oeff_moegl; 
+
+// Rücksetzen der Fehlermeldung Zweihandbedienung und Magazintür offen bei geschlossener Tür
+      U     #E_I_Mag_Tuer_zu; 
+      U     #E_I_Ext_EnergieFRG_WZM; 
+      R     #EA_Fehler_Zweihandbed; 
+      R     #EA_Warnung_Tuer_offen; 
+
+NETWORK
+TITLE =Magazin verfahren neue Zweihandbedienung
+//----------Neue Zweihandbedienung-----------
+      NOP   0; 
+//Zeitüberwachung
+      U     #E_I_Mag_Tuer_zu; 
+      SPB   ZH05; 
+      U     #E_I_Mag_Ta_Zweihand; 
+      L     4096; 
+      L     #E_MD_MAG_ZH_Ueb; 
+      ITB   ; 
+      OW    ; 
+      SE    "Te_Mag_ZH"; 
+
+      U     #E_I_Ext_Tast_WZM_Links; 
+      O     #E_I_Ext_Tast_WZM_Rechts; 
+      UN    "Te_Mag_ZH"; 
+      R     "Te_Mag_ZH"; 
+
+      U     #E_I_Mag_Ta_Zweihand; 
+      FP    #EA_MAG_Trigg4; 
+      =     #PI_I_MAG_Ta_Zweihand; 
+
+      O     #PI_I_MAG_Ta_Zweihand; 
+      O     "Te_Mag_ZH"; 
+      U(    ; 
+      U     #E_I_Ext_Tast_WZM_Links; 
+      O     #E_I_Ext_Tast_WZM_Rechts; 
+      )     ; 
+      SPBN  ZH04; 
+      SET   ; 
+      S     #EA_Fehler_Zweihandbed; 
+      SPA   ERR; 
+
+//Externe Magazinfreigabe setzen
+ZH04: U     #E_I_Mag_Ta_Zweihand; 
+      UN    #EA_Fehler_Zweihandbed; 
+      U(    ; 
+      U     #E_I_Ext_Tast_WZM_Links; 
+      O     #E_I_Ext_Tast_WZM_Rechts; 
+      )     ; 
+      S     #EA_Ext_FRG_Magazin; 
+
+      UN    #E_I_Ext_Tast_WZM_Links; 
+      UN    #E_I_Ext_Tast_WZM_Rechts; 
+      UN    #E_Mag_laeuft; 
+      O     #EA_Fehler_Zweihandbed; 
+      R     #EA_Ext_FRG_Magazin; 
+
+      U     #E_I_Ext_Tast_WZM_Links; 
+      O     #E_I_Ext_Tast_WZM_Rechts; 
+      FP    #EA_MAG_Trigg5; 
+      U     #E_Mag_laeuft; 
+      SPBN  ZH05; 
+      S     #EA_Fehler_Zweihandbed; 
+      SPA   ERR; 
+
+//links fahren
+ZH05: U     #E_Ta_Magazin_links; 
+      UN    #E_Ta_Magazin_rechts; 
+      O(    ; 
+      U     #E_I_Ext_Tast_WZM_Links; 
+      UN    #E_I_Ext_Tast_WZM_Rechts; 
+      U(    ; 
+      O     #E_I_Ext_EnergieFRG_WZM; 
+      O     #E_I_Mag_Tuer_zu; 
+      )     ; 
+      )     ; 
+      O(    ; 
+      U     #E_Ta_HCU_Mag_links; 
+      UN    #E_Ta_HCU_Mag_rechts; 
+      )     ; 
+      UN    #E_Ta_Magazin_rechts; 
+      UN    #E_I_Ext_Tast_WZM_Rechts; 
+      UN    #E_Ta_HCU_Mag_rechts; 
+      UN    #E_M6_Funktion_Aktiv; 
+      UN    #E_TDS_WRT_REQ; 
+      UN    #EA_MAG_Start; 
+      =     #EA_Man_Mag_Links; 
+
+//rechts fahren
+      U     #E_Ta_Magazin_rechts; 
+      UN    #E_Ta_Magazin_links; 
+      O(    ; 
+      U     #E_I_Ext_Tast_WZM_Rechts; 
+      UN    #E_I_Ext_Tast_WZM_Links; 
+      U(    ; 
+      O     #E_I_Ext_EnergieFRG_WZM; 
+      O     #E_I_Mag_Tuer_zu; 
+      )     ; 
+      )     ; 
+      O(    ; 
+      U     #E_Ta_HCU_Mag_rechts; 
+      UN    #E_Ta_HCU_Mag_links; 
+      )     ; 
+      UN    #E_Ta_Magazin_links; 
+      UN    #E_I_Ext_Tast_WZM_Links; 
+      UN    #E_Ta_HCU_Mag_links; 
+      UN    #E_M6_Funktion_Aktiv; 
+      UN    #E_TDS_WRT_REQ; 
+      UN    #EA_MAG_Start; 
+      =     #EA_Man_Mag_Rechts; 
+
+      NOP   0; 
+
+
+NETWORK
+TITLE =Energiefreigabe Ueberwachung
+//Überwachung neue Zweihandbedienung
+      U     #EA_Ext_FRG_Magazin; 
+      L     S5T#1S; 
+      SE    "Te_Energ_ZH"; 
+
+      U     "Te_Energ_ZH"; 
+      U(    ; 
+      O     #E_I_Ext_Tast_WZM_Links; 
+      O     #E_I_Ext_Tast_WZM_Rechts; 
+      )     ; 
+      UN    #E_I_Mag_Tuer_zu; 
+      UN    #E_I_Ext_EnergieFRG_WZM; 
+      UN    #EA_Mag_Fehler; 
+      SPBN  TUER; 
+
+      SET   ; 
+      =     #EA_Mag_Fehler; 
+
+      U     #E_M6_Funktion_Aktiv; 
+      O     #E_T_Funktion_Aktiv; 
+      S     #EA_Fehler_Energfreigabe; 
+      SPB   ERR; 
+      SET   ; 
+      =     #EA_Warnung_Energfreigabe; 
+      SPA   ERR; 
+
+NETWORK
+TITLE =Magazintuerueberwachung
+
+TUER: NOP   0; // U     #E_Mag_laeuft
+      O     #EA_Man_Mag_Rechts; 
+      O     #EA_Man_Mag_Links; 
+      O     #TX_Mag_Anforderung; 
+      UN    #EA_Mag_Fehler; 
+      UN    #E_I_Mag_Tuer_zu; 
+      U     #E_Mag_laeuft; 
+      SPBN  ERR; 
+
+      U(    ; 
+      ON    #E_I_Ext_EnergieFRG_WZM; 
+      O     #EA_MAG_Start; 
+      O     #TX_Mag_Anforderung; 
+      )     ; 
+      UN    #E_I_Mag_Ta_Zweihand; 
+      UN    #EA_Warnung_Tuer_offen; 
+      SPBN  MAG; 
+
+      SET   ; 
+      S     #EA_Mag_Fehler; 
+      S     #EA_Warnung_Tuer_offen; 
+      SPA   ERR; 
+
+NETWORK
+TITLE =Ruecksetzen der Module und Merker 
+//Ruecksetzen der Module und Merker bei Fehler,Reset und Not-Aus
+// noch schreiben!!!!
+ERR:  U     #E_RettFunkt_Aktiv; 
+      FP    #EA_Trigger_SKR; 
+      O(    ; 
+      U     #E_Reset; 
+      UN    #E_Maschine_ein; 
+      )     ; 
+      O(    ; 
+      O     #E_Mag_laeuft; 
+      U     #E_Reset; 
+      )     ; 
+      =     #T_Reset; 
+
+      O     #E_FehlerQuitt; 
+      O     #E_Reset; 
+      R     #EA_Fehler_WZW; 
+      R     #EA_Fehler_Energfreigabe; 
+      R     #EA_Warnung_Energfreigabe; 
+      R     #EA_Fehler_Tuer_offen; 
+      R     #EA_Warnung_Tuer_offen; 
+      R     #EA_Mag_Fehler; 
+      R     #EA_Fehler_Zweihandbed; 
+
+      U(    ; 
+      O     #EA_Warnung_Energfreigabe; 
+      O     #EA_Warnung_Tuer_offen; 
+      O     #EA_Fehler_Zweihandbed; 
+      )     ; 
+      U(    ; 
+      U     #E_I_Mag_Tuer_zu; 
+      U     #E_I_Ext_EnergieFRG_WZM; 
+      O     ; 
+      U     #PI_I_MAG_Ta_Zweihand; 
+      UN    #E_I_Ext_Tast_WZM_Links; 
+      UN    #E_I_Ext_Tast_WZM_Rechts; 
+      )     ; 
+      R     #EA_Mag_Fehler; 
+      R     #EA_Warnung_Energfreigabe; 
+      R     #EA_Warnung_Tuer_offen; 
+      R     #EA_Fehler_Zweihandbed; 
+
+      U     #E_Reset; 
+      R     #EA_Warnung_WZW; 
+      R     #EA_Warnung_Tuer_offen; 
+
+      O     #T_Reset; 
+      O     #EA_Mag_Fehler; 
+      O(    ; 
+      U     #E_Mag_laeuft; 
+      O     #EA_Mag_Freigabe; 
+      UN    #E_Maschine_ein; 
+      )     ; 
+      SPBN  MAG; 
+
+      SET   ; 
+      R     #EA_Mag_Inposition; 
+      R     #EA_Cmd_Links; 
+      R     #EA_Cmd_Rechts; 
+      R     #EA_Mag_Freigabe; 
+      R     #EA_Mag_Stop; 
+      R     #EA_Man_Mag_Rechts; 
+      R     #EA_Man_Mag_Links; 
+      R     "MX_Mag_Pos_Gueltig"; 
+
+      UN    #E_M6_Funktion_Aktiv; 
+      UN    #E_T_Funktion_Aktiv; 
+      R     #EA_Mag_Anforderung; 
+      R     #EA_TMag_Anforderung; 
+      R     #EA_TMMag_Anforderung; 
+      R     #EA_MAG_Start; 
+      R     #EA_Mag_Fertig; 
+
+      L     0; 
+      T     #EA_SKZ_Mag; 
+      T     #EA_SKZ_Unterbrechung; 
+
+
+NETWORK
+TITLE =Schritt 0
+//
+//
+//
+MAG:  L     #EA_SKZ_Mag; 
+      L     0; 
+      ==I   ; 
+      SPBN  MA01; 
+
+//--------------------Aktion-----------
+//-----Mag. Anforderungen zurucksetzen
+
+      CLR   ; 
+      =     #EA_Mag_Freigabe; 
+      =     #EA_Cmd_Links; 
+      =     #EA_Cmd_Rechts; 
+
+//---------------Ereignis----------------
+
+
+      U     #E_Wzw_Grundstg; // WZW in Grundstellung
+      U(    ; 
+      UN    #E_Tool_in_Wzw; // kein WZ in den Greifern
+      O     "M_WZW_Gre1_Pos_Keg"; 
+      O     "M_WZW_Gre2_Pos_Keg"; 
+      O(    ; 
+      L     #EA_TMP_Anforderung; //angeforderter Platz von FB193 ist
+      L     #E_MP_Ist; //Istplatz
+      ==I   ; 
+      )     ; 
+      )     ; 
+      UN    #E_Mag_laeuft; // das Magazin steht
+      UN    #EA_Mag_Stop; // kein Stop Auftrag vorhanden
+      UN    #E_Magazin_Sperre; // keine Sperre von anderen
+      U     #E_Maschine_ein; // und die Maschine ist eingeschaltet
+      SPBN  INT; 
+
+      U     #EA_Mag_Anforderung; // Anforderung oder
+      O     #EA_TMag_Anforderung; 
+      O     #EA_TMMag_Anforderung; 
+      O     #EA_MAG_Start; // Magazin bereits gestartet
+      U     #E_I_Mag_Tuer_zu; // und die Tuer zu
+      SPBN  us02; 
+
+// WZW Anforderung
+
+      U     #EA_Mag_Anforderung; 
+      SPBN  us03; 
+      L     1; 
+      T     #EA_Anforderung; 
+      L     #EA_MP_Anforderung; // Anforderung auf
+      T     #EA_MP_Soll; // Sollposition speichern
+
+      L     #EA_MP_Anforderung; // Anforderung gleich 
+      L     #E_MP_Ist; // aktueller Position
+      ==I   ; // und Ref. Punkt gefunden
+      U     #EA_Mag_Ref_Gefunden; 
+      SPBN  us01; 
+      SPA   us04; 
+
+// T-Anforderung
+
+us03: U     #EA_TMag_Anforderung; 
+      SPBN  us05; 
+
+      L     2; 
+      T     #EA_Anforderung; 
+      L     #EA_TMP_Anforderung; // Anforderung auf
+      T     #EA_MP_Soll; // Sollposition speichern
+
+      L     #EA_TMP_Anforderung; // Anforderung gleich 
+      L     #E_MP_Ist; // aktueller Position
+      ==I   ; // und Ref. Punkt gefunden
+      U     #EA_Mag_Ref_Gefunden; 
+      SPBN  us01; 
+      SPA   us04; 
+
+// TM-Anforderung Beladen/Entladen
+us05: U     #EA_TMMag_Anforderung; 
+      SPBN  us02; 
+
+      L     3; 
+      T     #EA_Anforderung; 
+      L     #EA_TMMP_Anforderung; // Anforderung auf
+      T     #EA_MP_Soll; // Sollposition speichern
+
+      L     #EA_TMMP_Anforderung; // Anforderung gleich 
+      L     #E_MP_Ist; // aktueller Position
+      ==I   ; // und Ref. Punkt gefunden
+      U     #EA_Mag_Ref_Gefunden; 
+      SPBN  us01; 
+
+
+us04: SET   ; 
+      =     #EA_MAG_Start; // Magazin Starten
+      L     2; 
+      T     #EA_SKZ_Mag; 
+      SPA   MA02; 
+
+us01: L     1; // Ansonsten in Step 1 die Richtung ausgrechnen und das
+      T     #EA_SKZ_Mag; // Magazin starten 
+      SPA   INT; 
+
+us02: O     #EA_Man_Mag_Rechts; // Tasten rechts oder
+      O     #EA_Man_Mag_Links; // links
+      U(    ; // und die Magazintuere zu oder 
+      O     #E_I_Ext_EnergieFRG_WZM; // die Energiefreigabe ist 1
+      O     #E_I_Mag_Tuer_zu; 
+      )     ; 
+      UN    #EA_Fehler_Zweihandbed; 
+      U(    ; 
+      L     1; 
+      L     #E_MD_Anwahl_Magazin; 
+      ==I   ; 
+      ON    "DB_ACHS7_WZM".MX_Anf_Referieren; // und kein Referieren laeuft
+      )     ; 
+      SPBN  INT; 
+
+      L     10; // dann weiter zu Step 10
+      T     #EA_SKZ_Mag; 
+
+      U     #EA_Man_Mag_Rechts; // Richtung vorgeben
+      =     #EA_Cmd_Rechts; // und Magazin Starten
+      U     #EA_Man_Mag_Links; 
+      =     #EA_Cmd_Links; 
+
+      SET   ; 
+      =     #EA_Mag_Freigabe; 
+      SPA   MA10; 
+
+NETWORK
+TITLE =Schritt 1
+
+MA01: L     #EA_SKZ_Mag; 
+      L     1; 
+      ==I   ; 
+      SPBN  MA02; 
+
+//----------------Aktion----------------------
+
+      S     #EA_MAG_Start; // Magazin starten 
+      R     #EA_Mag_Inposition; // Inposition ruecksetzen
+      R     "MX_Mag_Pos_Gueltig"; 
+
+      L     #EA_MP_Soll; // ( Soll > Ist )
+      L     #E_MP_Ist; // 
+      >I    ; 
+      SPB   norm; 
+
+      L     #E_MD_Mag_Groesse; // 
+      L     #E_MP_Ist; 
+      -D    ; 
+      L     #EA_MP_Soll; 
+      +D    ; 
+      SPA   rcht; 
+
+norm: L     #EA_MP_Soll; 
+      L     #E_MP_Ist; 
+      -D    ; 
+
+rcht: L     #E_Mag_Haelfte; 
+      <=I   ; 
+      SPBN  left; 
+
+      S     #EA_Cmd_Rechts; 
+      R     #EA_Cmd_Links; 
+      SPA   S2; 
+
+left: SET   ; 
+      S     #EA_Cmd_Links; 
+      R     #EA_Cmd_Rechts; 
+
+// provisorisch, da Hub in drehendes Mag fuhr
+
+S2:   SET   ; 
+      S     #EA_Mag_Freigabe; // Freigabe drehen
+
+//--------------Ereignis------------------
+
+      L     2; 
+      T     #EA_SKZ_Mag; 
+
+NETWORK
+TITLE =Schritt 2
+
+MA02: L     2; 
+      L     #EA_SKZ_Mag; 
+      ==I   ; 
+      SPBN  MA03; 
+
+//-----------Aktion-----------------------
+
+      L     #EA_Anforderung; 
+      L     1; 
+      ==I   ; 
+      SPBN  A021; 
+
+      U     #EA_Mag_Anforderung; // Rueckmelden der Funktion
+      S     #EA_Mag_Fertig; 
+      R     #EA_Mag_Anforderung; // Rueckmelden der Funktion
+      SPA   A022; 
+
+A021: L     #EA_Anforderung; 
+      L     2; 
+      ==I   ; 
+      SPBN  A023; 
+
+      U     #EA_TMag_Anforderung; // Rueckmelden der Funktion
+      S     #EA_TMAG_Fertig; 
+      R     #EA_TMag_Anforderung; // Rueckmelden der Funktion
+      SPA   A022; 
+
+A023: U     #EA_TMMag_Anforderung; // Rueckmelden der Funktion
+      S     #EA_TMMAg_Fertig; 
+      R     #EA_TMMag_Anforderung; // Rueckmelden der Funktion
+
+//-----------Ereignis--------------------
+
+A022: L     3; 
+      T     #EA_SKZ_Mag; 
+      SPA   INT; 
+
+NETWORK
+TITLE =Schritt 3
+//
+//Pruefen ob Ref.-Punkt angefahren
+//
+MA03: L     3; 
+      L     #EA_SKZ_Mag; 
+      ==I   ; 
+      SPBN  MA04; 
+
+//-------Aktion------
+
+
+//--------Ereignis-------------------
+
+      U     #EA_Mag_Ref_Gefunden; // Referenzpunkt gefunden
+      SPBN  INT; 
+
+      L     4; // OK => weiter Schritt 4
+      T     #EA_SKZ_Mag; 
+      SPA   INT; 
+NETWORK
+TITLE =Schritt 4
+//warten, bis programmierter Platz erreicht ist
+MA04: L     4; 
+      L     #EA_SKZ_Mag; 
+      ==I   ; 
+      SPBN  MA05; 
+
+
+//--------------Aktion--------------
+
+//--------------Ereignis--------------
+
+      L     #E_MP_Ist; // wenn die Ist-Position gleich
+      L     #EA_MP_Soll; // der Soll-Position ist
+      ==I   ; // und das Magazin steht
+      UN    #E_Mag_laeuft; 
+      SPBN  INT; 
+
+      S     #EA_Mag_Inposition; // Inposition setzen und weiter nach Schritt 5
+      S     "MX_Mag_Pos_Gueltig"; 
+
+      L     #EA_Anforderung; // T-Anforderung und
+      L     2; // WZ-Waschen bei T
+      ==I   ; 
+      U(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._012_ANWAHL_WKZ_WASCHEN; 
+      L     2; 
+      ==I   ; 
+      )     ; 
+      UN    "DB_CONFIG".ANWAHL_DURCH_USER_DATA.WZW_HORIZONTALE_KETTE; 
+      UN    "DB_NC_PLC".WZW_WZ_Auswechseln; 
+      UN    "DB_NC_PLC".WZW_WZ_Hand_Ein; 
+      UN    "DB_NC_PLC".WZW_WZ_AUS_EINWechseln; 
+      S     "MX_Req_Reinigen_Abl"; 
+      SPBN  A041; // 
+
+      U     "M_WZW_Aktiv"; // Wenn bereits ein WZW aktiv ist
+      R     "MX_Req_Reinigen_Abl"; // wird erst im Ablauf gereinigt
+      S     "MX_Anf_Reinin_InWZW"; 
+      SPB   A041; 
+
+      L     5; 
+      T     #EA_SKZ_Mag; 
+      SPA   INT; 
+
+A041: L     6; 
+      T     #EA_SKZ_Mag; 
+      SPA   INT; 
+
+NETWORK
+TITLE =Schritt 5
+//Magazinanforderung bereits quittiert
+//Mag.Anforderung zuruecksetzen
+//
+MA05: L     5; 
+      L     #EA_SKZ_Mag; 
+      ==I   ; 
+      SPBN  MA06; 
+
+//------------------------Aktion
+
+//------------------------Ereignis
+
+      U     "MX_Rdy_Reinigen_Abl"; 
+      SPBN  INT; 
+      R     "MX_Rdy_Reinigen_Abl"; 
+
+      L     6; 
+      T     #EA_SKZ_Mag; 
+      SPA   INT; 
+
+NETWORK
+TITLE =Schritt 6
+//Magazinanforderung bereits quittiert
+//Mag.Anforderung zuruecksetzen
+//
+MA06: L     6; 
+      L     #EA_SKZ_Mag; 
+      ==I   ; 
+      SPBN  MA10; 
+
+//------------------------Aktion
+
+//------------------------Ereignis
+
+
+      L     #EA_Anforderung; 
+      L     1; 
+      ==I   ; 
+      SPBN  A061; 
+
+      U     #EA_Mag_Fertig; 
+      SPB   INT; 
+      SPA   A062; 
+
+A061: L     #EA_Anforderung; 
+      L     2; 
+      ==I   ; 
+      SPBN  A063; 
+
+      U     #EA_TMAG_Fertig; 
+      SPB   INT; 
+      SPA   A062; 
+
+A063: U     #EA_TMMAg_Fertig; 
+      SPB   INT; 
+
+A062: CLR   ; // Anforderung Magazin ruecksetzen
+      =     #EA_MAG_Start; 
+
+      L     0; 
+      T     #EA_SKZ_Mag; 
+      SPA   INT; 
+
+NETWORK
+TITLE =Schritt 10
+//Handbetrieb
+//
+//
+MA10: L     10; 
+      L     #EA_SKZ_Mag; 
+      ==I   ; 
+      SPBN  MA11; 
+
+//-----------------Aktion-------------
+
+      R     #EA_Mag_Inposition; // Inposition ruecksetzen
+
+//----------------Ereignis------------
+
+      U     #EA_Man_Mag_Rechts; // Richtung vorgeben
+      U     #EA_Cmd_Rechts; // und Magazin Starten
+      O(    ; 
+      U     #EA_Man_Mag_Links; 
+      U     #EA_Cmd_Links; 
+      )     ; 
+      SPB   INT; 
+
+      SET   ; // Sobald die Tasten 0 sind das
+      =     #EA_Mag_Stop; // Magazin anhalten
+
+      L     11; 
+      T     #EA_SKZ_Mag; 
+
+NETWORK
+TITLE =Schritt 11
+//Handbetrieb
+//
+//
+MA11: L     11; 
+      L     #EA_SKZ_Mag; 
+      ==I   ; 
+      SPBN  INT; 
+
+//-------------------Aktion-----------------
+//-------------------Ereignis--------------
+
+      U     #E_Mag_laeuft; // Warten bis das Magazin steht
+      SPB   INT; 
+
+      CLR   ; 
+      =     #EA_Mag_Freigabe; 
+
+      L     0; 
+      T     #EA_SKZ_Mag; 
+NETWORK
+TITLE =Unterbrechungen des Magazinlaufs
+//
+//
+INT:  L     0; 
+      L     #EA_SKZ_Unterbrechung; 
+      ==I   ; 
+      SPBN  INT2; 
+
+//-----------------Aktion--------------
+
+//-----------------Ereignis-------------
+
+      U     #EA_Mag_Ref_Gefunden; // Sobald der Referenzpunkt
+      FP    #EA_Trigger_Ref_Found; // erkannt und der Platz 1
+      U(    ; // ist angefordert 
+      L     1; // nur bei getaktetem Magazin
+      L     #EA_MP_Soll; 
+      ==I   ; 
+      )     ; 
+      U(    ; 
+      L     1; 
+      L     #E_MD_Anwahl_Magazin; 
+      ==I   ; 
+      )     ; 
+      SPBN  ui01; // dann Magazin stoppen und neu Anfordern
+
+      S     #EA_Mag_Stop; 
+
+      L     1; 
+      T     #EA_SKZ_Unterbrechung; 
+
+
+ui01: U     #E_Reset; // Bei Reset und das Magazin läuft wird 
+//      U     #EA_MAG_Start               // ein Stop ausgegeben um
+//      U     #EA_Mag_Laeuft              // am nächsten Platz anzuhalten
+      SPBN  ENDE; 
+
+      R     #EA_MAG_Start; 
+      S     #EA_Mag_Stop; 
+      L     1; 
+      T     #EA_SKZ_Unterbrechung; 
+
+NETWORK
+TITLE =
+
+INT2: L     1; 
+      L     #EA_SKZ_Unterbrechung; 
+      ==I   ; 
+      SPBN  ENDE; 
+
+//-----------------Aktion---------------
+//----------------Ereignis---------------
+
+      U     #E_Mag_laeuft; // Warten bis das Magazin steht
+      SPB   ENDE; 
+
+      L     0; // zum Start und die Anforderungskette auch neu Starten
+      T     #EA_SKZ_Unterbrechung; 
+      T     #EA_SKZ_Mag; 
+
+NETWORK
+TITLE =Baustein-Ende
+
+ENDE: BEA   ; 
+
+END_FUNCTION
+

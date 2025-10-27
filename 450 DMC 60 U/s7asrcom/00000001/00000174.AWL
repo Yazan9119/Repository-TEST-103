@@ -1,0 +1,211 @@
+DATA_BLOCK "DB_VGL_DMTDC"
+TITLE =
+//$Revision: 1.14 $
+//$Date: 2007/09/14 13:40:35CEST $
+//$Author: sth $
+//$ProjectRevision: Last Checkpoint: 1.188 $
+//
+VERSION : 0.1
+
+
+  STRUCT 	
+   text : STRING  [32 ];	
+   text1 : STRING  [32 ];	
+   Duplo : INT ;	
+   BCD_4BYTE : DWORD ;	
+   res : ARRAY  [1 .. 10 ] OF INT ;	
+   Fkt1 : STRUCT 	//Wandung von BCD (2Byte) nach INT
+    I_BCD : WORD ;	
+    O_INT : INT ;	
+   END_STRUCT ;	
+   Fkt2 : STRUCT 	//Integer (4Byte) --> Real
+    I_DINT : DINT ;	
+    O_REAL : REAL ;	
+   END_STRUCT ;	
+   Fkt3 : STRUCT 	//Wandung von INT --> BCD (2Byte)
+    I_INT : INT ;	
+    O_BCD : WORD ;	
+   END_STRUCT ;	
+   Fkt4 : STRUCT 	//Real --> Integer (4Byte)
+    I_REAL : REAL ;	
+    O_DINT : DINT ;	
+   END_STRUCT ;	
+   Fkt5 : STRUCT 	//BCD --> REAL (4Byte)
+    I_BCD_1 : WORD ;	
+    O_REAL : DINT ;	
+   END_STRUCT ;	
+   Fkt6 : STRUCT 	//REAL --> BCD (4Byte)
+    I_REAL : REAL ;	
+    O_BCD : DWORD ;	
+   END_STRUCT ;	
+   Fkt7 : STRUCT 	//REAL(4BYTE) --> BCD (2BYTE)
+    I_REAL : REAL ;	
+    O_BCD : WORD ;	
+   END_STRUCT ;	
+   Fkt8 : STRUCT 	//BCD (4BYTE) --> REAL(4BYTE)
+    I_BCD : DWORD ;	
+    O_REAL : DWORD ;	
+   END_STRUCT ;	
+   Fkt9 : STRUCT 	//REAL(4BYTE) --> BCD (4BYTE)
+    I_REAL : REAL ;	
+    O_BCD : DWORD ;	
+   END_STRUCT ;	
+   Schmierm : ARRAY  [1 .. 12 ] OF BYTE ;	
+   SchmiermDW : REAL ;	
+   SchmString : STRING  [32 ];	
+   SchmString1 : STRING  [32 ];	
+   WZABM : STRUCT 	//Werkzeugabmessungen 
+    WZTyp1 : STRUCT 	
+     Laenge : INT ;	
+     Radius : INT ;	
+    END_STRUCT ;	
+    WZTyp2 : STRUCT 	
+     Laenge : INT ;	
+     Radius : INT ;	
+    END_STRUCT ;	
+    WZTyp3 : STRUCT 	
+     Laenge : INT ;	
+     Radius : INT ;	
+    END_STRUCT ;	
+    WZTyp4 : STRUCT 	
+     Laenge : INT ;	
+     Radius : INT ;	
+    END_STRUCT ;	
+    WZTyp5 : STRUCT 	
+     Laenge : INT ;	
+     Radius : INT ;	
+    END_STRUCT ;	
+    WZTyp6 : STRUCT 	
+     Laenge : INT ;	
+     Radius : INT ;	
+    END_STRUCT ;	
+    WZTyp7 : STRUCT 	
+     Laenge : INT ;	
+     Radius : INT ;	
+    END_STRUCT ;	
+    WZTyp8 : STRUCT 	
+     Laenge : INT ;	
+     Radius : INT ;	
+    END_STRUCT ;	
+    WZTyp9 : STRUCT 	
+     Laenge : INT ;	
+     Radius : INT ;	
+    END_STRUCT ;	
+    WZTyp10 : STRUCT 	
+     Laenge : INT ;	
+     Radius : INT ;	
+    END_STRUCT ;	
+    TYP1RadiusY : INT ;	
+    TYP2RadiusY : INT ;	
+    TYP3RadiusY : INT ;	
+    TYP4RadiusY : INT ;	
+    TYP5RadiusY : INT ;	
+    TYP6RadiusY : INT ;	
+    TYP7RadiusY : INT ;	
+    TYP8RadiusY : INT ;	
+    TYP9RadiusY : INT ;	
+    TYP10RadiusY : INT ;	
+   END_STRUCT ;	
+   Softkeys : STRUCT 	
+    Chiplesen : BOOL ;	
+    Chipschreiben : BOOL ;	
+    Konv_beladen : BOOL ;	
+    Konv_entladen : BOOL ;	
+    WZ_anlegen : BOOL ;	
+    WZ_auslesen : BOOL ;	
+    T_NUM : INT ;	
+    PLATZNUM : INT ;	
+    Status : BOOL ;	
+    Daten_loeschen : BOOL ;	
+   END_STRUCT ;	
+  END_STRUCT ;	
+BEGIN
+   text := ''; 
+   text1 := ''; 
+   Duplo := 0; 
+   BCD_4BYTE := DW#16#0; 
+   res[1] := 0; 
+   res[2] := 0; 
+   res[3] := 0; 
+   res[4] := 0; 
+   res[5] := 0; 
+   res[6] := 0; 
+   res[7] := 0; 
+   res[8] := 0; 
+   res[9] := 0; 
+   res[10] := 0; 
+   Fkt1.I_BCD := W#16#0; 
+   Fkt1.O_INT := 0; 
+   Fkt2.I_DINT := L#0; 
+   Fkt2.O_REAL := 0.000000e+000; 
+   Fkt3.I_INT := 0; 
+   Fkt3.O_BCD := W#16#0; 
+   Fkt4.I_REAL := 0.000000e+000; 
+   Fkt4.O_DINT := L#0; 
+   Fkt5.I_BCD_1 := W#16#0; 
+   Fkt5.O_REAL := L#0; 
+   Fkt6.I_REAL := 0.000000e+000; 
+   Fkt6.O_BCD := DW#16#0; 
+   Fkt7.I_REAL := 0.000000e+000; 
+   Fkt7.O_BCD := W#16#0; 
+   Fkt8.I_BCD := DW#16#0; 
+   Fkt8.O_REAL := DW#16#0; 
+   Fkt9.I_REAL := 0.000000e+000; 
+   Fkt9.O_BCD := DW#16#0; 
+   Schmierm[1] := B#16#0; 
+   Schmierm[2] := B#16#0; 
+   Schmierm[3] := B#16#0; 
+   Schmierm[4] := B#16#0; 
+   Schmierm[5] := B#16#0; 
+   Schmierm[6] := B#16#0; 
+   Schmierm[7] := B#16#0; 
+   Schmierm[8] := B#16#0; 
+   Schmierm[9] := B#16#0; 
+   Schmierm[10] := B#16#0; 
+   Schmierm[11] := B#16#0; 
+   Schmierm[12] := B#16#0; 
+   SchmiermDW := 0.000000e+000; 
+   SchmString := ''; 
+   SchmString1 := ''; 
+   WZABM.WZTyp1.Laenge := 0; 
+   WZABM.WZTyp1.Radius := 0; 
+   WZABM.WZTyp2.Laenge := 0; 
+   WZABM.WZTyp2.Radius := 0; 
+   WZABM.WZTyp3.Laenge := 0; 
+   WZABM.WZTyp3.Radius := 0; 
+   WZABM.WZTyp4.Laenge := 0; 
+   WZABM.WZTyp4.Radius := 0; 
+   WZABM.WZTyp5.Laenge := 0; 
+   WZABM.WZTyp5.Radius := 0; 
+   WZABM.WZTyp6.Laenge := 0; 
+   WZABM.WZTyp6.Radius := 0; 
+   WZABM.WZTyp7.Laenge := 0; 
+   WZABM.WZTyp7.Radius := 0; 
+   WZABM.WZTyp8.Laenge := 0; 
+   WZABM.WZTyp8.Radius := 0; 
+   WZABM.WZTyp9.Laenge := 0; 
+   WZABM.WZTyp9.Radius := 0; 
+   WZABM.WZTyp10.Laenge := 0; 
+   WZABM.WZTyp10.Radius := 0; 
+   WZABM.TYP1RadiusY := 0; 
+   WZABM.TYP2RadiusY := 0; 
+   WZABM.TYP3RadiusY := 0; 
+   WZABM.TYP4RadiusY := 0; 
+   WZABM.TYP5RadiusY := 0; 
+   WZABM.TYP6RadiusY := 0; 
+   WZABM.TYP7RadiusY := 0; 
+   WZABM.TYP8RadiusY := 0; 
+   WZABM.TYP9RadiusY := 0; 
+   WZABM.TYP10RadiusY := 0; 
+   Softkeys.Chiplesen := FALSE; 
+   Softkeys.Chipschreiben := FALSE; 
+   Softkeys.Konv_beladen := FALSE; 
+   Softkeys.Konv_entladen := FALSE; 
+   Softkeys.WZ_anlegen := FALSE; 
+   Softkeys.WZ_auslesen := FALSE; 
+   Softkeys.T_NUM := 0; 
+   Softkeys.PLATZNUM := 0; 
+   Softkeys.Status := FALSE; 
+   Softkeys.Daten_loeschen := FALSE; 
+END_DATA_BLOCK
+

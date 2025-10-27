@@ -1,0 +1,202 @@
+DATA_BLOCK "DB_TOOL_DATA"
+TITLE =
+//$Revision: 1.5 $
+//$Date: 2008/06/25 07:32:00CEST $
+//$Author: fuh $
+//
+VERSION : 1.0
+
+
+  STRUCT 	
+   T_NR : WORD ;	
+   D_NR : WORD ;	
+   Laenge1 : REAL ;	
+   Laenge2 : REAL ;	
+   Laenge3 : REAL ;	
+   Radius : REAL ;	
+   Spindel_Ist_Drehzahl : REAL ;	
+   C1_S_actTNumber_23 : STRUCT 	
+    SYNTAX_ID : BYTE  := B#16#82;	
+    bereich_u_einheit : BYTE  := B#16#41;	
+    spalte : WORD  := W#16#17;	
+    zeile : WORD  := W#16#1;	
+    bausteintyp : BYTE  := B#16#7F;	
+    ZEILENANZAHL : BYTE  := B#16#1;	
+    typ : BYTE  := B#16#4;	
+    laenge : BYTE  := B#16#2;	
+   END_STRUCT ;	
+   C1_S_actDNumber_24 : STRUCT 	
+    SYNTAX_ID : BYTE  := B#16#82;	
+    bereich_u_einheit : BYTE  := B#16#41;	
+    spalte : WORD  := W#16#18;	
+    zeile : WORD  := W#16#1;	
+    bausteintyp : BYTE  := B#16#7F;	
+    ZEILENANZAHL : BYTE  := B#16#1;	
+    typ : BYTE  := B#16#4;	
+    laenge : BYTE  := B#16#2;	
+   END_STRUCT ;	
+   C1_S_actToolLength1_28 : STRUCT 	
+    SYNTAX_ID : BYTE  := B#16#82;	
+    bereich_u_einheit : BYTE  := B#16#41;	
+    spalte : WORD  := W#16#1C;	
+    zeile : WORD  := W#16#1;	
+    bausteintyp : BYTE  := B#16#7F;	
+    ZEILENANZAHL : BYTE  := B#16#1;	
+    typ : BYTE  := B#16#F;	
+    laenge : BYTE  := B#16#8;	
+   END_STRUCT ;	
+   C1_S_actToolLength2_29 : STRUCT 	
+    SYNTAX_ID : BYTE  := B#16#82;	
+    bereich_u_einheit : BYTE  := B#16#41;	
+    spalte : WORD  := W#16#1D;	
+    zeile : WORD  := W#16#1;	
+    bausteintyp : BYTE  := B#16#7F;	
+    ZEILENANZAHL : BYTE  := B#16#1;	
+    typ : BYTE  := B#16#F;	
+    laenge : BYTE  := B#16#8;	
+   END_STRUCT ;	
+   C1_S_actToolLength3_30 : STRUCT 	
+    SYNTAX_ID : BYTE  := B#16#82;	
+    bereich_u_einheit : BYTE  := B#16#41;	
+    spalte : WORD  := W#16#1E;	
+    zeile : WORD  := W#16#1;	
+    bausteintyp : BYTE  := B#16#7F;	
+    ZEILENANZAHL : BYTE  := B#16#1;	
+    typ : BYTE  := B#16#F;	
+    laenge : BYTE  := B#16#8;	
+   END_STRUCT ;	
+   C1_S_actToolRadius_27 : STRUCT 	
+    SYNTAX_ID : BYTE  := B#16#82;	
+    bereich_u_einheit : BYTE  := B#16#41;	
+    spalte : WORD  := W#16#1B;	
+    zeile : WORD  := W#16#1;	
+    bausteintyp : BYTE  := B#16#7F;	
+    ZEILENANZAHL : BYTE  := B#16#1;	
+    typ : BYTE  := B#16#F;	
+    laenge : BYTE  := B#16#8;	
+   END_STRUCT ;	
+   C1_SSP_actSpeed1_2 : STRUCT 	
+    SYNTAX_ID : BYTE  := B#16#82;	
+    bereich_u_einheit : BYTE  := B#16#41;	
+    spalte : WORD  := W#16#2;	
+    zeile : WORD  := W#16#1;	
+    bausteintyp : BYTE  := B#16#72;	
+    ZEILENANZAHL : BYTE  := B#16#1;	
+    typ : BYTE  := B#16#F;	
+    laenge : BYTE  := B#16#8;	
+   END_STRUCT ;	
+   T_NR_alt : WORD ;	
+   ToolOEMDATA : STRUCT 	
+    SYNTAX_ID : BYTE  := B#16#82;	
+    bereich_u_einheit : BYTE  := B#16#81;	
+    spalte : WORD ;	
+    zeile : WORD ;	
+    bausteintyp : BYTE  := B#16#24;	
+    ZEILENANZAHL : BYTE  := B#16#1;	
+    typ : BYTE  := B#16#F;	
+    laenge : BYTE  := B#16#8;	
+   END_STRUCT ;	
+   SpWZ_Option : REAL ;	
+   Spindeldrehzahl_max : REAL ;	
+   waschzeit_greiferWZ : REAL ;	
+   T1_TO_cuttEdgeParam1_1 : STRUCT 	
+    SYNTAX_ID : BYTE  := B#16#82;	
+    bereich_u_einheit : BYTE  := B#16#81;	
+    spalte : WORD  := W#16#1;	
+    zeile : WORD  := W#16#1;	
+    bausteintyp : BYTE  := B#16#14;	
+    ZEILENANZAHL : BYTE  := B#16#1;	
+    typ : BYTE  := B#16#F;	
+    laenge : BYTE  := B#16#8;	
+   END_STRUCT ;	
+   WZ_TYP : REAL ;	
+   New_Tool_Siem_Typ : REAL ;	
+  END_STRUCT ;	
+BEGIN
+   T_NR := W#16#0; 
+   D_NR := W#16#0; 
+   Laenge1 := 0.000000e+000; 
+   Laenge2 := 0.000000e+000; 
+   Laenge3 := 0.000000e+000; 
+   Radius := 0.000000e+000; 
+   Spindel_Ist_Drehzahl := 0.000000e+000; 
+   C1_S_actTNumber_23.SYNTAX_ID := B#16#82; 
+   C1_S_actTNumber_23.bereich_u_einheit := B#16#41; 
+   C1_S_actTNumber_23.spalte := W#16#17; 
+   C1_S_actTNumber_23.zeile := W#16#1; 
+   C1_S_actTNumber_23.bausteintyp := B#16#7F; 
+   C1_S_actTNumber_23.ZEILENANZAHL := B#16#1; 
+   C1_S_actTNumber_23.typ := B#16#4; 
+   C1_S_actTNumber_23.laenge := B#16#2; 
+   C1_S_actDNumber_24.SYNTAX_ID := B#16#82; 
+   C1_S_actDNumber_24.bereich_u_einheit := B#16#41; 
+   C1_S_actDNumber_24.spalte := W#16#18; 
+   C1_S_actDNumber_24.zeile := W#16#1; 
+   C1_S_actDNumber_24.bausteintyp := B#16#7F; 
+   C1_S_actDNumber_24.ZEILENANZAHL := B#16#1; 
+   C1_S_actDNumber_24.typ := B#16#4; 
+   C1_S_actDNumber_24.laenge := B#16#2; 
+   C1_S_actToolLength1_28.SYNTAX_ID := B#16#82; 
+   C1_S_actToolLength1_28.bereich_u_einheit := B#16#41; 
+   C1_S_actToolLength1_28.spalte := W#16#1C; 
+   C1_S_actToolLength1_28.zeile := W#16#1; 
+   C1_S_actToolLength1_28.bausteintyp := B#16#7F; 
+   C1_S_actToolLength1_28.ZEILENANZAHL := B#16#1; 
+   C1_S_actToolLength1_28.typ := B#16#F; 
+   C1_S_actToolLength1_28.laenge := B#16#8; 
+   C1_S_actToolLength2_29.SYNTAX_ID := B#16#82; 
+   C1_S_actToolLength2_29.bereich_u_einheit := B#16#41; 
+   C1_S_actToolLength2_29.spalte := W#16#1D; 
+   C1_S_actToolLength2_29.zeile := W#16#1; 
+   C1_S_actToolLength2_29.bausteintyp := B#16#7F; 
+   C1_S_actToolLength2_29.ZEILENANZAHL := B#16#1; 
+   C1_S_actToolLength2_29.typ := B#16#F; 
+   C1_S_actToolLength2_29.laenge := B#16#8; 
+   C1_S_actToolLength3_30.SYNTAX_ID := B#16#82; 
+   C1_S_actToolLength3_30.bereich_u_einheit := B#16#41; 
+   C1_S_actToolLength3_30.spalte := W#16#1E; 
+   C1_S_actToolLength3_30.zeile := W#16#1; 
+   C1_S_actToolLength3_30.bausteintyp := B#16#7F; 
+   C1_S_actToolLength3_30.ZEILENANZAHL := B#16#1; 
+   C1_S_actToolLength3_30.typ := B#16#F; 
+   C1_S_actToolLength3_30.laenge := B#16#8; 
+   C1_S_actToolRadius_27.SYNTAX_ID := B#16#82; 
+   C1_S_actToolRadius_27.bereich_u_einheit := B#16#41; 
+   C1_S_actToolRadius_27.spalte := W#16#1B; 
+   C1_S_actToolRadius_27.zeile := W#16#1; 
+   C1_S_actToolRadius_27.bausteintyp := B#16#7F; 
+   C1_S_actToolRadius_27.ZEILENANZAHL := B#16#1; 
+   C1_S_actToolRadius_27.typ := B#16#F; 
+   C1_S_actToolRadius_27.laenge := B#16#8; 
+   C1_SSP_actSpeed1_2.SYNTAX_ID := B#16#82; 
+   C1_SSP_actSpeed1_2.bereich_u_einheit := B#16#41; 
+   C1_SSP_actSpeed1_2.spalte := W#16#2; 
+   C1_SSP_actSpeed1_2.zeile := W#16#1; 
+   C1_SSP_actSpeed1_2.bausteintyp := B#16#72; 
+   C1_SSP_actSpeed1_2.ZEILENANZAHL := B#16#1; 
+   C1_SSP_actSpeed1_2.typ := B#16#F; 
+   C1_SSP_actSpeed1_2.laenge := B#16#8; 
+   T_NR_alt := W#16#0; 
+   ToolOEMDATA.SYNTAX_ID := B#16#82; 
+   ToolOEMDATA.bereich_u_einheit := B#16#81; 
+   ToolOEMDATA.spalte := W#16#0; 
+   ToolOEMDATA.zeile := W#16#0; 
+   ToolOEMDATA.bausteintyp := B#16#24; 
+   ToolOEMDATA.ZEILENANZAHL := B#16#1; 
+   ToolOEMDATA.typ := B#16#F; 
+   ToolOEMDATA.laenge := B#16#8; 
+   SpWZ_Option := 0.000000e+000; 
+   Spindeldrehzahl_max := 0.000000e+000; 
+   waschzeit_greiferWZ := 0.000000e+000; 
+   T1_TO_cuttEdgeParam1_1.SYNTAX_ID := B#16#82; 
+   T1_TO_cuttEdgeParam1_1.bereich_u_einheit := B#16#81; 
+   T1_TO_cuttEdgeParam1_1.spalte := W#16#1; 
+   T1_TO_cuttEdgeParam1_1.zeile := W#16#1; 
+   T1_TO_cuttEdgeParam1_1.bausteintyp := B#16#14; 
+   T1_TO_cuttEdgeParam1_1.ZEILENANZAHL := B#16#1; 
+   T1_TO_cuttEdgeParam1_1.typ := B#16#F; 
+   T1_TO_cuttEdgeParam1_1.laenge := B#16#8; 
+   WZ_TYP := 0.000000e+000; 
+   New_Tool_Siem_Typ := 0.000000e+000; 
+END_DATA_BLOCK
+

@@ -1,0 +1,67 @@
+DATA_BLOCK DB 329
+TITLE =
+AUTHOR : wri
+VERSION : 0.0
+
+"FB_VENTIL_2E2A"
+BEGIN
+   EX_Init := FALSE; 
+   Zeittakt := FALSE; 
+   OutputMode := FALSE; 
+   Endlage_AST := FALSE; 
+   Endlage_GST := FALSE; 
+   Automatik := FALSE; 
+   Hand := FALSE; 
+   Freig_Ventil_AST_Auto := FALSE; 
+   Freig_Ventil_GST_Auto := FALSE; 
+   Taste_AST_Hand := FALSE; 
+   Taste_GST_Hand := FALSE; 
+   Freigabe_AST_Hand := FALSE; 
+   Freigabe_GST_Hand := FALSE; 
+   Freig_Ventil_Hardware := FALSE; 
+   SST_Anlage_Aus := FALSE; 
+   QUIT := FALSE; 
+   Laufzeit_AST := 0; 
+   Laufzeit_GST := 0; 
+   Wartezeit_AST := 0; 
+   Wartezeit_GST := 0; 
+   Einrichten_Aktiv := FALSE; 
+   Bewegungsnummer := 0; 
+   Ventil_AST := FALSE; 
+   Ventil_GST := FALSE; 
+   Stoer_Laufz_AST := FALSE; 
+   Stoer_Laufz_GST := FALSE; 
+   Stoer_Paarueb := FALSE; 
+   Sammelstoerung := FALSE; 
+   Beweg_Fertig := FALSE; 
+   Ablauf_Fertig := FALSE; 
+   HB_Laufzeit_AST := 0; 
+   HB_Laufzeit_GST := 0; 
+   HB_Wartezeit_AST := 0; 
+   HB_Wartezeit_GST := 0; 
+   HM_AST := FALSE; 
+   HM_GST := FALSE; 
+   HM_Ventil_AST := FALSE; 
+   HM_Ventil_GST := FALSE; 
+   ZM_Stoe_Laufz_AST := FALSE; 
+   ZM_Stoe_Laufz_GST := FALSE; 
+   Sammelstoerung_Gesamt := FALSE; 
+   Beweg_Fertig_AST := FALSE; 
+   Beweg_Fertig_GST := FALSE; 
+   Ablauf_Fertig_AST := FALSE; 
+   Ablauf_Fertig_GST := FALSE; 
+   LZ_AST_freigegeben := FALSE; 
+   LZ_AST_laeuft := FALSE; 
+   LZ_AST_abgelaufen := FALSE; 
+   LZ_GST_freigegeben := FALSE; 
+   LZ_GST_laeuft := FALSE; 
+   LZ_GST_abgelaufen := FALSE; 
+   WZ_AST_freigegeben := FALSE; 
+   WZ_AST_laeuft := FALSE; 
+   WZ_AST_abgelaufen := FALSE; 
+   WZ_GST_freigegeben := FALSE; 
+   WZ_GST_laeuft := FALSE; 
+   WZ_GST_abgelaufen := FALSE; 
+   flankenbit := FALSE; 
+END_DATA_BLOCK
+

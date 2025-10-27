@@ -1,0 +1,317 @@
+FUNCTION "FC_SIGNALLEUCHTE" : VOID
+TITLE =
+//$Revision: 1.24 $
+//$Date: 2008/07/02 10:03:36CEST $
+//$Author: hgc $
+//
+//-------------------------- Einzel-Farbe ------------------------------------
+//Rot (Statisch):
+//Allgemeine Störung,die eine sofortige Handlung erfordert, gefahrbringender 
+//Zustand, Fehler mit hoher Priorität, z. B.-  von Not-Halt,-  Spindel- und 
+//Vorschub-Halt.
+//Symbolischer Operand OX_AL_LM_RD(OX_GEN_SIGNALLAMP_RD)
+//
+//Gelb (Statisch):
+//Maschineneingriff erforderlich,da eine der
+//Fehlermeldung niedriger Priorität ansteht, z. B.
+//-  Werkzeugbruch,
+//Vorwarnungen für z.B.
+//-  Wassermangel
+//-  Maschine bekommt keine Werkstücke mehr (Werkstückmagazin leer) oder
+//-  Werkstückablaufmagazin voll,
+//-  Messwerkstück nicht i.O. (ausgeschleust).
+//Symbolischer Operand OX_AL_LM_YE(OX_GEN_SIGNALLAMP_YE)
+//
+//Gelb (blinkend):
+//Materialmangel an Stangennachschubeinrichtung (in Übereinstimmung mit 
+//Konzern-Stangenladerschnittstelle)
+//Symbolischer Operand OX_AL_LM_YE(OX_GEN_SIGNALLAMP_YE)
+//
+//Grün (Statisch):
+//Normaler Zustand der Maschine, z. B.
+//Maschine produziert im Automatikbetrieb (BA 1).
+//Die grüne Leuchte leuchtet nicht bei angewählter BA2, BA3 und BA4 !
+//Symbolischer Operand OX_AL_LM_GN(OX_GEN_SIGNALLAMP_GN)
+//
+//Blau (Statisch):
+//Zustand an der Maschine, der eine Handlung durch den Bediener erfordert
+//-  Freigabe Palettenwechsler am Rüstplatz oder
+//-  Maschine ist im Einrichtbetrieb (BA 2) oder BA 3
+//Symbolischer Operand OX_AL_LM_BU(OX_GEN_SIGNALLAMP_BU)
+//
+//Blau (Blinkend):
+//Maschine erfordert generell eine Handlung durch den Bediener,BA4 angewählt ist.
+//Symbolischer Operand OX_AL_LM_BU(OX_GEN_SIGNALLAMP_BU)
+//
+//------------------- Kombination von Farben -----------------------------------
+//Lasermaschinen Grün (statisch) und Gelb (Statisch):
+//Maschine arbeitet mit Laser.
+//Symbolischer Operand OX_AL_LM_GN(OX_GEN_SIGNALLAMP_GN)
+//Symbolischer Operand OX_AL_LM_YE(OX_GEN_SIGNALLAMP_YE)
+//
+//Grün (statisch) und Blau (Statisch): 
+//Maschine ist voll funktionsfähig, es ist eine Bedienerhandlung 
+//erforderlich,z.B. 
+//-  Spezialwerkzeug manuell einlegen oder
+//-  neues Programm starten, weil Maschine steht oder
+//-  M00 / M01 ist aktiv.
+//Symbolischer Operand OX_AL_LM_GN(OX_GEN_SIGNALLAMP_GN)
+//Symbolischer Operand OX_AL_LM_BU(OX_GEN_SIGNALLAMP_BU)
+//
+//Grün (statisch),  Blau (Statisch) und Gelb (Statisch):
+//Maschine ist voll funktionsfähig, es ist eine Bedienerhandlung erforderlich, z.B
+//- Spezialwerkzeug manuell einlegen oder 
+//- neues Programm starten und es ist eine Vorwarnung vorhanden,
+//  z. B. Wassermangel.
+//Symbolischer Operand OX_AL_LM_GN(OX_GEN_SIGNALLAMP_GN)
+//Symbolischer Operand OX_AL_LM_BU(OX_GEN_SIGNALLAMP_BU)
+//Symbolischer Operand OX_AL_LM_YE(OX_GEN_SIGNALLAMP_YE)
+{ S7_language := '9(1) Englisch (USA)  15.02.2008  06:49:31' }
+VERSION : 0.1
+
+BEGIN
+NETWORK
+TITLE =M-Ausgang: Maschinen-Ampel ROT
+//Rot (Statisch):
+//Allgemeine Störung,die eine sofortige Handlung erfordert, gefahrbringender 
+//Zustand, Fehler mit hoher Priorität, z. B.-  von Not-Halt,-  Spindel- und 
+//Vorschub-Halt.
+//Symbolischer Operand OX_AL_LM_RD(OX_GEN_SIGNALLAMP_RD)
+      O     "DB_FAMILIEN_MODUL".E_Fehler.Not_Aus; 
+      O     "DB_FAMILIEN_MODUL".E_Fehler.Spin_Vorschub_Halt_Kanal; 
+      O     "DB_FAMILIEN_MODUL".E_Fehler.Spin_VS_Halt_Satzwechsel; 
+      O     "DB_FAMILIEN_MODUL".E_Fehler.Vorschub_Halt_Kanal; 
+      O     "DB_FAMILIEN_MODUL".E_Fehler.Spindel_Halt_Kanal; 
+      O     ; 
+      U     "DB_FAMILIEN_MODUL".E_Fehler.Einlesesperre; 
+      UN    "DB_FEHLERMELDUNG".Einlesesperre._700552; 
+      O     "DB_FAMILIEN_MODUL".E_Fehler.Vorschub_Halt_Haupt_Achs; 
+      O     "DB_FAMILIEN_MODUL".E_Fehler.Vorschub_Halt_1_Achse; 
+      O     "DB_FAMILIEN_MODUL".E_Fehler.Vorschub_Halt_2_Achse; 
+      O     "DB_FAMILIEN_MODUL".E_Fehler.Vorschub_Halt_3_Achse; 
+      O     "DB_FAMILIEN_MODUL".E_Fehler.Vorschub_Halt_4_Achse; 
+      O     "DB_FAMILIEN_MODUL".E_Fehler.Vorschub_Halt_5_Achse; 
+      O     "DB_FAMILIEN_MODUL".E_Fehler.Vorschub_Halt_6_Achse; 
+      O     "DB_FAMILIEN_MODUL".E_Fehler.Vorschub_Halt_7_Achse; 
+      O     "DB_FAMILIEN_MODUL".E_Fehler.Vorschub_Halt_8_Achse; 
+      O     "DB_FAMILIEN_MODUL".E_Fehler.Vorschub_Halt_9_Achse; 
+      O     "DB_FAMILIEN_MODUL".E_Fehler.Vorschub_Halt_10_Achse; 
+      O     "DB_FAMILIEN_MODUL".E_Fehler.Vorschub_Halt_11_Achse; 
+      O     "DB_FAMILIEN_MODUL".E_Fehler.Vorschub_Halt_12_Achse; 
+      O     "DB_FAMILIEN_MODUL".E_Fehler.NC_Start_Sperre; 
+      O     "DB_FAMILIEN_MODUL".E_Fehler.Stop_Werkzeugwechsel; 
+      O     "DB_FAMILIEN_MODUL".E_Fehler.Stop_Palettenwechsel; 
+      O     "DB_FAMILIEN_MODUL".E_Fehler.Stop_Kopf_schwenken; 
+      O     "DB_FAMILIEN_MODUL".E_Fehler.Stop_Sonderaktion; 
+      O     "DB_FAMILIEN_MODUL".E_Fehler.Stop_Asychron_Prozess1; 
+      O     "DB_FAMILIEN_MODUL".E_Fehler.Stop_Asychron_Prozess2; 
+      O     "DB_FAMILIEN_MODUL".E_Fehler.Stop_Asychron_Prozess3; 
+      O     "DB_FAMILIEN_MODUL".E_Fehler.Stop_Asychron_Prozess4; 
+      O     "MX_T_WZ_DREHMOMENT_STOP"; 
+      O     ; 
+      U(    ; 
+      O     "DB_SIEM_NCK".E_NCKalarm; 
+
+      O     "DB_SIEM_KANAL_1".E_NCKalarmChan; 
+      )     ; 
+      UN    "MX_T_WZ_Drehmoment"; 
+
+      UN    "MX_T_WZ_Standzeit"; 
+
+      O     "t_verz_wzw_aktiv"; 
+      =     "O_AL_LM_RD"; 
+NETWORK
+TITLE =WZV: Werkzeugstandzeit abgelaufen
+
+      U     "M_Ruecksetze_Fehler"; 
+      R     "MX_T_WZ_Standzeit"; 
+
+      U(    ; 
+      O     "DB_SIEM_KANAL_1".E_T_PrewarnLimit; //           Genzwert erreicht
+      O     "DB_SIEM_KANAL_1".E_T_Limit; 
+
+      )     ; 
+      S     "MX_T_WZ_Standzeit"; 
+      NOP   0; 
+NETWORK
+TITLE =M-Ausgang: Maschinen-Ampel GELB
+//Gelb (Statisch):
+//Maschineneingriff erforderlich,da eine der
+//Fehlermeldung niedriger Priorität ansteht, z. B.
+//-  Werkzeugbruch,
+//Vorwarnungen für z.B.
+//-  Wassermangel
+//-  Maschine bekommt keine Werkstücke mehr (Werkstückmagazin leer) oder
+//-  Werkstückablaufmagazin voll,
+//-  Messwerkstück nicht i.O. (ausgeschleust).
+//Symbolischer Operand OX_AL_LM_YE(OX_GEN_SIGNALLAMP_YE)
+//
+//Gelb (blinkend):
+//Materialmangel an Stangennachschubeinrichtung (in Übereinstimmung mit 
+//Konzern-Stangenladerschnittstelle)
+//Symbolischer Operand OX_AL_LM_YE(OX_GEN_SIGNALLAMP_YE)
+//
+//Lasermaschinen Grün (statisch) und Gelb (Statisch):
+//Maschine arbeitet mit Laser.
+//Symbolischer Operand OX_AL_LM_GN(OX_GEN_SIGNALLAMP_GN)
+//Symbolischer Operand OX_AL_LM_YE(OX_GEN_SIGNALLAMP_YE)
+//
+//Grün (statisch),  Blau (Statisch) und Gelb (Statisch):
+//Maschine ist voll funktionsfähig, es ist eine Bedienerhandlung erforderlich, z.B
+//- Spezialwerkzeug manuell einlegen oder 
+//- neues Programm starten und es ist eine Vorwarnung vorhanden,
+//  z. B. Wassermangel.
+//Symbolischer Operand OX_AL_LM_GN(OX_GEN_SIGNALLAMP_GN)
+//Symbolischer Operand OX_AL_LM_BU(OX_GEN_SIGNALLAMP_BU)
+//Symbolischer Operand OX_AL_LM_YE(OX_GEN_SIGNALLAMP_YE)
+      U(    ; 
+      O     "DB_FAMILIEN_MODUL".E_Fehler.Sammel_Warnungen; 
+      O     "DB_FEHLERMELDUNG".MELDEFENSTER2._511213_FEHL_WZ_EINLEGEN; 
+      )     ; 
+      UN    "O_AL_LM_RD"; 
+
+
+      O     "MX_T_WZ_Standzeit"; 
+      O     "MX_T_WZ_Drehmoment"; 
+      O     ; 
+      U     "m_PS_STOP_TUERE_NICHT_ZU"; 
+      U     "m_takt_1sec."; 
+      =     "O_AL_LM_YE"; 
+NETWORK
+TITLE =M-AUSGANG: Signalleuchte Farbe GN
+//Grün (Statisch):
+//Normaler Zustand der Maschine, z. B.
+//Maschine produziert im Automatikbetrieb (BA 1).
+//Die grüne Leuchte leuchtet nicht bei angewählter BA2, BA3 und BA4 !
+//Symbolischer Operand OX_AL_LM_GN(OX_GEN_SIGNALLAMP_GN)
+//
+//Lasermaschinen Grün (statisch) und Gelb (Statisch):
+//Maschine arbeitet mit Laser.
+//Symbolischer Operand OX_AL_LM_GN(OX_GEN_SIGNALLAMP_GN)
+//Symbolischer Operand OX_AL_LM_YE(OX_GEN_SIGNALLAMP_YE)
+//
+//Grün (statisch) und Blau (Statisch): 
+//Maschine ist voll funktionsfähig, es ist eine Bedienerhandlung 
+//erforderlich,z.B. 
+//-  Spezialwerkzeug manuell einlegen oder
+//-  neues Programm starten, weil Maschine steht oder
+//-  M00 / M01 ist aktiv.
+//Symbolischer Operand OX_AL_LM_GN(OX_GEN_SIGNALLAMP_GN)
+//Symbolischer Operand OX_AL_LM_BU(OX_GEN_SIGNALLAMP_BU)
+//
+//Grün (statisch),  Blau (Statisch) und Gelb (Statisch):
+//Maschine ist voll funktionsfähig, es ist eine Bedienerhandlung erforderlich, z.B
+//- Spezialwerkzeug manuell einlegen oder 
+//- neues Programm starten und es ist eine Vorwarnung vorhanden,
+//  z. B. Wassermangel.
+//Symbolischer Operand OX_AL_LM_GN(OX_GEN_SIGNALLAMP_GN)
+//Symbolischer Operand OX_AL_LM_BU(OX_GEN_SIGNALLAMP_BU)
+//Symbolischer Operand OX_AL_LM_YE(OX_GEN_SIGNALLAMP_YE)
+      U(    ; 
+      U(    ; 
+      O     "M_Programm_Aktiv"; 
+      O     ; 
+      U     "M_Satzfolge_aktiv"; 
+      U(    ; 
+      O     "m_takt_2sec."; 
+      O     "DB_FEHLERMELDUNG".Meldung._702146_WZW_aktiv; 
+      )     ; 
+      )     ; 
+      U     "I_AL_Kabine_Verriegelt"; 
+      U     "DB_SIEM_KANAL_1".E_ProgRunn; 
+      O     "MX_M0_1_Aktiv"; 
+      )     ; 
+      UN    "O_AL_LM_RD"; 
+      UN    "M_Einrichtbetrieb"; 
+      UN    "M_3Te_Betriebsart"; 
+      UN    "M_4Te_Betriebsart"; 
+      UN    "t_verz_wzw_aktiv"; 
+      =     "O_AL_LM_GN"; 
+NETWORK
+TITLE =M-AUSGANG: Signalleuchte Farbe BU
+//Blau (Statisch):
+//Zustand an der Maschine, der eine Handlung durch den Bediener erfordert
+//-  Freigabe Palettenwechsler am Rüstplatz oder
+//-  Maschine ist im Einrichtbetrieb (BA 2) oder BA 3
+//Symbolischer Operand OX_AL_LM_BU(OX_GEN_SIGNALLAMP_BU)
+//
+//Blau (Blinkend):
+//Maschine erfordert generell eine Handlung durch den Bediener,BA4 angewählt ist.
+//Symbolischer Operand OX_AL_LM_BU(OX_GEN_SIGNALLAMP_BU)
+//
+//Grün (statisch) und Blau (Statisch): 
+//Maschine ist voll funktionsfähig, es ist eine Bedienerhandlung 
+//erforderlich,z.B. 
+//-  Spezialwerkzeug manuell einlegen oder
+//-  neues Programm starten, weil Maschine steht oder
+//-  M00 / M01 ist aktiv.
+//Symbolischer Operand OX_AL_LM_GN(OX_GEN_SIGNALLAMP_GN)
+//Symbolischer Operand OX_AL_LM_BU(OX_GEN_SIGNALLAMP_BU)
+//
+//Grün (statisch),  Blau (Statisch) und Gelb (Statisch):
+//Maschine ist voll funktionsfähig, es ist eine Bedienerhandlung erforderlich, z.B
+//- Spezialwerkzeug manuell einlegen oder 
+//- neues Programm starten und es ist eine Vorwarnung vorhanden,
+//  z. B. Wassermangel.
+//Symbolischer Operand OX_AL_LM_GN(OX_GEN_SIGNALLAMP_GN)
+//Symbolischer Operand OX_AL_LM_BU(OX_GEN_SIGNALLAMP_BU)
+//Symbolischer Operand OX_AL_LM_YE(OX_GEN_SIGNALLAMP_YE)
+      U     "M_4Te_Betriebsart"; 
+      U     "m_takt_0,5sec."; 
+      O     "M_Einrichtbetrieb"; 
+      O     "M_3Te_Betriebsart"; 
+      O     ; 
+      U(    ; 
+      UN    "M_FreigabePW"; 
+      UN    "I_FMS_APC_MOVEMENT_OK"; 
+      U(    ; 
+      O     "DB_FEHLERMELDUNG".Warnung._701933_Eingang_PW_0Sig; 
+      O     "DB_FEHLERMELDUNG".Meldung._702063_Freigabe_PW_0Sig; 
+      )     ; 
+      U     "M_Programm_Aktiv"; 
+      O     "DB_ICON"._1.UI_18; 
+      O     "DB_ICON"._1.UI_23; 
+      O     ; 
+      U(    ; 
+      O     "M_4Te_Betriebsart"; 
+      O     "DB_FEHLERMELDUNG".MELDUNG2._701327_Regal_ni_bereit; 
+      )     ; 
+      U     "DB_FEHLERMELDUNG".MELDUNG2._701327_Regal_ni_bereit; 
+      O     "MX_M0_1_Aktiv"; 
+      )     ; 
+      UN    "O_AL_LM_RD"; 
+      =     "O_AL_LM_BU"; 
+NETWORK
+TITLE =M-AUSGANG: Signalband Grün
+
+      O     "O_AL_LM_GN"; 
+      O     "O_AL_LM_YE"; 
+      =     "O_GEN_OPTWAVE_GN"; 
+NETWORK
+TITLE =M-AUSGANG: Signalband Rot
+
+      U     "O_AL_LM_RD"; 
+      UN    "O_GEN_OPTWAVE_GN"; 
+      O     "O_AL_LM_YE"; 
+      =     "O_GEN_OPTWAVE_RD"; 
+NETWORK
+TITLE =M-AUSGANG: Signalband Blau
+
+      U     "O_AL_LM_BU"; 
+      UN    "O_GEN_OPTWAVE_GN"; 
+      UN    "O_GEN_OPTWAVE_RD"; 
+      =     "O_GEN_OPTWAVE_BU"; 
+NETWORK
+TITLE =Verzögerung für Überwachung Werkzeugwechsel zu langsam/steht
+
+      U     "DB_FEHLERMELDUNG".Meldung._702146_WZW_aktiv; 
+      U     "DB_SIEM_KANAL_1".E_AxesStop; 
+      U     "DB_SIEM_KANAL_1".E_ProgRunn; 
+      L     S5T#5M; 
+      SE    "t_verz_wzw_aktiv"; 
+      NOP   0; 
+      NOP   0; 
+      NOP   0; 
+      NOP   0; 
+END_FUNCTION
+

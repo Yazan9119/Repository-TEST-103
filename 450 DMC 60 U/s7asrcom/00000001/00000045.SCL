@@ -1,0 +1,47 @@
+FUNCTION "FC_TEST_WZB" : VOID
+
+TITLE = ''
+//$Revision: 1.6 $
+//$Date: 2007/09/10 08:07:39CEST $
+//$Author: riedlh $
+
+VAR_INPUT
+   Enable : BOOL; 
+   Messung_Start : BOOL;
+   Greifer1_Pos_Mag : BOOL;
+   Greifer2_Pos_Mag : BOOL;
+   Messung_Nr : INT;
+END_VAR    
+
+VAR_TEMP
+  // temporäre Variablen
+   y,k,t : INT;
+END_VAR
+
+  // Anweisungsteil
+k:=10;
+IF Messung_Start = True THEN
+    FOR t:= 1 TO 9 DO     
+         y:=k-t;
+         "DB_TEST_WZB".Messung[y+1].T_Nummer:="DB_TEST_WZB".Messung[y].T_Nummer; 
+         "DB_TEST_WZB".Messung[y+1].Messung:="DB_TEST_WZB".Messung[y].Messung; 
+         "DB_TEST_WZB".Messung[y+1].Messwert_SX_Grf:="DB_TEST_WZB".Messung[y].Messwert_SX_Grf;
+         "DB_TEST_WZB".Messung[y+1].Messwert_SX_Spi:="DB_TEST_WZB".Messung[y].Messwert_SX_Spi;
+         "DB_TEST_WZB".Messung[y+1].Messwert_Aktuell:="DB_TEST_WZB".Messung[y].Messwert_Aktuell;
+         "DB_TEST_WZB".Messung[y+1].SX_Grf:="DB_TEST_WZB".Messung[y].SX_Grf;
+         "DB_TEST_WZB".Messung[y+1].SX_Spi:="DB_TEST_WZB".Messung[y].SX_Spi;
+    END_FOR;
+    IF Greifer1_Pos_Mag = True THEN
+           "DB_TEST_WZB".Messung[1].T_Nummer:="DB_GREIFER_DATEN".TNR_Gr1;
+    ELSE
+           "DB_TEST_WZB".Messung[1].T_Nummer:="DB_GREIFER_DATEN".TNR_Gr2;
+    END_IF;
+    "DB_TEST_WZB".Messung[1].Messung:=Messung_Nr;
+    "DB_TEST_WZB".Messung[1].Messwert_SX_Grf:="DI_WZ_BRUCH".SW_GRF_LAENGE;
+    "DB_TEST_WZB".Messung[1].Messwert_SX_Spi:="DI_WZ_BRUCH".SW_SP_LAENGE;
+    "DB_TEST_WZB".Messung[1].Messwert_Aktuell:="DI_WZ_BRUCH".SW_WZ_LAENGE;
+    "DB_TEST_WZB".Messung[1].SX_Grf:="DI_WZ_BRUCH".SX_GRF_ANF;
+    "DB_TEST_WZB".Messung[1].SX_Spi:="DI_WZ_BRUCH".SX_SP_ANF;
+END_IF;
+RETURN;
+END_FUNCTION

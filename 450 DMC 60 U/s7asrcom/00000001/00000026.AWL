@@ -1,0 +1,410 @@
+FUNCTION "FC_WZVS_ARTIS_MAIN" : VOID
+TITLE =
+//$Revision: 1.14 $
+//$Date: 2008/04/01 16:55:44CEST $
+//$Author: riedlh $
+//
+//Werkzeug Verschleisskontrolle Artis
+AUTHOR : PS
+FAMILY : DMC_H
+NAME : WVS_ART
+VERSION : 0.0
+
+
+VAR_TEMP
+  FC_WVS_Reset : BOOL ;	
+  Reset_Kanal : BOOL ;	
+  Wz_sperren_DM : BOOL ;	
+  Freigabe : BOOL ;	
+  t_int : INT ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =Rücksetzen Lernschnitt
+// Netzwerk-Übersicht
+// ==================
+// NW 1: Rücksetzen Lernschnitt
+// NW 2: Verlängerter Impuls M30 oder Taste Reset
+// NW 3: WZVS mit M77 aktiviert
+// NW 4: ARTIS: Kanal-Reset
+// NW 5: Reset 700322 "SPI-Verz-H, Drehmoment Grenzwert 2 ueberschritten"
+// NW 6: M130+M131: Kanal 1 aktiv
+// NW 7: M132+M133: Kanal 2 aktiv
+// NW 8: M134+M135: Kanal 3 aktiv
+// NW 9: M136+M137: Kanal 4 aktiv
+// NW 10: Vorschuboverride 100%
+// NW 11: Override-Stellung wurde verändert (2 PLC-Zyklen)
+// NW 12: Programm-Nr von NC-Programm
+// NW 13: T-Nr von NC-Programm
+// NW 14: D-Nr von NC-Programm
+// NW 15: Schnitt von NC-Programm
+// NW 16: Datenaustausch miz ARTIS über Profibus
+// NW 17: 700322 "SPI-Verz-H, Drehmoment Grenzwert 2 ueberschritten"
+// NW 18: Werkzeug sperren
+// NW 19: Merkerbit mit Wert Null
+// NW 20: Anwahl ARTIS ausschalten
+// NW 21: HMI: Anwenderdatum ARTIS ausschalten
+// NW 22: Anwahl ARTIS ausschalten
+// NW 23: HMI: Anwenderdatum ARTIS ausschalten
+      U     "M_M30_Kanal1"; // PI M30
+      U     "M_Automatik_Betrieb"; // BA Automatik
+      R     "DB_WZVS".Artis.Lernschnitt; // Anwenderdatum Lernschnitt EI
+
+NETWORK
+TITLE =Verlängerter Impuls M30 oder Taste Reset
+
+      O     "M_M30_Kanal1"; // PI M30
+      O     "M_Reset_Taste"; 
+      L     S5T#500MS; 
+      SV    "TV_M30_Reset"; // M2 M30 Reset verlängert
+
+      U     "TV_M30_Reset"; 
+      =     #FC_WVS_Reset; 
+NETWORK
+TITLE =WZVS mit M77 aktiviert
+
+      U     "DB_DM_M_FUNKTION".MX_IM[77]; 
+      UN    "DB_WZVS".Artis.AUS; 
+      S     "M_WZVS_M77_aktiviert"; 
+      U(    ; 
+      O     "DB_WZVS".Artis.AUS; 
+      O     "DB_DM_M_FUNKTION".MX_IM[78]; 
+      )     ; 
+      R     "M_WZVS_M77_aktiviert"; 
+      NOP   0; 
+NETWORK
+TITLE =ARTIS: Kanal-Reset
+
+      U(    ; 
+      O     "DB_FEHLERMELDUNG".Warnung1._701537; // Artis Fehlt-Alarm
+      O     "DB_FEHLERMELDUNG".Warnung1._701535; // Artis Bruch-Alarm
+      )     ; 
+      UN    "I_AL_Kabine_Verriegelt"; //511106  VS-H, Arbeitsraumtür offen
+      O     "M_Ruecksetze_Fehler"; 
+      O     "M_Reset_Taste"; // MSST: Taste Reset
+      =     #Reset_Kanal; 
+NETWORK
+TITLE =Reset 700322 "SPI-Verz-H, Drehmoment Grenzwert 2 ueberschritten"
+
+      U     #Reset_Kanal; 
+      R     "DB_FEHLERMELDUNG".VS_SpiVerz_Halt._700322; // Achenstop von Drehmomentüberwachung
+NETWORK
+TITLE =M130+M131: Kanal 1 aktiv
+
+      U     "DB_DM_M_FUNKTION".MX_IM[130]; 
+      S     "DB_WZVS".Artis.DM_Kanal_1_aktiv; 
+
+      U(    ; 
+      O     "DB_DM_M_FUNKTION".MX_IM[131]; 
+      O     #Reset_Kanal; 
+      )     ; 
+      R     "DB_WZVS".Artis.DM_Kanal_1_aktiv; 
+      NOP   0; 
+
+NETWORK
+TITLE =M132+M133: Kanal 2 aktiv
+
+      U     "DB_DM_M_FUNKTION".MX_IM[132]; 
+      S     "DB_WZVS".Artis.DM_Kanal_2_aktiv; 
+
+      U(    ; 
+      O     "DB_DM_M_FUNKTION".MX_IM[133]; 
+      O     #Reset_Kanal; 
+      )     ; 
+      R     "DB_WZVS".Artis.DM_Kanal_2_aktiv; 
+      NOP   0; 
+
+NETWORK
+TITLE =M134+M135: Kanal 3 aktiv
+
+      U     "DB_DM_M_FUNKTION".MX_IM[134]; 
+      S     "DB_WZVS".Artis.DM_Kanal_3_aktiv; 
+
+      U(    ; 
+      O     "DB_DM_M_FUNKTION".MX_IM[135]; 
+      O     #Reset_Kanal; 
+      )     ; 
+      R     "DB_WZVS".Artis.DM_Kanal_3_aktiv; 
+      NOP   0; 
+
+NETWORK
+TITLE =M136+M137: Kanal 4 aktiv
+
+      U     "DB_DM_M_FUNKTION".MX_IM[136]; 
+      S     "DB_WZVS".Artis.DM_Kanal_4_aktiv; 
+
+      U(    ; 
+      O     "DB_DM_M_FUNKTION".MX_IM[137]; 
+      O     #Reset_Kanal; 
+      )     ; 
+      R     "DB_WZVS".Artis.DM_Kanal_4_aktiv; 
+      NOP   0; 
+
+NETWORK
+TITLE =Vorschuboverride 100%
+
+      O(    ; 
+      L     "DB_SIEM_KANAL_1".A_FD_OR; 
+      L     21; 
+      ==I   ; 
+      )     ; 
+      O     "MX_MsSt_Vorschub_0"; 
+      =     "DB_WZVS".Artis.OVR_100; 
+NETWORK
+TITLE =Override-Stellung wurde verändert (2 PLC-Zyklen)
+//01.04.2008: Änderungs-Anforderung von ARTIS
+//Der Vorschlag vom Herrn Edel ist so in Ordnung.
+// 
+//- Kanal 1 und 2 für Standardüberwachung mit herkömmlicher Nacharbeit
+//- Kanal 3 und 4 für die DXDT Überwachung mit Nacharbeit EIN bei jeder Override 
+//Veränderung à z.B. Override von 90% auf 80% geändert heißt   Nacharbeit für 
+//zwei 
+//PLC Zyklen setzen und dann wieder an der Schnittstelle löschen. Damit steht die 
+//Funktion für eine weitere Änderung des Vorschubpoti´s wieder zur Verfügung.
+// 
+//Wenn sie noch Fragen haben, können sie mich gerne anrufen.
+//Mit freundlichen Grüßen / Yours faithfully 
+//ARTIS GmbH     
+//Frank Bonas | Produktkoordinator CTM          
+//Tel. +49-5194-950-29 | Fax +49-5194-7825  
+      U(    ; 
+      U(    ; 
+      L     "DB_SIEM_KANAL_1".A_FD_OR; 
+      L     "DB_WZVS".Artis.Merker.letzte_OVR_Stellung; 
+      <>I   ; 
+      )     ; 
+      SPBNB _001; 
+      L     "DB_SIEM_KANAL_1".A_FD_OR; 
+      T     "DB_WZVS".Artis.Merker.letzte_OVR_Stellung; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+_001: U     BIE; 
+      )     ; 
+      UN    "MX_MsSt_Vorschub_0"; 
+      S     "DB_WZVS".Artis.Merker.OVR_Aenderung; 
+      U     "DB_WZVS".Artis.Merker.ZYK_2_OVR_geaendert; 
+      R     "DB_WZVS".Artis.Merker.OVR_Aenderung; 
+      U     "DB_WZVS".Artis.Merker.OVR_Aenderung; 
+      =     L      4.0; 
+      U     L      4.0; 
+      U     "DB_WZVS".Artis.Merker.ZYK_1_OVR_geaendert; 
+      =     "DB_WZVS".Artis.Merker.ZYK_2_OVR_geaendert; 
+      U     L      4.0; 
+      BLD   102; 
+      =     "DB_WZVS".Artis.Merker.ZYK_1_OVR_geaendert; 
+NETWORK
+TITLE =Programm-Nr von NC-Programm
+
+      L     "DB_NC_PLC".WZVS.Daten_1; 
+      TAW   ; 
+      T     "DB_WZVS".Artis.PrgNr; 
+      NOP   0; 
+NETWORK
+TITLE =T-Nr von NC-Programm
+
+      L     "DB_NC_PLC".WZVS.Daten_2; 
+      TAW   ; 
+      T     "DB_WZVS".Artis.TNr; 
+      NOP   0; 
+NETWORK
+TITLE =D-Nr von NC-Programm
+
+      L     "DB_NC_PLC".WZVS.Daten_3; 
+      TAW   ; 
+      T     "DB_WZVS".Artis.DNr; 
+      NOP   0; 
+NETWORK
+TITLE =Schnitt von NC-Programm
+
+      L     "DB_NC_PLC".WZVS.Daten_4; 
+      TAW   ; 
+      T     "DB_WZVS".Artis.Schnitt; 
+      NOP   0; 
+NETWORK
+TITLE =Datenaustausch miz ARTIS über Profibus
+
+      U     "m_eins"; 
+      =     L      4.0; 
+      BLD   103; 
+      U     "DB_WZVS".Artis.DM_Kanal_1_aktiv; 
+      =     L      4.1; 
+      BLD   103; 
+      U     "DB_WZVS".Artis.DM_Kanal_2_aktiv; 
+      =     L      4.2; 
+      BLD   103; 
+      U     "DB_WZVS".Artis.DM_Kanal_3_aktiv; 
+      =     L      4.3; 
+      BLD   103; 
+      U     "DB_WZVS".Artis.DM_Kanal_4_aktiv; 
+      =     L      4.4; 
+      BLD   103; 
+      U     "DB_WZVS".Artis.Lernschnitt; 
+      =     L      4.5; 
+      BLD   103; 
+      U     "DB_WZVS".Artis.AUS; 
+      =     L      4.6; 
+      BLD   103; 
+      U     #FC_WVS_Reset; 
+      =     L      4.7; 
+      BLD   103; 
+      U     #Reset_Kanal; 
+      =     L      5.0; 
+      BLD   103; 
+      U     "DB_WZVS".Artis.OVR_100; 
+      =     L      5.1; 
+      BLD   103; 
+      U     "DB_SIEM_KANAL_1".E_ProgRunn; 
+      =     L      5.2; 
+      BLD   103; 
+      U     "DB_FAMILIEN_MODUL".E_Fehler.Vorschub_Halt_Kanal; 
+      =     L      5.3; 
+      BLD   103; 
+      U     "DB_WZVS".Artis.Merker.OVR_Aenderung; 
+      =     L      5.4; 
+      BLD   103; 
+      CALL "FC_WZVS_ARTIS" (
+           Freigabe                 := L      4.0,
+           Start_K1                 := L      4.1,
+           Start_K2                 := L      4.2,
+           Start_K3                 := L      4.3,
+           Start_K4                 := L      4.4,
+           Lernschnitt              := L      4.5,
+           Artis_aus                := L      4.6,
+           Reset                    := L      4.7,
+           T_Reset                  := L      5.0,
+           VS_OVR_100               := L      5.1,
+           Prg_laeuft               := L      5.2,
+           VS_Halt                  := L      5.3,
+           K3K4_Nacharbeit          := L      5.4,
+           PrgNr                    := "DB_WZVS".Artis.PrgNr,
+           T_Nr                     := "DB_WZVS".Artis.TNr,
+           D_Nr                     := "DB_WZVS".Artis.DNr,
+           Schnitt_Nr               := "DB_WZVS".Artis.Schnitt,
+           PBAdresse                := "DB_WZVS".STARTADRESSE,
+           F_System                 := "DB_FEHLERMELDUNG".Warnung1._701534,
+           F_Bruch                  := "DB_FEHLERMELDUNG".Warnung1._701535,
+           F_stumpf                 := "DB_FEHLERMELDUNG".Warnung1._701536,
+           F_fehlt                  := "DB_FEHLERMELDUNG".Warnung1._701537,
+           F_Nacharbeit             := "DB_FEHLERMELDUNG".Warnung1._701538,
+           F_Beruehrung_M           := "DB_FEHLERMELDUNG".Warnung1._701539,
+           F_Alarme_aus             := "DB_FEHLERMELDUNG".Warnung1._701540,
+           F_Artis_aus              := "DB_FEHLERMELDUNG".Warnung1._701541,
+           F_Sammelalarm            := "DB_FEHLERMELDUNG".Warnung1._701542,
+           F_Kanal_1                := "DB_FEHLERMELDUNG".Warnung1._701543,
+           F_Kanal_2                := "DB_FEHLERMELDUNG".Warnung1._701544,
+           F_Kanal_3                := "DB_FEHLERMELDUNG".Warnung1._701545,
+           F_Kanal_4                := "DB_FEHLERMELDUNG".Warnung1._701546,
+           ACC_OVR                  := "DB_NC_PLC".ACC_OVR);
+      NOP   0; 
+NETWORK
+TITLE =700322 "SPI-Verz-H, Drehmoment Grenzwert 2 ueberschritten"
+
+      U(    ; 
+      O     "DB_FEHLERMELDUNG".Warnung1._701535; // Artis Bruch-Alarm
+      O     "DB_FEHLERMELDUNG".Warnung1._701539; // Artis Materialberührung
+      O     "DB_FEHLERMELDUNG".Warnung1._701537; // Artis Fehlt-Alarm
+      )     ; 
+      FP    "DB_WZVS".Artis.FP_Vorschubsperre; 
+      S     "DB_FEHLERMELDUNG".VS_SpiVerz_Halt._700322; 
+NETWORK
+TITLE =Werkzeug sperren
+
+      U(    ; 
+      O     "DB_FEHLERMELDUNG".Warnung1._701536; 
+      O     "DB_FEHLERMELDUNG".Warnung1._701535; 
+      )     ; 
+      FP    "DB_WZVS".Artis.FP_WZ_sperren; 
+      S     "DB_WZVS".Artis.WZ_sperren; 
+NETWORK
+TITLE =Merkerbit mit Wert Null
+
+      U(    ; 
+      U     "TMSpindleIF".IFNo[1]; 
+      U     "TMSpindleIF".IF[1].Perform; 
+      UN    "TMSpindleIF".IF[1].Prepare; 
+      ON    "DB_SIEM_KANAL_1".E_ProgRunn; 
+      )     ; 
+      U     "DB_WZVS".Artis.WZ_sperren; 
+      S     "DB_WZVS".Artis.Req_WZ_sperren; 
+      UN    "DB_WZVS".Artis.WZ_sperren; 
+      R     "DB_WZVS".Artis.Req_WZ_sperren; 
+      NOP   0; 
+NETWORK
+TITLE =Anwahl ARTIS ausschalten
+
+      U     "DB_EINRICHTFUNKTION".Bewegung_148_Minus; 
+      S     "DB_WZVS".Artis.AUS; 
+      U     "DB_EINRICHTFUNKTION".Bewegung_148_Plus; 
+      R     "DB_WZVS".Artis.AUS; 
+      NOP   0; 
+NETWORK
+TITLE =HMI: Anwenderdatum ARTIS ausschalten
+
+      U     "m_eins"; 
+      =     L      4.0; 
+      BLD   103; 
+      U     "m_eins"; 
+      =     L      4.1; 
+      BLD   103; 
+      U     "DB_WZVS".Artis.AUS; 
+      =     L      4.2; 
+      BLD   103; 
+      UN    "DB_WZVS".Artis.AUS; 
+      =     L      4.3; 
+      BLD   103; 
+      U     "DB_WZVS".Artis.AUS; 
+      =     L      4.4; 
+      BLD   103; 
+      UN    "DB_WZVS".Artis.AUS; 
+      =     L      4.5; 
+      BLD   103; 
+      CALL "FC_HMI_IO_TO_TLINE" (
+           Freigabe_AST_Hand        := L      4.0,
+           Freigabe_GST_Hand        := L      4.1,
+           Endlage_AST              := L      4.2,
+           Endlage_GST              := L      4.3,
+           Ventil_AST               := L      4.4,
+           Ventil_GST               := L      4.5,
+           Bewegungsnummer          := 148);
+      NOP   0; 
+NETWORK
+TITLE =Anwahl ARTIS ausschalten
+
+      U     "DB_EINRICHTFUNKTION".Bewegung_147_Minus; 
+      S     "DB_WZVS".Artis.Lernschnitt; 
+      U     "DB_EINRICHTFUNKTION".Bewegung_147_Plus; 
+      R     "DB_WZVS".Artis.Lernschnitt; 
+      NOP   0; 
+NETWORK
+TITLE =HMI: Anwenderdatum ARTIS ausschalten
+
+      U     "m_eins"; 
+      =     L      4.0; 
+      BLD   103; 
+      U     "m_eins"; 
+      =     L      4.1; 
+      BLD   103; 
+      U     "DB_WZVS".Artis.Lernschnitt; 
+      =     L      4.2; 
+      BLD   103; 
+      UN    "DB_WZVS".Artis.Lernschnitt; 
+      =     L      4.3; 
+      BLD   103; 
+      U     "DB_WZVS".Artis.Lernschnitt; 
+      =     L      4.4; 
+      BLD   103; 
+      UN    "DB_WZVS".Artis.Lernschnitt; 
+      =     L      4.5; 
+      BLD   103; 
+      CALL "FC_HMI_IO_TO_TLINE" (
+           Freigabe_AST_Hand        := L      4.0,
+           Freigabe_GST_Hand        := L      4.1,
+           Endlage_AST              := L      4.2,
+           Endlage_GST              := L      4.3,
+           Ventil_AST               := L      4.4,
+           Ventil_GST               := L      4.5,
+           Bewegungsnummer          := 147);
+      NOP   0; 
+END_FUNCTION
+

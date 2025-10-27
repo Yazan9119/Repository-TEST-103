@@ -1,0 +1,314 @@
+FUNCTION "FC_SK_Status" : VOID
+TITLE =
+//$Revision: 1.9 $
+//$Date: 2008/03/10 06:22:04CET $
+//$Author: rieds $
+//
+//
+//V0.1 / 18.01.2000 / SCH
+//
+//- Modul Erstellt
+AUTHOR : SCH
+FAMILY : DM_WP
+NAME : FB_PST
+VERSION : 0.1
+
+
+VAR_INPUT
+  E_Enabled : BOOL ;	//Modul Freigabe
+END_VAR
+BEGIN
+NETWORK
+TITLE =Schritt 0
+
+      CLR   ; 
+      =     "M_SK_Reset_Module"; 
+
+      U     "DB_OEM".OEM_SKRettaktiv; 
+      SPBN  str1; 
+
+      U     "I_SK_Klemmung_geloest"; 
+      =     "M_SK_Rett1"; 
+
+      U     "I_SK_Klemmung_geklemmt"; 
+      =     "M_SK_Rett2"; 
+
+      U     "I_SK_VER_Ebene"; 
+      =     "M_SK_Rett4"; 
+
+      U     "I_SK_HOR_Ebene"; 
+      =     "M_SK_Rett3"; 
+
+str1: U     "M_Reset_Taste"; // oder Reset
+      O     "M_3_ter_OB1_Zyklus"; // Initialisierung
+      FP    "M_FP_SK_Resettaste"; 
+      S     "M_SK_Reset"; // Merker setzen
+
+      U     #E_Enabled; 
+      U     "DB_NC_PLC".SK_Anwahl; // PW nicht angewaehlt oder
+      SPB   STRT; // Modul nicht angewaehlt
+
+      CLR   ; 
+      =     "DB_FEHLERMELDUNG".Meldung._702129_VSHK_SK; // Freigabe Achsen, Spindel ruecksetzen
+      BEA   ; 
+
+STRT: U     "DB_NC_PLC".SK_NC_Aktiv; 
+      FP    "M_TR_Start_SK"; 
+      O     "DB_DM_M_FUNKTION".MX_M[260]; // oder kompletter Ablauf angestossen
+      O     "DB_DM_M_FUNKTION".MX_M[261]; 
+      S     "M_SK_Aktiv"; 
+      S     "DB_NC_PLC".SK_M78_Aktiv; 
+
+      U     "DB_NC_PLC".SK_NC_Aktiv; 
+      FN    "M_TR_Ende_SK"; 
+      R     "M_SK_Aktiv"; 
+      R     "DB_NC_PLC".SK_M78_Aktiv; 
+
+      O     "DB_DM_M_FUNKTION".MX_M[260]; // auch negativer Flanke von M264, M265
+      O     "DB_DM_M_FUNKTION".MX_M[261]; // Aktiv Bit ruecksetzen
+      FN    "M_SK_TR_Ende_M26x"; 
+      R     "M_SK_Aktiv"; 
+
+      U     "I_SK_HOR_Ebene"; 
+      X     "I_SK_VER_Ebene"; 
+      UN    "I_SK_Klemmung_geloest"; 
+      U     "I_SK_Klemmung_geklemmt"; 
+      O(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._007_ANWAHL_FRAESKOPF; 
+      L     2; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._007_ANWAHL_FRAESKOPF; 
+      L     4; 
+      ==I   ; 
+      )     ; 
+      =     "M_SK_GRDST"; 
+
+      U     "M_SK_Aktiv"; // Ausserhalb von M53/54 wird wenn der SK
+      SPB   NOUE; // nicht in Grundstellung ist die Achsen gesperrt
+
+      UN    "M_SK_GRDST"; 
+      UN    "DB_OEM".OEM_SKRettaktiv; 
+      =     "DB_FEHLERMELDUNG".Meldung._702129_VSHK_SK; 
+
+NOUE: NOP   0; 
+NETWORK
+TITLE =Schritt 0
+
+      L     "B_SKZ_SStat"; // Schritt 0 ?
+      L     0; 
+      ==I   ; 
+      SPBN  SK01; // Nein => Schrtitt 1
+
+// -----------------------------------------------------------------------------
+
+      CLR   ; 
+      =     "M_SK_Stat"; // 
+
+// -----------------------------------------------------------------------------
+
+      UN    "M_MA_Maschine_Ein"; // Maschine Aus
+      O     "M_Vorschub_Halt_Haupt"; // oder Vorschub Halt
+      O     "M_SK_Reset"; // oder Reset Modul
+      SPBN  MEND; 
+
+      L     1; 
+      T     "B_SKZ_SStat"; 
+      BEA   ; 
+
+NETWORK
+TITLE =Schritt 1
+
+SK01: L     "B_SKZ_SStat"; // Schritt 1 ?
+      L     1; 
+      ==I   ; 
+      SPBN  SK02; // Nein => Schrtitt 2
+
+// -----------------------------------------------------------------------------
+
+      SET   ; 
+      =     "M_SK_Stat"; // Status-Bit setzen
+
+      U     "O_SK_Klemmung_loesen"; 
+      =     "M_SK_Rett1"; 
+
+      U     "I_SK_Klemmung_geloest"; 
+      UN    "I_SK_Klemmung_geklemmt"; 
+      =     "O_SK_Klemmung_loesen"; 
+
+      U     "O_SK_Klemmung_zu"; 
+      =     "M_SK_Rett2"; 
+
+      U     "I_SK_Klemmung_geklemmt"; 
+      UN    "I_SK_Klemmung_geloest"; 
+      =     "O_SK_Klemmung_zu"; 
+
+      U     "O_SK_HOR_schwenken"; 
+      =     "M_SK_Rett3"; 
+
+      U     "I_SK_HOR_Ebene"; 
+      UN    "I_SK_VER_Ebene"; 
+      =     "O_SK_HOR_schwenken"; 
+
+      U     "O_SK_VER_schwenken"; 
+      =     "M_SK_Rett4"; 
+
+      U     "I_SK_VER_Ebene"; 
+      UN    "I_SK_HOR_Ebene"; 
+      =     "O_SK_VER_schwenken"; 
+
+
+// -----------------------------------------------------------------------------
+
+      L     2; 
+      T     "B_SKZ_SStat"; 
+      BEA   ; 
+
+NETWORK
+TITLE =Schritt 2
+
+SK02: L     "B_SKZ_SStat"; // Schritt 2 ?
+      L     2; 
+      ==I   ; 
+      SPBN  SK03; // Nein => Schrtitt 3
+
+// -----------------------------------------------------------------------------
+
+
+// -----------------------------------------------------------------------------
+
+      U     "M_SK_Reset"; // Reset steht an 
+      SPBN  PS21; // dann weiter zu Step 4
+      L     5; 
+      T     "B_SKZ_SStat"; 
+      SPA   SK05; 
+
+PS21: U     "M_MA_Maschine_Ein"; // Maschine Ein und
+      SPB   PS22; 
+      L     3; // dann weiter zu Step 3
+      T     "B_SKZ_SStat"; 
+      SPA   SK03; 
+
+PS22: U     "M_Vorschub_Halt_Haupt"; // kein Vorschub Halt
+      SPB   MEND; 
+      L     4; // dann weiter zu Step 3
+      T     "B_SKZ_SStat"; 
+      SPA   SK04; 
+
+NETWORK
+TITLE =Schritt 3
+//Ausgang Ruecksetzen und Warten bis 
+//der Vorgang fortgesetzt wird
+SK03: L     "B_SKZ_SStat"; // Schritt 3 ?
+      L     3; 
+      ==I   ; 
+      SPBN  SK04; // Nein => Schrtitt 4
+
+// -----------------------------------------------------------------------------
+
+      CLR   ; 
+      =     "O_SK_Klemmung_loesen"; 
+      =     "O_SK_Klemmung_zu"; 
+      =     "O_SK_VER_schwenken"; 
+      =     "O_SK_HOR_schwenken"; 
+
+      U     "M_MA_Maschine_Ein"; 
+      SPBN  MEND; 
+
+      U     "I_SK_Klemmung_geloest"; 
+      =     "O_SK_Klemmung_loesen"; 
+
+      U     "I_SK_Klemmung_geklemmt"; 
+      =     "O_SK_Klemmung_zu"; 
+
+      U     "I_SK_VER_Ebene"; 
+      =     "O_SK_VER_schwenken"; 
+
+      U     "I_SK_HOR_Ebene"; 
+      =     "O_SK_HOR_schwenken"; 
+
+// -----------------------------------------------------------------------------
+
+      L     2; // dann weiter zu Step 2
+      T     "B_SKZ_SStat"; 
+      SPA   SK04; 
+
+NETWORK
+TITLE =Schritt 4
+
+SK04: L     "B_SKZ_SStat"; // Schritt 4 ?
+      L     4; 
+      ==I   ; 
+      SPBN  SK05; // Nein => Ende
+
+// -----------------------------------------------------------------------------
+
+      U     "M_SK_Rett1"; 
+      =     "O_SK_Klemmung_loesen"; 
+
+      U     "M_SK_Rett2"; 
+      =     "O_SK_Klemmung_zu"; 
+
+      U     "M_SK_Rett3"; 
+      =     "O_SK_HOR_schwenken"; 
+
+      U     "M_SK_Rett4"; 
+      =     "O_SK_VER_schwenken"; 
+
+// -----------------------------------------------------------------------------
+
+      L     0; 
+      T     "B_SKZ_SStat"; 
+      BEA   ; 
+
+NETWORK
+TITLE =Schritt 5
+
+SK05: L     "B_SKZ_SStat"; // Schritt 5 ?
+      L     5; 
+      ==I   ; 
+      SPBN  SK06; // Nein => Schrtitt 6
+
+// -----------------------------------------------------------------------------
+
+      SET   ; 
+      =     "M_SK_Reset_Module"; 
+
+      CLR   ; 
+      =     "M_SK_Reset"; 
+//   =     "DB_DM_M_FUNKTION".MX_M[260]
+//   =     "DB_DM_M_FUNKTION".MX_M[261]
+
+      =     "DB_NC_PLC".SK_PLC_Freigabe; 
+      =     "M_SK_ERR"; 
+      =     "M_SK_Aktiv"; 
+
+      =     "M_SK_Klemm_Bewegung"; 
+      =     "M_SK_Kopf_Bewegung"; 
+
+      L     0; 
+      T     "B_SK_Ablauf"; 
+
+// -----------------------------------------------------------------------------
+
+      L     0; 
+      T     "B_SKZ_SStat"; 
+      BEA   ; 
+
+NETWORK
+TITLE =Schritt 6
+
+SK06: L     "B_SKZ_SStat"; // Schritt 6 ?
+      L     6; 
+      ==I   ; 
+      SPBN  MEND; // Nein => Schrtitt 7
+
+// -----------------------------------------------------------------------------
+
+
+// -----------------------------------------------------------------------------
+
+MEND: NOP   0; 
+END_FUNCTION
+

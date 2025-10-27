@@ -1,0 +1,922 @@
+FUNCTION "FC_PS_RS10_SKR" : VOID
+TITLE =
+//$Revision: 1.7 $
+//$Date: 2008/06/27 11:29:14CEST $
+//$Author: hgc $
+//
+//Rundspeicher RS10 Rettungsfunktion
+//=============================
+AUTHOR : SCH
+NAME : WZM160
+VERSION : 0.1
+
+
+VAR_TEMP
+  TX_Fahrbefehl_Fertig : BOOL ;	
+  TX_Abzieh_Pos : BOOL ;	
+  Tx_Frg_Dst : BOOL ;	
+  Tx_Frg_Trans : BOOL ;	
+  Tx_Frg_Hub : BOOL ;	
+  Tx_Jog_Freig : BOOL ;	
+  Tb_Platz : BYTE ;	
+  Ventil_GST : BOOL ;	
+  Ventil_AST : BOOL ;	
+  FB_Achse_9 : BOOL ;	
+  FB_Achse_16 : BOOL ;	
+  Tx_Frg_Trans_GST : BOOL ;	
+  Tx_Frg_Trans_AST : BOOL ;	
+  Tx_Frg_Klm : BOOL ;	
+  Tx_Frg_Klp : BOOL ;	
+  Tx_Frg_RPL_ankuppeln : BOOL ;	
+  tx_dummy : BOOL ;	
+  bringen : BOOL ;	
+  holen : BOOL ;	
+  t_Freigabe_AST_Hand : BOOL ;	
+  t_Freigabe_GST_Hand : BOOL ;	
+  TX_DREHST_POS_GUELTIG : BOOL ;	
+  TX_DREHST_IN_SPEICH_POS : BOOL ;	
+  TX_DREHST_VORW_SPPL_1 : BOOL ;	
+  TX_DREHST_VORW_SPPL_2 : BOOL ;	
+  TX_DREHST_VORW_SPPL_3 : BOOL ;	
+  TX_DREHST_VORW_SPPL_4 : BOOL ;	
+  TX_DREHST_VORW_SPPL_5 : BOOL ;	
+  TX_DREHST_VORW_SPPL_6 : BOOL ;	
+  TX_DREHST_VORW_SPPL_7 : BOOL ;	
+  TX_DREHST_VORW_SPPL_8 : BOOL ;	
+  TX_DREHST_VORW_SPPL_9 : BOOL ;	
+  TX_DREHST_VORW_SPPL_10 : BOOL ;	
+  TX_DREHST_POS_VORGEW : BOOL ;	
+  TX_DREHST_FRG_SPEICH_POS : BOOL ;	
+  TX_DREHST_FRG_POS_2_3 : BOOL ;	
+  TX_EBENE_0_FRG_HUB : BOOL ;	
+  TX_EBENE_1_FRG_HUB : BOOL ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =Freigabe Drehstation
+
+      U     "M_Handbetrieb"; 
+      U     "M_FRG_Drehst_Achse"; 
+      UN    "DB_LSSchnittstelle".IX_Bringen_laeuft; 
+      UN    "DB_LSSchnittstelle".IX_Holen_laeuft; // "DB_SIEM_BAG".E_JOG
+      =     #Tx_Frg_Dst; 
+NETWORK
+TITLE =Freigabe Hub
+
+      U     "M_Handbetrieb"; 
+      U     "M_FRG_Hub_Achse"; 
+      UN    "DB_LSSchnittstelle".IX_Bringen_laeuft; 
+      UN    "DB_LSSchnittstelle".IX_Holen_laeuft; 
+      U     "I_PS_RPL_TUER_VORNE_ZU"; 
+      UN    "I_PS_RPL_TUER_HINTEN_ZU"; 
+      U     "DB_LSSchnittstelle".IX_Ruestplatz_UebergabeP; 
+      =     #Tx_Frg_Hub; 
+NETWORK
+TITLE =Freigabe Hub Ebenen 0 / 1 
+
+      U     #Tx_Frg_Hub; 
+      =     L      6.0; 
+      U     L      6.0; 
+      U(    ; 
+      U     "MX_Transport_Ausgef"; 
+      U     "M_RS_HUBACHSE_BER_EBENE0"; 
+      O     "MX_Transport_Gst"; 
+      )     ; 
+      =     #TX_EBENE_0_FRG_HUB; 
+      U     L      6.0; 
+      U(    ; 
+      U     "MX_Transport_Ausgef"; 
+      U     "M_RS_HUBACHSE_BER_EBENE1"; 
+      O     "MX_Transport_Gst"; 
+      )     ; 
+      =     #TX_EBENE_1_FRG_HUB; 
+NETWORK
+TITLE =Freigabe Transport
+
+      U     "M_Handbetrieb"; 
+      U     "M_FRG_Transp_Achse"; 
+      UN    "DB_LSSchnittstelle".IX_Bringen_laeuft; 
+      UN    "DB_LSSchnittstelle".IX_Holen_laeuft; 
+      U     "I_PS_RPL_TUER_VORNE_ZU"; 
+      UN    "I_PS_RPL_TUER_HINTEN_ZU"; 
+      U     "DB_LSSchnittstelle".IX_Ruestplatz_UebergabeP; 
+      =     #Tx_Frg_Trans; 
+NETWORK
+TITLE =Freigabe Transport ausfahren
+
+      U     #Tx_Frg_Trans; 
+      U(    ; 
+      ON    "MX_Transport_Gst"; 
+      ON    "I_PS_DREHST_PAL_VORH"; 
+      ON    "I_PS_DREHST_PAL_GST"; 
+      )     ; 
+      U(    ; 
+      UN    "M_RS_HUBACHSE_E0_OBEN"; 
+      UN    "M_RS_HUBACHSE_E1_OBEN"; 
+      ON    "MX_Transport_Gst"; 
+      ON    "I_PS_DREHST_PAL_VORH"; 
+      )     ; 
+      U(    ; 
+      UN    "M_RS_HUBACHSE_E0_UNTEN"; 
+      UN    "M_RS_HUBACHSE_E1_UNTEN"; 
+      ON    "MX_Transport_Gst"; 
+      ON    "I_PS_DREHST_PAL_GST"; 
+      )     ; 
+      =     #Tx_Frg_Trans_AST; 
+NETWORK
+TITLE =Freigabe Transport zur Grundstellung
+
+      U     #Tx_Frg_Trans; 
+      =     #Tx_Frg_Trans_GST; 
+NETWORK
+TITLE =Freigabe klemmen / kuppeln
+
+      UN    "DB_LSSchnittstelle".IX_Bringen_laeuft; 
+      UN    "DB_LSSchnittstelle".IX_Holen_laeuft; 
+      O     "I_PS_RPL_TUER_HINTEN_ZU"; 
+      =     #Tx_Frg_Klm; 
+      =     #Tx_Frg_Klp; 
+NETWORK
+TITLE =Einrichtbetrieb - > Freigabe für Jog
+
+      U(    ; 
+      O     "DB_PLC_MD_DB20".UDHex._04_BIT4_EINRICHT_BETR; 
+      O     "DB_PLC_MD_DB20".UDHex._05_BIT2_SAFTY_ABNAHME; 
+      )     ; 
+      U     "M_Handbetrieb"; 
+      UN    "DB_LSSchnittstelle".IX_Holen_laeuft; 
+      UN    "DB_LSSchnittstelle".IX_Bringen_laeuft; 
+      U     "M_LS_Ax_10_11_Freig"; 
+      =     #Tx_Jog_Freig; 
+NETWORK
+TITLE =Drehstation Achse Jog minus
+
+      U     "DB_EINRICHTFUNKTION".Bewegung_37_Minus; 
+      U     #Tx_Jog_Freig; 
+      =     "DB_Achs9_DrehSt".MX_FahrAnf_Minus; 
+NETWORK
+TITLE =Drehstation Achse Jog plus
+
+      U     "DB_EINRICHTFUNKTION".Bewegung_37_Plus; 
+      U     #Tx_Jog_Freig; 
+      =     "DB_Achs9_DrehSt".MX_FahrAnf_Plus; 
+NETWORK
+TITLE =Transport Achse Jog minus
+
+      U     "DB_EINRICHTFUNKTION".Bewegung_38_Minus; 
+      U     #Tx_Jog_Freig; 
+      =     "DB_Achs10_Transport".MX_FahrAnf_Minus; 
+NETWORK
+TITLE =Transport Achse Jog plus
+
+      U     "DB_EINRICHTFUNKTION".Bewegung_38_Plus; 
+      U     #Tx_Jog_Freig; 
+      =     "DB_Achs10_Transport".MX_FahrAnf_Plus; 
+NETWORK
+TITLE =Hub Achse Jog minus
+
+      U     "DB_EINRICHTFUNKTION".Bewegung_97_Minus; 
+      U     #Tx_Jog_Freig; 
+      =     "DB_Achs16_Hub_PS".MX_FahrAnf_Minus; 
+NETWORK
+TITLE =Hub Achse Jog plus
+
+      U     "DB_EINRICHTFUNKTION".Bewegung_97_Plus; 
+      U     #Tx_Jog_Freig; 
+      =     "DB_Achs16_Hub_PS".MX_FahrAnf_Plus; 
+NETWORK
+TITLE =Reset Fahranforderungen / Schrittkette
+
+      U(    ; 
+      O     "M_RS_RETTUNG_AKTIV"; 
+      FN    "M_RS_SKR_NEG"; 
+      O(    ; 
+      U     "M_RS_RETTUNG_AKTIV"; 
+      FP    "MX_SKR_FP_RS"; 
+      )     ; 
+      )     ; 
+      UN    "DB_LSSchnittstelle".IX_Bringen_laeuft; 
+      UN    "DB_LSSchnittstelle".IX_Holen_laeuft; 
+      SPBN  M002; 
+
+      SET   ; 
+      R     "DB_Achs9_DrehSt".MX_FahrAnf_Plus; 
+      R     "DB_Achs9_DrehSt".MX_FahrAnf_Minus; 
+      R     "DB_Achs10_Transport".MX_FahrAnf_Plus; 
+      R     "DB_Achs10_Transport".MX_FahrAnf_Minus; 
+      R     "DB_Achs16_Hub_PS".MX_FahrAnf_Plus; 
+      R     "DB_Achs16_Hub_PS".MX_FahrAnf_Minus; 
+      R     "MX_SKR_DSt_Req"; 
+      R     "MX_SKR_Trp_Req"; 
+      R     "MX_SKR_HUB_Req"; 
+
+      L     0; 
+      T     "MB_SKZ_Transport"; 
+      T     "MB_SKZ_Drehstation"; 
+      T     "MB_SKZ_Hub_PS"; 
+      T     "DB_Achs9_DrehSt".MB_SKZ_Achse; 
+      T     "DB_Achs10_Transport".MB_SKZ_Achse; 
+      T     "DB_Achs16_Hub_PS".MB_SKZ_Achse; 
+NETWORK
+TITLE =Holen / Bringen abgebrochen
+
+      U     "M_RS_RETTUNG_AKTIV"; // nur wenn SKR Aktiv
+      U     "M_LS_Ax_10_11_Freig"; 
+      UN    "DB_LSSchnittstelle".IX_Bringen_laeuft; 
+      UN    "DB_LSSchnittstelle".IX_Holen_laeuft; 
+      SPBN  M001; 
+
+      SET   ; 
+      =     "DB_LSSchnittstelle".IX_Holen_abgebrochen; 
+      =     "DB_LSSchnittstelle".IX_Bringen_abgebrochen; 
+
+      L     0; 
+      T     "DB_LS_POS".SKZ_Transport_von; 
+      T     "DB_LS_POS".SKZ_Transport_nach; 
+NETWORK
+TITLE =Störung Rüstplatztüre nicht geschlossen
+
+M002: U     "M_RS_RETTUNG_AKTIV"; 
+      UN    "DB_LSSchnittstelle".IX_Bringen_laeuft; 
+      UN    "DB_LSSchnittstelle".IX_Holen_laeuft; 
+      SPBN  M001; 
+NETWORK
+TITLE =Alarm Rüstplatztüre nicht geschlossen
+
+      UN    "I_PS_RPL_TUER_VORNE_ZU"; 
+      UN    "I_PS_RPL_TUER_HINTEN_ZU"; 
+      S     "DB_FEHLERMELDUNG".VS_Halt_Async3._701722_RP_Tuer_offen; 
+NETWORK
+TITLE =Hub-Achse Bewegung
+
+      O     "DB_EINRICHTFUNKTION".Bewegung_98_Minus; 
+      O     "DB_EINRICHTFUNKTION".Bewegung_98_Plus; 
+      O     "DB_EINRICHTFUNKTION".Bewegung_99_Minus; 
+      O     "DB_EINRICHTFUNKTION".Bewegung_99_Plus; 
+      FN    "M_RS_FP_Oem"; 
+      O(    ; 
+      U     "M_LS_Ax_10_11_Freig"; 
+      FN    "M_RS_FN_Oem6"; 
+      )     ; 
+      O     "M_Reset_Taste"; 
+      S     "DB_Achs16_Hub_PS".MX_Abbruch_Positionieren; 
+
+//1 = Ebene 0 unten,2 = Ebene 0 oben,3 = Ebene 1 unten,4 = Ebene 1 oben 
+      U     "DB_EINRICHTFUNKTION".Bewegung_98_Plus; 
+      U     #TX_EBENE_0_FRG_HUB; 
+      SPBN  H002; 
+      L     1; 
+      SPA   H009; 
+
+H002: U     "DB_EINRICHTFUNKTION".Bewegung_98_Minus; 
+      U     #TX_EBENE_0_FRG_HUB; 
+      SPBN  H003; 
+      L     2; 
+      SPA   H009; 
+
+H003: U     "DB_EINRICHTFUNKTION".Bewegung_99_Plus; 
+      U     #TX_EBENE_1_FRG_HUB; 
+      SPBN  H004; 
+      L     3; 
+      SPA   H009; 
+
+H004: U     "DB_EINRICHTFUNKTION".Bewegung_99_Minus; 
+      U     #TX_EBENE_1_FRG_HUB; 
+      SPBN  H008; 
+      L     4; 
+      SPA   H009; 
+
+H008: L     0; 
+      T     #Tb_Platz; 
+      SET   ; 
+      R     "MX_SKR_HUB_Req"; 
+      SPA   H010; 
+
+H009: T     #Tb_Platz; 
+      U     #TX_EBENE_0_FRG_HUB; 
+      O     #TX_EBENE_1_FRG_HUB; 
+      U(    ; 
+      O     "DB_EINRICHTFUNKTION".Bewegung_98_Minus; 
+      O     "DB_EINRICHTFUNKTION".Bewegung_98_Plus; 
+      O     "DB_EINRICHTFUNKTION".Bewegung_99_Minus; 
+      O     "DB_EINRICHTFUNKTION".Bewegung_99_Plus; 
+      )     ; 
+      S     "MX_SKR_HUB_Req"; 
+
+H010: CALL "FC_PS_Hub_Pos" (
+           Eb_Position              := #Tb_Platz,
+           EX_Fahrbefehl            := "MX_SKR_HUB_Req",
+           EAX_Fahrbefehl_Fertig    := "MX_RS_HUB_Fertig");
+
+      U     "MX_RS_HUB_Fertig"; 
+      R     "MX_RS_HUB_Fertig"; 
+
+      NOP   0; 
+NETWORK
+TITLE =Drehstation Vorwahl Speicherposition gültig
+
+      U(    ; 
+      L     "DB_OEM".PS_DREHST_ZUR_POSITION; 
+      L     4; 
+      >=I   ; 
+      )     ; 
+      U(    ; 
+      U     "M_RS_HUBACHSE_BER_EBENE0"; 
+      U(    ; 
+      L     "DB_OEM".PS_DREHST_ZUR_POSITION; 
+      L     8; 
+      <=I   ; 
+      )     ; 
+      O     ; 
+      U     "M_RS_HUBACHSE_BER_EBENE1"; 
+      U(    ; 
+      L     "DB_OEM".PS_DREHST_ZUR_POSITION; 
+      L     9; 
+      >=I   ; 
+      )     ; 
+      U(    ; 
+      L     "DB_OEM".PS_DREHST_ZUR_POSITION; 
+      L     13; 
+      <=I   ; 
+      )     ; 
+      O     ; 
+      UN    "M_RS_HUBACHSE_BER_EBENE0"; 
+      UN    "M_RS_HUBACHSE_BER_EBENE1"; 
+      )     ; 
+      =     "M_RS_DREHST_POS_GUELTIG"; 
+NETWORK
+TITLE =Drehstation Eintrag 0 bei ungültiger Speicherplatzvorwahl
+
+      U(    ; 
+      L     "DB_OEM".PS_DREHST_ZUR_POSITION; 
+      L     0; 
+      <>I   ; 
+      )     ; 
+      UN    "M_RS_DREHST_POS_GUELTIG"; 
+      SPBNB _001; 
+      L     0; 
+      T     "DB_OEM".PS_DREHST_ZUR_POSITION; 
+_001: NOP   0; 
+NETWORK
+TITLE =Drehstation Speicherplatzvorwahl
+
+      U     "M_RS_DREHST_POS_GUELTIG"; 
+      =     L      6.0; 
+      U     L      6.0; 
+      U(    ; 
+      L     "DB_OEM".PS_DREHST_ZUR_POSITION; 
+      L     4; 
+      ==I   ; 
+      )     ; 
+      =     #TX_DREHST_VORW_SPPL_1; 
+      U     L      6.0; 
+      U(    ; 
+      L     "DB_OEM".PS_DREHST_ZUR_POSITION; 
+      L     5; 
+      ==I   ; 
+      )     ; 
+      =     #TX_DREHST_VORW_SPPL_2; 
+      U     L      6.0; 
+      U(    ; 
+      L     "DB_OEM".PS_DREHST_ZUR_POSITION; 
+      L     6; 
+      ==I   ; 
+      )     ; 
+      =     #TX_DREHST_VORW_SPPL_3; 
+      U     L      6.0; 
+      U(    ; 
+      L     "DB_OEM".PS_DREHST_ZUR_POSITION; 
+      L     7; 
+      ==I   ; 
+      )     ; 
+      =     #TX_DREHST_VORW_SPPL_4; 
+      U     L      6.0; 
+      U(    ; 
+      L     "DB_OEM".PS_DREHST_ZUR_POSITION; 
+      L     8; 
+      ==I   ; 
+      )     ; 
+      =     #TX_DREHST_VORW_SPPL_5; 
+      U     L      6.0; 
+      U(    ; 
+      L     "DB_OEM".PS_DREHST_ZUR_POSITION; 
+      L     9; 
+      ==I   ; 
+      )     ; 
+      =     #TX_DREHST_VORW_SPPL_6; 
+      U     L      6.0; 
+      U(    ; 
+      L     "DB_OEM".PS_DREHST_ZUR_POSITION; 
+      L     10; 
+      ==I   ; 
+      )     ; 
+      =     #TX_DREHST_VORW_SPPL_7; 
+      U     L      6.0; 
+      U(    ; 
+      L     "DB_OEM".PS_DREHST_ZUR_POSITION; 
+      L     11; 
+      ==I   ; 
+      )     ; 
+      =     #TX_DREHST_VORW_SPPL_8; 
+      U     L      6.0; 
+      U(    ; 
+      L     "DB_OEM".PS_DREHST_ZUR_POSITION; 
+      L     12; 
+      ==I   ; 
+      )     ; 
+      =     #TX_DREHST_VORW_SPPL_9; 
+      U     L      6.0; 
+      U(    ; 
+      L     "DB_OEM".PS_DREHST_ZUR_POSITION; 
+      L     13; 
+      ==I   ; 
+      )     ; 
+      =     #TX_DREHST_VORW_SPPL_10; 
+NETWORK
+TITLE =Drehstation Bewegung
+//
+//
+      O     "DB_EINRICHTFUNKTION".Bewegung_31_Plus; 
+      O     "DB_EINRICHTFUNKTION".Bewegung_32_Minus; 
+      O     "DB_EINRICHTFUNKTION".Bewegung_32_Plus; 
+      FN    "M_RS_FP_Oem2"; 
+      O(    ; 
+      U     "M_LS_Ax_10_11_Freig"; 
+      FN    "M_RS_FN_Oem3"; 
+      )     ; 
+      O     "M_Reset_Taste"; 
+      S     "DB_Achs9_DrehSt".MX_Abbruch_Positionieren; 
+
+
+// 0:Maschine,1:Überpl1,2:Überpl2,3:Transportw,4:Ruepl,5-xx:Speicherpl 1 -- xx 
+      U     "DB_EINRICHTFUNKTION".Bewegung_32_Minus; 
+      U     "M_RS_HUBACHSE_BER_EBENE0"; 
+      SPBN  M003; 
+      L     4; 
+      SPA   M004; 
+
+M003: U     "DB_EINRICHTFUNKTION".Bewegung_32_Plus; 
+      U     "M_RS_HUBACHSE_BER_EBENE0"; 
+      SPBN  SP01; 
+      L     1; 
+      SPA   M004; 
+
+SP01: U     "DB_EINRICHTFUNKTION".Bewegung_31_Plus; 
+      U     #TX_DREHST_VORW_SPPL_1; 
+      SPBN  SP02; 
+      L     5; 
+      SPA   M004; 
+
+SP02: U     "DB_EINRICHTFUNKTION".Bewegung_31_Plus; 
+      U     #TX_DREHST_VORW_SPPL_2; 
+      SPBN  SP03; 
+      L     6; 
+      SPA   M004; 
+
+SP03: U     "DB_EINRICHTFUNKTION".Bewegung_31_Plus; 
+      U     #TX_DREHST_VORW_SPPL_3; 
+      SPBN  SP04; 
+      L     7; 
+      SPA   M004; 
+
+SP04: U     "DB_EINRICHTFUNKTION".Bewegung_31_Plus; 
+      U     #TX_DREHST_VORW_SPPL_4; 
+      SPBN  SP05; 
+      L     8; 
+      SPA   M004; 
+
+SP05: U     "DB_EINRICHTFUNKTION".Bewegung_31_Plus; 
+      U     #TX_DREHST_VORW_SPPL_5; 
+      SPBN  SP06; 
+      L     9; 
+      SPA   M004; 
+
+SP06: U     "DB_EINRICHTFUNKTION".Bewegung_31_Plus; 
+      U     #TX_DREHST_VORW_SPPL_6; 
+      SPBN  SP07; 
+      L     10; 
+      SPA   M004; 
+
+SP07: U     "DB_EINRICHTFUNKTION".Bewegung_31_Plus; 
+      U     #TX_DREHST_VORW_SPPL_7; 
+      SPBN  SP08; 
+      L     11; 
+      SPA   M004; 
+
+SP08: U     "DB_EINRICHTFUNKTION".Bewegung_31_Plus; 
+      U     #TX_DREHST_VORW_SPPL_8; 
+      SPBN  SP09; 
+      L     12; 
+      SPA   M004; 
+
+SP09: U     "DB_EINRICHTFUNKTION".Bewegung_31_Plus; 
+      U     #TX_DREHST_VORW_SPPL_9; 
+      SPBN  SP10; 
+      L     13; 
+      SPA   M004; 
+
+SP10: U     "DB_EINRICHTFUNKTION".Bewegung_31_Plus; 
+      U     #TX_DREHST_VORW_SPPL_10; 
+      SPBN  M009; 
+      L     14; 
+      SPA   M004; 
+
+M009: L     0; 
+      T     #Tb_Platz; 
+      SET   ; 
+      R     "MX_SKR_DSt_Req"; 
+      SPA   M010; 
+
+M004: T     #Tb_Platz; 
+      U     #Tx_Frg_Dst; 
+      U(    ; 
+      U     "M_RS_DREHST_POS_GUELTIG"; 
+      O     "DB_EINRICHTFUNKTION".Bewegung_32_Minus; 
+      O     "DB_EINRICHTFUNKTION".Bewegung_32_Plus; 
+      )     ; 
+      S     "MX_SKR_DSt_Req"; 
+
+M010: NOP   0; 
+
+      CALL "FC_PS_DrehSt_Pos" (
+           EW_Platz                 := #Tb_Platz,
+           EX_Fahrbefehl            := "MX_SKR_DSt_Req",
+           EAX_Fahrbefehl_Fertig    := "MX_RS_DrehSt_Fertig");
+
+      U     "MX_RS_DrehSt_Fertig"; 
+      R     "MX_RS_DrehSt_Fertig"; 
+
+NETWORK
+TITLE =Transportachse Bewegung
+
+      O     "DB_EINRICHTFUNKTION".Bewegung_35_Minus; 
+      O     "DB_EINRICHTFUNKTION".Bewegung_35_Plus; 
+      FN    "M_RS_FP_Oem4"; 
+      O(    ; 
+      U     "M_LS_Ax_10_11_Freig"; 
+      FN    "M_RS_FN_Oem5"; 
+      )     ; 
+      O     "M_Reset_Taste"; 
+      S     "DB_Achs10_Transport".MX_Abbruch_Positionieren; 
+
+      U     "DB_EINRICHTFUNKTION".Bewegung_35_Minus; 
+
+      U     #Tx_Frg_Trans_AST; 
+      SPBN  M011; 
+      L     2; 
+      SPA   M012; 
+
+M011: U     "DB_EINRICHTFUNKTION".Bewegung_35_Plus; 
+
+      U     #Tx_Frg_Trans_GST; 
+      SPBN  M013; 
+      L     1; 
+      SPA   M012; 
+
+M013: L     0; 
+      T     #Tb_Platz; 
+      SET   ; 
+      R     "MX_SKR_Trp_Req"; 
+      SPA   M014; 
+
+M012: T     #Tb_Platz; 
+      U     #Tx_Frg_Trans; 
+      S     "MX_SKR_Trp_Req"; 
+
+M014: NOP   0; 
+
+      CALL "FC_PS_Transp_Pos" (
+           Eb_Position              := #Tb_Platz,
+           EX_Fahrbefehl            := "MX_SKR_Trp_Req",
+           EAX_Fahrbefehl_Fertig    := "MX_RS_Tansport_Fertig");
+
+      U     "MX_RS_Tansport_Fertig"; 
+      R     "MX_RS_Tansport_Fertig"; 
+
+
+NETWORK
+TITLE =Freigabe RPL Palettenklemmung loesen/klemmen in Bild Anwender
+
+      U(    ; 
+      O     "I_SP_RPL_ENTKUPPELT"; 
+      ON    "DB_PLC_MD_DB20".UDHex._27_Bit3_RPLmitKupplung; 
+      )     ; 
+      U     "DB_OEM".OEM_ANWENDER; 
+      U     "I_PS_RPL_TUER_HINTEN_ZU"; 
+      =     #t_Freigabe_AST_Hand; 
+      =     #t_Freigabe_GST_Hand; 
+NETWORK
+TITLE =Ruestplatz Palettenklemmung loesen
+// Klemmung Rüstplatz
+      O     "DB_EINRICHTFUNKTION".Bewegung_39_Minus; 
+      O     "DB_EINRICHTFUNKTION".Bewegung_39_Plus; 
+      O     "DB_EINRICHTFUNKTION".Bewegung_211_Minus; 
+      O     "DB_EINRICHTFUNKTION".Bewegung_211_Plus; 
+      O     "DB_EINRICHTFUNKTION".Bewegung_139_Minus; 
+      O     "DB_EINRICHTFUNKTION".Bewegung_139_Plus; 
+      FN    "HM_NI_Bew_39_211"; 
+      SPBN  M015; 
+      U     "I_PW_RPL_PAL_GELOEST"; 
+      =     "O_PW_RPL_PAL_LOESEN"; 
+      U     "I_PW_RPL_PAL_GEKLEMMT"; 
+      =     "O_PW_RPL_PAL_KLEMMEN"; 
+
+M015: U(    ; 
+      O     "DB_EINRICHTFUNKTION".Bewegung_39_Minus; 
+      O     "DB_EINRICHTFUNKTION".Bewegung_211_Minus; 
+      O     ; 
+      U     "DB_EINRICHTFUNKTION".Bewegung_139_Minus; 
+      U     #t_Freigabe_AST_Hand; 
+      )     ; 
+      U     #Tx_Frg_Klp; 
+      O     ; 
+      U     "DB_EINRICHTFUNKTION".Bewegung_211_Minus; 
+      U     "I_SP_RPL_ENTKUPPELT"; 
+      S     "O_PW_RPL_PAL_LOESEN"; 
+      R     "O_PW_RPL_PAL_KLEMMEN"; 
+
+      U(    ; 
+      O     "DB_EINRICHTFUNKTION".Bewegung_39_Plus; 
+      O     "DB_EINRICHTFUNKTION".Bewegung_211_Plus; 
+      O     ; 
+      U     "DB_EINRICHTFUNKTION".Bewegung_139_Plus; 
+      U     #t_Freigabe_GST_Hand; 
+      )     ; 
+      U     #Tx_Frg_Klp; 
+      O     ; 
+      U     "DB_EINRICHTFUNKTION".Bewegung_211_Plus; 
+      U     "I_SP_RPL_ENTKUPPELT"; 
+      R     "O_PW_RPL_PAL_LOESEN"; 
+      S     "O_PW_RPL_PAL_KLEMMEN"; 
+
+M001: NOP   0; 
+NETWORK
+TITLE =Einrichten aktiv
+
+      U     "M_RS_RETTUNG_AKTIV"; 
+      SPBN  M028; 
+NETWORK
+TITLE =Drehstation am vorgewählten Speicherplatz
+
+      U     "M_RS_DREHST_POS_GUELTIG"; 
+      U(    ; 
+      U     #TX_DREHST_VORW_SPPL_1; 
+      U     "M_DS_Pos_4"; 
+      O     ; 
+      U     #TX_DREHST_VORW_SPPL_2; 
+      U     "M_DS_Pos_5"; 
+      O     ; 
+      U     #TX_DREHST_VORW_SPPL_3; 
+      U     "M_DS_Pos_6"; 
+      O     ; 
+      U     #TX_DREHST_VORW_SPPL_4; 
+      U     "M_DS_Pos_7"; 
+      O     ; 
+      U     #TX_DREHST_VORW_SPPL_5; 
+      U     "M_DS_Pos_8"; 
+      O     ; 
+      U     #TX_DREHST_VORW_SPPL_6; 
+      U     "M_DS_Pos_9"; 
+      O     ; 
+      U     #TX_DREHST_VORW_SPPL_7; 
+      U     "M_DS_Pos_10"; 
+      O     ; 
+      U     #TX_DREHST_VORW_SPPL_8; 
+      U     "M_DS_Pos_11"; 
+      O     ; 
+      U     #TX_DREHST_VORW_SPPL_9; 
+      U     "M_DS_Pos_12"; 
+      O     ; 
+      U     #TX_DREHST_VORW_SPPL_10; 
+      U     "M_DS_Pos_13"; 
+      )     ; 
+      =     #TX_DREHST_IN_SPEICH_POS; 
+NETWORK
+TITLE =Fahrbefehl Drehachse aktiv
+
+      O     "DB_ACHSE9".E_TCMinus; 
+      O     "DB_ACHSE9".E_TCPlus; 
+      =     #FB_Achse_9; 
+
+NETWORK
+TITLE =Drehstation fährt zur Speicherpositionen
+
+      U     "DB_EINRICHTFUNKTION".Bewegung_31_Plus; 
+      U     #FB_Achse_9; 
+      =     #Ventil_GST; 
+NETWORK
+TITLE =Drehstation Speicherpositionen Freigabe
+
+      U     "M_RS_DREHST_POS_GUELTIG"; 
+      U     #Tx_Frg_Dst; 
+      =     #TX_DREHST_FRG_SPEICH_POS; 
+NETWORK
+TITLE =Anzeige für Drehstation Speicherpositionen
+
+      CALL "FC_HMI_IO_TO_TLINE" (
+           Freigabe_AST_Hand        := "m_null",
+           Freigabe_GST_Hand        := #TX_DREHST_FRG_SPEICH_POS,
+           Endlage_AST              := "m_null",
+           Endlage_GST              := #TX_DREHST_IN_SPEICH_POS,
+           Ventil_AST               := "m_null",
+           Ventil_GST               := #Ventil_GST,
+           Bewegungsnummer          := 31);
+
+NETWORK
+TITLE =Drehstation Position fährt zur AST
+
+      U     "DB_EINRICHTFUNKTION".Bewegung_32_Minus; 
+      U     #FB_Achse_9; 
+      =     #Ventil_AST; 
+NETWORK
+TITLE =Drehstation Position fährt zur GST
+
+      U     "DB_EINRICHTFUNKTION".Bewegung_32_Plus; 
+      U     #FB_Achse_9; 
+      =     #Ventil_GST; 
+
+NETWORK
+TITLE =Drehstation Position 2 und 3 Freigabe 
+
+      U     #Tx_Frg_Dst; 
+      U     "M_RS_HUBACHSE_BER_EBENE0"; 
+      =     #TX_DREHST_FRG_POS_2_3; 
+NETWORK
+TITLE =Anzeige für Drehstation Position 2 und 3
+
+      CALL "FC_HMI_IO_TO_TLINE" (
+           Freigabe_AST_Hand        := #TX_DREHST_FRG_POS_2_3,
+           Freigabe_GST_Hand        := #TX_DREHST_FRG_POS_2_3,
+           Endlage_AST              := "M_DS_Pos_2",
+           Endlage_GST              := "M_DS_Pos_3",
+           Ventil_AST               := #Ventil_AST,
+           Ventil_GST               := #Ventil_GST,
+           Bewegungsnummer          := 32);
+
+NETWORK
+TITLE =Anzeige für Transport-Achse Position Grundstellung und Ausgef.
+
+      CALL "FC_HMI_IO_TO_TLINE" (
+           Freigabe_AST_Hand        := #Tx_Frg_Trans_AST,
+           Freigabe_GST_Hand        := #Tx_Frg_Trans_GST,
+           Endlage_AST              := "MX_Transport_Ausgef",
+           Endlage_GST              := "MX_Transport_Gst",
+           Ventil_AST               := "DB_ACHSE10".E_TCPlus,
+           Ventil_GST               := "DB_ACHSE10".E_TCMinus,
+           Bewegungsnummer          := 35);
+      NOP   0; 
+
+NETWORK
+TITLE =Anzeige für Drehstation +-
+
+      CALL "FC_HMI_IO_TO_TLINE" (
+           Freigabe_AST_Hand        := #Tx_Jog_Freig,
+           Freigabe_GST_Hand        := #Tx_Jog_Freig,
+           Endlage_AST              := "m_null",
+           Endlage_GST              := "m_null",
+           Ventil_AST               := "DB_ACHSE9".E_TCMinus,
+           Ventil_GST               := "DB_ACHSE9".E_TCPlus,
+           Bewegungsnummer          := 37);
+
+NETWORK
+TITLE =Anzeige für Transport-Achse +-
+
+      CALL "FC_HMI_IO_TO_TLINE" (
+           Freigabe_AST_Hand        := #Tx_Jog_Freig,
+           Freigabe_GST_Hand        := #Tx_Jog_Freig,
+           Endlage_AST              := "m_null",
+           Endlage_GST              := "m_null",
+           Ventil_AST               := "DB_ACHSE10".E_TCMinus,
+           Ventil_GST               := "DB_ACHSE10".E_TCPlus,
+           Bewegungsnummer          := 38);
+
+NETWORK
+TITLE =Ruestplatz Palettenklemmung loesen/klemmen in Bild Speicher 2
+
+      CALL "FC_HMI_IO_TO_TLINE" (
+           Freigabe_AST_Hand        := #Tx_Frg_Klm,
+           Freigabe_GST_Hand        := #Tx_Frg_Klm,
+           Endlage_AST              := "I_PW_RPL_PAL_GELOEST",
+           Endlage_GST              := "I_PW_RPL_PAL_GEKLEMMT",
+           Ventil_AST               := "O_PW_RPL_PAL_LOESEN",
+           Ventil_GST               := "O_PW_RPL_PAL_KLEMMEN",
+           Bewegungsnummer          := 39);
+
+NETWORK
+TITLE =Ruestplatz Palettenklemmung loesen/klemmen in Bild Anwender
+//Bild-Nr: 24
+      CALL "FC_HMI_IO_TO_TLINE" (
+           Freigabe_AST_Hand        := #t_Freigabe_AST_Hand,
+           Freigabe_GST_Hand        := #t_Freigabe_GST_Hand,
+           Endlage_AST              := "I_PW_RPL_PAL_GELOEST",
+           Endlage_GST              := "I_PW_RPL_PAL_GEKLEMMT",
+           Ventil_AST               := "O_PW_RPL_PAL_LOESEN",
+           Ventil_GST               := "O_PW_RPL_PAL_KLEMMEN",
+           Bewegungsnummer          := 139);
+
+NETWORK
+TITLE =Ruestplatz Palettenklemmung loesen/klemmen in Bild SpH-RPL
+
+      CALL "FC_HMI_IO_TO_TLINE" (
+           Freigabe_AST_Hand        := #Tx_Frg_Klm,
+           Freigabe_GST_Hand        := #Tx_Frg_Klm,
+           Endlage_AST              := "I_PW_RPL_PAL_GELOEST",
+           Endlage_GST              := "I_PW_RPL_PAL_GEKLEMMT",
+           Ventil_AST               := "O_PW_RPL_PAL_LOESEN",
+           Ventil_GST               := "O_PW_RPL_PAL_KLEMMEN",
+           Bewegungsnummer          := 211);
+
+NETWORK
+TITLE =Fahrbefehl Hub-Achse aktiv
+
+      O     "DB_ACHSE16".E_TCMinus; 
+      O     "DB_ACHSE16".E_TCPlus; 
+      =     #FB_Achse_16; 
+NETWORK
+TITLE =Hub-Achse Jog fährt zur AST (RS10)
+
+      U     "DB_EINRICHTFUNKTION".Bewegung_97_Minus; 
+      U     "DB_ACHSE16".E_TCMinus; 
+      =     #Ventil_AST; 
+NETWORK
+TITLE =Hub-Achse Jog fährt zur GST (RS10)
+
+      U     "DB_EINRICHTFUNKTION".Bewegung_97_Plus; 
+      U     "DB_ACHSE16".E_TCPlus; 
+      =     #Ventil_GST; 
+NETWORK
+TITLE =Anzeige für Hub-Achse +- (RS10)
+
+      CALL "FC_HMI_IO_TO_TLINE" (
+           Freigabe_AST_Hand        := #Tx_Jog_Freig,
+           Freigabe_GST_Hand        := #Tx_Jog_Freig,
+           Endlage_AST              := "m_null",
+           Endlage_GST              := "m_null",
+           Ventil_AST               := #Ventil_AST,
+           Ventil_GST               := #Ventil_GST,
+           Bewegungsnummer          := 97);
+
+NETWORK
+TITLE =Hub-Achse Ebene 0 fährt zur AST
+
+      U     "DB_EINRICHTFUNKTION".Bewegung_98_Minus; 
+      U     #FB_Achse_16; 
+      =     #Ventil_AST; 
+NETWORK
+TITLE =Hub-Achse Ebene 0 fährt zur GST
+
+      U     "DB_EINRICHTFUNKTION".Bewegung_98_Plus; 
+      U     #FB_Achse_16; 
+      =     #Ventil_GST; 
+NETWORK
+TITLE =Anzeige für Hub-Achse (RS10) Ebene 0
+
+      CALL "FC_HMI_IO_TO_TLINE" (
+           Freigabe_AST_Hand        := #TX_EBENE_0_FRG_HUB,
+           Freigabe_GST_Hand        := #TX_EBENE_0_FRG_HUB,
+           Endlage_AST              := "M_RS_HUBACHSE_E0_OBEN",
+           Endlage_GST              := "M_RS_HUBACHSE_E0_UNTEN",
+           Ventil_AST               := #Ventil_AST,
+           Ventil_GST               := #Ventil_GST,
+           Bewegungsnummer          := 98);
+
+NETWORK
+TITLE =Hub-Achse Ebene 1 fährt zur AST
+
+      U     "DB_EINRICHTFUNKTION".Bewegung_99_Minus; 
+      U     #FB_Achse_16; 
+      =     #Ventil_AST; 
+NETWORK
+TITLE =Hub-Achse Ebene 1 fährt zur GST
+
+      U     "DB_EINRICHTFUNKTION".Bewegung_99_Plus; 
+      U     #FB_Achse_16; 
+      =     #Ventil_GST; 
+NETWORK
+TITLE =Anzeige für Hub-Achse (RS10) Ebene 1
+
+      CALL "FC_HMI_IO_TO_TLINE" (
+           Freigabe_AST_Hand        := #TX_EBENE_1_FRG_HUB,
+           Freigabe_GST_Hand        := #TX_EBENE_1_FRG_HUB,
+           Endlage_AST              := "M_RS_HUBACHSE_E1_OBEN",
+           Endlage_GST              := "M_RS_HUBACHSE_E1_UNTEN",
+           Ventil_AST               := #Ventil_AST,
+           Ventil_GST               := #Ventil_GST,
+           Bewegungsnummer          := 99);
+
+NETWORK
+TITLE =Anzeige Grundstellung
+
+      U     "MX_Transport_Gst"; 
+      U(    ; 
+      O     "M_RS_HUBACHSE_E0_UNTEN"; 
+      O     "M_RS_HUBACHSE_E1_UNTEN"; 
+      )     ; 
+      =     "DB_OEM".Speicher_GrdST; 
+NETWORK
+TITLE =
+
+M028: NOP   0; 
+
+END_FUNCTION
+

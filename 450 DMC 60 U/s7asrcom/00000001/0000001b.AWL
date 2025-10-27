@@ -1,0 +1,535 @@
+FUNCTION "FC_WZW_VERWALTUNG" : VOID
+TITLE =
+//$Revision: 1.52 $
+//$Date: 2008/09/23 16:57:25CEST $
+//$Author: schmoelp $
+//
+VERSION : 0.1
+
+
+VAR_TEMP
+  T_MP_Ein : WORD ;	
+  T_MP_Aus : WORD ;	
+  T_Magazin_velo : REAL ;	
+  T_WZW_RAD : BOOL ;	
+  T_Bild_MAGEinstellung : BOOL ;	
+  T_Rett_Spanner_auf : BOOL ;	
+  T_Rett_Spanner_zu : BOOL ;	
+  TR_Gr2_Pos_Kegelrein : REAL ;	
+  MagNo : INT ;	
+  LocNo : INT ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =WZW Typ an NC
+
+      L     "DB_PLC_MD_DB20".UDInt._008_ANWAHL_WZW_TYP; 
+      T     "DB_NC_PLC".WZW_Typ; 
+      NOP   0; 
+NETWORK
+TITLE =Werkzeugwechsler angewählt
+
+      L     "DB_PLC_MD_DB20".UDInt._008_ANWAHL_WZW_TYP; 
+      L     0; 
+      <>I   ; 
+      =     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.WZW_ANGEWAEHLT; 
+NETWORK
+TITLE =Anwahl Werkzeugwechsler Rad aktiv
+
+      U     "m_eins"; 
+      =     L     18.0; 
+      U     L     18.0; 
+      U(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._008_ANWAHL_WZW_TYP; 
+      L     8; 
+      ==I   ; 
+      )     ; 
+      =     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.WZW_RAD_MIT_ZYLINDER; 
+      U     L     18.0; 
+      U(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._008_ANWAHL_WZW_TYP; 
+      L     7; 
+      ==I   ; 
+      )     ; 
+      =     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.WZW_RAD_MIT_ACHSE; 
+      U     L     18.0; 
+      U(    ; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.WZW_RAD_MIT_ZYLINDER; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.WZW_RAD_MIT_ACHSE; 
+      )     ; 
+      =     "M_RADMAGAZIN"; 
+NETWORK
+TITLE =Anwahl Werkzeugwechsler Vertikale Kette (GR1/2/TPU) aktiv
+
+      L     "DB_PLC_MD_DB20".UDInt._008_ANWAHL_WZW_TYP; 
+      L     9; 
+      ==I   ; 
+      =     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.WZW_VKETTE_MIT_TPU; 
+NETWORK
+TITLE =Anwahl Werkzeugwechsler Vertikale Kette (GR1/2) aktiv
+
+      L     "DB_PLC_MD_DB20".UDInt._008_ANWAHL_WZW_TYP; 
+      L     11; 
+      ==I   ; 
+      =     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.WZW_VKETTE_OHNE_TPU; 
+NETWORK
+TITLE =Anwahl Werkzeugwechsler Horiz.Kette bzw. Regal (GR1/2) aktiv
+
+      L     "DB_PLC_MD_DB20".UDInt._008_ANWAHL_WZW_TYP; 
+      L     6; 
+      ==I   ; 
+      =     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.WZW_HORIZONTALE_KETTE; 
+NETWORK
+TITLE =Anwahl Werkzeugwechsler (GR1/2) mit Regalmagazin aktiv
+
+      L     "DB_PLC_MD_DB20".UDInt._014_ANWAHL_MAGAZIN; 
+      L     3; 
+      ==I   ; 
+      =     "M_WZM_Regal_angewaehlt"; 
+NETWORK
+TITLE =Vertikalkette
+
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.WZW_VKETTE_MIT_TPU; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.WZW_VKETTE_OHNE_TPU; 
+      =     "M_VERTIKALKETTE"; 
+NETWORK
+TITLE =Ablaufmodul: Horizontalmagazin und Vertikalkette ohne TPU
+
+      U     "m_eins"; 
+      =     L     18.0; 
+      BLD   103; 
+      U(    ; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.WZW_HORIZONTALE_KETTE; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.WZW_VKETTE_OHNE_TPU; 
+      )     ; 
+      SPBNB _001; 
+      CALL "FC_WZW_ABLAUF" (
+           E_Enable                 := L     18.0);
+_001: NOP   0; 
+NETWORK
+TITLE =Vertkalmagazin: Status
+
+      U     "m_eins"; 
+      =     L     18.0; 
+      BLD   103; 
+      U     "IX_MSST_Ta_2_4"; 
+      UN    "M_Handbetrieb"; 
+      =     L     18.1; 
+      BLD   103; 
+      U     "MSSTst_NC_Start"; 
+      =     L     18.2; 
+      BLD   103; 
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.WZW_VKETTE_MIT_TPU; 
+      SPBNB _002; 
+      CALL "FC_WZW_VMAG_STATUS" (
+           E_Enabled                := L     18.0,
+           E_TastGf                 := L     18.1,
+           E_MSSTst_NC_Start        := L     18.2);
+_002: NOP   0; 
+NETWORK
+TITLE =Vertkalmagazin: Ablaufmodul
+
+      U     "m_eins"; 
+      =     L     18.0; 
+      BLD   103; 
+      U     "MSSTst_NC_Start"; 
+      =     L     18.1; 
+      BLD   103; 
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.WZW_VKETTE_MIT_TPU; 
+      SPBNB _003; 
+      CALL "FC_WZW_VERT_MAG" (
+           E_Enable                 := L     18.0,
+           E_Ta_NC_Start            := L     18.1);
+_003: NOP   0; 
+NETWORK
+TITLE =Manueller WZW Ablaufmodul
+
+      U     "m_eins"; 
+      =     L     18.0; 
+      BLD   103; 
+      CALL "FC_MWZW_Ablauf" (
+           E_Enabled                := L     18.0);
+      NOP   0; 
+NETWORK
+TITLE =Kegelreinigung Horizontalkette und Regalmagazin
+
+      U     "m_eins"; 
+      =     L     18.0; 
+      BLD   103; 
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.WZW_HORIZONTALE_KETTE; 
+      SPBNB _004; 
+      CALL "FC_KEGELREINIGUNG" (
+           E_Enable                 := L     18.0);
+_004: NOP   0; 
+NETWORK
+TITLE =Vertkalmagazin: Kegelreinigung
+
+      U     "m_eins"; 
+      =     L     18.0; 
+      BLD   103; 
+      U     "M_Req_WZ_Reinigen"; 
+      =     L     18.1; 
+      BLD   103; 
+      U     "DB_NC_PLC".WZW_NC_Aktiv; 
+      =     L     18.2; 
+      BLD   103; 
+      U(    ; 
+      U     "DB_ACHSE14".E_Stat; 
+      FP    "M_FP_Achse14_steht"; 
+      O     "M_IMP_Leistung_steht_an"; 
+      O     "M_Takt_04s"; 
+      )     ; 
+      =     L     18.3; 
+      BLD   103; 
+      U     "M_WZW_Gre1_Pos_Mag"; 
+      =     L     18.4; 
+      BLD   103; 
+      U     "M_WZW_Gre1_Pos_Spi"; 
+      =     L     18.5; 
+      BLD   103; 
+      U     "DB_OEM".Anwahl.WZW.Maske3; 
+      =     L     18.6; 
+      BLD   103; 
+      U(    ; 
+      U(    ; 
+      U     "M_Kegelrein_VM_aktiv"; 
+      SPBNB _005; 
+      L     "DB_NC_PLC".Zusatz.NC_an_PLC.Offset_Kegelreinigung_VM; 
+      T     "DB_REMANENT".Offset_Kegelreinigung_VM; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+_005: U     BIE; 
+      )     ; 
+      SPBNB _006; 
+      L     "DB_REMANENT".Offset_Kegelreinigung_VM; 
+      L     1.800000e+002; 
+      +R    ; 
+      T     #TR_Gr2_Pos_Kegelrein; 
+      UN    OV; 
+      SAVE  ; 
+      CLR   ; 
+_006: U     BIE; 
+      )     ; 
+      SPBNB _007; 
+      CALL "FC_KEGELREINIGUNG_VM" (
+           EX_Enable                := L     18.0,
+           EX_Reinigung_Req         := L     18.1,
+           EX_WZW_NC_Aktiv          := L     18.2,
+           EX_Anf_Pos_lesen         := L     18.3,
+           EX_WZGR1_Pos_Mag         := L     18.4,
+           EX_WZGR2_Pos_Mag         := L     18.5,
+           EX_Rettungsmaske_aktiv   := L     18.6,
+           ER_WZGR_Istposition      := "DB_Achs11_VMAG_Greifer".MR_IstPosition,
+           ER_WZGR1_Pos_Keg         := "DB_REMANENT".Offset_Kegelreinigung_VM,
+           ER_WZGR2_Pos_Keg         := #TR_Gr2_Pos_Kegelrein,
+           EAX_Reinigung_aktiv      := "M_WZ_Reinigen_Aktiv",
+           EAX_Reinigung_Ready      := "M_Ready_WZ_Reinigen",
+           EAX_WZGR_InPos           := "DB_Achs11_VMAG_Greifer".MX_Ax_InPosition,
+           EAX_WZGR_Anf_Positionier := "DB_Achs11_VMAG_Greifer".MX_Anf_Positionieren,
+           EAX_WZGR_Pos_lesen       := "DB_Achs11_VMAG_Greifer".MX_Ax_Position_Lesen,
+           EAR_WZGR_Sollposition    := "DB_Achs11_VMAG_Greifer".MR_SollPosition,
+           EAR_WZGR_Geschwindigkeit := "DB_Achs11_VMAG_Greifer".MR_Achsgeschwindigkeit,
+           EAB_SKZ                  := "MW_Kegelreinigung_VM_SKZ");
+_007: NOP   0; 
+NETWORK
+TITLE =Einrichtfunktion (Rettung) Werkzeugspanner auf
+
+      O     "DB_EINRICHTFUNKTION".Bewegung_5_Minus; 
+      O     "DB_EINRICHTFUNKTION".Bewegung_44_Minus; 
+      =     #T_Rett_Spanner_auf; 
+NETWORK
+TITLE =Einrichtfunktion (Rettung) Werkzeugspanner zu
+
+      O     "DB_EINRICHTFUNKTION".Bewegung_5_Plus; 
+      O     "DB_EINRICHTFUNKTION".Bewegung_44_Plus; 
+      =     #T_Rett_Spanner_zu; 
+NETWORK
+TITLE =Werkzeugspanner 
+
+      U     "m_eins"; 
+      =     L     18.0; 
+      BLD   103; 
+      U     "m_eins"; 
+      =     L     18.1; 
+      BLD   103; 
+      U     "m_null"; 
+      =     L     18.2; 
+      BLD   103; 
+      U     "m_null"; 
+      =     L     18.3; 
+      BLD   103; 
+      U     "m_null"; 
+      =     L     18.4; 
+      BLD   103; 
+      U     "DB_ACHSE6_SPINDEL".E_PosMode; 
+      =     L     18.5; 
+      BLD   103; 
+      U     "m_eins"; 
+      =     L     18.6; 
+      BLD   103; 
+      U     "m_null"; 
+      =     L     18.7; 
+      BLD   103; 
+      U     "MX_Spdl_M3"; 
+      =     L     19.0; 
+      BLD   103; 
+      U     "MX_Spdl_M4"; 
+      =     L     19.1; 
+      BLD   103; 
+      U     #T_Rett_Spanner_auf; 
+      =     L     19.2; 
+      BLD   103; 
+      U     #T_Rett_Spanner_zu; 
+      =     L     19.3; 
+      BLD   103; 
+      U     "MSSTst_NC_Start"; 
+      =     L     19.4; 
+      BLD   103; 
+      CALL "FC_WZ_SPANNER" (
+           E_Enabled                := L     18.0,
+           E_Fehlermodulenabled     := L     18.1,
+           E_Blasluft_Freigabe_Aus  := L     18.2,
+           E_Spindel_orientiert     := L     18.3,
+           E_M19_Fertig             := L     18.4,
+           E_M19_aktiv              := L     18.5,
+           E_I_Loeseeinheit_Abgehob := L     18.6,
+           E_Vorsatzspindel         := L     18.7,
+           E_M3_Request             := L     19.0,
+           E_M4_Request             := L     19.1,
+           E_Rett_Spanner_oeffnen   := L     19.2,
+           E_Rett_Spanner_schliesse := L     19.3,
+           E_Ta_NC_Start            := L     19.4);
+      NOP   0; 
+NETWORK
+TITLE =Messposition Bruchkontrolle Radmagazin
+
+      U     "M_RADMAGAZIN"; 
+      =     L     18.0; 
+      U     L     18.0; 
+      UN    "M_WZB_Messung"; 
+      =     L     18.1; 
+      U     L     18.1; 
+      SPBNB _008; 
+      L     "TMSpindleIF".IF[1].SMag; 
+      T     #MagNo; 
+_008: NOP   0; 
+      U     L     18.1; 
+      SPBNB _009; 
+      L     "TMSpindleIF".IF[1].SLoc; 
+      T     #LocNo; 
+_009: NOP   0; 
+      U     L     18.0; 
+      U     "M_WZB_Messung"; 
+      =     L     18.1; 
+      U     L     18.1; 
+      SPBNB _00a; 
+      L     "DB_WZV".WZB.MagNo; 
+      T     #MagNo; 
+_00a: NOP   0; 
+      U     L     18.1; 
+      SPBNB _00b; 
+      L     "DB_WZV".WZB.LocNo; 
+      T     #LocNo; 
+_00b: NOP   0; 
+NETWORK
+TITLE =Messposition Bruchkontrolle vertikale Kette
+
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.WZW_VKETTE_MIT_TPU; 
+      =     L     18.0; 
+      U     L     18.0; 
+      SPBNB _00c; 
+      L     9998; 
+      T     #MagNo; 
+_00c: NOP   0; 
+      U     L     18.0; 
+      SPBNB _00d; 
+      L     4; 
+      T     #LocNo; 
+_00d: NOP   0; 
+NETWORK
+TITLE =Messposition Bruchkontrolle horizontale Kette oder Regal
+
+      UN    "M_RADMAGAZIN"; 
+      UN    "DB_CONFIG".ANWAHL_DURCH_USER_DATA.WZW_VKETTE_MIT_TPU; 
+      =     L     18.0; 
+      U     L     18.0; 
+      SPBNB _00e; 
+      L     9998; 
+      T     #MagNo; 
+_00e: NOP   0; 
+      U     L     18.0; 
+      U     "M_WZW_Gre1_Pos_Mag"; 
+      SPBNB _00f; 
+      L     2; 
+      T     #LocNo; 
+_00f: NOP   0; 
+      U     L     18.0; 
+      U     "M_WZW_Gre1_Pos_Spi"; 
+      SPBNB _010; 
+      L     3; 
+      T     #LocNo; 
+_010: NOP   0; 
+NETWORK
+TITLE =Aufruf: Werkzeugbruch Überwachung
+
+      U     "MSSTst_NC_Start"; //"MSSTst_NC_Start"
+      =     L     18.0; 
+      BLD   103; 
+      CALL "FB_WZ_BRUCH" , "DI_WZ_BRUCH" (
+           EX_Ta_NC_Start           := L     18.0,
+           E_MagNo                  := #MagNo,
+           E_LocNo                  := #LocNo);
+      NOP   0; 
+NETWORK
+TITLE =Aufruf: Werkzeugbruch Überwachung Frühstart
+
+      UN    "M_RADMAGAZIN"; 
+      UN    "M_VERTIKALKETTE"; 
+      U     "DB_PLC_MD_DB20".UDHex._20_Bit1_WZ_ni_ablegen; 
+      SPBNB _011; 
+      CALL "FC_WZB_FSTRT" ;
+_011: NOP   0; 
+NETWORK
+TITLE =Tellermagazin vorhanden ? nein -> Bausteinende
+
+      UN    "M_RADMAGAZIN"; 
+      SPB   ENDE; 
+NETWORK
+TITLE =Tellermagazin: HMI-Bild 35: Bildanwahl Magazineinstellung
+//HMI: Manuell / [SK7] Rettung Werkzeugwechlser 7   Bild-Nr: 35
+      U(    ; 
+      L     "DB_OEM".Bildnummer; 
+      L     35; 
+      ==I   ; 
+      )     ; 
+      U     "M_Handbetrieb"; 
+      U     "DB_PLC_MD_DB20".UDHex._04_BIT4_EINRICHT_BETR; 
+      =     #T_Bild_MAGEinstellung; 
+NETWORK
+TITLE =Tellermagazin: Werkzeugverwaltung 
+
+      U     "m_null"; 
+      =     L     18.0; 
+      BLD   103; 
+      U     "m_eins"; 
+      =     L     18.1; 
+      BLD   103; 
+      U     "m_null"; 
+      =     L     18.2; 
+      BLD   103; 
+      U     "m_null"; 
+      =     L     18.3; 
+      BLD   103; 
+      U     "M_Ruecksetze_Fehler"; 
+      =     L     18.4; 
+      BLD   103; 
+      U     "M_Not_aus"; 
+      =     L     18.5; 
+      BLD   103; 
+      U     "M_Reset_Taste"; 
+      =     L     18.6; 
+      BLD   103; 
+      CALL "FC_WZV_TELLER" (
+           Teststeuerung            := L     18.0,
+           Frg_Pos_Mag_1            := L     18.1,
+           Frg_Pos_Mag_2            := L     18.2,
+           Doppelmagazin            := L     18.3,
+           FM_del                   := L     18.4,
+           Not_Aus                  := L     18.5,
+           E_MSST_Reset             := L     18.6,
+           Abstand_WS               := "DB_PLC_MD_DB20".UDInt._127_Abstand_KR,
+           MAG_Laenge               := "DB_PLC_MD_DB20".UDInt._120_ANZAHL_MAG_PLAETZE,
+           MAG_Laenge_HSK           := "DB_PLC_MD_DB20".UDInt._121_ANZAHL_HSK_PLAETZE,
+           Abstand_Ls1              := "DB_PLC_MD_DB20".UDInt._122_RUESTPOSITION,
+           Abstand_Ls2              := 0,
+           Mag1_Pos                 := "DB_WZV".Mag1_Pos,
+           Mag2_Pos                 := "DB_WZV".Mag2_Pos,
+           Start_Pos_M1             := "M_Start_Pos_M1",
+           Start_Pos_M2             := "M_Start_Pos_M2");
+      NOP   0; 
+NETWORK
+TITLE =Tellermagazin: Geschwindigkeitsvorgabe
+
+      U     "m_eins"; 
+      =     L     18.0; 
+      U     L     18.0; 
+      U     "I_WM_Beladung_zu"; 
+      SPBNB _012; 
+      L     5.000000e+000; 
+      T     #T_Magazin_velo; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+_012: U     BIE; 
+      =     "DB_ACHSE7".A_RapidTrOR; 
+      U     L     18.0; 
+      UN    "I_WM_Beladung_zu"; 
+      SPBNB _013; 
+      L     1.000000e+000; 
+      T     #T_Magazin_velo; 
+_013: NOP   0; 
+NETWORK
+TITLE =Tellermagazin: Positionieren
+
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.WZW_RAD_MIT_ACHSE; 
+      =     L     18.0; 
+      BLD   103; 
+      UN    "DB_PLC_MD_DB20".UDHex._24_Bit4_Rad_n_einfahren; 
+      =     L     18.1; 
+      BLD   103; 
+      U     #T_Bild_MAGEinstellung; 
+      =     L     18.2; 
+      BLD   103; 
+      CALL "FC_WMT_POSITIONIEREN" (
+           WW_Pos_aus_SPI           := "DB_PLC_MD_DB20".UDInt._128_MAG_HUB,
+           WW_Pos_in_SPI            := 0.000000e+000,
+           HUB_Velo                 := 1.000000e+001,
+           MAG_Velo                 := #T_Magazin_velo,
+           mit_Hubachse             := L     18.0,
+           Rad_einfahren            := L     18.1,
+           Bild_MAGEinstellung      := L     18.2);
+      NOP   0; 
+NETWORK
+TITLE =Tellermagazin: Werkzeugwechsler
+
+      U     "m_null"; 
+      =     L     18.0; 
+      BLD   103; 
+      U     "m_null"; 
+      =     L     18.1; 
+      BLD   103; 
+      UN    "DB_PLC_MD_DB20".UDHex._08_BIT0_UGP_BELEGT; 
+      =     L     18.2; 
+      BLD   103; 
+      U     #T_Bild_MAGEinstellung; 
+      =     L     18.3; 
+      BLD   103; 
+      CALL "FC_WW_SPANNER" (
+           AB_Kein_gespannt_mWz     := L     18.0,
+           AB_mit_Entriegeln        := L     18.1,
+           IB_MagKontr_aus          := L     18.2,
+           Bild_MAGEinstellung      := L     18.3,
+           Anf_ART_oeffnen          := "M_Anf_ART_oeffnen",
+           Sp_OVR_0                 := "M_Sp_OVR_0",
+           MFkt_WW_Hand             := "DB_DM_M_FUNKTION".MX_M[33]);
+      NOP   0; 
+NETWORK
+TITLE =Anwahl für Maske Schneller Werkzeugwechsel
+
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.WZW_RAD_MIT_ZYLINDER; 
+      U(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._000_STANDORT_MASCHTYP; 
+      L     3071; 
+      ==I   ; 
+      )     ; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.WZW_VKETTE_MIT_TPU; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.WZW_VKETTE_OHNE_TPU; 
+      =     "M_Anwahl_WZW_Maske"; 
+NETWORK
+TITLE =Bausteinende
+
+ENDE: NOP   0; 
+
+END_FUNCTION
+

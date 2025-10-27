@@ -1,0 +1,96 @@
+FUNCTION "FC_FAM_M_RESET" : VOID
+TITLE =
+//$Revision: 1.9 $
+//$Date: 2007/10/10 13:08:53CEST $
+//$Author: riedlh $
+
+//
+//Funktionsbeschreibung:
+//
+//     Nicht benützte M-Funktionsmerker ruecksetzen
+//
+//Logbuch:
+//
+//V0.1 /28.04.00/ AB
+//- Modul angelegt
+AUTHOR : AB
+FAMILY : Familie
+NAME : M_Reset
+VERSION : 0.1
+
+
+VAR_INPUT
+  E_EN : BOOL ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =
+
+      UN    #E_EN; 
+      BEB   ; 
+
+      U     "DB_DM_M_FUNKTION".MX_M[0]; 
+      R     "DB_DM_M_FUNKTION".MX_M[0]; 
+
+      U     "DB_DM_M_FUNKTION".MX_M[1]; 
+      R     "DB_DM_M_FUNKTION".MX_M[1]; 
+
+      U     "DB_DM_M_FUNKTION".MX_M[2]; 
+      R     "DB_DM_M_FUNKTION".MX_M[2]; 
+
+      U     "DB_DM_M_FUNKTION".MX_M[6]; 
+      R     "DB_DM_M_FUNKTION".MX_M[6]; 
+
+      U     "DB_DM_M_FUNKTION".MX_M[46]; 
+      R     "DB_DM_M_FUNKTION".MX_M[46]; 
+
+      U     "DB_DM_M_FUNKTION".MX_M[53]; 
+      R     "DB_DM_M_FUNKTION".MX_M[53]; 
+
+      U     "DB_DM_M_FUNKTION".MX_M[54]; 
+      R     "DB_DM_M_FUNKTION".MX_M[54]; 
+
+      U     "DB_DM_M_FUNKTION".MX_M[55]; 
+      R     "DB_DM_M_FUNKTION".MX_M[55]; 
+
+      U     "DB_DM_M_FUNKTION".MX_M[56]; 
+      R     "DB_DM_M_FUNKTION".MX_M[56]; 
+
+      U     "DB_DM_M_FUNKTION".MX_M[57]; 
+      R     "DB_DM_M_FUNKTION".MX_M[57]; 
+
+      U     "DB_DM_M_FUNKTION".MX_M[58]; 
+      R     "DB_DM_M_FUNKTION".MX_M[58]; 
+
+      U     "DB_DM_M_FUNKTION".MX_M[61]; 
+      R     "DB_DM_M_FUNKTION".MX_M[61]; 
+
+      U     "DB_DM_M_FUNKTION".MX_M[62]; 
+      R     "DB_DM_M_FUNKTION".MX_M[62]; 
+
+      U     "DB_DM_M_FUNKTION".MX_M[66]; 
+      R     "DB_DM_M_FUNKTION".MX_M[66]; 
+
+      U     "DB_DM_M_FUNKTION".MX_M[67]; 
+      R     "DB_DM_M_FUNKTION".MX_M[67]; 
+
+      U     "DB_DM_M_FUNKTION".MX_M[68]; 
+      R     "DB_DM_M_FUNKTION".MX_M[68]; 
+
+      U     "DB_DM_M_FUNKTION".MX_M[75]; 
+      R     "DB_DM_M_FUNKTION".MX_M[75]; 
+
+      U     "DB_DM_M_FUNKTION".MX_M[76]; 
+      R     "DB_DM_M_FUNKTION".MX_M[76]; 
+
+
+//M77: WZVS aktivieren (ARTIS)
+      U     "DB_DM_M_FUNKTION".MX_M[77]; 
+      R     "DB_DM_M_FUNKTION".MX_M[77]; 
+
+//M78: WZVS deaktivieren (ARTIS)
+      U     "DB_DM_M_FUNKTION".MX_M[78]; 
+      R     "DB_DM_M_FUNKTION".MX_M[78]; 
+
+END_FUNCTION
+

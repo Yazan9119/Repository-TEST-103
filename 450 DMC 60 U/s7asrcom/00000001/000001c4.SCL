@@ -1,0 +1,162 @@
+FUNCTION FC_Achse_RPL : VOID
+
+TITLE = ''
+//$Revision: 1.9 $
+//$Date: 2008/11/29 07:51:46CET $
+//$Author: fuh $
+
+
+// Rüstplatz positionieren
+
+VAR_INPUT
+    EX_Init: BOOL; // Modulfreigabe   
+    EX_RPL_Grdst_Req: BOOL; 
+    EX_RPL_Plus_Req: BOOL;   
+    EX_RPL_Minus_Req: BOOL;
+    EX_RPL_Pos_Req: BOOL;
+    ER_RPL_Sollposition_Req: REAL;
+    ER_RPL_Istposition: REAL;
+    EW_Teilung: INT;
+    ER_Pos_Fenster: REAL;
+    ER_Pos_Limit_Minus: REAL;
+    ER_Pos_Limit_Plus: REAL;
+END_VAR
+
+VAR_TEMP
+    i: INT;
+    TR_Teilung: REAL;
+    TR_RPL_Istposition: REAL;
+END_VAR
+
+VAR_IN_OUT
+    EAX_RPL_Bereich: INT;
+    EAX_RPL_Position: INT;
+    EAX_RPL_Pos_Req: BOOL;
+    EAX_RPL_In_Pos: BOOL;
+    EAB_RPL_Positionierung: BYTE;
+    EAR_RPL_Sollposition: REAL;
+END_VAR    
+
+// Anweisungsteil
+//Umschreiben der Istposition wenn über 360 Grad oder -Bereich
+
+IF (ER_RPL_Istposition >= 360.0) THEN
+  TR_RPL_Istposition := ER_RPL_Istposition - 360.0;
+ELSIF (ER_RPL_Istposition < 0.0) THEN
+  TR_RPL_Istposition := ER_RPL_Istposition + 360.0;
+ELSE
+  TR_RPL_Istposition := ER_RPL_Istposition;
+END_IF;
+
+IF (EW_Teilung <> 0) AND (EX_RPL_Pos_Req = FALSE) THEN
+  EAX_RPL_Position := 0;
+  EAX_RPL_Bereich := 0;
+  TR_Teilung := 360.0/EW_Teilung;
+  EAB_RPL_Positionierung := 2;
+//Bereiche und Positionen in DB schreiben
+  IF EX_Init THEN
+    FOR i:=1 TO EW_Teilung BY 1 DO
+        "DB_RPL_Positionen".Position[i].MIN := (i*TR_Teilung-TR_Teilung)-(ER_Pos_Fenster/2);
+        "DB_RPL_Positionen".Position[i].MAX := (i*TR_Teilung-TR_Teilung)+(ER_Pos_Fenster/2);
+        "DB_RPL_Positionen".Bereich[i].MIN := (i*TR_Teilung-TR_Teilung)+(ER_Pos_Fenster/2);
+        "DB_RPL_Positionen".Bereich[i].MAX := (i*TR_Teilung)-(ER_Pos_Fenster/2);
+    END_FOR; 
+  END_IF; 
+
+//Bereich oder Position lesen
+  FOR i:= 1 TO EW_Teilung BY 1 DO
+    IF (TR_RPL_Istposition >= "DB_RPL_Positionen".Position[i].MIN) AND (TR_RPL_Istposition <= "DB_RPL_Positionen".Position[i].MAX) THEN
+      EAX_RPL_Position := i;
+    END_IF;
+    IF (TR_RPL_Istposition > "DB_RPL_Positionen".Bereich[i].MIN) AND (TR_RPL_Istposition < "DB_RPL_Positionen".Bereich[i].MAX) THEN
+      EAX_RPL_Bereich := i;
+    END_IF;
+    IF (TR_RPL_Istposition >= (360.0 - (ER_Pos_Fenster/2))) AND (TR_RPL_Istposition <= (360.0 + (ER_Pos_Fenster/2))) THEN
+      EAX_RPL_Position := 1;
+    END_IF;
+  END_FOR;
+
+//RPL auf Grundstellung fahren
+  IF EX_RPL_Grdst_Req THEN
+      EAR_RPL_Sollposition := 0.0;
+      EAX_RPL_Pos_Req := True;
+      EAX_RPL_In_Pos := False;
+      RETURN;
+  END_IF;
+
+//RPL in Plus-Richtung takten
+  IF EX_RPL_Plus_Req THEN
+      FOR i:= 1 TO EW_Teilung BY 1 DO
+          IF (EAX_RPL_Position = i) OR (EAX_RPL_Bereich = i) THEN
+              IF i = EW_Teilung THEN
+                 EAR_RPL_Sollposition := 0.0;
+                 EAX_RPL_Pos_Req := True;
+                 EAX_RPL_In_Pos := False;
+              ELSE
+                 EAR_RPL_Sollposition := TR_Teilung * i;
+                 EAX_RPL_Pos_Req := True;
+                 EAX_RPL_In_Pos := False;
+              END_IF;
+          END_IF;
+      END_FOR;    
+  END_IF;
+
+//RPL in Minus-Richtung takten
+  IF EX_RPL_Minus_Req THEN
+      FOR i:= 1 TO EW_Teilung BY 1 DO
+          IF i = 1 THEN
+            IF (EAX_RPL_Position = i) OR (EAX_RPL_Bereich = EW_Teilung) THEN
+                EAR_RPL_Sollposition := (TR_Teilung * (EW_Teilung-1));
+                EAX_RPL_Pos_Req := True;
+                EAX_RPL_In_Pos := False;
+            END_IF;
+          ELSE
+            IF (EAX_RPL_Position = i) OR (EAX_RPL_Bereich = i-1) THEN
+                EAR_RPL_Sollposition := (TR_Teilung * (i-2));
+                EAX_RPL_Pos_Req := True;
+                EAX_RPL_In_Pos := False;
+            END_IF;
+          END_IF;
+      END_FOR;    
+  END_IF;
+ELSE
+//RPL Position direkt anfahren
+//EW_Teilung muss 0 sein und in ER_RPL_Position_Req wird die anzufahrende Position angegeben    
+  IF (ER_RPL_Sollposition_Req <> TR_RPL_Istposition) AND (EAX_RPL_POS_REQ = False) AND (EX_RPL_Pos_Req = TRUE) THEN
+      EAR_RPL_Sollposition := ER_RPL_Sollposition_Req;
+      EAB_RPL_Positionierung := 2;
+      EAX_RPL_Pos_Req := True;
+      EAX_RPL_In_Pos := False;
+  END_IF;
+//RPL-Achse mit + und - Taste fahren
+  IF (EX_RPL_Plus_Req = True) THEN
+      EAR_RPL_Sollposition := ER_Pos_Limit_Plus;
+      EAB_RPL_Positionierung := 1;
+      EAX_RPL_POS_REQ := True;
+      EAX_RPL_In_Pos := False;
+  END_IF;
+  IF (EX_RPL_Minus_Req = True) THEN
+      EAR_RPL_Sollposition := ER_Pos_Limit_Minus;
+      EAB_RPL_Positionierung := 1;
+      EAX_RPL_POS_REQ := True;
+      EAX_RPL_In_Pos := False;
+  END_IF;
+//RPL auf Grundstellung fahren
+  IF EX_RPL_Grdst_Req THEN
+      EAR_RPL_Sollposition := 0.0;
+      EAB_RPL_Positionierung := 2;
+      EAX_RPL_Pos_Req := True;
+      EAX_RPL_In_Pos := False;
+      RETURN;
+  END_IF;  
+END_IF;
+IF (EAX_RPL_In_Pos = True) THEN
+    EAX_RPL_POS_REQ := False;
+END_IF;
+IF (EAR_RPL_Sollposition <= (TR_RPL_Istposition + (ER_Pos_Fenster/2))) AND (EAR_RPL_Sollposition >= (TR_RPL_Istposition - (ER_Pos_Fenster/2))) THEN 
+    EAX_RPL_In_Pos := True;
+END_IF; 
+IF (TR_RPL_Istposition >= (360.0 - (ER_Pos_Fenster/2))) AND (TR_RPL_Istposition <= (360.0 + (ER_Pos_Fenster/2))) AND (EAR_RPL_Sollposition = 0.0) THEN
+    EAX_RPL_In_Pos := True;
+END_IF;
+END_FUNCTION

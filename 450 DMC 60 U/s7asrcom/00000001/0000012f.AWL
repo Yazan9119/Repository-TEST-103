@@ -1,0 +1,106 @@
+FUNCTION_BLOCK "FB_WIKO_ABLAUF"
+TITLE =
+//$Revision: 1.7 $
+//$Date: 2007/09/04 12:49:05CEST $
+//$Author: riedlh $
+//
+//Dummybaustein , keine Verwendung im SL-Prokekt
+AUTHOR : gs
+FAMILY : WiKo
+VERSION : 1.0
+
+
+VAR
+  Klemmung : "FB_VENTIL_2E2A";	
+  Res : WORD ;	
+  angedockt : BOOL ;	//WiKo ist angedockt / aktiv
+  UPlatz : BOOL ;	//WiKo auf Übergabeplatz
+  geklemmt : BOOL ;	//WiKo ist geklemmt
+  Bit503 : BOOL ;	//frei
+  start : BOOL ;	//WiKo Start von DM_WiKo
+  spuelen : BOOL ;	//Spülen aktiv
+  abblasen : BOOL ;	//Abblasen aktiv
+  SNRneu : BOOL ;	//neue SNR von NC
+  i_SNR : BYTE ;	//Schrittnummer/Schrittzähler
+  i_WiKo_Nr : BYTE ;	//WiKo-Nr.
+  i_WiKo_PalNr : BYTE ;	//WiKo PalettenNummer
+  KL_klemmen : BOOL ;	//Klemmung Ein
+  KL_loesen : BOOL ;	//Klemmung Aus
+  FM_02 : BOOL ;	//Flankenmerker
+  FM_03 : BOOL ;	//Flankenmerker
+  SHM_04 : BOOL ;	//SchrittHilfsmerker
+  SHM_05 : BOOL ;	//SchrittHilfsmerker
+  SHM_06 : BOOL ;	//SchrittHilfsmerker
+  SHM_07 : BOOL ;	//SchrittHilfsmerker
+  WiKoPALda : BOOL ;	//WiKo-PAL gefunden
+  ersterZK : BOOL ;	//erster Zyklus in SNR
+  SK_WiKo_UebPLZ : BOOL ;	//WiKo ist auf Übergabeplatz
+  SK_WiKo_ArbPLZ : BOOL ;	//WiKo ist auf Arbeitsplatz
+  SK_WeSk_iO : BOOL ;	//ArbeitsPAL ist iO 
+  SK_KL_iO : BOOL ;	//Klemmvorgang iO
+  SK_KL_niO : BOOL ;	//Klemmvorgang niO
+  Bit35_7 : BOOL ;	
+  PSP_WiKo : BYTE ;	//WiKo Palettenspeicherplatz
+  PNr_WStk : BYTE ;	//PAL-Nummer Werkstück
+  STAT_1 : BYTE ;	
+  Fe_SNR : BYTE ;	//Fehler von Schritt
+  SS_PALNr : BYTE ;	//PalettenNr suchen
+  SS_vonPlatz : BYTE ;	//Transport von Platz
+  SS_nachPlatz : BYTE ;	//Transport nach Platz
+  SS_PlatzNr : BYTE ;	//WiKo auf Platz gefunden
+  SS_such : BOOL ;	//Auftrag "WiKo suchen"
+  SS_trans : BOOL ;	//Auftrag "WiKo transportieren"
+  SS_sperr : BOOL ;	//Auftrag "JOB-Liste sperren"
+  SS_frei : BOOL ;	//Auftrag "JOB-Liste freigeben"
+  SS_such_iO : BOOL ;	//Auftrag "WiKo suchen" ohne Fehler beendet
+  SS_trans_iO : BOOL ;	//Auftrag "WiKo transportieren" ohne Fehler beendet
+  SS_sperr_iO : BOOL ;	//Auftrag "JOB-Liste sperren" ohne Fehler beendet
+  SS_frei_iO : BOOL ;	//Auftrag "JOB-Liste freigeben" ohne Fehler beendet
+  SS_such_niO : BOOL ;	//Auftrag "WiKo suchen" mit Fehler beendet
+  SS_trans_niO : BOOL ;	//Auftrag "WiKo transportieren" mit Fehler beendet
+  SS_sperr_niO : BOOL ;	//Auftrag "JOB-Liste sperren" mit Fehler beendet
+  SS_frei_niO : BOOL ;	//Auftrag "JOB-Liste freigeben" mit Fehler beendet
+  SS_res4 : BOOL ;	
+  SS_res5 : BOOL ;	
+  SS_res6 : BOOL ;	
+  SS_res7 : BOOL ;	
+  i_SNRrett : BYTE ;	//alte Schrittnummer
+  WZ_inSP : BOOL ;	//Werkzeugdaten umspeichern nach Spindel
+  WZ_inSP_iO : BOOL ;	//Auftrag ohne Fehler beendet
+  WZ_inSP_niO : BOOL ;	//Auftrag mit Fehler beendet
+  WZ_inMAG : BOOL ;	//Werkzeugdaten umspeichern nach Magazinplatz
+  WZ_inMAG_iO : BOOL ;	//Auftrag ohne Fehler beendet
+  WZ_inMAG_niO : BOOL ;	//Auftrag mit Fehler beendet
+  SK_WeSk_Ueb : BOOL ;	//Werkstückpalette auf Übergabeplatz
+  WZ_MAG_PLZ1 : INT ;	//WZ-Magazinplatz WiKo1
+  WZ_MAG_PLZ2 : INT ;	//WZ-Magazinplatz WiKo2
+  Old_Pl_WiKo : BYTE ;	//Alter Platz Wikopalette im Speicher
+END_VAR
+VAR_TEMP
+  SKxx : BOOL ;	
+  bHand_Aktiv : BOOL ;	
+  bAutomatik_Aktiv : BOOL ;	
+  bSST_Anlage_Aus : BOOL ;	
+  bHand_Frg_Ax1 : BOOL ;	
+  bHand_Frg_AxHorz : BOOL ;	
+  bHand_Frg_AxVert : BOOL ;	
+  bAsup_Ax1_WIKO_1_Pos : BOOL ;	
+  bAsup_Ax1_WIKO_2_Pos : BOOL ;	
+  bAsup_AxHorz_WIKO_1_Pos : BOOL ;	
+  bAsup_AxHorz_WIKO_2_Pos : BOOL ;	
+  bAsup_AxHorz_WIKO_Vorpos : BOOL ;	
+  bAsup_AxVert_WIKO_1_Pos : BOOL ;	
+  bAsup_AxVert_WIKO_2_Pos : BOOL ;	
+  FehlerAST : BOOL ;	
+  FehlerGST : BOOL ;	
+  FehlerPaar : BOOL ;	
+  bHand_Frg_AxRund : BOOL ;	
+  bAsup_AxRund_WIKO_1_Pos : BOOL ;	
+  bAsup_AxRund_WIKO_2_Pos : BOOL ;	
+  bWzSp_geloest : BOOL ;	
+  bWzSp_geklemmt : BOOL ;	
+  bAsup_Spindel_WIKO_Pos : BOOL ;	
+END_VAR
+BEGIN
+END_FUNCTION_BLOCK
+

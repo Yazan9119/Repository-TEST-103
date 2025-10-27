@@ -1,0 +1,2356 @@
+FUNCTION_BLOCK "FB_TM_T_BEFEHL"
+TITLE =
+//$Revision: 2.24 $
+//$Date: 2008/09/03 13:48:25CEST $
+//$Author: fuh $
+//
+//Kette_Tx Werkzeug vorbereiten 
+//
+//erstellt: 1.2.2000 AB
+//geändert: 27.06.01 AB
+//   --> Aufruf Wzbruch- Erkennung 
+//geändert: 18.07.02 FUH
+//   --> Werkzeug vorbereiten in Zwischenspeicher
+//geändert: 05.06.2007
+//   --> Wz umspeichern mit Bewegung (phys.Umsetzen)
+//
+//Version: vorläufig
+//
+//Konfiguration:
+//
+//Wechsler mit Doppelgreifer (Holer und Bringer)
+//     1:1 Tausch ist Standard ($TC_MAMP2) Bit 15 = 1
+//     --> wandern der Werkzeuge über Magazine ist möglich
+//
+//Eingangsparameter:
+//    E_EN_1zu1_Uebergross : 0: übergrosse werkzeuge können nicht 1:1 getauscht 
+//                              werden
+//                           1: auch übergrosse werkzeuge können 1:1 getauscht 
+//                              werden
+//
+//    E_Nr_Bereitst_Platz  :Zwischenspeicher-Nr. des Bereitstellungsplatzes
+//                           0: kein Bereitstellen
+//                           2: Greifer 1
+//                           3: Greifer 2
+//                           4: Bereitstellungsplatz
+//
+//    E_Mag1_Fertig: Positonier-Anforderung an Mag1 fertig -> Quit Txx   
+//    E_Mag2_Fertig: Positonier-Anforderung an Mag2 fertig <-- i.V   
+//   
+//    E_WZ_abgelegt_in_Mag   : Wz aus ZwSp wieder in Mag abgelegt bei Txx
+//    E_Bereitstellen_Fertig : Bereitstellen in Zwischenspeicher fertig
+AUTHOR : AB
+VERSION : 0.1
+
+
+VAR_INPUT
+  E_EN_Zwsp_nach_Mag : BOOL ;	//Konfigurationsbit Ablegen aus Gr1/Bereitstellungsplatz möglich
+  E_EN_1zu1_Uebergross : BOOL ;	//Konfigurationsbit Freigabe 1:1 Tausch bei Uebergrossen Wz.
+  E_Reset_Taste : BOOL ;	//Reset-Taste
+  E_Nr_Bereitst_Platz : INT ;	//Zwischenspeicher-Nr. des Bereitstellungsplatzes 0: kein Bereitstellen
+  E_M6_aktiv : BOOL ;	//Rückmeldung M6 aktiv
+  E_Bereitstellen_aktiv : BOOL ;	//Bereitstellen ist aktiv
+  E_Ablegen_aktiv : BOOL ;	//Vorgang Ablegen ist aktiv 
+  E_Sperre_T_Befehl : BOOL ;	
+  E_Ready_Ablegen : BOOL ;	//Fertigmeldung ablegen in Mag 
+  E_Ready_Bereitstellen : BOOL ;	//Fertigmeldung Bereitstellen
+  E_Req_Ablegen_ZwSp : BOOL ;	//Anforderung Ablegen von Werkzeug im Greifer
+  E_M1P_Ist : WORD ;	//Rückmeldung Kette 1 Istposition
+END_VAR
+VAR_OUTPUT
+  A_Req_Mag1 : BOOL ;	//Anforderung Mag 1 positionieren
+  A_Req_Ablegen : BOOL ;	//Anforderung Wz ablegen in Magazin
+  A_Req_Bereitstellen : BOOL ;	//Anforderung Bereitstellen in Gr1,Bstpl
+  A_Req_Ablegen_T0 : BOOL ;	//Anforderung Ablegen von Spindelwerkzeug (im Greifer)
+  A_Quit_Bereitstellen : BOOL ;	//Anforderung Quittieren Txx Kette in Position
+  A_Quit_Bereitst_in_Zw : BOOL ;	//Anforderung Quittieren Txx Wz in Zwischenspeicher angelangt
+END_VAR
+VAR_IN_OUT
+  EA_M1P_Soll : WORD ;	//Anforderung Kette 1 positionieren auf Platz
+  EA_Ready_Mag1 : BOOL ;	//Rückmeldung Magazin1 positionieren fertig
+  EA_UeberGrWz : BOOL ;	//neues oder altes Wz ist Übergross
+  EA_neuesWzWechselst : BOOL ;	//neues oder altes Wz liegt an der Wechselstelle
+  EA_Mag_load_M6 : BYTE ;	
+  EA_Loc_load_M6 : BYTE ;	
+  EA_Mag_unload_M6 : BYTE ;	
+  EA_Loc_unload_M6 : BYTE ;	
+  EA_Anf_load_M6 : BOOL ;	
+  EA_Anf_unload_M6 : BOOL ;	
+  EA_Anf_change_M6 : BOOL ;	
+  EA_Anf_unload_load_M6 : BOOL ;	
+  EA_Anf_HWZ_load_M6 : BOOL ;	
+  EA_ANF_HWZ_unload_M6 : BOOL ;	
+  EA_Vollwechsel_beendet : BOOL ;	
+  EA_Wz_equal_alt_neu : BOOL ;	
+END_VAR
+VAR
+  FMP_WechselVorbereiten : BOOL ;	//Flankenmerker Wechsel vorbereiten
+  Req_Tx : BOOL ;	//Start Kette Tx
+  Req_FB192 : BOOL ;	//Request Daten aus Zwischenspeicher lesen
+  NDR_FB192 : BOOL ;	//Fertigmeldung FB 192
+  Wz_equal_FB1921 : BOOL ;	//Wz in Spindel und Greifer sin vom gleichen Typ und Größe 
+  Error_FB192 : BOOL ;	//Fehler aus FB 192
+  Warning_FB192 : BOOL ;	//Warnung aus FB 192
+  Wz_equal_FB192 : BOOL ;	//Wz in Spindel und Greifer haben gleichen Typ und Größe
+  fk0 : BOOL ;	//Flankenhilfsmerker
+  fk1 : BOOL ;	//Flankenhilfsmerker
+  fk2 : BOOL ;	//Flankenhilfsmerker
+  fk3 : BOOL ;	//Flankenhilfsmerker
+  fk4 : BOOL ;	//Flankenhilfsmerker
+  fk5 : BOOL ;	//Flankenhilfsmerker
+  fk6 : BOOL ;	//Flankenhilfsmerker
+  fk7 : BOOL ;	//Flankenhilfsmerker
+  State_FB192 : WORD ;	//Status FB192
+  Req_FB92 : BOOL ;	
+  NDR_FB92 : BOOL ;	
+  Error_FB92 : BOOL ;	
+  Warning_FB92 : BOOL ;	
+  State_FB92 : WORD ;	
+  Fehler_FB92 : BOOL ;	
+  T_SpWz_Typ : WORD ;	
+  T_NewTool_Typ : WORD ;	
+  Schritt_Tx : INT ;	//Schrittzaehler
+  Schritt : INT ;	
+  Anf_Leerplatzsuche : BOOL ;	//Anforderung Leerplatzsuche
+  Start_FB191 : BOOL ;	//Start Leerplatzsuche
+  Done_FB191 : BOOL ;	//Fertigmeldung Leerplatzsuche
+  Aktiv_FB191 : BOOL ;	//Leerplatzsuche laeuft
+  Error_FB191 : BOOL ;	//Fehler Leerplatzsuche
+  State_FB191 : WORD ;	//Status Leerplatzsuche
+  MagNr_Empty : INT ;	//Ergebnis aus Leerplatzsuche MagazinNr
+  LocNr_Empty : INT ;	//Ergebnis aus Leerplatzsuche PlatzNr
+  Schritt_alt : INT ;	//Schrittnummer alt
+  Fehler_FB191 : BOOL ;	//Fehler bei Leerplatzsuche kein Platz in beiden Magazinen
+  Fehler_FB192 : BOOL ;	//Fehler aus FB 192
+  Fehler3 : BOOL ;	
+  Fehler4 : BOOL ;	
+  Fehler5 : BOOL ;	
+  Fehler6 : BOOL ;	
+  Fehler7 : BOOL ;	
+  Fehler8 : BOOL ;	
+  Fehler_State : WORD ;	//Fehlerinfo abh. von Fehlerbit (FB191 / FB192)
+  Mag_unload_Tx : INT ;	//Magazin entladen bei T-Befehl
+  Loc_unload_Tx : INT ;	//Platz entladen bei T-Befehl
+  MagNr_pos_Tx : INT ;	//Mag positionieren für neues Wz
+  LocNr_pos_Tx : INT ;	//Platz positionieren für neues Wz
+  Anf_pos_Tx : BOOL ;	//Anforderung Magazin positionieren 
+  Req_Kette_Tx : BOOL ;	//Anforderung Kette Tx
+  Uebergross : BOOL ;	//altes oder neues Wz ist übergross
+  Res1 : BOOL ;	
+  Anf_T0_Tx : BOOL ;	//nur ablegen bei Tx = T0
+  USortAkt : BOOL ;	//FB_TM_TBef:Wz umsortieren aktiv
+  ax_1 : BOOL ;	//Reserve
+  ax_2 : BOOL ;	//Reserve
+  ax_3 : BOOL ;	//Reserve
+  ax_4 : BOOL ;	//Reserve
+  ax_5 : BOOL ;	//Reserve
+  ax_6 : BOOL ;	//Reserve
+  ax_7 : BOOL ;	//Reserve
+  ax_8 : BOOL ;	//Reserve
+  ax_9 : BOOL ;	//Reserve
+  ax_10 : BOOL ;	//Reserve
+  Einsprung_Kette_Tx : INT ;	//Schrittnummer für Einsprung in Kette Tx
+  Mag_unload_Tx_Buf : INT ;	//Magazin entladen bei T-Befehl
+  Loc_unload_Tx_Buf : INT ;	//Platz entladen bei T-Befehl
+  MagNr_pos_Tx_Buf : INT ;	//Mag positionieren für neues Wz
+  LocNr_pos_Tx_Buf : INT ;	//Platz positionieren für neues Wz
+  loc_zw_Tx_Buf : INT ;	//Zwischenspeicher-Nr aus der abgelegt werden soll
+  Uebergross_Buf : BOOL ;	//altes oder neues Wz ist übergross
+  Anf_T0_Tx_Buf : BOOL ;	//nur ablegen bei Tx = T0
+  Mag_unload_M6 : INT ;	//MagazinNr. für Unload
+  Loc_unload_M6 : INT ;	//PlatzNr. für Unload
+  Mag_load_M6 : INT ;	//MagazinNr. für Load
+  Loc_load_M6 : INT ;	//PlatzNr. für Load
+  Anf_load_M6 : BOOL ;	//Anf. laden in Spindel
+  Anf_change_M6 : BOOL ;	//Anf. 1:1 Tausch Daten stehen in Load
+  Anf_unload_M6 : BOOL ;	//Anf. entladen aus Spindel 
+  Anf_unload_load_M6 : BOOL ;	//Anf. entladen dann laden
+  Anf_load_HWZ_M6 : BOOL ;	//Anf. Handwerkzeug laden
+  Anf_unload_HWZ_M6 : BOOL ;	//Anf. Handwerkzeug laden
+  LocNr_ZW_LPS : INT ;	
+  MagNr_ZW_LPS : INT ;	
+  Mag_Nr_LPS : INT ;	
+  loc_zw : INT ;	
+  Done_FB197 : BOOL ;	
+  Error_FB197 : BOOL ;	
+  Req_FB197 : BOOL ;	
+  WzVgw_WzBruch_FB197 : BOOL ;	//Kennung Werkzeugbruch bei neuem Wz
+  SMag_NewTool : INT ;	
+  SLoc_NewTool : INT ;	
+  T_SpWz_langsam : BOOL ;	
+  T_NewTool_langsam : BOOL ;	
+  T_SpWz_schnell : BOOL ;	
+  T_NewTool_schnell : BOOL ;	
+  T_SpWz_Velo : REAL ;	
+  T_NewTool_Velo : REAL ;	
+  PI_WW_ausfuehren : BOOL ;	
+  PF_WW_ausfuehren : BOOL ;	
+  PosAltplatzSpindel : BOOL ;	
+  Mag_auf_Altplatz : BOOL ;	
+  FP_M6_aktiv : BOOL ;	
+  T_SpWz_Reinigung : BOOL ;	
+  TM_WZBRUCH_R : "FB_TM_WZBRUCH_R";	
+END_VAR
+VAR_TEMP
+  Offset_TNR_ZwSp : DWORD ;	//Offset Zwischenspeicher in DB 192
+  zeiger : DWORD ;	
+  Anz_Zwischenspeicher : INT ;	
+  IM_Schritt : BOOL ;	//Impuls Schrittwechsel
+  ZwSp2_liegt_neuesWz : BOOL ;	//in Greifer 1 liegt das neue Wz
+  ZwSp4_liegt_neuesWz : BOOL ;	//in Bstp liegt das neue Wz
+  ZwSp3_liegt_neuesWz : BOOL ;	//in Greifer 2 liegt das neue Wz
+  neuesWz_festpl : BOOL ;	//neues Wz ist festplatzcodiert
+  altesWz_festpl : BOOL ;	//altes Wz ist festplatzcodiert
+  SpWz_variabel : BOOL ;	
+  TPUWz_variabel : BOOL ;	
+  ti_BereitstellungsPlatz : INT ;	
+  dummy : REAL ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =Wechsel vorbereiten
+
+      U     "M_Ruecksetze_Fehler"; 
+      R     "DB_FEHLERMELDUNG".Warnung._701902_WZB_LESEFEHLER; 
+
+      U     #E_Reset_Taste; 
+      SPBN  nore; 
+      R     #PosAltplatzSpindel; 
+      R     #Mag_auf_Altplatz; 
+      R     #A_Req_Ablegen_T0; 
+      R     #A_Req_Ablegen; 
+      R     #A_Req_Bereitstellen; 
+      R     #A_Quit_Bereitstellen; 
+      R     #Req_Tx; 
+      R     #Req_Kette_Tx; 
+      R     #Req_FB192; 
+      R     #NDR_FB192; 
+      R     #Fehler_FB92; 
+      R     #EA_Anf_load_M6; 
+      R     #EA_Anf_unload_M6; 
+      R     #EA_Anf_change_M6; 
+      R     #EA_Anf_unload_load_M6; 
+      R     #EA_Anf_HWZ_load_M6; 
+      R     #EA_ANF_HWZ_unload_M6; 
+
+      L     0; 
+      T     #Schritt; 
+      T     #Schritt_Tx; 
+
+nore: L     B#16#0; 
+      L     #Schritt_Tx; 
+      ==I   ; 
+      R     #USortAkt; 
+      U     "M_WZW_SPERRE_TBEF_V_MAG"; // Bei aktiver Handbedienung oder suchen/positionieren am Magazin
+      SPB   M201; // oder offener Magazintüre -> keine Auswertung von T-Befehl
+
+      U     "TMSpindleIF".IFNo[1]; 
+      U     "TMSpindleIF".IF[1].Prepare; 
+      UN    "MX_FP_W_Prep"; 
+      UN    "M_RESET_DISABLE"; 
+      FP    #FMP_WechselVorbereiten; 
+      O     ; 
+      U     "m_StrtRld_move"; 
+      FP    #fk0; 
+      S     #Req_Tx; 
+
+      U     #E_M6_aktiv; 
+      U     "M_VERTIKALKETTE"; 
+      FP    #FP_M6_aktiv; 
+      R     #EA_Anf_load_M6; 
+      R     #EA_Anf_unload_M6; 
+      R     #EA_Anf_change_M6; 
+
+      U     #Req_Tx; 
+      UN    #PosAltplatzSpindel; 
+      SPBN  x1; 
+
+      U     #E_Sperre_T_Befehl; 
+      SPB   LPS; 
+
+      L     0; 
+      T     #Schritt_Tx; 
+      T     #Schritt; 
+
+x1:   L     #Schritt_Tx; 
+      L     0; 
+      ==I   ; 
+      SPBN  x2; 
+
+      UN    #E_M6_aktiv; 
+      R     #EA_Anf_unload_load_M6; 
+
+      UN    #Req_Tx; //--000--- pos Flanke Txx
+      SPB   LPS; 
+      R     #Req_Tx; 
+      L     102; 
+      T     #Schritt_Tx; 
+
+x2:   L     #Schritt_Tx; //--102--- initialisieren
+      L     102; //102
+      ==I   ; 
+      SPBN  x3; 
+      L     1; 
+      T     #Schritt_Tx; 
+      R     #Fehler_FB191; 
+      R     #Fehler_FB192; 
+      R     #Fehler3; 
+      R     #Fehler4; 
+      R     #Fehler5; 
+      R     #Fehler6; 
+      R     #Fehler7; 
+      R     #Fehler8; 
+      L     0; 
+      T     #Fehler_State; 
+
+      R     #EA_neuesWzWechselst; 
+      R     #Uebergross; 
+      R     #EA_UeberGrWz; 
+      R     #Anf_load_M6; 
+      R     #Anf_unload_M6; 
+      R     #Anf_change_M6; 
+      R     #Anf_unload_load_M6; 
+      R     #Anf_T0_Tx; 
+      R     #Anf_load_HWZ_M6; 
+      R     #Anf_unload_HWZ_M6; 
+      R     #EA_Anf_load_M6; 
+      R     #EA_Anf_unload_M6; 
+      R     #EA_Anf_change_M6; 
+      R     #EA_Anf_unload_load_M6; 
+      R     #EA_Anf_HWZ_load_M6; 
+      R     #EA_ANF_HWZ_unload_M6; 
+      R     #A_Quit_Bereitstellen; //18.09.04 FUH
+      R     #Start_FB191; 
+
+      U     "m_StrtRld_move"; //bei real umspeichern gleich zum Lesen ZwiSp
+      L     104; 
+      SPB   m001; 
+      L     103; 
+m001: T     #Schritt_Tx; 
+
+x3:   L     #Schritt_Tx; 
+      L     103; 
+      ==I   ; 
+      SPBN  x4; 
+      L     "TMSpindleIF".IF[1].SLoc; // T0 programmiert
+      L     0; 
+      ==I   ; 
+      SPB   UNLO; //-- Werkzeug entladen aus Spindel
+      L     "TMSpindleIF".IF[1].TLoc; // kein Wz in Spindel
+      L     0; 
+      ==I   ; 
+      SPB   LOAD; //--> Werkzeug laden in Spindel
+      S     #Anf_change_M6; // Change
+      SPA   HWZ; 
+UNLO: S     #Anf_unload_M6; // Unload
+      SPA   HWZ; 
+LOAD: S     #Anf_load_M6; // Load
+
+HWZ:  L     "TMSpindleIF".IF[1].SMag; 
+      L     9999; 
+      ==I   ; 
+      S     #Anf_load_HWZ_M6; // Handwerkzeug  einwechseln
+
+      L     "TMSpindleIF".IF[1].TMag; 
+      L     9999; 
+      ==I   ; 
+      S     #Anf_unload_HWZ_M6; // Handwerkzeug auswechseln
+      L     104; 
+      T     #Schritt_Tx; 
+NETWORK
+TITLE =Lesen der Zwischenspeicherplätze
+
+x4:   L     104; 
+      L     #Schritt_Tx; 
+      ==I   ; 
+      SPBN  x6; 
+      S     #Req_FB192; 
+      L     105; 
+      T     #Schritt_Tx; 
+      SPA   x5; 
+
+x6:   L     105; 
+      L     #Schritt_Tx; 
+      ==I   ; 
+      SPBN  N199; 
+
+      O     #NDR_FB192; 
+      O     #Error_FB192; 
+      R     #Req_FB192; 
+      SPBN  N199; 
+      U     #Error_FB192; 
+      SPBN  next; 
+      S     #Fehler_FB192; 
+      L     #State_FB192; 
+      T     #Fehler_State; //Fehlerinfo siehe FB 192 
+      L     104; 
+      T     #Schritt_Tx; 
+      SPA   LPS; 
+next: L     199; 
+      T     #Schritt_Tx; 
+NETWORK
+TITLE =Lesen der Daten der beteiligten Werkzeuge
+
+N199: L     199; 
+      L     #Schritt_Tx; 
+      ==I   ; 
+      SPBN  N200; 
+      U(    ; 
+      L     "TMSpindleIF".IF[1].TLoc; // kein Wz in Spindel
+      L     0; 
+      ==I   ; 
+      )     ; 
+      U(    ; 
+      L     "TMSpindleIF".IF[1].SLoc; // T0 programmiert
+      L     0; 
+      ==I   ; 
+      )     ; 
+      O     "m_StrtRld_move"; 
+      SPB   nex; 
+
+      L     "TMSpindleIF".IF[1].SMag; 
+      T     #SMag_NewTool; 
+      L     "TMSpindleIF".IF[1].SLoc; 
+      T     #SLoc_NewTool; 
+      R     #NDR_FB92; 
+      S     #Req_FB92; 
+      L     200; 
+      T     #Schritt_Tx; 
+      SPA   x5; 
+
+N200: L     200; 
+      L     #Schritt_Tx; 
+      ==I   ; 
+      SPBN  N201; 
+
+
+      O     #NDR_FB92; 
+      O     #Error_FB92; 
+      R     #Req_FB92; 
+      SPBN  N201; 
+      U     #Error_FB92; 
+      SPBN  nex; 
+      S     #Fehler_FB92; 
+      L     #State_FB92; 
+      T     #Fehler_State; //Fehlerinfo siehe FB 192 
+      L     199; 
+      T     #Schritt_Tx; 
+      SPA   LPS; 
+nex:  L     201; 
+      T     #Schritt_Tx; 
+
+NETWORK
+TITLE =WzBruch erkennen
+//27.06.01 AB 
+//Netzwerk eingefügt
+//stat Variablen ..._FB197 eingbaut
+//
+N201: L     201; 
+      L     #Schritt_Tx; 
+      ==I   ; 
+      SPBN  N2y; 
+      L     "DB_PLC_MD_DB20".UDInt._010_ANWAHL_WERZEUGBRUCH; 
+      L     0; 
+      ==I   ; 
+// 01.07.01 SCH: bei T0 kein Lesen der Magazindaten 
+      O(    ; 
+      L     "TMSpindleIF".IF[1].SLoc; 
+      L     0; 
+      ==I   ; 
+      )     ; 
+// 01.07.01 SCH: bei Handwechsel auch nicht 
+      O(    ; 
+      L     "TMSpindleIF".IF[1].SMag; 
+      L     9999; 
+      ==I   ; 
+      )     ; 
+      O     "m_StrtRld_move"; 
+      SPBN  N2z; 
+      L     2; 
+      T     #Schritt_Tx; 
+      SET   ; 
+      R     #WzVgw_WzBruch_FB197; 
+      SPA   N2; 
+
+N2z:  S     #Req_FB197; 
+      L     202; 
+      T     #Schritt_Tx; 
+
+
+N2y:  CALL "FB_TM_WZBRUCH_R" , "DI_TM_WZBRUCH_R" (
+           E_TNR_READ               := "TMSpindleIF".IF[1].T_no,
+           E_READ                   := #Req_FB197,
+           EA_WZBRUCH               := #WzVgw_WzBruch_FB197,
+           EA_Error_Read            := #Error_FB197,
+           EA_DONE_Read             := #Done_FB197);
+
+      U     #Error_FB197; 
+      S     "DB_FEHLERMELDUNG".Warnung._701902_WZB_LESEFEHLER; 
+      R     #Error_FB197; 
+
+      O     #Done_FB197; 
+      O     #Error_FB197; 
+      U(    ; 
+      L     202; 
+      L     #Schritt_Tx; 
+      ==I   ; 
+      )     ; 
+      SPBN  N2; 
+      R     #Req_FB197; 
+      L     2; 
+      T     #Schritt_Tx; 
+
+NETWORK
+TITLE =Auswerten T0 --> Kette positionieren auf altes Wz
+
+N2:   L     2; 
+      L     #Schritt_Tx; 
+      ==I   ; 
+      SPBN  N211; 
+      L     "TMSpindleIF".IF[1].SLoc; // T0 programmiert
+      L     0; 
+      ==I   ; 
+      O     "m_StrtRld_move"; //bei real Umsetz.immer Grf.Leer prüfen
+      SPB   N2T0; //-- Werkzeug entladen aus Spindel
+
+      L     3; 
+      T     #Schritt_Tx; 
+      SPA   N3; 
+
+N2T0: ON    #E_EN_Zwsp_nach_Mag; // ablegen aus Gr1/Bstp möglich
+      O     #Anf_unload_HWZ_M6; 
+      SPB   unsp; 
+      SET   ; 
+      R     #EA_Ready_Mag1; 
+
+      UN    "DI_TM_MAGDAT".T0_Pl2; //Wz ist in Greifer 1 
+      L     2; 
+      T     #loc_zw; 
+      SPB   lpsx; 
+
+      UN    "DI_TM_MAGDAT".T0_Pl3; //Wz ist in Greifer 2 
+      L     3; 
+      T     #loc_zw; 
+      SPB   lpsx; 
+
+      U     "m_StrtRld_move"; //bei real Umsetz.und leerem DoppGrf: weiter mit Sonderablauf
+      L     64; 
+      T     #Schritt_Tx; 
+      SPB   N064; 
+
+      UN    "DI_TM_MAGDAT".T0_Pl4; //Wz ist in Bereitstellungsplatz 
+      L     4; 
+      T     #loc_zw; 
+      SPB   lpsx; 
+
+      L     0; 
+      T     #loc_zw; 
+      SPA   unsp; 
+
+lpsx: L     211; 
+      T     #Schritt_Tx; // ablegen und Leerplatz suchen
+
+      UN    "M_VERTIKALKETTE"; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.WZW_VKETTE_OHNE_TPU; 
+      S     "MX_WZB_NeuWahl"; //Eventuelle WZ-Bruchdaten ablöschen
+      SPA   N211; 
+
+//---- Entladen Spindel.Wz bei T0 (Gr1,Gr2,Bstpl ist leer) --------------------
+
+unsp: U     #Anf_unload_HWZ_M6; 
+      SPB   hwzu; 
+      S     #Anf_unload_M6; // Anforderung unload
+      S     #Anf_pos_Tx; 
+      L     "TMSpindleIF".IF[1].TMag; // nach Mag-Nr. altes Wz
+      T     #Mag_unload_M6; 
+      L     "TMSpindleIF".IF[1].TLoc; // nach Platz-Nr. altes Wz
+      T     #Loc_unload_M6; 
+      L     19; // Fertig
+      T     #Schritt_Tx; 
+      L     9; 
+      T     #Einsprung_Kette_Tx; // Einsprung in Kette Tx
+
+      SPA   N19; 
+
+//---- Handwerkzeug auswechseln bei T0------------------------------
+
+hwzu: S     #Anf_unload_M6; // Anforderung unload
+      S     #A_Quit_Bereitstellen; 
+      S     "M_TPrepare_Quit"; 
+      L     "TMSpindleIF".IF[1].TMag; // nach Mag-Nr. altes Wz
+      T     #Mag_unload_M6; 
+      L     "TMSpindleIF".IF[1].TLoc; // nach Platz-Nr. altes Wz
+      T     #Loc_unload_M6; 
+      L     19; // Fertig
+      T     #Schritt_Tx; 
+      SPA   N19; 
+
+NETWORK
+TITLE =
+
+      L     #Schritt_Tx; 
+      L     210; 
+      ==I   ; 
+      SPBN  N211; 
+
+
+      UN    "DI_TM_MAGDAT".T0_Pl2; //Wz ist in Greifer 1 
+      L     2; 
+      T     #loc_zw; 
+      SPB   n21a; 
+
+      UN    "DI_TM_MAGDAT".T0_Pl3; //Wz ist in Greifer 2 
+      L     3; 
+      T     #loc_zw; 
+      SPB   n21a; 
+
+      UN    "DI_TM_MAGDAT".T0_Pl4; //Wz ist in Bereitstellungsplatz 
+      L     4; 
+      T     #loc_zw; 
+      SPB   n21a; 
+
+
+n21a: L     211; 
+      T     #Schritt_Tx; // ablegen und Leerplatz suchen
+      SPA   N211; 
+
+
+NETWORK
+TITLE =Leerplatzsuche für Werkzeug im Zwischenspeicher oder 1:1 Tausch
+
+N211: L     #Schritt_Tx; 
+      L     211; 
+      ==I   ; 
+      SPBN  N212; 
+
+// 1:1 Tausch: Variables austauschbares Werkzeug in TPU und Spindel
+      L     "DI_TM_WZTYP_RD".SpWZ_Status; 
+      L     "DI_TM_MAGDAT".WZ_Maske; // WzMaske Bit festplatzcodiert
+      UW    ; 
+      L     0; 
+      ==I   ; 
+      =     #SpWz_variabel; // SpindelWz ist variabel
+
+      L     "DI_TM_WZTYP_RD".TPUWz_Status; 
+      L     "DI_TM_MAGDAT".WZ_Maske; // WzMaske Bit festplatzcodiert
+      UW    ; 
+      L     0; 
+      ==I   ; 
+      =     #TPUWz_variabel; 
+
+      U(    ; 
+      L     "DI_TM_WZTYP_RD".Groesse_links_1; 
+      L     "DI_TM_WZTYP_RD".Groesse_links_3; 
+      ==I   ; 
+      )     ; 
+      U(    ; 
+      L     "DI_TM_WZTYP_RD".Groesse_rechts_1; 
+      L     "DI_TM_WZTYP_RD".Groesse_rechts_3; 
+      ==I   ; 
+      )     ; 
+      UN    "DI_TM_WZTYP_RD".T_Sp_leer; 
+      UN    "DI_TM_WZTYP_RD".T_TPU_leer; 
+      U     #SpWz_variabel; // SpindelWz ist variabel
+      U     #TPUWz_variabel; 
+      SPBN  K1T1; 
+
+      L     "TMSpindleIF".IF[1].TLoc; 
+      T     #EA_M1P_Soll; 
+      S     #A_Req_Mag1; // Anforderung Kette positionieren
+      R     #EA_Ready_Mag1; 
+      L     215; 
+      T     #Schritt_Tx; 
+      SPA   N215; 
+
+
+// Leerplatzsuche für Werkzeug im Zwischenspeicher
+K1T1: SET   ; 
+      S     #Start_FB191; 
+      L     9998; 
+      T     #MagNr_ZW_LPS; 
+      L     #loc_zw; // Zwischenspeicher  
+      T     #LocNr_ZW_LPS; 
+      L     1; // DB72.DBW   24
+      T     #Mag_Nr_LPS; // Magazin Nr für Leerplatzsuche
+      L     212; 
+      T     #Schritt_Tx; 
+      SPA   LPS; 
+
+
+NETWORK
+TITLE =Leerplatz für Zwischenspeicher-WZ gefunden
+
+N212: L     #Schritt_Tx; 
+      L     212; 
+      ==I   ; 
+      SPBN  N213; 
+      O     #Done_FB191; 
+      O     #Error_FB191; 
+      R     #Start_FB191; 
+      SPBN  N45; 
+      U     #Error_FB191; 
+      SPBN  N2oy; 
+      S     #Fehler_FB191; 
+      L     #State_FB191; 
+      T     #Fehler_State; 
+      SPA   N45; 
+
+      L     19; 
+      T     #Schritt_Tx; 
+      SPA   N19; 
+N2oy: L     213; 
+      T     #Schritt_Tx; 
+
+
+NETWORK
+TITLE =Anforderung Mag Positionieren für WZ im Zwischenspeicher
+
+N213: L     #Schritt_Tx; 
+      L     213; 
+      ==I   ; 
+      SPBN  N215; 
+      L     #LocNr_Empty; // nach Platz-Nr. Leerplatz
+      T     #EA_M1P_Soll; 
+      S     #A_Req_Mag1; // Anforderung Kette positionieren
+      R     #EA_Ready_Mag1; //xxxxxxxxxx 19.07.2002 FUH
+      L     215; 
+      T     #Schritt_Tx; 
+
+
+NETWORK
+TITLE =Anforderung Gr1,Gr2,Bstpl ablegen
+
+N215: L     #Schritt_Tx; 
+      L     215; 
+      ==I   ; 
+      SPBN  N216; 
+      U     #EA_Ready_Mag1; 
+      U(    ; 
+      L     #EA_M1P_Soll; 
+      L     #E_M1P_Ist; 
+      ==I   ; 
+      )     ; 
+      SPBN  N216; 
+      R     #EA_Ready_Mag1; //04.11.02 FUH
+      UN    #E_Ablegen_aktiv; 
+      S     #A_Req_Ablegen; 
+      R     "M_WZ_Rdy_Ablegen"; 
+
+      L     216; 
+      T     #Schritt_Tx; 
+      SPA   LPS; 
+
+NETWORK
+TITLE =Warten bis  Gr1,Gr2,Bstpl abgelegt ist
+
+N216: L     #Schritt_Tx; 
+      L     216; 
+      ==I   ; 
+      SPBN  N217; 
+      U     #E_Ready_Ablegen; 
+      SPBN  N217; 
+//---(1)--- bei real Umsetz.weiter mit Sonderablauf -----
+      U     "m_StrtRld_move"; 
+      R     #A_Req_Ablegen; 
+      L     64; 
+      T     #Schritt_Tx; 
+      SPB   N064; 
+//---(1)---------------------------------------------------
+      U     #E_Req_Ablegen_ZwSp; 
+      SPBN  A216; 
+      R     #A_Req_Ablegen; 
+      R     #Req_Tx; 
+
+      U     #E_Req_Ablegen_ZwSp; 
+      SPB   LPS; 
+      L     0; 
+      T     #Schritt_Tx; 
+      T     #Schritt; 
+      SPA   LPS; 
+
+A216: R     #A_Req_Ablegen; 
+      R     #A_Req_Mag1; 
+      R     #EA_Ready_Mag1; 
+      L     217; 
+      T     #Schritt_Tx; 
+
+NETWORK
+TITLE =Leerplatzsuche für Spindel-Wz bei T0 
+
+N217: L     #Schritt_Tx; 
+      L     217; 
+      ==I   ; 
+      SPBN  N218; 
+      L     "TMSpindleIF".IF[1].TLoc; // kein Wz in Spindel
+      L     0; 
+      ==I   ; 
+      SPBN  N2a; 
+      L     19; 
+      T     #Schritt_Tx; 
+      SPA   N19; 
+
+N2a:  SET   ; 
+      S     #Start_FB191; 
+      L     9998; 
+      T     #MagNr_ZW_LPS; 
+      L     1; //Spindel
+      T     #LocNr_ZW_LPS; 
+      L     1; // DB72.DBW   24
+      T     #Mag_Nr_LPS; // Magazin Nr für Leerplatzsuche
+      L     218; 
+      T     #Schritt_Tx; 
+      SPA   LPS; 
+
+NETWORK
+TITLE =Leerplatz für Spindel-Wz gefunden bei T0
+
+N218: L     #Schritt_Tx; 
+      L     218; 
+      ==I   ; 
+      SPBN  N219; 
+      O     #Done_FB191; 
+      O     #Error_FB191; 
+      R     #Start_FB191; 
+      SPBN  N45; 
+      U     #Error_FB191; 
+      SPBN  N2ox; 
+      S     #Fehler_FB191; 
+      L     #State_FB191; 
+      T     #Fehler_State; 
+      L     19; 
+      T     #Schritt_Tx; 
+      SPA   N19; 
+N2ox: L     219; 
+      T     #Schritt_Tx; 
+
+NETWORK
+TITLE =Anforderung Mag Positionieren auf Spindel-Wz bei T0
+
+N219: L     #Schritt_Tx; 
+      L     219; 
+      ==I   ; 
+      SPBN  N3; 
+      S     #Anf_pos_Tx; // Anforderung Kette positionieren
+      L     #MagNr_Empty; // nach Mag-Nr. Leerplatz
+      T     #Mag_unload_M6; 
+      L     #LocNr_Empty; // nach Platz-Nr. Leerplatz
+      T     #Loc_unload_M6; 
+      S     #Anf_T0_Tx; // nur ablegen
+      L     19; // Ende Kette
+      T     #Schritt_Tx; 
+      L     9; 
+      T     #Einsprung_Kette_Tx; // Einsprung in Kette Tx
+
+// ----- Ende T0 bei gesperrtem Magazin --------- 
+
+NETWORK
+TITLE =
+
+NETWORK
+TITLE =Abfrage WZ in Zwischenspeicher 
+
+N3:   L     #Schritt_Tx; 
+      L     3; 
+      ==I   ; 
+      SPBN  N4; 
+
+      ON    "DI_TM_MAGDAT".T0_Pl2; // Wz in Greifer1
+      ON    "DI_TM_MAGDAT".T0_Pl4; // Wz in Bereitstellungsplatz
+      ON    "DI_TM_MAGDAT".T0_Pl3; // Wz in Greifer 2
+      SPB   N3_1; 
+
+//wenn abzulegendes Werkzeug wieder angefordert wird
+      U(    ; // Wenn angefordertes WZ in Greifer 1 od. 2
+      U(    ; // dann sofort Wechsel
+      L     "TMSpindleIF".IF[1].SLoc; 
+      L     4; 
+      ==I   ; 
+      )     ; 
+      U(    ; 
+      L     "TMSpindleIF".IF[1].SMag; 
+      L     9998; 
+      ==I   ; 
+      )     ; 
+      )     ; 
+      SPBN  N3a; 
+      L     1; 
+      T     "TMSpindleIF".IF[1].SMag; //Werkzeugverwaltung überschreiben
+      L     #E_M1P_Ist; 
+      T     "TMSpindleIF".IF[1].SLoc; //da angefordertes Werkzeug gerade beim ablegen ist
+      T     #Loc_load_M6; 
+
+N3a:  SET   ; 
+      R     #ZwSp2_liegt_neuesWz; // Wz in Greifer 1
+      R     #ZwSp3_liegt_neuesWz; // Wz in Greifer 2
+      R     #ZwSp4_liegt_neuesWz; // Wz in Bereitstellungsplatz
+      L     45; // kein Wz in Greifer1, Greifer2 und Bereitstellungsplatz
+      T     #Schritt_Tx; 
+      SPA   N45; 
+N3_1: L     4; // Wz in Gr1,Gr2,Bstpl gefunden
+      T     #Schritt_Tx; 
+
+NETWORK
+TITLE = Wz im Greifer 1, Greifer 2 oder Bereitstellungsplatz  
+
+N4:   L     #Schritt_Tx; // Abfrage Schrittnummer
+      L     4; 
+      ==I   ; 
+      SPBN  N400; 
+
+      UN    "DI_TM_MAGDAT".T0_Pl2; // Greifer 1 hat ein Werkzeug
+      L     2; 
+      SPB   N4_1; 
+      UN    "DI_TM_MAGDAT".T0_Pl3; // Greifer 2 hat ein Werkzeug
+      L     3; 
+      SPB   N4_1; // Bereitstellungsplatz hat ein Werkzeug
+      L     4; 
+N4_1: T     #loc_zw; 
+
+      UN    "DI_TM_MAGDAT".T0_Pl2; // Greifer 1 hat ein Werkzeug
+      U(    ; 
+      L     "TMSpindleIF".IF[1].T_no; //T-Nr. neues Wz
+      L     "DI_TM_MAGDAT".TNr_2; //T-Nr Greifer 1 
+      ==I   ; // Wz in Gr1 == neues Wz
+      )     ; 
+      O     ; 
+      U(    ; 
+      L     "TMSpindleIF".IF[1].SMag; // T-Befehl hat neues Wz in Gr.1 gefunden
+      L     9998; 
+      ==I   ; 
+      )     ; 
+      U(    ; 
+      L     "TMSpindleIF".IF[1].SLoc; 
+      L     2; 
+      ==I   ; 
+      )     ; 
+      =     #ZwSp2_liegt_neuesWz; 
+
+      UN    "DI_TM_MAGDAT".T0_Pl3; // Greifer 2 hat ein Werkzeug
+      U(    ; 
+      L     "TMSpindleIF".IF[1].T_no; //T-Nr. neues Wz
+      L     "DI_TM_MAGDAT".TNr_3; //T-Nr Greifer 2 
+      ==I   ; // Wz in Gr1 == neues Wz
+      )     ; 
+      O     ; 
+      U(    ; 
+      L     "TMSpindleIF".IF[1].SMag; // T-Befehl hat neues Wz in Gr.2 gefunden
+      L     9998; 
+      ==I   ; 
+      )     ; 
+      U(    ; 
+      L     "TMSpindleIF".IF[1].SLoc; 
+      L     3; 
+      ==I   ; 
+      )     ; 
+      =     #ZwSp3_liegt_neuesWz; 
+
+      UN    "DI_TM_MAGDAT".T0_Pl4; // Bereitstellungsplatz hat ein Werkzeug
+      U(    ; 
+      L     "TMSpindleIF".IF[1].T_no; //T-Nr. neues Wz
+      L     "DI_TM_MAGDAT".TNr_4; //T-Nr Bereitstellungsplatz 
+      ==I   ; //nicht neues Werkzeug
+      )     ; 
+      O     ; 
+      U(    ; 
+      L     "TMSpindleIF".IF[1].SMag; // T-Befehl hat neues Wz in Bstpl gefunden
+      L     9998; 
+      ==I   ; 
+      )     ; 
+      U(    ; 
+      L     "TMSpindleIF".IF[1].SLoc; 
+      L     4; 
+      ==I   ; 
+      )     ; 
+      =     #ZwSp4_liegt_neuesWz; // Wz in Bstp == neues Wz
+
+      O     #ZwSp2_liegt_neuesWz; // Wz in Greifer 1
+      O     #ZwSp3_liegt_neuesWz; // Wz in Greifer 2
+      O     #ZwSp4_liegt_neuesWz; // Wz in Bereitstellungsplatz
+      SPBN  N4zy; 
+      L     45; // 45   keine Leerplatzsuche
+      T     #Schritt_Tx; // neues Wz liegt in zwischenspeicher
+      SPA   N5; 
+N4zy: L     400; // 400  Leerplatzsuche
+      T     #Schritt_Tx; 
+      UN    "M_VERTIKALKETTE"; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.WZW_VKETTE_OHNE_TPU; 
+      S     "MX_WZB_NeuWahl"; //Eventuelle WZ-Bruchdaten ablöschen
+      SPA   N400; 
+NETWORK
+TITLE =Leerplatzsuche für Werkzeug im Zwischenspeicher oder 1:1 Tausch
+
+N400: L     #Schritt_Tx; // Abfrage Schrittnummer
+      L     400; 
+      ==I   ; 
+      SPBN  N401; 
+
+// 1:1 Tausch: Variables austauschbares Werkzeug in TPU und Spindel
+      L     "DI_TM_WZTYP_RD".SpWZ_Status; 
+      L     "DI_TM_MAGDAT".WZ_Maske; // WzMaske Bit festplatzcodiert
+      UW    ; 
+      L     0; 
+      ==I   ; 
+      =     #SpWz_variabel; // SpindelWz ist variabel
+
+      L     "DI_TM_WZTYP_RD".TPUWz_Status; 
+      L     "DI_TM_MAGDAT".WZ_Maske; // WzMaske Bit festplatzcodiert
+      UW    ; 
+      L     0; 
+      ==I   ; 
+      =     #TPUWz_variabel; 
+
+      U(    ; 
+      L     "DI_TM_WZTYP_RD".Groesse_links_1; 
+      L     "DI_TM_WZTYP_RD".Groesse_links_3; 
+      ==I   ; 
+      )     ; 
+      U(    ; 
+      L     "DI_TM_WZTYP_RD".Groesse_rechts_1; 
+      L     "DI_TM_WZTYP_RD".Groesse_rechts_3; 
+      ==I   ; 
+      )     ; 
+      UN    "DI_TM_WZTYP_RD".T_Sp_leer; 
+      UN    "DI_TM_WZTYP_RD".T_TPU_leer; 
+      U     #SpWz_variabel; // SpindelWz ist variabel
+      U     #TPUWz_variabel; 
+      SPBN  K11T; 
+      L     405; 
+      T     #Schritt_Tx; 
+      U(    ; 
+      L     #E_M1P_Ist; 
+      L     #EA_M1P_Soll; 
+      ==I   ; 
+      )     ; 
+      U(    ; 
+      L     #EA_M1P_Soll; 
+      L     0; 
+      <>I   ; 
+      )     ; 
+      SPB   N405; 
+      UN    "M_VERTIKALKETTE"; 
+      U     #E_M6_aktiv; 
+      SPB   N405; 
+      L     "TMSpindleIF".IF[1].TLoc; 
+      T     #EA_M1P_Soll; 
+      S     #A_Req_Mag1; // Anforderung Kette positionieren
+      R     #EA_Ready_Mag1; 
+      L     405; 
+      T     #Schritt_Tx; 
+      SPA   N405; 
+
+// Leerplatzsuche für Werkzeug im Zwischenspeicher
+K11T: NOP   0; 
+      U     #EA_Vollwechsel_beendet; 
+      U     #Mag_auf_Altplatz; 
+      U     "m_null"; 
+      UN    "DB_SIEM_KANAL_1".E_ActBlock; 
+      SPBN  K11X; 
+      R     #EA_Vollwechsel_beendet; 
+      R     #Mag_auf_Altplatz; 
+      L     405; 
+      T     #Schritt_Tx; 
+      SPA   N405; 
+
+K11X: S     #Start_FB191; 
+      L     9998; 
+      T     #MagNr_ZW_LPS; 
+      L     #loc_zw; // Zwischenspeicher  
+      T     #LocNr_ZW_LPS; 
+      L     1; // DB72.DBW   24
+      T     #Mag_Nr_LPS; // Magazin Nr für Leerplatzsuche
+      L     401; 
+      T     #Schritt_Tx; 
+      SPA   LPS; 
+
+NETWORK
+TITLE =Leerplatz für Zwischenspeicher-WZ gefunden
+
+N401: L     #Schritt_Tx; 
+      L     401; 
+      ==I   ; 
+      SPBN  N402; 
+      O     #Done_FB191; 
+      O     #Error_FB191; 
+      R     #Start_FB191; 
+      SPBN  N45; 
+      U     #Error_FB191; 
+      SPBN  N4oy; 
+      S     #Fehler_FB191; 
+      L     #State_FB191; 
+      T     #Fehler_State; 
+      L     19; 
+      T     #Schritt_Tx; 
+      SPA   N19; 
+N4oy: L     402; 
+      T     #Schritt_Tx; 
+
+
+NETWORK
+TITLE =Anforderung Mag Positionieren für WZ im Zwischenspeicher
+
+N402: L     #Schritt_Tx; 
+      L     402; 
+      ==I   ; 
+      SPBN  N405; 
+
+      U     #E_M6_aktiv; //xxxxxxxxxxxxxxxxxxxxxxxx
+      UN    "M_VERTIKALKETTE"; 
+      SPB   N405; 
+
+      L     #LocNr_Empty; // nach Platz-Nr. Leerplatz
+      T     #EA_M1P_Soll; 
+
+      L     #E_M1P_Ist; 
+      ==I   ; 
+      U     "M_MAG_In_Position"; 
+      SPB   K402; 
+
+      S     #A_Req_Mag1; // Anforderung Kette positionieren
+      R     #EA_Ready_Mag1; //xxxxxxxxxx 19.07.2002 FUH
+
+K402: L     405; 
+      T     #Schritt_Tx; 
+
+
+NETWORK
+TITLE =Anforderung Ablegen Greifer 1,2 / Bereitst.platz
+
+N405: L     405; 
+      L     #Schritt_Tx; 
+      ==I   ; 
+      SPBN  N406; 
+
+      U     #E_M6_aktiv; //Warten bis Gr2 abgelegt hat
+      UN    "M_VERTIKALKETTE"; 
+      O     #E_Ablegen_aktiv; 
+      SPB   N406; 
+
+      UN    "M_MAG_Laeuft"; 
+      U(    ; 
+      L     #EA_M1P_Soll; 
+      L     #E_M1P_Ist; 
+      ==I   ; 
+      )     ; 
+      SPBN  N406; 
+      UN    "DI_TM_MAGDAT".T0_Pl2; // Greifer 1 hat ein Werkzeug
+      ON    "DI_TM_MAGDAT".T0_Pl3; // Greifer 2 hat ein Werkzeug
+      ON    "DI_TM_MAGDAT".T0_Pl4; //BStpl. hat ein Werkzeug
+      S     #A_Req_Ablegen; 
+      R     "M_WZ_Rdy_Ablegen"; 
+      S     #EA_UeberGrWz; //eingefügt wegen HWZ-Wechsel
+      R     #EA_Ready_Mag1; //xxxxxxx
+      L     406; 
+      T     #Schritt_Tx; 
+      SPA   LPS; 
+
+NETWORK
+TITLE =Warten bis Wz aus Gr1,Bstpl. abgelegt ist
+
+N406: L     406; 
+      L     #Schritt_Tx; 
+      ==I   ; 
+      SPBN  N45; 
+      U     #E_Ready_Ablegen; 
+      SPBN  N45; 
+      R     #EA_UeberGrWz; //xxxxxxx
+      R     #A_Req_Ablegen; 
+      L     45; //L     7
+      T     #Schritt_Tx; 
+      SPA   N45; //N7
+NETWORK
+TITLE =neues oder altes Wz ist Handwerkzeug
+
+N45:  L     45; 
+      L     #Schritt_Tx; 
+      ==I   ; 
+      SPBN  N450; 
+      O     #Anf_load_HWZ_M6; 
+      O     #Anf_unload_HWZ_M6; 
+      SPB   Nhwu; 
+      L     5; 
+      T     #Schritt_Tx; 
+      SPA   LPS; //N5
+
+//--- Handwerkzeug ein oder auswechseln ------------------------------
+
+Nhwu: U     #Anf_load_HWZ_M6; 
+      SPBN  HWun; 
+
+      L     "TMSpindleIF".IF[1].TMag; // kein Wz in der Spindel 
+      L     0; 
+      ==I   ; 
+      SPBN  HWlo; 
+
+      S     #A_Quit_Bereitstellen; //bei HWZ sofort vorbereiten quittieren
+
+//-- Handwerkzeug laden in leere Spindel ----------- -------------------
+
+      S     #Anf_load_M6; 
+      L     99; // nach Mag-Nr.neues Wz
+      T     #Mag_load_M6; // Mag laden
+      L     "TMSpindleIF".IF[1].SLoc; // nach Platz-Nr. neues Wz
+      T     #Loc_load_M6; 
+      L     0; 
+      T     #Mag_unload_M6; 
+      T     #Loc_unload_M6; 
+      L     19; 
+      T     #Schritt_Tx; 
+      SPA   N19; 
+
+//-- Handwerkzeug laden und Handwerkzeug entladen-----------------
+
+HWlo: U     #Anf_unload_HWZ_M6; 
+      U     #Anf_load_HWZ_M6; 
+      SPBN  HWlx; 
+      S     #A_Quit_Bereitstellen; 
+
+      L     99; // nach Mag-Nr.neues Wz
+      T     #Mag_load_M6; // Mag laden
+      T     #Mag_unload_M6; // Mag laden
+
+      L     "TMSpindleIF".IF[1].SLoc; // nach Platz-Nr. neues Wz
+      T     #Loc_load_M6; 
+      L     "TMSpindleIF".IF[1].TLoc; // nach Platz-Nr. neues Wz
+      T     #Loc_unload_M6; 
+      L     19; 
+      T     #Schritt_Tx; 
+      SPA   N19; 
+
+
+//-- Handwerkzeug laden aber erst Spindel entladen ---------------------
+
+HWlx: S     #Start_FB191; 
+      L     9998; 
+      T     #MagNr_ZW_LPS; 
+      L     1; // Zwischenspeicher  
+      T     #LocNr_ZW_LPS; 
+      L     1; // DB72.DBW   24
+      T     #Mag_Nr_LPS; // Magazin Nr für Leerplatzsuche
+      L     450; 
+      T     #Schritt_Tx; 
+      SPA   LPS; 
+
+//-- Leerplatz für Spindelwerkzeug gefunden ---------------------------
+N450: L     450; 
+      L     #Schritt_Tx; 
+      ==I   ; 
+      SPBN  N451; 
+      O     #Done_FB191; 
+      O     #Error_FB191; 
+      R     #Start_FB191; 
+      SPBN  N5; 
+      U     #Error_FB191; 
+      SPBN  N4oz; 
+      S     #Fehler_FB191; 
+      L     #State_FB191; 
+      T     #Fehler_State; 
+      L     19; 
+      T     #Schritt_Tx; 
+      SPA   N19; 
+N4oz: L     451; 
+      T     #Schritt_Tx; 
+      SPA   LPS; 
+
+N451: L     451; 
+      L     #Schritt_Tx; 
+      ==I   ; 
+      SPBN  N5; 
+
+      S     #Anf_pos_Tx; // Kette positionieren
+      S     #Anf_unload_load_M6; 
+      L     99; // nach Mag-Nr.neues Wz
+      T     #Mag_load_M6; // Mag laden
+      L     "TMSpindleIF".IF[1].SLoc; // nach Platz-Nr.neues Wz
+      T     #Loc_load_M6; 
+      L     "TMSpindleIF".IF[1].TMag; // nach Mag-Nr.altes Wz
+      T     #Mag_unload_M6; // MagazinNr. positionieren
+      T     "DI_TM_QUITT_FC8".MagPosGrWz; 
+      L     #LocNr_Empty; 
+      T     #Loc_unload_M6; 
+      T     "TMSpindleIF".IF[1].TLoc; 
+      T     "DI_TM_QUITT_FC8".PlacePosGrWz; 
+
+//-----neu 9.3.ab
+      S     #EA_UeberGrWz; 
+      S     #EA_neuesWzWechselst; 
+
+//-----bis hier
+
+      L     9; 
+      T     #Einsprung_Kette_Tx; 
+      L     19; 
+      T     #Schritt_Tx; 
+      SPA   N19; 
+
+HWun: U     #Anf_unload_HWZ_M6; 
+      SPBN  N5; 
+
+//-- Handwerkzeug entladen --Mag positionieren auf neues Wz----------------
+
+      S     #A_Quit_Bereitstellen; 
+      L     99; // Mag-Nr.altes Wz
+      T     #Mag_unload_M6; // Mag laden
+      L     9998; 
+      T     "DI_TM_QUITT_FC8".MagPosGrWz; 
+
+      L     "TMSpindleIF".IF[1].TLoc; // Platz-Nr. altes Wz
+      T     #Loc_unload_M6; 
+      L     1; 
+      T     "DI_TM_QUITT_FC8".PlacePosGrWz; 
+
+      S     #Anf_pos_Tx; // Kette positionieren
+      L     "TMSpindleIF".IF[1].SMag; // nach Mag-Nr.neues Wz
+      T     #Mag_load_M6; // Mag laden
+
+      L     "TMSpindleIF".IF[1].SLoc; // nach Platz-Nr. neues Wz
+      T     #Loc_load_M6; 
+      S     #EA_UeberGrWz; 
+
+      L     5; 
+      T     #Einsprung_Kette_Tx; 
+      L     19; 
+      T     #Schritt_Tx; 
+      SPA   N19; 
+NETWORK
+TITLE =Ende Kette HWZ 
+
+NETWORK
+TITLE =neues Wz und altes gleiche Größe und Typ ? / Wz ist übergroß ? 
+
+N5:   L     #Schritt_Tx; 
+      L     5; 
+      ==I   ; 
+      SPBN  N501; 
+
+      L     DB72.DBW   42; // Wz neu Status
+      L     "DI_TM_MAGDAT".WZ_Maske; // WzMaske Bit festplatzcodiert
+      UW    ; 
+      L     0; 
+      >I    ; 
+      =     #neuesWz_festpl; 
+
+      L     "DI_TM_WZTYP_RD".SpWZ_Status; 
+      L     "DI_TM_MAGDAT".WZ_Maske; // WzMaske Bit festplatzcodiert
+      UW    ; 
+      L     0; 
+      >I    ; 
+      =     #altesWz_festpl; // SpindelWz ist festplatzcodiert
+
+      SET   ; 
+      R     #EA_Wz_equal_alt_neu; 
+      O     #altesWz_festpl; // SpindelWz ist festplatzcodiert
+      O     #neuesWz_festpl; 
+      SPB   Vrgl; 
+      L     "TMSpindleIF".IF[1].LocType; // Wz neu Type
+      L     "DI_TM_MAGDAT".WZTyp_1; 
+      <>I   ; 
+      SPB   Vrgl; 
+      L     "TMSpindleIF".IF[1].SLeft; // Wz neu Größe links
+      L     "DI_TM_MAGDAT".Groesse_links_1; 
+      <>I   ; 
+      SPB   Vrgl; 
+      L     "TMSpindleIF".IF[1].SRight; // Wz neu Größe rechts
+      L     "DI_TM_MAGDAT".Groesse_rechts_1; 
+      <>I   ; 
+      SPB   Vrgl; 
+      S     #EA_Wz_equal_alt_neu; 
+
+Vrgl: L     "TMSpindleIF".IF[1].SLeft; // neues Wz Groesse links
+      L     "TMSpindleIF".IF[1].SRight; // neues Wz Groesse rechts
+      OW    ; 
+      L     "DI_TM_MAGDAT".Groesse_links_1; // Spi Wz Groesse rechts
+      OW    ; 
+      L     "DI_TM_MAGDAT".Groesse_rechts_1; // Spi Wz Groesse rechts
+      OW    ; 
+      L     1; 
+      >I    ; 
+      =     #Uebergross; // altes oder neues Wz ist uebergross
+
+      L     "TMSpindleIF".IF[1].TMag; // kein Wz in der Spindel 
+      L     0; 
+      ==I   ; 
+      SPB   N52; 
+
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.WZW_HORIZONTALE_KETTE; 
+      U(    ; //beide Werkzeuge übergross
+      U(    ; 
+      U(    ; 
+      L     #T_SpWz_Typ; 
+      L     2; 
+      ==I   ; 
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.MAG_mit_Wiko; 
+      )     ; 
+      O(    ; 
+      TAK   ; 
+      L     3; 
+      ==I   ; 
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.MAG_mit_Wiko; 
+      )     ; 
+      O(    ; 
+      TAK   ; 
+      L     4; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      TAK   ; 
+      L     5; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      TAK   ; 
+      L     6; 
+      ==I   ; 
+      U     "DB_PLC_MD_DB20".UDHex._16_BIT4_WZTyp6_Greif2; 
+      )     ; 
+      O(    ; 
+      TAK   ; 
+      L     7; 
+      ==I   ; 
+      )     ; 
+      )     ; 
+      U(    ; 
+      U(    ; 
+      L     #T_NewTool_Typ; 
+      L     2; 
+      ==I   ; 
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.MAG_mit_Wiko; 
+      )     ; 
+      O(    ; 
+      TAK   ; 
+      L     3; 
+      ==I   ; 
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.MAG_mit_Wiko; 
+      )     ; 
+      O(    ; 
+      L     #T_NewTool_Typ; 
+      L     4; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      TAK   ; 
+      L     5; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      TAK   ; 
+      L     6; 
+      ==I   ; 
+      U     "DB_PLC_MD_DB20".UDHex._16_BIT4_WZTyp6_Greif2; 
+      )     ; 
+      O(    ; 
+      TAK   ; 
+      L     7; 
+      ==I   ; 
+      )     ; 
+      )     ; 
+      )     ; 
+      O     ; 
+      U(    ; 
+      U     "M_VERTIKALKETTE"; 
+      U(    ; 
+      L     #T_SpWz_Typ; 
+      L     7; 
+      ==I   ; 
+      )     ; 
+      U(    ; 
+      L     #T_NewTool_Typ; 
+      L     7; 
+      ==I   ; 
+      O     "M_Kegelrein_VM_aktiv"; 
+      )     ; 
+      O(    ; 
+      L     #T_NewTool_Typ; 
+      L     7; 
+      ==I   ; 
+      U     #T_SpWz_Reinigung; 
+      )     ; 
+      )     ; 
+      S     #EA_UeberGrWz; 
+      SPB   such; 
+      U(    ; 
+      L     "TMSpindleIF".IF[1].T_no; //T-Nr. neues Wz
+      L     "DI_TM_MAGDAT".TNr_2; //T-Nr Greifer 1 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     "TMSpindleIF".IF[1].T_no; //T-Nr. neues Wz
+      L     "DI_TM_MAGDAT".TNr_3; //T-Nr Greifer 2 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     "TMSpindleIF".IF[1].T_no; //T-Nr. neues Wz
+      L     "DI_TM_MAGDAT".TNr_4; //T-Nr Bereitstellungsplatz 
+      ==I   ; 
+      )     ; 
+      SPBN  N52; 
+
+      L     19; // neues Wz liegt schon in Greifer1 
+      T     #Schritt_Tx; 
+
+      U     "M_VERTIKALKETTE"; 
+      SPA   N7; 
+      L     9; 
+      T     #Schritt; 
+      SPA   N7; 
+
+N52:  U     #EA_Wz_equal_alt_neu; 
+      O(    ; 
+      L     "TMSpindleIF".IF[1].TMag; // kein Wz in der Spindel 
+      L     0; 
+      ==I   ; 
+      )     ; 
+      SPBN  noeq; 
+      L     7; // 1:1 Tausch möglich
+      T     #Schritt_Tx; 
+      SPA   N7; 
+
+such: S     #Anf_unload_load_M6; 
+      S     "M_TPrepare_Quit"; 
+      S     #EA_UeberGrWz; 
+      R     #Anf_change_M6; 
+      L     501; // neuen Leerplatz suchen im Magazin des alten Wz
+      T     #Schritt_Tx; 
+      SPA   N501; 
+
+noeq: L     501; 
+      T     #Schritt_Tx; 
+NETWORK
+TITLE =Leerplatz suchen für Spindel-Wz
+
+N501: L     #Schritt_Tx; 
+      L     501; 
+      ==I   ; 
+      SPBN  N502; 
+      S     #Start_FB191; 
+      L     9998; 
+      T     #MagNr_ZW_LPS; 
+      L     1; 
+      T     #LocNr_ZW_LPS; 
+      L     "TMSpindleIF".IF[1].SMag; 
+      L     1; 
+      T     #Mag_Nr_LPS; 
+      L     502; 
+      T     #Schritt_Tx; 
+      U     #Done_FB191; 
+      R     #Done_FB191; 
+NETWORK
+TITLE =Warten bis Leerplatz für Spindel-Wz gefunden
+
+N502: L     #Schritt_Tx; 
+      L     502; 
+      ==I   ; 
+      SPBN  N7; 
+      O     #Done_FB191; 
+      O     #Error_FB191; 
+      R     #Start_FB191; 
+      SPBN  N7; 
+      U     #Error_FB191; 
+      SPBN  N5_2; 
+      S     #Fehler_FB191; 
+      L     #State_FB191; 
+      T     #Fehler_State; 
+      L     19; // 19
+      T     #Schritt_Tx; 
+      SPA   N19; 
+N5_2: U     #Anf_unload_load_M6; 
+      SPBN  N5_3; 
+      L     8; // Leerplatz gefunden
+      T     #Schritt_Tx; // Aus-Ein Wechsel
+      SPA   N7; 
+
+N5_3: L     7; // 1:1 Tausch
+      T     #Schritt_Tx; 
+NETWORK
+TITLE =Mag Pos. auf neues Wz (1:1 Tausch) nach M6 / oder einwechseln
+
+N7:   L     #Schritt_Tx; 
+      L     7; 
+      ==I   ; 
+      SPBN  N8; 
+      L     "TMSpindleIF".IF[1].TMag; // kein Wz in der Spindel 
+      L     0; 
+      ==I   ; 
+      SPB   N7lo; 
+      S     #Anf_pos_Tx; // Kette positionieren
+      S     #Anf_change_M6; // L6 1:1 Tausch
+
+      U     #EA_Wz_equal_alt_neu; 
+      SPBN  N7a; 
+      L     "TMSpindleIF".IF[1].SMag; // nach Mag-Nr.neues Wz
+      T     #Mag_load_M6; // Mag laden
+      T     #Mag_unload_M6; 
+
+      L     "TMSpindleIF".IF[1].SLoc; // nach Platz-Nr. neues Wz
+      T     #Loc_load_M6; 
+      T     #Loc_unload_M6; 
+      SPA   N7b; 
+
+N7a:  L     "TMSpindleIF".IF[1].SMag; // nach Mag-Nr.neues Wz
+      T     #Mag_load_M6; // Mag laden
+
+      L     #MagNr_Empty; // nach Mag-Nr. Leerplatz
+      T     #Mag_unload_M6; 
+
+      L     "TMSpindleIF".IF[1].SLoc; // nach Platz-Nr. neues Wz
+      T     #Loc_load_M6; 
+
+      L     #LocNr_Empty; // nach Platz-Nr. Leerplatz
+      T     #Loc_unload_M6; 
+
+N7b:  L     5; 
+      T     #Einsprung_Kette_Tx; 
+      L     19; 
+      T     #Schritt_Tx; 
+      SPA   N19; 
+
+N7lo: S     #Anf_pos_Tx; // Kette positionieren
+      S     #Anf_load_M6; // L6 Load  
+      L     "TMSpindleIF".IF[1].SMag; // nach Mag-Nr.neues Wz
+      T     #Mag_load_M6; // Mag laden
+
+      L     "TMSpindleIF".IF[1].SLoc; // nach Platz-Nr. neues Wz
+      T     #Loc_load_M6; 
+
+      L     5; 
+      T     #Einsprung_Kette_Tx; 
+      L     19; 
+      T     #Schritt_Tx; 
+      SPA   N19; 
+
+NETWORK
+TITLE =Mag Positionieren auf Leerplatz für SpWZ nach M6 --> AUS-EIN
+
+N8:   L     #Schritt_Tx; 
+      L     8; 
+      ==I   ; 
+      SPBN  N81; 
+      S     #EA_neuesWzWechselst; // neues Wz an Wechselstelle
+      S     "M_WZV_Bereitst_Fertig"; //Quittierung für Makro
+
+      S     #Anf_pos_Tx; // Kette positionieren
+      L     #MagNr_Empty; // nach Mag-Nr. Leerplatz
+      T     #Mag_unload_M6; 
+      T     "DI_TM_QUITT_FC8".MagPosGrWz; 
+
+      L     #LocNr_Empty; // nach Platz-Nr. Leerplatz
+      T     #Loc_unload_M6; 
+      T     "DI_TM_QUITT_FC8".PlacePosGrWz; 
+
+      L     "TMSpindleIF".IF[1].SMag; // Mag neues Wz
+      T     #Mag_load_M6; 
+      L     "TMSpindleIF".IF[1].SLoc; // Platz neues Wz
+      T     #Loc_load_M6; 
+
+      L     19; 
+      T     #Schritt_Tx; 
+      L     9; // positionieren zum entladen
+      T     #Einsprung_Kette_Tx; 
+      SPA   LPS; 
+NETWORK
+TITLE =Mag Positionieren auf Altplatz SpWZ nach M6
+
+N81:  L     #Schritt_Tx; 
+      L     81; 
+      ==I   ; 
+      SPBN  N82; 
+      S     #Req_Kette_Tx; 
+
+      U     "M_VERTIKALKETTE"; 
+      S     #PosAltplatzSpindel; 
+
+      L     #MagNr_Empty; // nach Mag-Nr. Leerplatz
+      T     #Mag_unload_M6; 
+      T     "DI_TM_QUITT_FC8".MagPosGrWz; 
+
+      L     #LocNr_Empty; // nach Platz-Nr. Leerplatz
+      T     #Loc_unload_M6; 
+      T     "DI_TM_QUITT_FC8".PlacePosGrWz; 
+
+      L     "TMSpindleIF".IF[1].SMag; // Mag neues Wz
+      T     #Mag_load_M6; 
+      L     "TMSpindleIF".IF[1].SLoc; // Platz neues Wz
+      T     #Loc_load_M6; 
+
+      L     82; 
+      T     #Schritt_Tx; 
+      L     9; // positionieren zum entladen
+      T     #Einsprung_Kette_Tx; 
+      SPA   LPS; 
+NETWORK
+TITLE =Warten auf Magazin hat positioniert
+
+N82:  L     #Schritt_Tx; 
+      L     82; 
+      ==I   ; 
+      SPBN  N9; 
+      L     #Schritt; 
+      L     0; 
+      ==I   ; 
+      UN    #Req_Kette_Tx; 
+      SPBN  N9; 
+      R     #PosAltplatzSpindel; 
+      S     #Mag_auf_Altplatz; 
+
+      L     20; 
+      T     #Schritt_Tx; 
+      SPA   LPS; 
+
+NETWORK
+TITLE =Mag Positionieren auf das festplatzcodierte Wz aus der Spindel
+
+N9:   L     #Schritt_Tx; 
+      L     9; 
+      ==I   ; 
+      SPBN  N19; 
+      R     #Anf_change_M6; 
+      S     #Anf_unload_load_M6; // Kennung L6
+      S     #EA_UeberGrWz; // wie übergrosses Wz
+      S     #EA_neuesWzWechselst; // neues Wz an Wechselstelle
+
+      S     #Anf_pos_Tx; // Kette positionieren
+      L     "TMSpindleIF".IF[1].TMag; // Mag-Nr. altes Festpl.cod. Wz
+      T     #Mag_unload_M6; 
+
+      L     "TMSpindleIF".IF[1].TLoc; // Mag-Nr. altes Festpl.cod. Wz
+      T     #Loc_unload_M6; 
+
+      L     "TMSpindleIF".IF[1].SMag; // Mag neues Wz
+      T     #Mag_load_M6; 
+      L     "TMSpindleIF".IF[1].SLoc; // Platz neues Wz
+      T     #Loc_load_M6; 
+
+      L     19; 
+      T     #Schritt_Tx; 
+      L     9; // Positionieren zum entladen
+      T     #Einsprung_Kette_Tx; 
+
+NETWORK
+TITLE =Anforderung Quittieren Bereitstellen
+
+N19:  L     #Schritt_Tx; 
+      L     19; 
+      ==I   ; 
+      SPBN  N191; 
+      U     #E_M6_aktiv; 
+      UN    "M_VERTIKALKETTE"; 
+      U(    ; 
+      L     "TMSpindleIF".IF[1].SLoc; // T0 programmiert
+      L     0; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     "TMSpindleIF".IF[1].T_no; //T-Nr. neues Wz
+      L     "DI_TM_MAGDAT".TNr_2; //T-Nr Greifer 1 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     "TMSpindleIF".IF[1].T_no; //T-Nr. neues Wz
+      L     "DI_TM_MAGDAT".TNr_3; //T-Nr Greifer 2 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     "TMSpindleIF".IF[1].T_no; //T-Nr. neues Wz
+      L     "DI_TM_MAGDAT".TNr_4; //T-Nr TPU 
+      ==I   ; 
+      )     ; 
+      O     #Anf_unload_load_M6; 
+      UN    #Anf_unload_HWZ_M6; 
+      S     #A_Quit_Bereitstellen; // Anstoß Quittung FC192
+      S     "M_TPrepare_Quit"; 
+
+      U     #Anf_pos_Tx; 
+      S     #Req_Kette_Tx; 
+      R     #Anf_pos_Tx; 
+
+      U     #Anf_load_M6; 
+      SPBN  Unlo; 
+      S     #Anf_load_M6; // Load
+      S     #EA_Anf_load_M6; 
+      L     #Mag_load_M6; 
+      T     #EA_Mag_load_M6; 
+      L     #Loc_load_M6; 
+      T     #EA_Loc_load_M6; 
+      L     #Mag_unload_M6; 
+      T     #EA_Mag_unload_M6; 
+      L     #Loc_unload_M6; 
+      T     #EA_Loc_unload_M6; 
+
+Unlo: U     #Anf_unload_M6; 
+      SPBN  chan; 
+      S     #Anf_unload_M6; // Unload
+      S     #EA_Anf_unload_M6; 
+      L     #Mag_unload_M6; 
+      T     #EA_Mag_unload_M6; 
+      L     #Loc_unload_M6; 
+      T     #EA_Loc_unload_M6; 
+
+chan: U     #Anf_change_M6; 
+      SPBN  Ullo; 
+      S     #EA_Anf_change_M6; // Change
+      L     #Mag_load_M6; 
+      T     #EA_Mag_load_M6; 
+      L     #Loc_load_M6; 
+      T     #EA_Loc_load_M6; 
+
+      L     #Mag_unload_M6; 
+      T     #EA_Mag_unload_M6; 
+      L     #Loc_unload_M6; 
+      T     #EA_Loc_unload_M6; 
+
+Ullo: U     #Anf_unload_load_M6; 
+      SPBN  hwz; 
+      S     #EA_Anf_unload_load_M6; // Unload-->Load
+      L     #Mag_load_M6; 
+      T     #EA_Mag_load_M6; 
+      L     #Mag_unload_M6; 
+      T     #EA_Mag_unload_M6; 
+      L     #Loc_load_M6; 
+      T     #EA_Loc_load_M6; 
+      L     #Loc_unload_M6; 
+      T     #EA_Loc_unload_M6; 
+
+hwz:  U     #Anf_load_HWZ_M6; 
+      =     #EA_Anf_HWZ_load_M6; 
+      O     #Anf_unload_HWZ_M6; 
+      =     #EA_ANF_HWZ_unload_M6; 
+      S     #A_Quit_Bereitstellen; 
+
+      L     191; // 20   oder 191
+      T     #Schritt_Tx; 
+      SPA   LPS; 
+
+NETWORK
+TITLE =Warten auf RM Mag gestartet
+//vorbereitet falls erst quittiert wir wenn Magayin fertig ist
+//wird momentan nicht angesprungen
+N191: L     #Schritt_Tx; 
+      L     191; 
+      ==I   ; 
+      SPBN  N192; 
+      L     #Schritt; 
+      L     0; 
+      ==I   ; 
+      UN    #Req_Kette_Tx; 
+      SPBN  N20; 
+
+      L     DB72.DBW   42; // Wz neu Status
+      L     "DI_TM_MAGDAT".WZ_Maske; // WzMaske Bit festplatzcodiert
+      UW    ; 
+      L     0; 
+      >I    ; 
+      =     #neuesWz_festpl; 
+
+
+      L     "DI_TM_WZTYP_RD".SpWZ_Status; 
+      L     "DI_TM_MAGDAT".WZ_Maske; // WzMaske Bit festplatzcodiert
+      UW    ; 
+      L     0; 
+      >I    ; 
+      UN    "DI_TM_WZTYP_RD".T_Sp_leer; 
+      =     #altesWz_festpl; // SpindelWz ist festplatzcodiert
+
+      UN(   ; 
+      L     "TMSpindleIF".IF[1].SMag; 
+      L     0; 
+      ==I   ; 
+      )     ; 
+      U     #altesWz_festpl; // SpindelWz ist festplatzcodiert
+      O(    ; 
+      U     #neuesWz_festpl; 
+      UN    #Anf_load_M6; //#EA_Anf_load_M6
+      )     ; 
+      UN    #EA_Anf_unload_load_M6; 
+      UN    #EA_Anf_HWZ_load_M6; 
+      UN    #EA_ANF_HWZ_unload_M6; 
+      SPBN  n31b; 
+      L     81; 
+      T     #Schritt_Tx; 
+      SPA   LPS; 
+
+n31b: U     #EA_Anf_unload_load_M6; 
+      UN    #EA_Anf_HWZ_load_M6; 
+      UN    #EA_ANF_HWZ_unload_M6; 
+      SPBN  n31a; 
+
+      L     5; 
+      T     #Einsprung_Kette_Tx; 
+      S     #Req_Kette_Tx; 
+      SPA   n31c; 
+
+n31a: U     #EA_Anf_change_M6; 
+      UN    "M_VERTIKALKETTE"; 
+      UN    #EA_Anf_HWZ_load_M6; 
+      SPBN  n31c; 
+      L     9; 
+      T     #Einsprung_Kette_Tx; 
+      S     #Req_Kette_Tx; 
+
+n31c: L     20; // 20
+      T     #Schritt_Tx; 
+
+      L     "TMSpindleIF".IF[1].TMag; // kein Wz in der Spindel 
+      L     0; 
+      ==I   ; 
+      S     "M_TPrepare_Quit"; 
+
+      SPA   LPS; 
+NETWORK
+TITLE =
+
+N192: L     #Schritt_Tx; 
+      L     192; 
+      ==I   ; 
+      SPBN  N064; 
+      U     #E_Ready_Ablegen; 
+      SPBN  N20; 
+      L     20; 
+      T     #Schritt_Tx; 
+
+      L     5; 
+      T     #Einsprung_Kette_Tx; 
+      S     #Req_Kette_Tx; 
+      SPA   LPS; 
+NETWORK
+TITLE =realUmsetz:Quell-Zielpos.aus "TMLoadIF" übernehmen
+
+N064: L     #Schritt_Tx; 
+      L     64; 
+      ==I   ; 
+      SPBN  N068; 
+      U     "TMLoadIF".IFNo[1]; 
+      U     "TMLoadIF".IF[1].Reloading; 
+      U     "m_reload_move"; //umsetzen mit Bewegung
+      U(    ; 
+      L     "TMLoadIF".IF[1].SMag; 
+      T     #Mag_load_M6; // Mag laden
+      L     B#16#1; 
+      ==I   ; //umsetzen nur von Mag.1
+      )     ; 
+      U(    ; 
+      L     "TMLoadIF".IF[1].TMag; 
+      T     #Mag_unload_M6; // Mag laden
+      ==I   ; //umsetzen nur nach Mag.1
+      )     ; 
+      U(    ; 
+      U     "M_WZW_Gre1_Pos_Mag"; 
+      UN    "M_WZGr1_belegt"; 
+      O     ; 
+      U     "M_WZW_Gre1_Pos_Spi"; 
+      UN    "M_WZGr2_belegt"; 
+      )     ; 
+      SPBN  N068; 
+      S     #USortAkt; 
+      S     #Anf_pos_Tx; // Kette positionieren
+      L     "TMLoadIF".IF[1].SLoc; 
+      T     #Loc_load_M6; 
+      L     "TMLoadIF".IF[1].TLoc; 
+      T     #Loc_unload_M6; 
+      L     B#16#5; 
+      T     #Einsprung_Kette_Tx; 
+      L     68; 
+      T     #Schritt_Tx; 
+      SPA   LPS; 
+NETWORK
+TITLE =realUmsetz:Start WzKette:Wz aufnehmen und ablegen
+
+N068: L     #Schritt_Tx; 
+      L     68; 
+      ==I   ; 
+      SPBN  N072; 
+      U     #Anf_pos_Tx; 
+      S     #Req_Kette_Tx; 
+      R     #Anf_pos_Tx; 
+      L     72; 
+      T     #Schritt_Tx; 
+      SPA   LPS; 
+NETWORK
+TITLE =realUmsetz:warten bis Unterkette gestartet
+
+N072: L     #Schritt_Tx; 
+      L     72; 
+      ==I   ; 
+      SPBN  N20; 
+      L     #Schritt; 
+      L     B#16#0; 
+      <>I   ; 
+      SPBN  LPS; 
+      L     20; 
+      T     #Schritt_Tx; 
+      SPA   LPS; 
+NETWORK
+TITLE =Anforderungen Quittieren Rücksetzen
+
+N20:  L     #Schritt_Tx; 
+      L     20; 
+      ==I   ; 
+      SPBN  LPS; 
+      UN    #Req_Kette_Tx; 
+      U(    ; 
+      L     #Schritt; 
+      L     0; 
+      ==I   ; 
+      )     ; 
+      SPBN  LPS; 
+      R     #A_Quit_Bereitstellen; 
+      R     #A_Quit_Bereitst_in_Zw; 
+      R     #USortAkt; 
+      L     0; 
+      T     #Schritt_Tx; 
+
+NETWORK
+TITLE =Aufruf FB191
+
+LPS:  CALL "FB_TM_LEERPLATZ" , "DI_TM_LEERPLATZ" (
+           Start                    := #Start_FB191,// Start Leerplatzsuche
+           MagNr_ZW                 := #MagNr_ZW_LPS,// Mag.des Zwischenspeichers
+           LocNr_ZW                 := #LocNr_ZW_LPS,//Spindel
+           MagNr                    := #Mag_Nr_LPS,// Magzin-Nr. in dem gesucht werden soll
+           Activ                    := #Aktiv_FB191,
+           Done                     := #Done_FB191,
+           Error                    := #Error_FB191,
+           State                    := #State_FB191,
+           MagNr_Empty              := #MagNr_Empty,
+           LocNr_Empty              := #LocNr_Empty);
+
+NETWORK
+TITLE =  // 1:Daten Spindel und Greifer vergleichen
+
+x5:   L     4; 
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.WZW_VKETTE_MIT_TPU; 
+      SPB   NUMZ; 
+      L     3; 
+NUMZ: T     #Anz_Zwischenspeicher; 
+
+      CALL "FB_TM_MAGAZINDATEN" , "DI_TM_MAGDAT" (
+           Req                      := #Req_FB192,//Startanforderung
+           MagNr                    := 9998,// Zwischenspeicher  
+           Platz                    := #Anz_Zwischenspeicher,// Anzahl der Zwischenspeicher
+           Mode                     := 1,// 1:Daten Spindel und Greifer vergleichen
+           Velo_1                   := "DB_PLC_MD_DB20".UDReal._25_VM_WW_VELO_1,
+           Velo_2                   := "DB_PLC_MD_DB20".UDReal._26_VM_WW_VELO_2,
+           Velo_3                   := "DB_PLC_MD_DB20".UDReal._27_VM_WW_VELO_3,
+           Velo_4                   := "DB_PLC_MD_DB20".UDReal._28_VM_WW_VELO_4,
+           Velo_5                   := "DB_PLC_MD_DB20".UDReal._29_VM_WW_VELO_5,
+           NDR                      := #NDR_FB192,// Fertigmeldung
+           WZ_equal                 := #Wz_equal_FB192,
+           Error                    := #Error_FB192,
+           Warning                  := #Warning_FB192,
+           State                    := #State_FB192,
+           GrWz_Velo                := #dummy);
+
+NETWORK
+TITLE =WZ Typ auslesen und Greifergeschwindigkeit einstellen
+
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.WZW_VKETTE_MIT_TPU; 
+      SPBN  OTPU; 
+      L     4; 
+      SPA   B_PL; 
+OTPU: L     "DI_TM_T_BEFEHL".E_Nr_Bereitst_Platz; 
+B_PL: T     #ti_BereitstellungsPlatz; 
+
+      CALL "FB_TM_WZTYP_RD" , "DI_TM_WZTYP_RD" (
+           Req                      := #Req_FB92,
+           B_Platz                  := #ti_BereitstellungsPlatz,
+           MagNr                    := #SMag_NewTool,
+           Platz                    := #SLoc_NewTool,
+           Velo_1                   := "DB_PLC_MD_DB20".UDReal._25_VM_WW_VELO_1,//7.092000e+002
+           Velo_2                   := "DB_PLC_MD_DB20".UDReal._26_VM_WW_VELO_2,//4.251600e+003
+           Velo_3                   := "DB_PLC_MD_DB20".UDReal._27_VM_WW_VELO_3,//1.062000e+004
+           Velo_4                   := "DB_PLC_MD_DB20".UDReal._28_VM_WW_VELO_4,//1.458000e+004
+           Velo_5                   := "DB_PLC_MD_DB20".UDReal._29_VM_WW_VELO_5,//3.060000e+004
+           NDR                      := #NDR_FB92,
+           Error                    := #Error_FB92,
+           Warning                  := #Warning_FB92,
+           State                    := #State_FB92,
+           SpWz_Typ                 := #T_SpWz_Typ,
+           NewTool_Typ              := #T_NewTool_Typ,
+           SpWz_Velo                := #T_SpWz_Velo,
+           NewTool_Velo             := #T_NewTool_Velo,
+           SpWz_Reinigung           := #T_SpWz_Reinigung,
+           NewTool_Siem_Typ         := "DB_TOOL_DATA".New_Tool_Siem_Typ);
+
+
+
+
+      U     #EA_Anf_unload_load_M6; 
+      UN    #A_Req_Ablegen; 
+      SPBN  sp03; 
+
+      L     #T_NewTool_Velo; 
+      SPA   sp0e; 
+
+sp03: U     #EA_Anf_unload_load_M6; 
+      U     #A_Req_Ablegen; 
+      SPBN  sp02; 
+
+      L     #T_SpWz_Velo; 
+      SPA   sp0e; 
+
+sp02: L     #T_SpWz_Velo; 
+      L     #T_NewTool_Velo; 
+      <R    ; 
+      SPB   sp01; 
+      L     #T_NewTool_Velo; 
+      SPA   sp0e; 
+sp01: L     #T_SpWz_Velo; 
+sp0e: T     "DB_NC_PLC".Greifer_Geschwindigkeit; 
+NETWORK
+TITLE =Grundschritt Kette T-Befehl Warten auf Start
+//M5: Kette Positionieren auf neues Wz und evtl. neues Wz Bereitstellen
+//M9: Kette Positionieren auf altese Wz
+      L     #Schritt; 
+      L     0; 
+      ==I   ; 
+      SPBN  M5; 
+      U     #E_Reset_Taste; 
+      SPBN  req; 
+      R     #A_Req_Mag1; 
+      R     #A_Req_Bereitstellen; 
+      R     #A_Req_Ablegen; 
+
+req:  U     #Req_Kette_Tx; //Anforderung Kette
+      SPBN  M5; 
+      U     #E_M6_aktiv; // M6 ist aktiv
+      UN    "M_VERTIKALKETTE"; 
+      O     #E_Ablegen_aktiv; //XXXXXXXXX
+      SPB   M5; 
+      R     #A_Req_Mag1; 
+      R     #A_Req_Ablegen; 
+      R     #A_Req_Bereitstellen; 
+      R     #EA_Ready_Mag1; //22.04.01
+
+      L     #Einsprung_Kette_Tx; 
+      T     #Schritt; 
+NETWORK
+TITLE =Anforderung Mag positionieren auf neues Wz 
+
+M5:   L     #Schritt; 
+      L     5; 
+      ==I   ; 
+      SPBN  M6; 
+      R     #Req_Kette_Tx; 
+      U     #E_M6_aktiv; // M6 ist aktiv
+      UN    "M_VERTIKALKETTE"; 
+      O     #E_Ablegen_aktiv; //XXXXXXXXX
+      SPB   M6; 
+      L     1; 
+      L     #Mag_load_M6; 
+      ==I   ; 
+      SPB   M5_1; 
+
+      L     20; 
+      T     #Schritt; 
+      SPA   M6; 
+
+M5_1: U     #A_Req_Mag1; 
+      SPB   M6; 
+      S     #A_Req_Mag1; 
+      R     #EA_Ready_Mag1; //xxxxxxxxxx 19.07.2002 FUH
+      L     #Loc_load_M6; 
+      T     #EA_M1P_Soll; 
+      L     6; // Ende Kette
+      T     #Schritt; 
+
+NETWORK
+TITLE =Warten bis Mag an Wechselstelle für neues Wz 
+
+M6:   L     #Schritt; 
+      L     6; 
+      ==I   ; 
+      SPBN  M7; 
+      U     #EA_Ready_Mag1; 
+      SPBN  M7; 
+      U     #EA_Ready_Mag1; 
+      R     #EA_Ready_Mag1; // Ready
+      R     #A_Req_Mag1; 
+      UN    "M_VERTIKALKETTE"; 
+      S     "M_TPrepare_Quit"; 
+      L     7; 
+      T     #Schritt; 
+NETWORK
+TITLE =Anf Laden in Bereitstellungsplatz
+
+M7:   L     #Schritt; 
+      L     7; 
+      ==I   ; 
+      SPBN  M8; 
+      O(    ; 
+      L     #E_Nr_Bereitst_Platz; // Nr. Bereitstellungsplatz
+      L     0; // 0: verbleibt in Magazin
+      ==I   ; 
+      )     ; 
+      O     ; 
+      U(    ; 
+      UN    #E_EN_1zu1_Uebergross; // 1:1 Tausch bei uebergrossen Wz. erlaubt 
+      U(    ; 
+      L     "TMSpindleIF".IF[1].TLoc; //Wenn kein WZ in der Spindel
+      L     0; 
+      <>I   ; 
+      )     ; 
+      O     #EA_Anf_HWZ_load_M6; 
+      O(    ; 
+      L     "TMSpindleIF".IF[1].SLoc; //Bei T0 kein Bereitstellen
+      L     0; 
+      ==I   ; 
+      )     ; 
+      )     ; 
+      UN    "m_StrtRld_move"; 
+      SPB   M7_1; 
+      S     #A_Req_Bereitstellen; // Bereitstellen in Greifer 1
+
+      U     #E_Bereitstellen_aktiv; 
+      SPBN  M8; 
+      R     #A_Req_Bereitstellen; 
+
+      L     8; 
+      T     #Schritt; 
+      SPA   M201; //Ende
+M7_1: L     20; // Ende Kette
+      T     #Schritt; 
+
+NETWORK
+TITLE =Warten bis Wz. in Greifer angekommen
+
+M8:   L     #Schritt; 
+      L     8; 
+      ==I   ; 
+      SPBN  M9; 
+      U     #E_Ready_Bereitstellen; 
+      SPBN  M20; 
+      R     #A_Req_Mag1; 
+      R     #A_Req_Bereitstellen; 
+      R     #Anf_pos_Tx; //23.04.01
+      U(    ; 
+      L     "TMSpindleIF".IF[1].TLoc; //Wenn kein WZ in der Spindel..
+      L     0; 
+      ==I   ; 
+      O     #EA_Anf_unload_load_M6; 
+      )     ; 
+      UN    "m_StrtRld_move"; //..und kein reales Umsetzen aktiv..
+      SPBN  n40a; 
+      L     20; //dann muss keins mehr abgelegt werden
+      T     #Schritt; 
+      SPA   M9; 
+
+n40a: L     20; //9                           // sonst ablegen
+      T     #Schritt; 
+      SPA   M201; 
+
+NETWORK
+TITLE =Anf Mag positionieren bei T0 oder WZ ablegen (nicht 1 zu 1)
+
+M9:   L     #Schritt; 
+      L     9; 
+      ==I   ; 
+      SPBN  M10; 
+      R     #Req_Kette_Tx; 
+      L     1; 
+      L     #Mag_unload_M6; 
+      ==I   ; 
+      SPB   M9_1; //xxxxxxx
+      L     20; 
+      T     #Schritt; 
+      SPA   M10; 
+
+M9_1: S     #A_Req_Mag1; 
+      R     #EA_Ready_Mag1; 
+      L     #Loc_unload_M6; 
+      T     #EA_M1P_Soll; 
+      L     10; 
+      T     #Schritt; 
+NETWORK
+TITLE =Warten auf Kette steht an Wechselstelle für altes Wz bei T0
+
+M10:  L     #Schritt; 
+      L     10; 
+      ==I   ; 
+      SPBN  M11; 
+      U     #EA_Ready_Mag1; 
+      U(    ; 
+      L     #EA_M1P_Soll; 
+      L     #E_M1P_Ist; 
+      ==I   ; 
+      )     ; 
+      SPBN  M11; 
+      U(    ; 
+      L     "TMSpindleIF".IF[1].SLoc; 
+      L     0; 
+      ==I   ; 
+      )     ; 
+      UN    "m_StrtRld_move"; 
+      S     #A_Quit_Bereitstellen; 
+      SET   ; 
+      R     #A_Req_Mag1; 
+      U     #EA_Ready_Mag1; 
+      R     #EA_Ready_Mag1; 
+      L     11; 
+      T     #Schritt; 
+
+NETWORK
+TITLE =WZW: Anforderung WZ Ablegen
+
+M11:  L     #Schritt; 
+      L     11; 
+      ==I   ; 
+      SPBN  M12; 
+
+// Ende Schrittkette, wenn nur Altplatz Spindel zur Wechselstelle positioniert werden soll
+
+      U     #PosAltplatzSpindel; 
+      UN    #E_Req_Ablegen_ZwSp; 
+      SPBN  M11b; 
+      L     20; 
+      T     #Schritt; 
+      SPA   M201; 
+
+M11b: L     "TMSpindleIF".IF[1].SLoc; 
+      L     0; 
+      ==I   ; 
+      O     #EA_Anf_unload_load_M6; 
+      O     #E_Req_Ablegen_ZwSp; // M288 aus Makro
+      O     "m_StrtRld_move"; 
+      SPBN  M12; 
+      U(    ; 
+      L     #EA_M1P_Soll; 
+      L     #E_M1P_Ist; 
+      ==I   ; 
+      )     ; 
+      SPBN  M11a; 
+      S     #A_Req_Ablegen; // xxxx
+      R     "M_WZ_Rdy_Ablegen"; 
+      L     12; 
+      T     #Schritt; 
+      SPA   M201; 
+M11a: L     9; //Magazin neu positionieren
+      T     #Schritt; //da Position nicht mehr stimmt
+      SPA   M201; 
+
+NETWORK
+TITLE =WZW: Ablegen Werkzeug
+
+M12:  L     #Schritt; 
+      L     12; 
+      ==I   ; 
+      SPBN  M20; 
+      U     #E_Ready_Ablegen; 
+      SPBN  M20; 
+      R     #A_Req_Ablegen; 
+      R     #A_Req_Ablegen_T0; 
+      R     #A_Quit_Bereitstellen; 
+      L     20; 
+      T     #Schritt; 
+
+NETWORK
+TITLE =Ende Kette
+
+M20:  L     #Schritt; 
+      L     20; 
+      ==I   ; 
+      SPBN  M201; 
+      L     0; 
+      T     #Schritt; 
+M201: NOP   0; 
+
+
+END_FUNCTION_BLOCK
+

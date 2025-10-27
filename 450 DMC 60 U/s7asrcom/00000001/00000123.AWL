@@ -1,0 +1,794 @@
+FUNCTION "FC_ACHSE_RUND" : VOID
+TITLE =
+//$Revision: 1.27 $
+//$Date: 2008/09/15 12:30:45CEST $
+//$Author: hgc $
+//Logbuch:
+//         
+//Achstyp (MB_ACHS_TYP): 
+//  = 1 Anzeige
+//  = 2 permanent geregelt
+//  = 3 Achse mit Klemmung
+//  = 4 Achse mit Klemmung und Feldwinkelbestimmung
+//
+//Konfiguration: (MB_ACHS_KONFIG)
+//
+//  Achse mit Klemmung
+//     = 0 Standard
+//     = 1 negierter Ausgang
+//     = 2 negierter Ausgang, negierter Eingang
+//     = 3 negierter Eingang
+//     = 4 2 Eingänge (geklemmt, gelöst)
+AUTHOR : SJA
+NAME : AX
+VERSION : 0.1
+
+
+VAR_INPUT
+  EX_ENABLE : BOOL ;	//Enable
+  EX_Reset_Taste : BOOL ;	//Reset Taste
+  EX_Ruecksetze_Fehler : BOOL ;	//Fehler Rücksetz Taste
+  EX_Achse_vorhanden : BOOL ;	//Achse vorhanden
+  EX_I_Klemmung_Auf : BOOL ;	//Eingang Klemmung gelöst
+  EX_I_Klemmung_zu : BOOL ;	//Eingang Klemmung geklemmt
+  EX_Fahranf_Plus : BOOL ;	//Fahranforderung positiv
+  EX_Fahranf_Minus : BOOL ;	//Fahranforderung negativ
+  EX_Achse_steht : BOOL ;	//Nahtstellensignal Achse steht DBX61.4
+  EX_Klemmvor_Aktiv : BOOL ;	//Klemmvorgang Aktiv
+  EX_Achs_Typ : BYTE ;	//Achs-Typ: 0,1 Anzeige, 2=perm Geregelt, 3=mit Klemmung
+  EX_Achs_Konfig : BYTE ;	//Achs-Konfiguation
+  EW_Einsch_Verz : INT ;	//MD Einschaltverzögerung 
+  EW_Aussch_Verz : INT ;	//MD Ausschaltverzögerung
+  ET_Timer_Klemmung : TIMER ;	//Timer für die Klemmung
+  ET_Timer_Ueberwachung : TIMER ;	//Timer für die Überwachung
+  EX_Klemmung_offen_halten : BOOL ;	//Klemmung generell offen halten
+  EX_Ax_E_f92x4 : BOOL ;	//Feldwinkelerkennung aktiv
+  Ex_JogReqAx_plusminus : BOOL ;	
+  EX_Takttisch : BOOL ;	//Takttisch vorhanden
+  EX_Takttisch_Teilungspos : BOOL ;	//Takttisch in Teilungsposition
+END_VAR
+VAR_IN_OUT
+  EAX_Regler_ein : BOOL ;	//Controller enable
+  EAX_Vorschub_Sperre : BOOL ;	//Vorschubfreigabe
+  EAX_O_Klemmung_Auf : BOOL ;	//Ausgang Klemmung loesen
+  EAX_Req_Auf_Klemmung : BOOL ;	//Anforderung Klemmung lösen
+  EAX_Req_Zu_Klemmung : BOOL ;	//Anforderung Klemmung schliessen
+  EAX_Ready_Klemmung : BOOL ;	//Rückmeldung
+  EAX_Achse_Geloest : BOOL ;	//Klemmung der Achse gelöst
+  EAX_Klemmung_Auf : BOOL ;	//Klemmung gelöst über M10/11 usw.
+  EAX_TR_Pos : BOOL ;	//Trigger Fahranforderung positiv
+  EAX_TR_Neg : BOOL ;	//Trigger Fahranforderung negativ
+  EAX_TO_Klemmung_Auf : BOOL ;	//Temporärer Ausgang Klemmung
+  EAX_Klemmvor_Aktiv : BOOL ;	//Klemmvorgang Aktiv
+  EAX_FP1_FUE : BOOL ;	//Flanke Positiv 1
+  EAX_FP2_FUE : BOOL ;	//Flanke Positiv 2
+  EAX_Klemmung_Zu_Os : BOOL ;	//Fehler Klemmung Zu 0-Signal
+  EAX_Klemmung_Auf_0s : BOOL ;	//Fehler Klemmung Auf 0-Signal
+  EAB_SKZ_Achse : BYTE ;	//Schrittkettenzaehler
+END_VAR
+VAR_TEMP
+  TX_I_Klemmung_auf : BOOL ;	
+  TX_I_Klemmung_zu : BOOL ;	
+  TX_O_Klemmung_auf : BOOL ;	
+  TX_Klemm_Feldwinkel : BOOL ;	
+  tint_Verzgerungswert : INT ;	
+  TX_Takttisch_loesen : BOOL ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =Modul-Freigabe
+
+      UN    #EX_ENABLE; 
+      BEB   ; 
+
+NETWORK
+TITLE =Eingang zuweisen
+//Konfiguration: 0 -> Standart
+//               2,3 -> negierter Eingang  
+//
+//
+//
+//--- Konfig 2 oder 3 --> Eingang invertiert 
+      L     #EX_Achs_Konfig; 
+      L     2; 
+      ==I   ; 
+      O(    ; 
+      L     #EX_Achs_Konfig; 
+      L     3; 
+      ==I   ; 
+      )     ; 
+      SPB   NEG; 
+
+      L     #EX_Achs_Konfig; 
+      L     4; 
+      ==I   ; 
+      SPB   _2E; 
+      U     #EX_I_Klemmung_Auf; 
+      =     #TX_I_Klemmung_auf; 
+      NOT   ; 
+      =     #TX_I_Klemmung_zu; 
+      SPA   AKTI; 
+_2E:  U     #EX_I_Klemmung_Auf; 
+      =     #TX_I_Klemmung_auf; 
+      U     #EX_I_Klemmung_zu; 
+      =     #TX_I_Klemmung_zu; 
+      SPA   AKTI; 
+
+NEG:  UN    #EX_I_Klemmung_Auf; 
+      =     #TX_I_Klemmung_auf; 
+      NOT   ; 
+      =     #TX_I_Klemmung_zu; 
+NETWORK
+TITLE =
+
+AKTI: L     #EX_Achs_Typ; 
+      L     4; 
+      ==I   ; 
+      =     #TX_Klemm_Feldwinkel; 
+NETWORK
+TITLE =Achse existent
+
+      U     #EX_Achse_vorhanden; 
+      SPBN  ENDE; 
+
+      L     #EX_Achs_Typ; // Typ
+      L     2; 
+      <=I   ; 
+      SPBN  RESE; 
+
+      SET   ; 
+      S     #EAX_Regler_ein; // Regler, Vorschubfreigabe setzen
+      R     #EAX_Vorschub_Sperre; 
+      S     #EAX_TO_Klemmung_Auf; 
+
+      L     20; // SKZ-Zaehler auf 20 ( Schritt nicht vorhanden )
+      T     #EAB_SKZ_Achse; 
+      SPA   ENDE; 
+
+NETWORK
+TITLE =Reset
+//
+//
+RESE: U     #EX_Reset_Taste; 
+      SPBN  st01; 
+
+      CLR   ; 
+      =     #EAX_Klemmung_Auf; //  Anforderung abloeschen
+
+      U     "DB_SIEM_BAG".E_REF; 
+      SPB   st01; 
+
+      U     #EAX_Achse_Geloest; 
+      SPBN  st05; 
+
+      L     10; // Achse klemmen
+      T     #EAB_SKZ_Achse; 
+      SPA   AX10; 
+
+st05: L     14; // Freigaben abloeschen
+      T     #EAB_SKZ_Achse; 
+      SPA   AX14; 
+
+// --- Demobetrieb
+
+st01: U     "M_Simulation_Aktiv"; // Demobetrieb 
+//  O     "M_Automatikbetrieb"        // oder Automatik 
+//   O     "M_Einzelsatz"              // o. Einzelsatz
+      SPBN  st08; 
+
+      U     #EAX_Req_Auf_Klemmung; // Anforderungen loesen / klemmen zurueckmelden
+      O     #EAX_Req_Zu_Klemmung; 
+      S     #EAX_Ready_Klemmung; 
+
+      CLR   ; // Anforderungen abloeschen
+      =     #EAX_Req_Auf_Klemmung; 
+      =     #EAX_Req_Zu_Klemmung; 
+
+      U     #EX_Fahranf_Plus; // bei posit. oder neg.
+      U     #EX_Fahranf_Minus; 
+      =     #EAX_Vorschub_Sperre; // Achsbewegungen zulassen
+      SPA   ENDE; 
+
+// --- Anforderung Klemmen bei geloestem Zustand ( M10, M22, M32)
+
+st08: U(    ; 
+      O     #EAX_Req_Zu_Klemmung; 
+      O     ; 
+      U     #EX_Ax_E_f92x4; 
+      U     #TX_Klemm_Feldwinkel; 
+      )     ; 
+      U     #EAX_Klemmung_Auf; 
+      SPB   st06; 
+
+
+// --- M-Funktion auswerten
+      U     #EAX_Klemmung_Auf; 
+      SPB   AX00; 
+
+// --- Anforderung Takttisch lösen bei Fehler Klemmung 0 Signal 
+      U     #EX_Takttisch; 
+      UN    #EX_Takttisch_Teilungspos; 
+      U     #EX_Ruecksetze_Fehler; 
+      U     #TX_I_Klemmung_auf; 
+      U     #EAX_Klemmung_Zu_Os; 
+      =     #TX_Takttisch_loesen; 
+
+// --- Fahranforderung auswerten
+
+// Anforderung Klemmung lösen
+      U(    ; 
+      O     #EAX_Req_Auf_Klemmung; 
+      O     #EX_Fahranf_Plus; 
+      O     #EX_Fahranf_Minus; 
+      O(    ; 
+      U     "DB_SIEM_BAG".E_REF; 
+      UN    #EX_Takttisch; 
+      )     ; 
+      O     #TX_Takttisch_loesen; 
+      O     #EX_Klemmung_offen_halten; 
+      )     ; 
+      U(    ; 
+      UN    #EX_Ax_E_f92x4; 
+      U     #TX_Klemm_Feldwinkel; 
+      ON    #TX_Klemm_Feldwinkel; 
+      )     ; 
+      U(    ; 
+      UN    #TX_I_Klemmung_auf; 
+      O     #EX_Takttisch; 
+      )     ; 
+      U     "M_MA_Maschine_Ein"; 
+      FP    #EAX_TR_Pos; 
+      SPBN  st04; 
+
+      L     1; 
+      T     #EAB_SKZ_Achse; 
+      SPA   AX01; 
+
+// Anforderung Klemmung schliessen
+st04: UN    #EAX_Req_Auf_Klemmung; 
+      UN    "DB_SIEM_BAG".E_REF; 
+      UN(   ; 
+      U     #EX_Fahranf_Plus; 
+      O     #EX_Fahranf_Minus; 
+      ON    #EX_Achse_steht; 
+      )     ; 
+      UN    #EX_Klemmung_offen_halten; 
+      U(    ; 
+      U     #EX_Takttisch_Teilungspos; 
+      ON    #EX_Takttisch; 
+      )     ; 
+      O(    ; 
+      U     #EX_Ax_E_f92x4; 
+      U     #TX_Klemm_Feldwinkel; 
+      )     ; 
+      FP    #EAX_TR_Neg; 
+      SPBN  AX00; 
+
+st06: L     10; 
+      T     #EAB_SKZ_Achse; 
+      SPA   AX10; 
+
+NETWORK
+TITLE =Schritt 0
+
+AX00: L     #EAB_SKZ_Achse; 
+      L     0; 
+      ==I   ; 
+      SPBN  AX01; 
+
+//-------------------------- Aktion ---------------------
+
+//Timer
+
+//-------------------------- Ereignis -------------------
+
+      L     14; 
+      T     #EAB_SKZ_Achse; 
+      SPA   ENDE; 
+
+NETWORK
+TITLE =Vorgang Lösen
+//
+//
+//-
+//--------------------------------------------------------------------------------
+//--------------
+//-
+AX01: L     #EAB_SKZ_Achse; 
+      L     1; 
+      ==I   ; 
+      SPBN  AX02; 
+
+//-------------------------- Aktion ---------------------
+// Reglerfreigabe setzen
+
+      SET   ; 
+      =     #EAX_Regler_ein; 
+      =     #EAX_Klemmvor_Aktiv; 
+
+      L     S5T#100MS; 
+      SET   ; 
+      SV    #ET_Timer_Klemmung; 
+      CLR   ; 
+      SV    #ET_Timer_Klemmung; 
+
+
+//-------------------------- Ereignis -------------------
+
+      L     2; 
+      T     #EAB_SKZ_Achse; 
+
+
+      SPA   ENDE; 
+// -
+//----------------------------------------------------------------------------------------------
+// -
+AX02: L     #EAB_SKZ_Achse; 
+      L     2; 
+      ==I   ; 
+      SPBN  AX03; 
+
+//-------------------------- Aktion ---------------------
+
+//-------------------------- Ereignis -------------------
+
+      U     #ET_Timer_Klemmung; 
+      SPB   ENDE; 
+
+      L     3; 
+      T     #EAB_SKZ_Achse; 
+
+// -
+//----------------------------------------------------------------------------------------------
+// -
+AX03: L     #EAB_SKZ_Achse; 
+      L     3; 
+      ==I   ; 
+      SPBN  AX04; 
+
+//-------------------------- Aktion ---------------------
+// Klemmung lösen
+
+      SET   ; 
+      S     #EAX_TO_Klemmung_Auf; 
+
+//-------------------------- Ereignis -------------------
+
+      U     #TX_I_Klemmung_auf; 
+      UN    #TX_I_Klemmung_zu; 
+      SPBN  ENDE; 
+
+      L     4; 
+      T     #EAB_SKZ_Achse; 
+
+
+// sja 25.4.06 : MD > 10 Zeiteinheit ms, MD < 10 Zeiteinheit s 
+
+      L     #EW_Einsch_Verz; 
+      L     10; 
+      >=I   ; 
+      SPBN  ms01; 
+
+      L     #EW_Einsch_Verz; 
+      L     10; 
+      /I    ; 
+      T     #tint_Verzgerungswert; 
+
+      L     0; // Zeitbasis 0,01 s laden
+      SPA   ms02; 
+
+
+ms01: L     #EW_Einsch_Verz; 
+      T     #tint_Verzgerungswert; 
+
+      L     8192; // Zeitbasis 1s laden
+
+
+ms02: L     #tint_Verzgerungswert; // MD in BCD wandeln und mit Zeitbasis
+      ITB   ; // verodern
+      OW    ; 
+
+      SET   ; // 1 Laden
+      SV    #ET_Timer_Klemmung; // Zeit starten
+      CLR   ; // 1 Laden
+      SV    #ET_Timer_Klemmung; // Zeit starten
+      SPA   ENDE; 
+// -
+//----------------------------------------------------------------------------------------------
+// -
+AX04: L     #EAB_SKZ_Achse; 
+      L     4; 
+      ==I   ; 
+      SPBN  AX05; 
+
+//-------------------------- Aktion ---------------------
+
+//-------------------------- Ereignis -------------------
+// Zeit abgelaufen
+
+      U     #ET_Timer_Klemmung; 
+      SPB   ENDE; 
+
+
+      L     5; 
+      T     #EAB_SKZ_Achse; 
+
+//----------------------------------------------------------------------------------------------
+// -
+AX05: L     #EAB_SKZ_Achse; 
+      L     5; 
+      ==I   ; 
+      SPBN  AX06; 
+
+//-------------------------- Aktion ---------------------
+
+
+//-------------------------- Ereignis -------------------
+// Rückmeldungen setzen
+
+      U     #EAX_Req_Auf_Klemmung; 
+      S     #EAX_Ready_Klemmung; 
+      S     #EAX_Klemmung_Auf; 
+
+
+      SET   ; 
+      S     #EAX_Achse_Geloest; 
+      R     #EAX_Klemmvor_Aktiv; 
+
+      L     6; 
+      T     #EAB_SKZ_Achse; 
+// -
+//----------------------------------------------------------------------------------------------
+// -
+AX06: L     #EAB_SKZ_Achse; 
+      L     6; 
+      ==I   ; 
+      SPBN  AX10; 
+
+// Rückmeldungen setzen
+
+      U     #EAX_Req_Auf_Klemmung; 
+      S     #EAX_Ready_Klemmung; 
+      S     #EAX_Klemmung_Auf; 
+
+
+      SET   ; 
+      S     #EAX_Achse_Geloest; 
+      R     #EAX_Klemmvor_Aktiv; 
+
+//-------------------------- Aktion ---------------------
+// Vorschubfreigabe setzen
+
+      UN    #TX_I_Klemmung_auf; 
+      O     #TX_I_Klemmung_zu; 
+      =     #EAX_Vorschub_Sperre; 
+
+//-------------------------- Ereignis -------------------
+
+      SPA   ENDE; 
+
+NETWORK
+TITLE =Vorgang Klemmen
+//
+//
+//-
+//--------------------------------------------------------------------------------
+//--------------
+//-
+AX10: L     #EAB_SKZ_Achse; 
+      L     10; 
+      ==I   ; 
+      SPBN  AX11; 
+
+//-------------------------- Aktion ---------------------
+// Klemmung zu
+
+      CLR   ; 
+      =     #EAX_Klemmung_Auf; 
+
+      L     S5T#400MS; 
+      SET   ; 
+      SV    #ET_Timer_Klemmung; 
+      CLR   ; 
+      SV    #ET_Timer_Klemmung; 
+
+//-------------------------- Ereignis -------------------
+
+      L     11; 
+      T     #EAB_SKZ_Achse; 
+      SPA   ENDE; 
+// -
+//----------------------------------------------------------------------------------------------
+// -
+AX11: L     #EAB_SKZ_Achse; 
+      L     11; 
+      ==I   ; 
+      SPBN  AX12; 
+
+//-------------------------- Aktion ---------------------
+
+//-------------------------- Ereignis -------------------
+// wenn innerhalb 400ms wieder eine Fahranforderung 
+// kommt bleibt die Klemmung offen
+
+      U     #ET_Timer_Klemmung; 
+      SPBN  A111; 
+
+      L     12; 
+      T     #EAB_SKZ_Achse; 
+      SPA   ENDE; 
+
+A111: U(    ; 
+      O     #EX_Fahranf_Plus; 
+      O     #EX_Fahranf_Minus; 
+      O     #EAX_Req_Auf_Klemmung; // oder m Funktion Klemmung auf
+      )     ; 
+      U(    ; 
+      UN    #EX_Ax_E_f92x4; 
+      U     #TX_Klemm_Feldwinkel; 
+      ON    #TX_Klemm_Feldwinkel; 
+      )     ; 
+//      O     "DB_SIEM_BAG".E_REF
+      SPBN  ENDE; 
+
+      L     5; 
+      T     #EAB_SKZ_Achse; 
+      SPA   ENDE; 
+
+// -
+//----------------------------------------------------------------------------------------------
+// -
+AX12: L     #EAB_SKZ_Achse; 
+      L     12; 
+      ==I   ; 
+      SPBN  AX13; 
+
+//-------------------------- Aktion ---------------------
+// Klemmung schliessen, Vorschubfreigabe rücksetzen
+
+      SET   ; 
+      S     #EAX_Vorschub_Sperre; 
+      R     #EAX_TO_Klemmung_Auf; 
+      S     #EAX_Klemmvor_Aktiv; 
+
+//-------------------------- Ereignis -------------------
+
+      UN    #TX_I_Klemmung_zu; 
+      SPB   ENDE; 
+
+// sja 25.4.06 : MD > 10 Zeiteinheit ms, MD < 10 Zeiteinheit s 
+
+      L     #EW_Aussch_Verz; 
+      L     10; 
+      >=I   ; 
+      SPBN  as01; 
+
+      L     #EW_Aussch_Verz; 
+      L     10; 
+      /I    ; 
+      T     #tint_Verzgerungswert; 
+
+      L     0; // Zeitbasis 0,01 s laden
+      SPA   as02; 
+
+
+as01: L     #EW_Aussch_Verz; 
+      T     #tint_Verzgerungswert; 
+
+      L     8192; // Zeitbasis 1s laden
+
+
+as02: L     #tint_Verzgerungswert; // MD in BCD wandeln und mit Zeitbasis
+      ITB   ; // verodern
+      OW    ; 
+
+      SET   ; // 1 Laden
+      SV    #ET_Timer_Klemmung; // Zeit starten
+      CLR   ; 
+      SV    #ET_Timer_Klemmung; 
+
+      L     13; 
+      T     #EAB_SKZ_Achse; 
+
+      SPA   ENDE; 
+// -
+//----------------------------------------------------------------------------------------------
+// -
+AX13: L     #EAB_SKZ_Achse; 
+      L     13; 
+      ==I   ; 
+      SPBN  AX14; 
+
+//-------------------------- Aktion ---------------------
+
+//-------------------------- Ereignis -------------------
+// nach Verzögerung Rückmeldung geben
+
+      U     #ET_Timer_Klemmung; 
+      SPB   ENDE; 
+
+      U     #EAX_Req_Zu_Klemmung; 
+      S     #EAX_Ready_Klemmung; 
+
+      SET   ; 
+      R     #EAX_Achse_Geloest; 
+      R     #EAX_Klemmung_Auf; 
+      R     #EAX_Klemmvor_Aktiv; 
+
+      L     14; 
+      T     #EAB_SKZ_Achse; 
+      SPA   ENDE; 
+// -
+//----------------------------------------------------------------------------------------------
+// -
+AX14: L     #EAB_SKZ_Achse; 
+      L     14; 
+      ==I   ; 
+      SPBN  ENDE; 
+
+//-------------------------- Aktion ---------------------
+// Regler aus, Vorschubfreigabe rücksetzen
+
+      SET   ; 
+      R     #EAX_Regler_ein; 
+      S     #EAX_Vorschub_Sperre; 
+      R     #EAX_TO_Klemmung_Auf; 
+//      R     #EAX_Achse_Geloest
+      R     #EAX_Klemmvor_Aktiv; 
+
+//-------------------------- Ereignis -------------------
+
+      SPA   ENDE; 
+
+
+NETWORK
+TITLE =Fehlerüberwachung
+// Nur wenn Klemmung vorhanden ist in die Fehlerüberwachung
+ENDE: U(    ; 
+      L     #EX_Achs_Typ; 
+      L     3; 
+      ==I   ; 
+      O(    ; 
+      L     #EX_Achs_Typ; 
+      L     4; 
+      ==I   ; 
+      )     ; 
+      )     ; 
+      U     #EX_Achse_vorhanden; 
+      SPBN  AUSG; 
+
+//--- Dynamische Überwachung für Takttisch ---
+      UN    #EX_Takttisch; 
+      SPB   ohTT; 
+
+      U     #EAX_Klemmvor_Aktiv; 
+      U     "M_MA_Maschine_Ein"; 
+      U     #EAX_TO_Klemmung_Auf; 
+      UN    #TX_I_Klemmung_auf; 
+      O     ; 
+      U     #EAX_Klemmvor_Aktiv; 
+      U     "M_MA_Maschine_Ein"; 
+      U     #EX_Takttisch_Teilungspos; //  "O_PC_PAL_CAR_DOWN"
+      UN    #EAX_TO_Klemmung_Auf; 
+      UN    #TX_I_Klemmung_zu; 
+      L     S5T#5S; 
+      SE    #ET_Timer_Ueberwachung; 
+
+      U     #ET_Timer_Ueberwachung; 
+      U     #EAX_TO_Klemmung_Auf; 
+      S     #EAX_Klemmung_Auf_0s; 
+
+      U     #ET_Timer_Ueberwachung; 
+      UN    #EAX_TO_Klemmung_Auf; 
+      S     #EAX_Klemmung_Zu_Os; 
+
+      U     #EX_Ruecksetze_Fehler; 
+      R     #EAX_Klemmung_Zu_Os; 
+      R     #EAX_Klemmung_Auf_0s; 
+
+      SPA   AUSG; 
+
+//----------------------------------------------
+
+ohTT: UN    "M_MA_Maschine_Ein"; // Zeit starten
+      O     "M_Vorschub_Halt_Haupt"; 
+      U     #EX_Klemmvor_Aktiv; 
+      SPBN  FU00; 
+
+
+      L     S5T#5S; 
+      SET   ; 
+      SV    #ET_Timer_Ueberwachung; 
+      CLR   ; 
+      SV    #ET_Timer_Ueberwachung; 
+
+
+FU00: U     #EX_Ruecksetze_Fehler; 
+      R     #EAX_Klemmung_Zu_Os; 
+      R     #EAX_Klemmung_Auf_0s; 
+
+      UN    "M_MA_Maschine_Ein"; // Zeit starten
+      SPB   AUSG; 
+
+      U     #EAX_TO_Klemmung_Auf; 
+      FP    #EAX_FP1_FUE; 
+      O(    ; 
+      UN    #EAX_TO_Klemmung_Auf; 
+      FP    #EAX_FP2_FUE; 
+      )     ; 
+      SPBN  TSE; 
+
+
+      L     S5T#5S; 
+      SET   ; 
+      SV    #ET_Timer_Ueberwachung; 
+      CLR   ; 
+      SV    #ET_Timer_Ueberwachung; 
+      SPA   AUSG; 
+
+
+TSE:  U     #EAX_Klemmvor_Aktiv; 
+      SPB   UE01; 
+
+      U     #EAX_TO_Klemmung_Auf; 
+      SPB   UE02; 
+      U     #TX_I_Klemmung_zu; 
+      SPB   AUSG; 
+      SET   ; 
+      =     #EAX_Klemmung_Zu_Os; 
+      SPA   AUSG; 
+
+UE02: U     #TX_I_Klemmung_auf; 
+      SPB   AUSG; 
+      SET   ; 
+      =     #EAX_Klemmung_Auf_0s; 
+      SPA   AUSG; 
+
+// -
+// Dynamische Überwachung
+// -
+
+UE01: U     #EAX_TO_Klemmung_Auf; 
+      SPBN  UE03; 
+
+      UN    #TX_I_Klemmung_auf; 
+      UN    #ET_Timer_Ueberwachung; 
+      SPBN  AUSG; 
+      SET   ; 
+      =     #EAX_Klemmung_Auf_0s; 
+      SPA   AUSG; 
+
+UE03: UN    #TX_I_Klemmung_zu; 
+      UN    #ET_Timer_Ueberwachung; 
+      SPBN  AUSG; 
+      SET   ; 
+      =     #EAX_Klemmung_Zu_Os; 
+
+
+NETWORK
+TITLE =Ausgang zuweisen
+//---  Konfig 1 oder 2 --> Ausgang invertiert 
+AUSG: L     #EX_Achs_Konfig; 
+      L     1; 
+      ==I   ; 
+      O(    ; 
+      L     #EX_Achs_Konfig; 
+      L     2; 
+      ==I   ; 
+      )     ; 
+      SPB   NEGA; 
+
+      U     #EAX_TO_Klemmung_Auf; 
+      =     #EAX_O_Klemmung_Auf; 
+      SPA   BEND; 
+
+NEGA: UN    #EAX_TO_Klemmung_Auf; 
+      =     #EAX_O_Klemmung_Auf; 
+
+BEND: NOP   0; 
+      U     #EX_Ax_E_f92x4; 
+      U     #TX_Klemm_Feldwinkel; 
+      O     #Ex_JogReqAx_plusminus; 
+      S     #EAX_Regler_ein; 
+END_FUNCTION
+

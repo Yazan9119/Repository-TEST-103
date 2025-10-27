@@ -1,0 +1,165 @@
+FUNCTION "FC_TEMP_KOMP_MAIN" : VOID
+TITLE =
+//$Revision: 1.16.1.5 $
+//$Date: 2008/11/08 09:31:26CET $
+//$Author: sth $
+FAMILY : DM_Basis
+NAME : Com_Out
+VERSION : 0.3
+
+
+VAR_INPUT
+  E_EN_CO_MAIN : BOOL ;	
+  E_MSST_Reset : BOOL ;	
+END_VAR
+VAR_TEMP
+  Schmiermerker : BOOL ;	
+  T_Quit : BOOL ;	
+  T_Anwahl_Tempcomp_P2 : BOOL ;	
+  Dummy : INT ;	
+  Mx_Meldung_keine_Tab_akt : BOOL ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =
+
+      U     "DI_TEMP_SPINDEL".zwei_Sensoren; 
+      =     "DB_Temp_Comp".SSPI.zwei_Sensoren; 
+
+      U     "DI_TEMP_TISCH".zwei_Sensoren; 
+      =     "DB_Temp_Comp".Tisch.zwei_Sensoren; 
+
+      CALL "FC_TEMP_FUNKTIONEN" (
+           int_funktion             := 1,
+           int_mp                   := "DB_PLC_MD_DB20".UDInt._025_ANWAHL_TEMP_KOMP,
+           int_dekade               := 1,
+           int_wert                 := 3,
+           boo_ergebnis             := #T_Anwahl_Tempcomp_P2);
+
+      U     #T_Anwahl_Tempcomp_P2; 
+      SPB   star; 
+      SET   ; 
+      R     "DB_FEHLERMELDUNG".MELDUNG3._700517_Tempkomp_Falsche; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._701004_TEMP_KOMP_GRENZW; 
+      R     "DB_Temp_Comp".Tisch.Tab2_act; 
+      R     "DB_Temp_Comp".Tisch.Tab1_act; 
+      R     "DB_Temp_Comp".SSPI.Tab2_act; 
+      R     "DB_Temp_Comp".SSPI.Tab1_act; 
+      R     "DB_FEHLERMELDUNG".MELDUNG3._700528_Tempkomp_ni_akti; 
+      BEA   ; 
+
+
+// Tempkomp nach Hochlauf aktiv setzen
+star: NOP   0; 
+      U     "DB_SAFE_ALLG1".SPL_NC_OK; 
+
+      FP    "M_FP_SPL_OK"; 
+      SPBN  a02; 
+      SET   ; 
+      S     "DB_Temp_Comp".SSPI.Tab1_act; 
+      S     "DB_Temp_Comp".SSPI.Tab2_act; 
+      S     "DB_Temp_Comp".Tisch.Tab1_act; 
+      S     "DB_Temp_Comp".Tisch.Tab2_act; 
+a02:  NOP   0; 
+
+
+//Meldung ausgeben wenn Tempkomp angewählt aber nicht aktiv
+// Spindel 
+      U     "M_Ruecksetze_Fehler"; 
+      R     "DB_FEHLERMELDUNG".MELDUNG3._700528_Tempkomp_ni_akti; 
+
+      U     "TE_MASCHINE_EIN"; 
+      FP    "M_FP_TE_MASCHINE_EIN"; 
+      SPBN  kmel; 
+      UN    "DB_Temp_Comp".SSPI.Tab1_act; 
+      SPB   meld; 
+      U     "DB_Temp_Comp".SSPI.zwei_Sensoren; 
+      UN    "DB_Temp_Comp".SSPI.Tab2_act; 
+      SPB   meld; 
+//Tisch
+      U     "DI_TEMP_TISCH".ein_sensor; 
+      UN    "DB_Temp_Comp".Tisch.Tab1_act; 
+      SPB   meld; 
+      U     "DI_TEMP_TISCH".zwei_Sensoren; 
+      U(    ; 
+      UN    "DB_Temp_Comp".Tisch.Tab1_act; 
+      ON    "DB_Temp_Comp".Tisch.Tab2_act; 
+      )     ; 
+      SPB   meld; 
+      U     "DI_TEMP_TISCH".Tisch_angew; 
+      UN    "DB_Temp_Comp".Tisch.Tab1_act; 
+      SPB   meld; 
+      U     "DI_TEMP_TISCH".Bett_angew; 
+      UN    "DB_Temp_Comp".Tisch.Tab2_act; 
+      SPA   kmel; 
+meld: SET   ; 
+      S     "DB_FEHLERMELDUNG".MELDUNG3._700528_Tempkomp_ni_akti; 
+kmel: NOP   0; 
+
+
+      U     "DB_DM_M_FUNKTION".MX_IM[142]; 
+      SPBN  te01; 
+      R     "DB_DM_M_FUNKTION".MX_M[143]; 
+      S     "M_Tempkomp_eingefroren"; 
+
+te01: U     "DB_DM_M_FUNKTION".MX_IM[143]; 
+      SPBN  te02; 
+      R     "DB_DM_M_FUNKTION".MX_M[142]; 
+      R     "M_Tempkomp_eingefroren"; 
+
+te02: U     "M_Tempkomp_eingefroren"; 
+      =     "DB_FEHLERMELDUNG".MELDUNG3._700529_Tempkomp_eingefr; 
+      SPB   einf; 
+
+//Spindel
+      CALL "FB_TEMP_SPINDEL" , "DI_TEMP_SPINDEL" (
+           lager_grenz_temp         := #Dummy,
+           MSST_Reset               := #E_MSST_Reset);
+
+
+//Tisch
+      CALL "FB_TEMP_TISCH" , "DI_TEMP_TISCH" (
+           MSST_Reset               := #E_MSST_Reset,
+           lager_grenz_temp         := #Dummy);
+
+
+//Ausdehnungs-Kompensation 
+      CALL "FC_SP_KOMP_GLAE" ;
+
+
+einf: NOP   0; 
+//---------- Kompensation nach aktiver Tabelle-----------
+
+      U     "DB_Temp_Comp".SSPI.Temp_Komp_wert_wirksam; 
+      R     "DB_Temp_Comp".SSPI.Tab1_act; 
+      R     "DB_Temp_Comp".SSPI.Tab2_act; 
+
+      U     "DB_Temp_Comp".Tisch.Temp_Komp_wert_wirksam; 
+      R     "DB_Temp_Comp".Tisch.Tab1_act; 
+      R     "DB_Temp_Comp".Tisch.Tab2_act; 
+
+
+//Spindel
+      CALL "FB_TEMP_TAB_SPINDEL" , "DI_TEMP_TAB_SPINDEL" (
+           Tab1_act                 := "DB_Temp_Comp".SSPI.Tab1_act,
+           Tab2_act                 := "DB_Temp_Comp".SSPI.Tab2_act,
+           Temp_akt1                := "DB_Temp_Comp".SSPI.SPI_temp_Z_gespeichert,
+           Temp_akt2                := "DB_Temp_Comp".SSPI.SPI_temp_X_gespeichert);
+
+
+//Tisch
+      CALL "FB_TEMP_TAB_TISCH" , "DI_TEMP_TAB_TISCH" (
+           Tab1_act                 := "DB_Temp_Comp".Tisch.Tab1_act,
+           Tab2_act                 := "DB_Temp_Comp".Tisch.Tab2_act,
+           Temp_akt1                := "DB_Temp_Comp".Tisch.SPI_temp_Z_gespeichert,
+           Temp_akt2                := "DB_Temp_Comp".Tisch.SPI_temp_X_gespeichert);
+
+
+//--------------- GUD`S schreiben-----------------------------------------
+
+      CALL "FC_TEMP_WRITE_GUD" (
+           Enable                   := TRUE,
+           MSST_Reset               := #E_MSST_Reset);
+
+END_FUNCTION
+

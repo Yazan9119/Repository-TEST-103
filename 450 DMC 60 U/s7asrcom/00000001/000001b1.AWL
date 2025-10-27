@@ -1,0 +1,29 @@
+// ------------------------------------------------------------------
+// File           : D:\temp\Achs14.awl
+//
+// Source File    : D:\temp\Achs14.var
+// Generation Date: 02.10.2007  Time: 10:38:06
+// ------------------------------------------------------------------
+
+DATA_BLOCK DB  666
+VERSION : 0.0
+
+
+STRUCT
+
+ C1_SEMA_measPos114_5:
+   STRUCT
+   SYNTAX_ID : BYTE  := B#16#82;
+   bereich_u_einheit :byte := B#16#41;
+   spalte :word := W#16#5;
+   zeile :word := W#16#E;
+   bausteintyp :byte := B#16#71;
+   ZEILENANZAHL : BYTE := B#16#1;
+   typ :byte := B#16#F;
+   laenge :byte := B#16#8;
+   END_STRUCT ;
+
+ END_STRUCT ;
+
+BEGIN
+END_DATA_BLOCK

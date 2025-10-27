@@ -1,0 +1,288 @@
+FUNCTION "FC_MA_MASCHINE_EIN" : VOID
+TITLE =
+//$Revision: 1.28 $
+//$Date: 2008/11/05 11:16:14CET $
+//$Author: hgc $
+//
+//Logbuch:
+//
+//V0.1 / 25.10.99 / SCH
+//
+//- Modul Erstellt
+// 
+AUTHOR : SCH
+FAMILY : DM_BASIS
+NAME : FB_MSEIN
+VERSION : 0.1
+
+
+VAR_INPUT
+  E_Enable : BOOL ;	//Freigabe Modul
+END_VAR
+VAR_TEMP
+  T_keinNotAus : BOOL ;	
+  T_Maschine_ein_und_NC_ok : BOOL ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =Modulfreigabe
+//Auswertung der Freigabe
+      UN    #E_Enable; // Freigabe Modul
+      BEB   ; // Nein => zum Ende
+
+NETWORK
+TITLE =Temporärer Sammelmerker: Kein NOT-AUS
+
+      U     "DB_SIEM_NCK".E_NCKready; 
+      U     "DB_SIEM_NCK".E_NCready; 
+      UN    "DB_FAMILIEN_MODUL".E_Fehler.Not_Aus; 
+      U(    ; 
+      O     "DB_SIEM_NCK".E_MMCBTSSready; 
+      ON    "DB_PLC_MD_DB20".UDHex._16_BIT6_Not_AUS_PCU_0; 
+      )     ; 
+      =     #T_keinNotAus; 
+NETWORK
+TITLE =Meldung: NCK-CPU Ready fehlt
+
+      U     "I_AL_MASCHINE_EIN"; 
+      UN    "DB_SIEM_NCK".E_NCKready; 
+      =     "DB_FEHLERMELDUNG".Meldung._702019_NCK_CPU_Ready; 
+NETWORK
+TITLE =Meldung: NC Ready fehlt
+
+      U     "I_AL_MASCHINE_EIN"; 
+      UN    "DB_SIEM_NCK".E_NCready; 
+      =     "DB_FEHLERMELDUNG".Meldung._702020_NC_Ready; 
+NETWORK
+TITLE =Meldung: MMC-CPU Ready fehlt
+
+      U     "I_AL_MASCHINE_EIN"; 
+      UN    "DB_SIEM_NCK".E_MMCBTSSready; 
+      =     "DB_FEHLERMELDUNG".Meldung._702021_MMC_CPU_Ready; 
+NETWORK
+TITLE =Maschine Ein rücksetzen
+//Not Aus Zustand:
+      ON    "I_AL_NEG_Not_Aus"; 
+      ON    #T_keinNotAus; 
+      R     "O_AL_PLC_BTB"; 
+      R     "M_MA_Maschine_Ein"; 
+NETWORK
+TITLE =Ausgang Maschine Ein (PLC BTB) -> PNOZ Multi
+
+      U     "I_AL_MASCHINE_EIN"; 
+      U     #T_keinNotAus; 
+      S     "O_AL_PLC_BTB"; 
+NETWORK
+TITLE =Maschine Ein setzen
+
+      U     "I_AL_NEG_Not_Aus"; 
+      U     #T_keinNotAus; 
+      S     "M_MA_Maschine_Ein"; 
+NETWORK
+TITLE =Maschine Ein Flanke positiv
+
+      U     "M_MA_Maschine_Ein"; 
+      FP    "M_FP_Maschin"; 
+      =     "M_MA_FP_Maschine_Ein"; 
+NETWORK
+TITLE =Maschine Ein Flanke negativ 
+
+      U     "M_MA_Maschine_Ein"; 
+      FN    "M_FN_Maschine_ein"; 
+      =     "M_MA_FN_Maschine_Ein"; 
+NETWORK
+TITLE =NOT-AUS aufheben
+
+      U     "M_Ruecksetze_Fehler"; 
+      U     "DB_SIEM_NCK".A_EMERGENCY; 
+      =     "DB_SIEM_NCK".A_EMERGENCY_Ackn; 
+      R     "DB_SIEM_NCK".A_EMERGENCY; 
+NETWORK
+TITLE =NOT-AUS (*Maschine Ein)
+
+      UN    "M_MA_Maschine_Ein"; 
+      =     "M_Not_aus"; 
+NETWORK
+TITLE =Maschine ein / Aus verlängerter Impuls
+
+      U(    ; 
+      O     "M_MA_FP_Maschine_Ein"; 
+      O     ; 
+      U     "M_MA_FN_Maschine_Ein"; 
+      U     #T_keinNotAus; 
+      )     ; 
+      L     S5T#1S; 
+      SV    "Tv_Maschine_ein_aus"; 
+      NOP   0; 
+      NOP   0; 
+      NOP   0; 
+      NOP   0; 
+NETWORK
+TITLE =Maschine Ein verzögert
+
+      U     "M_MA_Maschine_Ein"; 
+      L     S5T#3S; 
+      SE    "TE_MASCHINE_EIN"; 
+      NOP   0; 
+      NOP   0; 
+      NOP   0; 
+      NOP   0; 
+NETWORK
+TITLE =Alarm: Not Aus 
+
+      UN    "M_MA_Maschine_Ein"; 
+      =     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700919_NOTAUS; 
+NETWORK
+TITLE =Leistung steht an
+
+      U     "DB_SAFE_ALLG1".Leistung_steht_an; 
+      =     "M_Leistung_Steht_an"; 
+NETWORK
+TITLE =Leistung steht an positive Flanke
+
+      U     "M_Leistung_Steht_an"; 
+      FP    "M_FM_Leistung_steht_an"; 
+      =     "M_IMP_Leistung_steht_an"; 
+NETWORK
+TITLE =Leistung steht an negative Flanke
+
+      U     "M_Leistung_Steht_an"; 
+      FN    "MX_FN_Leistung_Steht_an"; 
+      =     "MX_IMP_Leistung_0"; 
+NETWORK
+TITLE =Meldung: Leistung Maschine 0 Signal
+
+      UN    "M_Leistung_Steht_an"; 
+      UN    "DB_FEHLERMELDUNG".MELDUNG2._701301_PNOTZ_BTB_0_Sign; 
+      =     "DB_FEHLERMELDUNG".Meldung._702100_Leistung_0Signal; 
+NETWORK
+TITLE =Maschine mit SOLUTIONLINE ?
+
+      UN    "DB_PLC_MD_DB20".UDHex._31_Bit1_SOLUTIONLINE; 
+      SPB   ENDE; 
+NETWORK
+TITLE =Maschine Aus verzögert (Freigabe Klemme X122.2 AUS3 abgefallen)
+//Ansteuerung NCU: 
+//Freigabe Klemme X122.1 SLM bereit und Freigabe Klemme X122.2 AUS3 
+//nach aktuellen Vorgaben von SIEMENS programmiert.
+//
+//Ablauf Maschine Ein:
+//Maschine Ein und "DB_SIEM_NCK".f60_7 = $A_IN8 p2082[7] 2.899.0 
+//schaltet X122.1 auf 1. 
+//Danach schaltet "DB_SIEM_NCK".f60_6 = $A_IN7 p2082[6] 2.863.0
+//X122.2 auf 1
+//
+//Ablauf Maschine Aus:
+//X122.2 schaltet auf 0 wenn alle Achsen stehen, 3 Sekunden später schaltet
+//X122.1 auf 0
+//
+//____________________________________________________________________________
+// 
+//Info:
+//Der Eingang DB10.DBX60.6 == $A_IN[7] ist im p2082[6] verschaltet mit dem 
+//Parameter 
+//p2082[6]=2:863.0  >> Das Bit 0 signalisiert die Bereitschaft (in Betrieb) der 
+//Einspeisung.
+//
+//Der Eingang DB10.DBX60.7 == $A_IN[8] ist im p2082[7] verschaltet mit dem 
+//Parameter 
+//p2082[7]=2:899.0 >> Das Bit 0 signalisiert Einschaltbereit der Einspeisung.
+      UN    "M_MA_Maschine_Ein"; 
+      UN    "O_ENABLE_OUT_3_NX_NCU"; 
+      L     S5T#3S; 
+      SE    "TE_MASCHINE_AUS"; 
+      NOP   0; 
+      NOP   0; 
+      NOP   0; 
+      NOP   0; 
+NETWORK
+TITLE =Ansteuerung NCU: Freigabe Klemme X122.1 SLM bereit
+//SOLUTIONLINE
+//
+//ControlUnit MD Bico-Verschaltungen
+//"DB_SIEM_NCK".f60_7 = $A_IN8    p2082[7]  2.899.0 
+      U     "M_MA_Maschine_Ein"; 
+      U     "DB_SIEM_NCK".E_DrivesInCylOp; 
+      U     "DB_SIEM_NCK".E_NCready; 
+      U     "DB_SIEM_NCK".E_NCKready; 
+      =     #T_Maschine_ein_und_NC_ok; 
+      U     #T_Maschine_ein_und_NC_ok; 
+      U     "DB_SIEM_NCK".f60_7; 
+      S     "O_INFEED_ENABLE_NCU"; 
+      U     "TE_MASCHINE_AUS"; 
+      R     "O_INFEED_ENABLE_NCU"; 
+      NOP   0; 
+NETWORK
+TITLE =Meldung: Einschaltbereit der Einspeisung fehlt
+
+      U     #T_Maschine_ein_und_NC_ok; 
+      UN    "O_INFEED_ENABLE_NCU"; 
+      UN    "DB_SIEM_NCK".f60_7; 
+      =     "DB_FEHLERMELDUNG".MELDUNG6._702843_EINSPEISUNG_ESB; 
+NETWORK
+TITLE =Ansteuerung NCU: Freigabe Klemme X122.2 AUS3
+//SOLUTIONLINE
+//
+//ControlUnit MD Bico-Verschaltungen
+//"DB_SIEM_NCK".f60_6 = $A_IN7    p2082[6]  2.863.0 
+//
+      U     "M_MA_Maschine_Ein"; 
+      U     "O_INFEED_ENABLE_NCU"; 
+      U     "DB_SIEM_NCK".f60_6; 
+      S     "O_ENABLE_OUT_3_NX_NCU"; 
+      U(    ; 
+      UN    "M_MA_Maschine_Ein"; 
+      U     "M_Hauptachsen_stehen"; 
+      U     "M_Hauptspindel_steht"; 
+      U     "M_Zusatzachsen_stehen"; 
+      U     "M_PS_Achsen_stehen"; 
+      L     S5T#2S; 
+      SE    "TE_NCU_KL122_2_AUS3"; 
+      NOP   0; 
+      NOP   0; 
+      NOP   0; 
+      U     "TE_NCU_KL122_2_AUS3"; 
+      )     ; 
+      R     "O_ENABLE_OUT_3_NX_NCU"; 
+      NOP   0; 
+NETWORK
+TITLE =Meldung: Bereitschaft (in Betrieb) der Einspeisung fehlt
+
+      U(    ; 
+      U     "M_MA_Maschine_Ein"; 
+      U     "O_INFEED_ENABLE_NCU"; 
+      L     S5T#5S; 
+      SE    "TE_NCU_KL122_1_SLM_BTB"; 
+      NOP   0; 
+      NOP   0; 
+      NOP   0; 
+      U     "TE_NCU_KL122_1_SLM_BTB"; 
+      )     ; 
+      UN    "O_ENABLE_OUT_3_NX_NCU"; 
+      UN    "DB_SIEM_NCK".f60_6; 
+      =     "DB_FEHLERMELDUNG".MELDUNG6._702844_EINSPEISUNG_BTB; 
+NETWORK
+TITLE =Klemme X122.2 AUS3 Leistung eingeschaltet
+
+      U     "O_ENABLE_OUT_3_NX_NCU"; 
+      L     S5T#2S500MS; 
+      SE    "TE_ENABLE_OUT_3_NX_NCU"; 
+      NOP   0; 
+      NOP   0; 
+      NOP   0; 
+      NOP   0; 
+NETWORK
+TITLE =Meldung: Antriebe, Warten auf Leistung eingeschaltet
+
+      U     #T_Maschine_ein_und_NC_ok; 
+      U     "DB_SIEM_NCK".f60_7; 
+      UN    "TE_ENABLE_OUT_3_NX_NCU"; 
+      UN    "DB_FEHLERMELDUNG".MELDUNG6._702844_EINSPEISUNG_BTB; 
+      =     "DB_FEHLERMELDUNG".MELDEFENSTER._702902_WARTEN_AUF_LEIST; 
+NETWORK
+TITLE =Bausteinende
+
+ENDE: NOP   0; 
+
+END_FUNCTION
+

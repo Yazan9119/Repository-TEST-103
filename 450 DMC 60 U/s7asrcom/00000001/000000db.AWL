@@ -1,0 +1,227 @@
+FUNCTION "FC_GT_MAG_STAT" : VOID
+TITLE =
+//$Revision: 1.12 $
+//$Date: 2008/09/15 16:33:23CEST $
+//$Author: hgc $
+//
+
+AUTHOR : SCH
+FAMILY : DM_BASIS
+NAME : GTM_STAT
+VERSION : 0.1
+
+
+VAR_INPUT
+  E_Enable : BOOL ;	//Freigabe Modul
+  E_T_Funktion_Aktiv : BOOL ;	//T-Funktion aktiv
+  E_M6_Funktion_Aktiv : BOOL ;	//M6 Funktion aktiv
+  E_Maschine_Ein : BOOL ;	//Maschine Ein
+  E_NetzEin : BOOL ;	//NetzEin Zyklus (1.OB1 Zyklus)
+  E_Reset : BOOL ;	//Reset Modul
+  E_FehlerQuitt : BOOL ;	//Quit Error
+  E_RettFunkt_Aktiv : BOOL ;	//Rettungsfunktion aktiv
+  E_MD_Anwahl_Magazin : INT ;	//Anwahl Magazin
+  E_Anzahl_Mag_Plaetze : INT ;	//Anzahl Magazinplaetze
+END_VAR
+VAR_IN_OUT
+  EA_Mag_Kalibriert : BOOL ;	//Magazin Kalibriert
+  EA_Mag_Ref_Gefunden : BOOL ;	//Magazin Referenzpunkt gefunden
+  EA_Mag_Inposition : BOOL ;	//Magazin Inposition
+  EA_Mag_Freigabe : BOOL ;	//Magazin Start bzw. Freigabe
+  EA_Mag_Laeuft : BOOL ;	//Magazin laeuft
+  EA_Mag_Fehler : BOOL ;	//Magazin Fehler
+  EA_Mag_Stop : BOOL ;	//Magazin anhalten
+  EA_W_UngueltigeZaehlImp : BOOL ;	//Warnung: Ungueltige Zaehlimpulse
+  EA_Ungueltige_ZaehlImp : BOOL ;	//Fehler: Ungueltige Zaehlimpulse
+  EA_W_Kein_Referenzimpuls : BOOL ;	//Warnung: Kein Referenzimpuls gefunden
+  EA_Kein_ReferenzImpuls : BOOL ;	//Fehler: Kein Referenzimpuls gefunden
+  EA_W_Mag_Ungl_Ref_Imp1 : BOOL ;	//Warnung: Magazin ungleich Platz 1 und Referenzimpuls 1-Signal
+  EA_Mag_Ungl_Ref_Imp1 : BOOL ;	//Fehler: Magazin ungleich Platz 1 und Referenzimpuls 1-Signal
+  EA_W_ZaehlImp_bei_Absch0 : BOOL ;	//Warnung: Bei Nachlauf/Stillstand wurde Zaehlimpuls 0-Signal
+  EA_ZaehlImp_bei_Absch_0 : BOOL ;	//Fehler: Bei Nachlauf/Stillstand wurde Zaehlimpuls 0-Signal
+  EA_W_Kein_RefPunkt : BOOL ;	//Warnung: kein Referenzpunkt nach 1 Magazinumdrehung gefunden
+  EA_Kein_RefPunkt : BOOL ;	//Fehler: Kein Referenzpunkt nach 1 Magazinumdrehung gefunden
+  EA_W_Mag_Kein_Wechsel_ZI : BOOL ;	//Warnung: kein Wechsel Zaehlimpuls gefunden
+  EA_Mag_Kein_Wechsel_ZImp : BOOL ;	//Fehler: kein Wechsel Eingang Zaehlimpuls
+  EA_SKR_Trigg : BOOL ;	//Trigger Merker SKR Aktiv
+  EA_MAG_Fehler_Nr : BYTE ;	//Fehler Nr von Ablaufmodul
+  EA_SKZ_Tout : BYTE ;	//Schrittkettenzaehler Zaehlimpulsueberwachung
+  EA_SKZ_Kal : BYTE ;	//Schrittkettenzaehler Kablibrierung
+  EA_SKZ_Abl : BYTE ;	//Schrittkettenzaehler Ablauf
+  EA_Kal_Zaehler : BYTE ;	//Zaehler Kalibrierung
+  EA_MP_Ist : WORD ;	//Position Magazin (Platz)
+  EA_Mag_Plaetze_verfahren : WORD ;	//Anzahl Plaetze verfahren
+END_VAR
+VAR_TEMP
+  t_dummy : BOOL ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =
+
+      U     #E_Enable; // Freigabe Modul
+      U(    ; 
+      L     #E_MD_Anwahl_Magazin; // Magazin nicht angewaehlt oder
+      L     1; // Modul nicht angewaehlt
+      ==I   ; 
+      )     ; 
+      SPBN  MEND; // Nein => zum Ende
+
+NETWORK
+TITLE =
+//Rücksetzen der Fehler
+      O     #E_Reset; 
+      O     #E_FehlerQuitt; 
+      R     #EA_Ungueltige_ZaehlImp; 
+      R     #EA_Kein_ReferenzImpuls; 
+      R     #EA_Mag_Ungl_Ref_Imp1; 
+      R     #EA_ZaehlImp_bei_Absch_0; 
+      R     #EA_Kein_RefPunkt; 
+      R     #EA_Mag_Kein_Wechsel_ZImp; 
+      R     #EA_W_UngueltigeZaehlImp; 
+      R     #EA_W_Kein_Referenzimpuls; 
+      R     #EA_W_Mag_Ungl_Ref_Imp1; 
+      R     #EA_W_ZaehlImp_bei_Absch0; 
+      R     #EA_W_Kein_RefPunkt; 
+      R     #EA_W_Mag_Kein_Wechsel_ZI; 
+
+NETWORK
+TITLE =
+
+      CLR   ; 
+      =     #t_dummy; 
+
+      CALL "FC_UT_SLAVE_UEBERW" (
+           E_Slave_1                := "DB_SLAVE_DIAGNOSE".slave1A[13],
+           E_Slave_2                := FALSE,
+           E_Slave_3                := FALSE,
+           EA_Fehler_Slave_1        := "DB_FEHLERMELDUNG".Spi_VS_Halt._700253_Err_ASI_Slave_13,
+           EA_Fehler_Slave_2        := #t_dummy,
+           EA_Fehler_Slave_3        := #t_dummy,
+           EA_Fehler_Slave          := #t_dummy);
+
+
+      L     #EA_MAG_Fehler_Nr; 
+      L     1; 
+      ==I   ; 
+      SPBN  FE01; 
+      U     #E_M6_Funktion_Aktiv; 
+      O     #E_T_Funktion_Aktiv; 
+      S     #EA_Ungueltige_ZaehlImp; 
+      SPB   FAUS; 
+      SET   ; 
+      =     #EA_W_UngueltigeZaehlImp; 
+      SPA   FAUS; 
+
+FE01: L     #EA_MAG_Fehler_Nr; 
+      L     2; 
+      ==I   ; 
+      SPBN  FE02; 
+      U     #E_M6_Funktion_Aktiv; 
+      O     #E_T_Funktion_Aktiv; 
+      S     #EA_Kein_ReferenzImpuls; 
+      SPB   FAUS; 
+      SET   ; 
+      =     #EA_W_Kein_Referenzimpuls; 
+      SPA   FAUS; 
+
+FE02: L     #EA_MAG_Fehler_Nr; 
+      L     3; 
+      ==I   ; 
+      SPBN  FE03; 
+      U     #E_M6_Funktion_Aktiv; 
+      O     #E_T_Funktion_Aktiv; 
+      S     #EA_Mag_Ungl_Ref_Imp1; 
+      SPB   FAUS; 
+      SET   ; 
+      =     #EA_W_Mag_Ungl_Ref_Imp1; 
+      SPA   FAUS; 
+
+FE03: L     #EA_MAG_Fehler_Nr; 
+      L     4; 
+      ==I   ; 
+      SPBN  FE04; 
+      U     #E_M6_Funktion_Aktiv; 
+      O     #E_T_Funktion_Aktiv; 
+      S     #EA_ZaehlImp_bei_Absch_0; 
+      SPB   FAUS; 
+      SET   ; 
+      =     #EA_W_ZaehlImp_bei_Absch0; 
+      SPA   FAUS; 
+
+FE04: L     #EA_MAG_Fehler_Nr; 
+      L     5; 
+      ==I   ; 
+      SPBN  FE05; 
+      U     #E_M6_Funktion_Aktiv; 
+      O     #E_T_Funktion_Aktiv; 
+      S     #EA_Mag_Kein_Wechsel_ZImp; 
+      SPB   FAUS; 
+      SET   ; 
+      =     #EA_W_Mag_Kein_Wechsel_ZI; 
+      SPA   FAUS; 
+
+FE05: L     #EA_Mag_Plaetze_verfahren; // Anzahl verfahrener Plaetze groesser
+      L     #E_Anzahl_Mag_Plaetze; // als Magazin
+      >I    ; // Fehler ausgeben
+      SPBN  MF01; 
+      U     #E_M6_Funktion_Aktiv; 
+      O     #E_T_Funktion_Aktiv; 
+      S     #EA_Kein_RefPunkt; 
+      SPB   FAUS; 
+      SET   ; 
+      =     #EA_W_Kein_RefPunkt; 
+      SPA   FAUS; 
+
+FAUS: L     0; 
+      T     #EA_MAG_Fehler_Nr; 
+      SET   ; 
+      =     #EA_Mag_Fehler; 
+
+MF01: NOP   0; 
+NETWORK
+TITLE =
+//
+// Ruecksetzen Magazin bei Reset, Start SKR, oder Fehler
+//
+      U     #E_RettFunkt_Aktiv; 
+      U     "M_Handbetrieb"; 
+      FP    #EA_SKR_Trigg; 
+      O(    ; 
+//       O  #EA_Mag_Laeuft    auskommentiert kee 17.1.07
+      O     #EA_Mag_Fehler; 
+      U     #E_Reset; 
+      )     ; 
+      O     #E_NetzEin; 
+      O     #EA_Mag_Fehler; 
+      O(    ; 
+      O     #EA_Mag_Laeuft; 
+      O     #EA_Mag_Freigabe; 
+      UN    #E_Maschine_Ein; 
+      )     ; 
+      SPBN  MEND; 
+
+      SET   ; 
+      R     #EA_Mag_Kalibriert; 
+      R     #EA_Mag_Ref_Gefunden; 
+      R     #EA_Mag_Inposition; 
+      R     #EA_Mag_Freigabe; 
+      R     #EA_Mag_Laeuft; 
+      R     #EA_Mag_Stop; 
+
+      L     0; 
+      T     #EA_MAG_Fehler_Nr; 
+      T     #EA_SKZ_Tout; 
+      T     #EA_SKZ_Kal; 
+      T     #EA_SKZ_Abl; 
+      T     #EA_MP_Ist; 
+      T     #EA_Mag_Plaetze_verfahren; 
+      T     #EA_Kal_Zaehler; 
+
+NETWORK
+TITLE =
+
+MEND: NOP   0; 
+
+END_FUNCTION
+

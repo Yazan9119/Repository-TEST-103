@@ -1,0 +1,1096 @@
+FUNCTION "FC_ACHSE_RUND_ANFORD" : VOID
+TITLE =
+//$Revision: 1.35 $
+//$Date: 2008/06/06 08:40:35CEST $
+//$Author: hgc $
+//
+//Rundachsmodul Anforderungen
+AUTHOR : SJA
+FAMILY : AX
+NAME : AX
+VERSION : 0.1
+
+
+VAR_TEMP
+  T_Dekade1 : WORD ;	//Klemmungstyp: 0=Standart, 1=neg. A, 2=neg. AE, 3=neg. E.
+  T_Dekade2 : WORD ;	//Achstyp: 0,1 Anzeige, 2=Permanent, 3=mit Klemmung
+  T_Dekade3 : WORD ;	//Zuweistung Klemmfunktion: 1=M10/11, 2=M22/23, 3=M32/33
+  Tb_PW_Typ : BYTE ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =Anforderungen
+
+      U     "M_Reset_Taste"; // bei Reset
+      UN    "M_7_ter_OB1_Zyklus"; 
+      SPBN  INIT; 
+
+      SET   ; 
+      R     "DB_DM_M_FUNKTION".MX_Quitt[10]; 
+      R     "DB_DM_M_FUNKTION".MX_Quitt[11]; 
+      R     "DB_DM_M_FUNKTION".MX_Quitt[22]; 
+      R     "DB_DM_M_FUNKTION".MX_Quitt[23]; 
+      R     "DB_DM_M_FUNKTION".MX_Quitt[32]; 
+      R     "DB_DM_M_FUNKTION".MX_Quitt[33]; 
+
+      R     "M_Achse4_loesen"; 
+      R     "M_Achse5_loesen"; 
+      R     "M_Achse6_loesen"; 
+      R     "M_Achse4_klemmen"; 
+      R     "M_Achse5_klemmen"; 
+      R     "M_Achse6_klemmen"; 
+      R     "M_AchseNCT_loesen"; 
+      R     "M_AchseNCT_klemmen"; 
+
+      SPA   RRUE; 
+
+
+NETWORK
+TITLE =Schritt 0
+//Hier werden dei MD's auskodiert 
+//
+//Anwahl/Zuweistung: Achs-Typ
+//
+//über  "DB_PLC_MD_DB20".UDInt._001_RND_AX_Mxx_xx
+//
+//    3. Dekade Klemmfunktion
+//       1 = M10/11
+//       2 = M22/23
+//       3 = M32/33
+//
+//    2. Dekade Typ
+//       1 = Anzeige Achse
+//       2 = Achse permanent geregelt
+//       3 = Achse mit Klemmung
+//
+//    1. Dekade bei Achse mit Klemmung
+//       0 = Standart
+//       1 = negierter Ausgang
+//       2 = negierter Ausgang und negierter Eingang
+//       3 = negierter Eingang
+// 
+//
+//
+INIT: U     "M_7_ter_OB1_Zyklus"; 
+      SPBN  AX01; 
+
+//   ----------------- Aktion ---------------------------
+
+// --- M-Funktionen quittierpflichtig setzen -----------------
+
+      SET   ; 
+      =     "DB_DM_M_FUNKTION".MX_QuitPflicht[10]; 
+      =     "DB_DM_M_FUNKTION".MX_QuitPflicht[11]; 
+      =     "DB_DM_M_FUNKTION".MX_QuitPflicht[22]; 
+      =     "DB_DM_M_FUNKTION".MX_QuitPflicht[23]; 
+      =     "DB_DM_M_FUNKTION".MX_QuitPflicht[32]; 
+      =     "DB_DM_M_FUNKTION".MX_QuitPflicht[33]; 
+
+// Auscodieren der Achstypen erfolgt im FC_ACHS_VERWALTUNG 
+// da die Zuordnung der Achsen maschinenspezifisch ist 
+// Ist zunächst nur bei HL 
+
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.MASCHTYP_3060_AKTIV; 
+      SPB   OHNE; 
+
+// --- M10/11 4 Achse angewaehlt ? 
+      U     "DB_SIEM_STARTUP".ActivAxis[4]; 
+      U(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._001_RND_ACHSE_4; 
+      L     0; 
+      >I    ; 
+      )     ; 
+
+      =     "M_4Achse_existiert"; 
+
+      U     "DB_SIEM_STARTUP".ActivAxis[5]; 
+      U(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._002_RND_ACHSE_5; 
+      L     0; 
+      >I    ; 
+      )     ; 
+      =     "M_5Achse_existiert"; 
+
+      U     "DB_SIEM_STARTUP".ActivAxis[6]; 
+      U(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._003_RND_ACHSE_6; 
+      L     0; 
+      >I    ; 
+      )     ; 
+      =     "M_6Achse_existiert"; 
+
+
+      U     "DB_SIEM_STARTUP".ActivAxis[7]; 
+      U(    ; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.MAG_KETTE_GEREGELT; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.MAG_RAD; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.MAG_KETTE_MASTER_SLAVE; 
+      )     ; 
+      =     "M_7Achse_existiert"; 
+
+      L     "DB_PLC_MD_DB20".UDInt._015_ANWAHL_PALWECHLSER; 
+      ITB   ; 
+      UW    W#16#F; 
+      T     #Tb_PW_Typ; 
+
+      L     #Tb_PW_Typ; 
+      L     3; 
+      ==I   ; 
+      O(    ; 
+      TAK   ; 
+      L     5; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      TAK   ; 
+      L     6; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      TAK   ; 
+      L     7; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      TAK   ; 
+      L     9; 
+      ==I   ; 
+      )     ; 
+      U     "DB_SIEM_STARTUP".ActivAxis[8]; 
+      =     "M_8Achse_existiert"; 
+
+// -- Achse 9/10/16 Palettenspeicher bei P2 --- 
+      U     "DB_SIEM_STARTUP".ActivAxis[9]; 
+      =     "M_9Achse_existiert"; 
+
+      U     "DB_SIEM_STARTUP".ActivAxis[10]; 
+      =     "M_10Achse_existiert"; 
+
+      U     "DB_SIEM_STARTUP".ActivAxis[16]; 
+      =     "M_16Achse_existiert"; 
+//----------------------------------------------
+
+      U     "DB_SIEM_STARTUP".ActivAxis[11]; 
+      U(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._043_ANWAHL_TISCH; 
+      L     1; 
+      ==I   ; 
+      )     ; 
+      =     "M_11Achse_existiert"; 
+
+      U     "DB_SIEM_STARTUP".ActivAxis[12]; 
+      =     "M_12Achse_existiert"; 
+
+      L     "DB_PLC_MD_DB20".UDInt._001_RND_ACHSE_4; 
+      ITB   ; 
+      SRW   8; 
+      UW    W#16#F; 
+      T     #T_Dekade3; 
+
+      L     "DB_PLC_MD_DB20".UDInt._001_RND_ACHSE_4; 
+      ITB   ; 
+      SRW   4; 
+      UW    W#16#F; 
+      T     "MB_4Achs_Typ"; 
+
+      L     "DB_PLC_MD_DB20".UDInt._001_RND_ACHSE_4; 
+      ITB   ; 
+      UW    W#16#F; 
+      T     "MB_4Achs_Konfig"; 
+
+      L     #T_Dekade3; 
+      L     1; 
+      ==I   ; 
+      SPBN  A001; 
+      L     4; 
+      T     "MB_M10_11_Achse"; 
+      SPA   A003; 
+
+A001: L     #T_Dekade3; 
+      L     2; 
+      ==I   ; 
+      SPBN  A002; 
+      TAK   ; 
+      L     5; 
+      T     "MB_M10_11_Achse"; 
+      SPA   A003; 
+
+A002: L     #T_Dekade3; 
+      L     3; 
+      ==I   ; 
+      SPBN  A003; 
+      L     6; 
+      T     "MB_M10_11_Achse"; 
+
+A003: L     "DB_PLC_MD_DB20".UDInt._002_RND_ACHSE_5; 
+      ITB   ; 
+      SRW   8; 
+      UW    W#16#F; 
+      T     #T_Dekade3; 
+
+      L     "DB_PLC_MD_DB20".UDInt._002_RND_ACHSE_5; 
+      ITB   ; 
+      SRW   4; 
+      UW    W#16#F; 
+      T     "MB_5Achs_Typ"; 
+
+      L     "DB_PLC_MD_DB20".UDInt._002_RND_ACHSE_5; 
+      ITB   ; 
+      UW    W#16#F; 
+      T     "MB_5Achs_Konfig"; 
+
+      L     #T_Dekade3; 
+      L     1; 
+      ==I   ; 
+      SPBN  A004; 
+      L     4; 
+      T     "MB_M22_23_Achse"; 
+      SPA   A006; 
+
+A004: L     #T_Dekade3; 
+      L     2; 
+      ==I   ; 
+      SPBN  A005; 
+      TAK   ; 
+      L     5; 
+      T     "MB_M22_23_Achse"; 
+      SPA   A006; 
+
+A005: L     #T_Dekade3; 
+      L     3; 
+      ==I   ; 
+      SPBN  A006; 
+      L     6; 
+      T     "MB_M22_23_Achse"; 
+
+A006: L     "DB_PLC_MD_DB20".UDInt._003_RND_ACHSE_6; 
+      ITB   ; 
+      UW    W#16#F00; 
+      T     #T_Dekade3; 
+
+      L     "DB_PLC_MD_DB20".UDInt._003_RND_ACHSE_6; 
+      ITB   ; 
+      SRW   4; 
+      UW    W#16#F; 
+      T     "MB_6Achs_Typ"; 
+
+
+      L     "DB_PLC_MD_DB20".UDInt._003_RND_ACHSE_6; 
+      ITB   ; 
+      UW    W#16#F; 
+      T     "MB_6Achs_Konfig"; 
+
+      L     #T_Dekade3; 
+      L     1; 
+      ==I   ; 
+      SPBN  A007; 
+      L     4; 
+      T     "MB_M32_33_Achse"; 
+      SPA   A009; 
+
+A007: L     #T_Dekade3; 
+      L     2; 
+      ==I   ; 
+      SPBN  A008; 
+      TAK   ; 
+      L     5; 
+      T     "MB_M32_33_Achse"; 
+      SPA   A003; 
+
+A008: L     #T_Dekade3; 
+      L     3; 
+      ==I   ; 
+      SPBN  A009; 
+      L     6; 
+      T     "MB_M32_33_Achse"; 
+OHNE: NOP   0; 
+A009: NOP   0; 
+
+
+//---------------------------------- Ereignis ------------------------------------------
+
+      SPA   RRUE; // springe zu Requests zuruecksetzen
+
+NETWORK
+TITLE =Schritt 1
+//hier werden die Reuqests der M- Funktionen ueberwacht
+//
+//- bei M10/M11 wird in Schritt 2 verzweigt  ( geht bis Schritt 5)  -> in 6
+//- bei M22/23                  7 verzweigt  ( geht bis Schritt 10) -> in 6 
+//- bei M32/33                  11 verzweigt 
+//
+//
+//to do: MX_Achse_aktiv Bit fuer was?
+AX01: L     "MB_SKZ_RundachsAnf"; 
+      L     1; 
+      ==I   ; 
+      SPBN  AX02; 
+
+      CLR   ; 
+      =     "M_Achse4_klemmen"; 
+      =     "M_Achse5_klemmen"; 
+      =     "M_Achse6_klemmen"; 
+      =     "M_Achse4_loesen"; 
+      =     "M_Achse5_loesen"; 
+      =     "M_Achse6_loesen"; 
+      =     "M_Achse4_Ready"; 
+      =     "M_Achse5_Ready"; 
+      =     "M_Achse6_Ready"; 
+
+
+// --------------- Ereignis ------------------
+
+      U     "DB_DM_M_FUNKTION".MX_M[10]; 
+      O     "DB_DM_M_FUNKTION".MX_M[11]; 
+      SPBN  SC11; 
+      L     2; // bei m10/11 in Schritt 2
+      T     "MB_SKZ_RundachsAnf"; 
+      SPA   SC13; 
+
+SC11: U     "DB_DM_M_FUNKTION".MX_M[22]; 
+      O     "DB_DM_M_FUNKTION".MX_M[23]; 
+      SPBN  SC12; 
+      L     7; 
+      T     "MB_SKZ_RundachsAnf"; 
+      SPA   SC13; 
+
+SC12: U     "DB_DM_M_FUNKTION".MX_M[32]; 
+      O     "DB_DM_M_FUNKTION".MX_M[33]; 
+      SPBN  ENDE; 
+      L     11; 
+      T     "MB_SKZ_RundachsAnf"; 
+
+SC13: U     "M_Simulation_Aktiv"; // bei Simulation
+      SPB   READ; // direkt M-Readys setzen
+
+      SET   ; 
+      =     "M_RundAchse_aktiv"; // Achse aktiv Merker setzen
+      SPA   ENDE; 
+
+NETWORK
+TITLE =Schritt 2
+//Anfang M10/11 Reuqest
+//
+//Abfrage ob für M10/11 etwas zu tun ist
+AX02: L     "MB_SKZ_RundachsAnf"; 
+      L     2; 
+      ==I   ; 
+      SPBN  AX03; 
+
+// ------------------ Aktion ------------------
+
+
+// ----------------- Ereignis -----------------
+
+      L     "MB_M10_11_Achse"; // 4-te Achse angewaehlt
+      L     4; // Achstyp besitzt Klemmung (=3)
+      ==I   ; 
+      U(    ; 
+      U(    ; 
+      L     "MB_4Achs_Typ"; 
+      L     3; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     "MB_4Achs_Typ"; 
+      L     4; 
+      ==I   ; 
+      )     ; 
+      )     ; 
+      O(    ; // oder 
+      L     "MB_M10_11_Achse"; // 5-te Achse angewaehlt
+      L     5; // Achstyp besitzt Klemmung
+      ==I   ; 
+      U(    ; 
+      L     "MB_5Achs_Typ"; 
+      L     3; 
+      ==I   ; 
+      )     ; 
+      )     ; 
+
+      O(    ; // oder 
+      L     "MB_M10_11_Achse"; // 10-te Achse angewaehlt
+      L     6; // Achstyp besitzt Klemmung
+      ==I   ; 
+      U(    ; 
+      L     "MB_6Achs_Typ"; 
+      L     3; 
+      ==I   ; 
+      )     ; 
+      )     ; // Achstyp keine Klemmung oder keine Achse angewaehlt
+      SPBN  READ; // dann an Funktionen rückmelden
+
+      L     3; 
+      T     "MB_SKZ_RundachsAnf"; 
+      SPA   ENDE; 
+
+NETWORK
+TITLE =
+//- Auskodieren der Achsnummer un der Achsart, sowie ob Klemmung bereits geloest 
+//  (bei M11) bzw. bereits geklemmt (bei M10) (true --> M-fkt Ready setzen)
+//- Danach in Schritt 4 ( M11) bzw. 5 (M10)
+//
+AX03: L     "MB_SKZ_RundachsAnf"; 
+      L     3; 
+      ==I   ; 
+      SPBN  AX04; 
+
+// ---------------- Aktion --------------------
+
+// ---------------- Ereignis ------------------
+
+      U     "DB_DM_M_FUNKTION".MX_M[11]; // M11-Request
+      U(    ; // un Rund-Achse bereits geloest
+      L     "MB_M10_11_Achse"; 
+      L     4; 
+      ==I   ; 
+      U     "M_Achse4_geloest"; 
+      O(    ; 
+      L     "MB_M10_11_Achse"; 
+      L     5; 
+      ==I   ; 
+      U     "M_Achse5_geloest"; // 5-Achse bereits geloest
+      )     ; 
+      O(    ; 
+      L     "MB_M10_11_Achse"; 
+      L     6; 
+      ==I   ; 
+      U     "M_Achse6_geloest"; // 6-Achse bereits geloest
+      )     ; 
+      )     ; 
+//   UN    "M_Automatikbetrieb"
+//   UN    "M_Einzelsatz"
+      SPB   READ; // dann M-Readys setzen
+
+
+      U     "DB_DM_M_FUNKTION".MX_M[10]; // M10-Request
+      U(    ; 
+      L     "MB_M10_11_Achse"; 
+      L     4; 
+      ==I   ; 
+      UN    "M_Achse4_geloest"; // 4-Achse bereits geklemmt
+      O(    ; 
+      L     "MB_M10_11_Achse"; 
+      L     5; 
+      ==I   ; 
+      UN    "M_Achse5_geloest"; // 5-Achse bereits geklemmt
+      )     ; 
+      O(    ; 
+      L     "MB_M10_11_Achse"; 
+      L     6; 
+      ==I   ; 
+      UN    "M_Achse6_geloest"; // 6-Achse bereits geklemmt
+      )     ; 
+      )     ; 
+//   UN    "M_Automatikbetrieb"
+//   UN    "M_Einzelsatz"
+      SPB   READ; // dann M-Readys setzen
+
+      U     "DB_DM_M_FUNKTION".MX_M[10]; 
+      SPBN  SC31; 
+
+      L     5; // M10-Request --> in Schritt 5
+      SPA   SC32; 
+
+SC31: L     4; // M11-Request --> in Schritt 4
+
+SC32: T     "MB_SKZ_RundachsAnf"; 
+      SPA   ENDE; 
+
+NETWORK
+TITLE =Schritt 4 --> M11 - Request, Lösen der Rundachse
+//- richtigen Klemmung loesen Merker setzen
+//- dann in Schritt 6 
+AX04: L     "MB_SKZ_RundachsAnf"; 
+      L     4; 
+      ==I   ; 
+      SPBN  AX05; 
+
+// ----------------------- Aktion --------------------
+
+// je nach angewaehlter Achse --> Klemmung loesen setzen 
+
+      L     "MB_M10_11_Achse"; 
+      L     4; 
+      ==I   ; 
+      SPBN  SC41; 
+      SET   ; 
+      =     "M_Achse4_loesen"; 
+      S     "M_M11_aktiv"; 
+      SPA   SC43; 
+
+SC41: L     "MB_M10_11_Achse"; 
+      L     5; 
+      ==I   ; 
+      SPBN  SC42; 
+      SET   ; 
+      =     "M_Achse5_loesen"; 
+      SPA   SC43; 
+
+SC42: SET   ; 
+      =     "M_Achse6_loesen"; 
+
+// ---------------------- Ereignis ------------------
+
+SC43: L     6; // in Schritt 6
+      T     "MB_SKZ_RundachsAnf"; 
+      SPA   ENDE; 
+
+NETWORK
+TITLE =Schritt 5 - M10 Request, Klemmen der Rundachse
+
+AX05: L     "MB_SKZ_RundachsAnf"; 
+      L     5; 
+      ==I   ; 
+      SPBN  AX06; 
+
+// ----------------------- Aktion --------------------
+
+//  je nach angewaehlter Achse Klemmung klemmen setzen 
+
+      L     "MB_M10_11_Achse"; 
+      L     4; 
+      ==I   ; 
+      SPBN  SC51; 
+      SET   ; 
+      =     "M_Achse4_klemmen"; 
+      R     "M_M11_aktiv"; 
+      SPA   SC53; 
+
+SC51: L     "MB_M10_11_Achse"; 
+      L     5; 
+      ==I   ; 
+      SPBN  SC52; 
+      SET   ; 
+      =     "M_Achse5_klemmen"; 
+      SPA   SC53; 
+
+SC52: SET   ; 
+      =     "M_Achse6_klemmen"; 
+
+// ----------------------- Ereignis -------------------
+
+SC53: L     6; 
+      T     "MB_SKZ_RundachsAnf"; 
+      SPA   ENDE; 
+
+NETWORK
+TITLE =Schritt 6 -- Rueckmeldung der Achsen abfragen
+//Ende M10/11 Reuquest
+AX06: L     "MB_SKZ_RundachsAnf"; 
+      L     6; 
+      ==I   ; 
+      SPBN  AX07; 
+
+// ------------------------ Aktion -------------------
+
+
+// ------------------------ Ereignis -----------------
+
+      U     "M_Achse4_Ready"; // wenn Achse fertig mit Klemmen / Loesen
+      O     "M_Achse5_Ready"; 
+      O     "M_Achse6_Ready"; 
+      O     "M_AchseNCT_Ready"; 
+      SPBN  ENDE; 
+
+      SPA   READ; // dann M-Funktionen Ruekmelden
+
+NETWORK
+TITLE =Schritt 7 - Anfang M22/23 Request
+
+AX07: L     "MB_SKZ_RundachsAnf"; 
+      L     7; 
+      ==I   ; 
+      SPBN  AX08; 
+
+// ------------------------ Aktion -------------------
+
+
+// ------------------------ Ereignis -----------------
+
+      L     "MB_M22_23_Achse"; // 4-te Achse angewaehlt
+      L     4; // Achstyp besitzt Klemmung (=3)
+      ==I   ; 
+      U(    ; 
+      U(    ; 
+      L     "MB_4Achs_Typ"; 
+      L     3; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     "MB_4Achs_Typ"; 
+      L     4; 
+      ==I   ; 
+      )     ; 
+      )     ; 
+
+
+      O(    ; // oder 
+      L     "MB_M22_23_Achse"; // 5-te Achse angewaehlt
+      L     5; // Achstyp besitzt Klemmung
+      ==I   ; 
+      U(    ; 
+      L     "MB_5Achs_Typ"; 
+      L     3; 
+      ==I   ; 
+      )     ; 
+      )     ; 
+
+      O(    ; // oder 
+      L     "MB_M22_23_Achse"; // 6-te Achse angewaehlt
+      L     6; // Achstyp besitzt Klemmung
+      ==I   ; 
+      U(    ; 
+      L     "MB_6Achs_Typ"; 
+      L     3; 
+      ==I   ; 
+      )     ; 
+      )     ; // Achstyp keine Klemmung oder keine Achse angewaehlt
+      SPBN  READ; // dann an Funktionen rückmelden
+
+      L     8; 
+      T     "MB_SKZ_RundachsAnf"; 
+      SPA   ENDE; 
+
+NETWORK
+TITLE =Schritt 8
+//- Auskodieren der Achsnummer un der Achsart, sowie ob Klemmung bereits geloest 
+//  (bei M23) bzw. bereits geklemmt (bei M22) (true --> M-fkt Ready setzen)
+//- Danach in Schritt 9 ( M22) bzw. 10 (M23)
+//
+AX08: L     "MB_SKZ_RundachsAnf"; 
+      L     8; 
+      ==I   ; 
+      SPBN  AX09; 
+
+// ---------------- Aktion --------------------
+
+// ---------------- Ereignis ------------------
+
+      U     "DB_DM_M_FUNKTION".MX_M[23]; // M23-Request
+      SPB   n10a; 
+
+      U     "DB_DM_M_FUNKTION".MX_M[22]; // m22-Request
+      U(    ; 
+      L     "MB_M22_23_Achse"; 
+      L     4; 
+      ==I   ; 
+      UN    "M_Achse4_geloest"; // 4-Achse bereits geklemmt
+      O(    ; 
+      L     "MB_M22_23_Achse"; 
+      L     5; 
+      ==I   ; 
+      UN    "M_Achse5_geloest"; // 5-Achse bereits geklemmt
+      )     ; 
+      O(    ; 
+      L     "MB_M22_23_Achse"; 
+      L     6; 
+      ==I   ; 
+      UN    "M_Achse6_geloest"; // 6-Achse bereits geklemmt
+      )     ; 
+      O(    ; 
+      L     "MB_M22_23_Achse"; 
+      L     11; 
+      ==I   ; 
+      U     "M_AchseNCT_geloest"; // NC-Teilapperat bereits geloest
+      )     ; 
+      )     ; 
+//   UN    "M_Automatikbetrieb"
+//   UN    "M_Einzelsatz"
+      SPB   READ; // dann M-Readys setzen
+
+      U     "DB_DM_M_FUNKTION".MX_M[23]; 
+      SPBN  SC81; 
+
+n10a: L     9; // M23-Request --> in Schritt 9
+      SPA   SC82; 
+
+SC81: L     10; // M22-Request --> in Schritt 10
+
+SC82: T     "MB_SKZ_RundachsAnf"; 
+      SPA   ENDE; 
+
+NETWORK
+TITLE =Schritt 9 --> M23 - Request / Klemmung auf
+//- richtige Klemmung loesen Merker setzen
+//- dann in Schritt 11 
+AX09: L     "MB_SKZ_RundachsAnf"; 
+      L     9; 
+      ==I   ; 
+      SPBN  AX10; 
+
+// ----------------------- Aktion --------------------
+
+// je nach angewaehlter Achse --> Klemmung loesen setzen 
+
+      L     "MB_M22_23_Achse"; 
+      L     4; 
+      ==I   ; 
+      SPBN  SC91; 
+      SET   ; 
+      =     "M_Achse4_loesen"; 
+      SPA   SC93; 
+
+SC91: L     "MB_M22_23_Achse"; 
+      L     5; 
+      ==I   ; 
+      SPBN  SC92; 
+      SET   ; 
+      =     "M_Achse5_loesen"; 
+      SPA   SC93; 
+
+SC92: L     "MB_M22_23_Achse"; 
+      L     11; 
+      ==I   ; 
+      SPBN  SC93; 
+      SET   ; 
+      =     "M_AchseNCT_loesen"; // "M_AchseNCT_loesen"
+      CLR   ; 
+      =     "M_AchseNCT_klemmen"; // "M_AchseNCT_klemmen"
+      SPA   SC94; 
+
+SC93: SET   ; 
+      =     "M_Achse6_loesen"; 
+
+
+// ---------------------- Ereignis ------------------
+
+SC94: L     6; // in Schritt 6
+      T     "MB_SKZ_RundachsAnf"; 
+      SPA   ENDE; 
+
+NETWORK
+TITLE =Schritt 10 M22 / Klemmung schliessen
+
+AX10: L     "MB_SKZ_RundachsAnf"; 
+      L     10; 
+      ==I   ; 
+      SPBN  AX11; 
+
+// ----------------------- Aktion --------------------
+
+//  je nach angewaehlter Achse Klemmung klemmen setzen 
+
+      L     "MB_M22_23_Achse"; 
+      L     4; 
+      ==I   ; 
+      SPBN  A101; 
+      SET   ; 
+      =     "M_Achse4_klemmen"; 
+      SPA   E101; 
+
+A101: L     "MB_M22_23_Achse"; 
+      L     5; 
+      ==I   ; 
+      SPBN  A102; 
+      SET   ; 
+      =     "M_Achse5_klemmen"; 
+      SPA   E101; 
+
+A102: L     "MB_M22_23_Achse"; 
+      L     11; 
+      ==I   ; 
+      SPBN  A103; 
+      SET   ; 
+      =     "M_AchseNCT_klemmen"; 
+      CLR   ; 
+      =     "M_AchseNCT_loesen"; 
+      SPA   E101; 
+
+A103: SET   ; 
+      =     "M_Achse6_klemmen"; 
+
+// ----------------------- Ereignis -------------------
+
+E101: L     6; // in Schritt 6
+      T     "MB_SKZ_RundachsAnf"; 
+      SPA   ENDE; 
+
+NETWORK
+TITLE =Schritt 11
+//Anfang M32/33 Reuqest
+AX11: L     "MB_SKZ_RundachsAnf"; 
+      L     11; 
+      ==I   ; 
+      SPBN  AX12; 
+
+// ---------------------------- Aktion ---------------------
+
+
+// ---------------------------- Ereignis -------------------
+
+      L     "MB_M10_11_Achse"; // 4-te Achse angewaehlt
+      L     4; // Achstyp besitzt Klemmung (=3)
+      ==I   ; 
+      U(    ; 
+      U(    ; 
+      L     "MB_4Achs_Typ"; 
+      L     3; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     "MB_4Achs_Typ"; 
+      L     4; 
+      ==I   ; 
+      )     ; 
+      )     ; 
+      O(    ; // oder 
+      L     "MB_M32_33_Achse"; // 5-te Achse angewaehlt
+      L     5; // Achstyp besitzt Klemmung
+      ==I   ; 
+      U(    ; 
+      L     "MB_5Achs_Typ"; 
+      L     3; 
+      ==I   ; 
+      )     ; 
+      )     ; 
+
+      O(    ; // oder 
+      L     "MB_M32_33_Achse"; // 6-te Achse angewaehlt
+      L     6; // Achstyp besitzt Klemmung
+      ==I   ; 
+      U(    ; 
+      L     "MB_6Achs_Typ"; 
+      L     3; 
+      ==I   ; 
+      )     ; 
+      )     ; // Achstyp keine Klemmung oder keine Achse angewaehlt
+      SPBN  READ; // dann an Funktionen rückmelden
+
+      L     12; 
+      T     "MB_SKZ_RundachsAnf"; 
+      SPA   ENDE; 
+NETWORK
+TITLE =Schritt 12
+//- Auskodieren der Achsnummer un der Achsart, sowie ob Klemmung bereits geloest 
+//  (bei M33) bzw. bereits geklemmt (bei M32) (true --> M-fkt Ready setzen)
+//- Danach in Schritt 13 ( M33) bzw. 14 (M32)
+//
+AX12: L     "MB_SKZ_RundachsAnf"; 
+      L     12; 
+      ==I   ; 
+      SPBN  AX13; 
+
+// ---------------- Aktion --------------------
+
+// ---------------- Ereignis ------------------
+
+      U     "DB_DM_M_FUNKTION".MX_M[33]; // M33-Request
+      U(    ; 
+      L     "MB_M32_33_Achse"; 
+      L     4; 
+      ==I   ; 
+      U     "M_Achse4_geloest"; // 4-Achse bereits geloest
+      O(    ; 
+      L     "MB_M32_33_Achse"; 
+      L     5; 
+      ==I   ; 
+      U     "M_Achse5_geloest"; // 5-Achse bereits geloest
+      )     ; 
+      O(    ; 
+      L     "MB_M32_33_Achse"; 
+      L     6; 
+      ==I   ; 
+      U     "M_Achse6_geloest"; // 6-Achse bereits geloest
+      )     ; 
+      O(    ; 
+      L     "MB_M32_33_Achse"; 
+      L     11; 
+      ==I   ; 
+      U     "M_AchseNCT_geloest"; // NC-Teilapperat bereits geloest
+      )     ; 
+      )     ; 
+//   UN    "M_Automatikbetrieb"
+//   UN    "M_Einzelsatz"
+      SPB   READ; // dann M-Readys setzen
+
+
+      U     "DB_DM_M_FUNKTION".MX_M[32]; // m32-Request
+      U(    ; 
+      L     "MB_M32_33_Achse"; 
+      L     4; 
+      ==I   ; 
+      UN    "M_Achse4_geloest"; // 4-Achse bereits geklemmt
+      O(    ; 
+      L     "MB_M32_33_Achse"; 
+      L     5; 
+      ==I   ; 
+      UN    "M_Achse5_geloest"; // 5-Achse bereits geklemmt
+      )     ; 
+      O(    ; 
+      L     "MB_M32_33_Achse"; 
+      L     6; 
+      ==I   ; 
+      UN    "M_Achse6_geloest"; // 6-Achse bereits geklemmt
+      )     ; 
+      )     ; 
+//   UN    "M_Automatikbetrieb"
+//   UN    "M_Einzelsatz"
+      SPB   READ; // dann M-Readys setzen
+
+      U     "DB_DM_M_FUNKTION".MX_M[33]; 
+      SPBN  E121; 
+
+      L     13; // M33-Request --> in Schritt 13
+      SPA   E122; 
+
+E121: L     14; // M32-Request --> in Schritt 14
+
+E122: T     "MB_SKZ_RundachsAnf"; 
+      SPA   ENDE; 
+
+NETWORK
+TITLE =Schritt 13 --> M33 - Request
+//- richtigen Klemmung loesen Merker setzen
+//- dann in Schritt 6 
+AX13: L     "MB_SKZ_RundachsAnf"; 
+      L     13; 
+      ==I   ; 
+      SPBN  AX14; 
+
+// ----------------------- Aktion --------------------
+
+// je nach angewaehlter Achse --> Klemmung loesen setzen 
+
+      L     "MB_M32_33_Achse"; 
+      L     4; 
+      ==I   ; 
+      SPBN  A131; 
+      SET   ; 
+      =     "M_Achse4_loesen"; 
+      SPA   E131; 
+
+A131: L     "MB_M32_33_Achse"; 
+      L     5; 
+      ==I   ; 
+      SPBN  A132; 
+      SET   ; 
+      =     "M_Achse5_loesen"; 
+      SPA   E131; 
+
+A132: L     "MB_M32_33_Achse"; 
+      L     11; 
+      ==I   ; 
+      SPBN  A133; 
+      SET   ; 
+      =     "M_AchseNCT_loesen"; 
+      CLR   ; 
+      =     "M_AchseNCT_klemmen"; 
+      SPA   E131; 
+
+A133: SET   ; 
+      =     "M_Achse6_loesen"; 
+
+// ---------------------- Ereignis ------------------
+
+E131: L     6; // in Schritt 6
+      T     "MB_SKZ_RundachsAnf"; 
+      SPA   ENDE; 
+
+
+NETWORK
+TITLE =Schritt 14 - M32 Request
+
+AX14: L     "MB_SKZ_RundachsAnf"; 
+      L     14; 
+      ==I   ; 
+      SPBN  AX15; 
+
+// ----------------------- Aktion --------------------
+
+//  je nach angewaehlter Achse Klemmung klemmen setzen 
+
+      L     "MB_M32_33_Achse"; 
+      L     4; 
+      ==I   ; 
+      SPBN  A141; 
+      SET   ; 
+      =     "M_Achse4_klemmen"; 
+      SPA   E141; 
+
+A141: L     "MB_M32_33_Achse"; 
+      L     5; 
+      ==I   ; 
+      SPBN  A142; 
+      SET   ; 
+      =     "M_Achse5_klemmen"; 
+      SPA   E141; 
+
+A142: L     "MB_M32_33_Achse"; 
+      L     11; 
+      ==I   ; 
+      SPBN  A143; 
+      SET   ; 
+      =     "M_AchseNCT_klemmen"; 
+      CLR   ; 
+      =     "M_AchseNCT_loesen"; 
+      SPA   E141; 
+
+A143: SET   ; 
+      =     "M_Achse6_klemmen"; 
+
+// ----------------------- Ereignis -------------------
+
+E141: L     6; 
+      T     "MB_SKZ_RundachsAnf"; 
+      SPA   ENDE; 
+
+
+NETWORK
+TITLE =Schritt 15
+//to do: ENDE - Fertigstellen
+AX15: L     "MB_SKZ_RundachsAnf"; 
+      L     15; 
+      ==I   ; 
+      SPBN  ENDE; 
+
+// ------------------- Aktion ---------------------
+
+// ------------------- Ereignis -------------------
+
+
+// --- M-Fkten quittieren
+
+READ: U     "DB_DM_M_FUNKTION".MX_M[10]; 
+      S     "DB_DM_M_FUNKTION".MX_Quitt[10]; 
+
+      U     "DB_DM_M_FUNKTION".MX_M[11]; 
+      S     "DB_DM_M_FUNKTION".MX_Quitt[11]; 
+
+      U     "DB_DM_M_FUNKTION".MX_M[22]; 
+      S     "DB_DM_M_FUNKTION".MX_Quitt[22]; 
+
+      U     "DB_DM_M_FUNKTION".MX_M[23]; 
+      S     "DB_DM_M_FUNKTION".MX_Quitt[23]; 
+
+      U     "DB_DM_M_FUNKTION".MX_M[32]; 
+      S     "DB_DM_M_FUNKTION".MX_Quitt[32]; 
+
+      U     "DB_DM_M_FUNKTION".MX_M[33]; 
+      S     "DB_DM_M_FUNKTION".MX_Quitt[33]; 
+
+
+// --- hier werden die Requests zurueckgesetzt
+
+RRUE: CLR   ; 
+      =     "DB_DM_M_FUNKTION".MX_M[10]; 
+      =     "DB_DM_M_FUNKTION".MX_M[11]; 
+      =     "DB_DM_M_FUNKTION".MX_M[22]; 
+      =     "DB_DM_M_FUNKTION".MX_M[23]; 
+      =     "DB_DM_M_FUNKTION".MX_M[32]; 
+      =     "DB_DM_M_FUNKTION".MX_M[33]; 
+
+      =     "M_Achse4_Ready"; 
+      =     "M_Achse5_Ready"; 
+      =     "M_Achse6_Ready"; 
+      =     "M_RundAchse_aktiv"; 
+
+      L     1; // skz auf 1
+      T     "MB_SKZ_RundachsAnf"; 
+
+ENDE: L     "MB_SKZ_RundachsAnf"; 
+      L     1; 
+      <>I   ; 
+      =     "MX_Rundachsanf_aktiv"; 
+END_FUNCTION
+

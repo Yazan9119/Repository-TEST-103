@@ -1,0 +1,62 @@
+DATA_BLOCK "DI_FM_NC"
+TITLE =
+VERSION : 0.0
+
+"FB_NC_Fehler_Dekoder"
+BEGIN
+   BEDIENUNG := DW#16#0; 
+   FB_LESEN.Req := FALSE; 
+   FB_LESEN.NumVar := 0; 
+   FB_LESEN.Unit1 := B#16#0; 
+   FB_LESEN.Column1 := W#16#0; 
+   FB_LESEN.Line1 := W#16#0; 
+   FB_LESEN.Unit2 := B#16#0; 
+   FB_LESEN.Column2 := W#16#0; 
+   FB_LESEN.Line2 := W#16#0; 
+   FB_LESEN.Unit3 := B#16#0; 
+   FB_LESEN.Column3 := W#16#0; 
+   FB_LESEN.Line3 := W#16#0; 
+   FB_LESEN.Unit4 := B#16#0; 
+   FB_LESEN.Column4 := W#16#0; 
+   FB_LESEN.Line4 := W#16#0; 
+   FB_LESEN.Unit5 := B#16#0; 
+   FB_LESEN.Column5 := W#16#0; 
+   FB_LESEN.Line5 := W#16#0; 
+   FB_LESEN.Unit6 := B#16#0; 
+   FB_LESEN.Column6 := W#16#0; 
+   FB_LESEN.Line6 := W#16#0; 
+   FB_LESEN.Unit7 := B#16#0; 
+   FB_LESEN.Column7 := W#16#0; 
+   FB_LESEN.Line7 := W#16#0; 
+   FB_LESEN.Unit8 := B#16#0; 
+   FB_LESEN.Column8 := W#16#0; 
+   FB_LESEN.Line8 := W#16#0; 
+   FB_LESEN.Error := FALSE; 
+   FB_LESEN.NDR := FALSE; 
+   FB_LESEN.State := W#16#0; 
+   FB_LESEN.ident := B#16#0; 
+   FB_LESEN.regist := FALSE; 
+   FB_LESEN.flanke := FALSE; 
+   FB_LESEN.run := FALSE; 
+   FB_LESEN.progtest := FALSE; 
+   FB_LESEN.err_cls_cod := W#16#0; 
+   FB_LESEN.err_stat := W#16#0; 
+   FB_LESEN.PError := DW#16#0; 
+   FB_LESEN.PRD1 := DW#16#0; 
+   FB_LESEN.Pident := DW#16#0; 
+   NC_FLM_FEHL := FALSE; 
+   NC_FEHL := FALSE; 
+   FB2_ERROR := FALSE; 
+   FB_NDR := FALSE; 
+   NC_FEHL_PI := FALSE; 
+   FB_STATE := W#16#0; 
+   NC_fehler_1 := L#0; 
+   NC_fehler_2 := L#0; 
+   NC_fehler_3 := L#0; 
+   NC_fehler_4 := L#0; 
+   NC_fehler_5 := L#0; 
+   NC_fehler_6 := L#0; 
+   NC_fehler_7 := L#0; 
+   NC_fehler_8 := L#0; 
+END_DATA_BLOCK
+

@@ -1,0 +1,2370 @@
+FUNCTION_BLOCK "FB_WZV_Komm"
+TITLE =
+//$Revision: 1.4 $
+//$Date: 2007/08/23 12:35:52CEST $
+//$Author: sth $
+//
+//***************** WZV-Schnittstelle *************************
+{ S7_language := '7(1) Deutsch (Deutschland)  26.03.2008  08:00:15' }
+VERSION : 2.6
+
+
+VAR_INPUT
+  K_Code : INT ;	
+  Req : BOOL ;	
+END_VAR
+VAR_OUTPUT
+  Error : BOOL ;	
+  Done : BOOL ;	
+  State : DWORD ;	
+  Active : BOOL ;	
+END_VAR
+VAR
+  locinstFB2 : "FB_SIEM_GET";	
+  locinstFB3 : "FB_SIEM_PUT";	
+  locinstFB4 : "FB_SIEM_PI";	
+  ErrorFB2 : BOOL ;	
+  NDRFB2 : BOOL ;	
+  ErrorFB3 : BOOL ;	
+  DoneFB3 : BOOL ;	
+  ErrorFB4 : BOOL ;	
+  DoneFB4 : BOOL ;	
+  numParams_read : BOOL ;	// Variable numxxparams lesen nach Neustart 
+  numParams_Error : BOOL ;	// Fehler bei Variable numxxparams lesen 
+  numParams_ok : BOOL ;	// Variable numxxparams gelesen ohne Fehler  
+  nckVersionV5 : BOOL ;	
+  Sem0A : BOOL ;	// Semaphore=0 aktivieren
+  Sem0E : BOOL ;	// Semaphore=0 beendet
+  Sem1E : BOOL ;	// Semaphore=1 beendet
+  SemF : BOOL ;	// Semaphore=0 setzen da Fehler FB2/3/4
+  SemF0 : BOOL ;	// Semaphore=0 und Aussprung zu FEH0	
+  StateFB2 : WORD ;	
+  StateFB3 : WORD ;	
+  StateFB4 : WORD ;	
+  StateFB2_3_4_gesp : WORD ;	
+  StateFB94gespeichert : DWORD ;	
+  SR1 : BYTE ;	
+  SR2 : BYTE ;	
+  SR3 : BYTE ;	
+  SR4 : BYTE ;	
+  AktuelleSchneide : INT ;	
+  AnzahlDurchlaeufe : INT ;	
+  Ziel_Adr : INT ;	
+  Offset_Ziel : INT ;	
+  Offset_Column : INT ;	
+  Offset_Line : INT ;	
+  NCVAR_Adr : INT ;	
+  Column_Nr : INT ;	
+  Line_Nr : INT ;	
+  Datentyp : INT ;	
+  NumVarFB2 : INT ;	
+  NumVar : INT ;	
+  Magazin_Status : INT ;	
+  Unit : INT ;	
+  Unit1 : BYTE ;	
+  Unit2 : BYTE ;	
+  Unit3 : BYTE ;	
+  Unit4 : BYTE ;	
+  Unit5 : BYTE ;	
+  Unit6 : BYTE ;	
+  Unit7 : BYTE ;	
+  Unit8 : BYTE ;	
+  Line1 : WORD ;	
+  Line2 : WORD ;	
+  Line3 : WORD ;	
+  Line4 : WORD ;	
+  Line5 : WORD ;	
+  Line6 : WORD ;	
+  Line7 : WORD ;	
+  Line8 : WORD ;	
+  Column1 : WORD ;	
+  Column2 : WORD ;	
+  Column3 : WORD ;	
+  Column4 : WORD ;	
+  Column5 : WORD ;	
+  Column6 : WORD ;	
+  Column7 : WORD ;	
+  Column8 : WORD ;	
+  WVar1 : WORD ;	
+  WVar2 : WORD ;	
+  WVar3 : WORD ;	
+  WVar4 : WORD ;	
+  WVar5 : WORD ;	// Daten ab Version 2.x (SW 5)
+  MDBit : ARRAY  [0 .. 15 ] OF BOOL ;	
+  MDWord : ARRAY  [0 .. 8 ] OF WORD ;	
+  nckVersion : REAL ;	
+  maskToolManagement : DINT ;	
+  maxnumCuttEdges_Tool : WORD  := W#16#9;	
+  numCuttEdgeParams : WORD ;	
+  numCuttEdgeParams_ts : WORD ;	
+  numCuttEdgeParams_tu : WORD ;	
+  numCuttEdgeParamstus : WORD ;	
+  numMagPlaceParams : WORD ;	
+  numToolParams_tu : WORD ;	
+  StateFB2_3_4_Bel : WORD ;	
+  StateBel : WORD ;	
+  StateSem : WORD ;	
+  SemZaehler : INT ;	
+  SemFcNo : WORD ;	// Semaphore Funktions-Nr
+  SemValue : WORD ;	// Semaphore Wert
+  AdrVerschlUeberwachung : INT  := 1984;	
+  DNummer : INT  := 1;	// Daten ab Version 2.3
+  WZpr : BOOL ;	
+  DuEn : BOOL ;	// HM Duplo-NrBereich beendet (2.3) 		 	  
+  Dvor : BOOL ;	// Duplo-Nummer vorbesetzt
+  DPV : BOOL ;	// $TC_DPV-Daten vorhanden
+  SR5 : BYTE ;	
+  DuploNrTMCRTO : WORD ;	
+  DuploNrTMGETT : WORD ;	
+  resultNrTMGETT : WORD ;	
+  TMGETT : STRUCT 	
+   PIName : STRING  [10 ] := '_N_TMGETT';	
+   p01 : BYTE  := B#16#3;	//Bereich / Einheit
+   p02 : CHAR  := '4';	
+   p11 : BYTE  := B#16#20;	//Werkzeugbezeichner, Leerzeichen ergaenzen
+   p12 : BYTE  := B#16#13;	//String Kennung !!!
+   p21 : BYTE  := B#16#5;	//NRDuplo
+   p22 : BYTE  := B#16#5;	//Int aus WORD Spezifikation
+  END_STRUCT ;	
+END_VAR
+VAR_TEMP
+  adrNCVAR : ANY ;	
+  adrSD_RD_1 : ANY ;	
+  adrSD_RD_2 : ANY ;	
+  adrSD_RD_3 : ANY ;	
+  adrSD_RD_4 : ANY ;	
+  adrSD_RD_5 : ANY ;	
+  adrSD_RD_6 : ANY ;	
+  adrSD_RD_7 : ANY ;	
+  adrSD_RD_8 : ANY ;	
+  tmp_Ziel_Adr : INT ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =
+
+      UN    "m_neustart"; // "DB_SIEM_SYSTEM4".bits[8]
+      SPB   ANF; // Neustart ? Nein ->
+      CALL #locinstFB2 (
+           Req                      := FALSE);
+
+      CALL #locinstFB3 (
+           Req                      := FALSE);
+
+      CALL #locinstFB4 (
+           Req                      := FALSE);
+
+      SET   ; 
+      R     #numParams_Error; 
+      S     #numParams_read; 
+      R     #numParams_ok; 
+      R     #nckVersionV5; 
+      L     9; 
+      T     #maxnumCuttEdges_Tool; 
+      SPA   LOEP; 
+ANF:  UN    #numParams_read; 
+      SPB   ANF2; 
+      U     #nckVersionV5; 
+      SPB   PSW5; 
+      CALL #locinstFB2 (// -- Anzahl Parameter eines Magazinplatz lesen --
+           Req                      := TRUE,// Variable lesen
+           NumVar                   := 7,// Anzahl der zu lesenden Variablen
+           Addr1                    := "DB_WZV_NCVAR".N_Y_nckVersion_32,
+           Addr2                    := "DB_WZV_NCVAR".N_Y_numCuttEdgeParams_11,
+           Addr3                    := "DB_WZV_NCVAR".N_Y_numCuttEdgeParams_ts,
+           Addr4                    := "DB_WZV_NCVAR".N_Y_numCuttEdgeParams_tu,
+           Addr5                    := "DB_WZV_NCVAR".N_Y_numCuttEdgeParamstus,
+           Addr6                    := "DB_WZV_NCVAR".N_Y_numToolParams_tu_24,
+           Addr7                    := "DB_WZV_NCVAR".N_Y_numMagPlaceParams_27,
+           Error                    := #ErrorFB2,// NC_VAR lesen beendet mit Fehler
+           NDR                      := #NDRFB2,// NC_VAR lesen beendet ohne Fehler
+           State                    := #StateFB2,// Fehler-Nummer bei Error = 1
+           RD1                      := #nckVersion,
+           RD2                      := #numCuttEdgeParams,
+           RD3                      := #numCuttEdgeParams_ts,
+           RD4                      := #numCuttEdgeParams_tu,
+           RD5                      := #numCuttEdgeParamstus,
+           RD6                      := #numToolParams_tu,
+           RD7                      := #numMagPlaceParams);
+
+EFB2: UN    #NDRFB2; // Lesen beendet ohne Fehler 
+      UN    #ErrorFB2; // Lesen beendet mit Fehler
+      SPB   ENDE; // Lesen beendet ? Nein ->
+      CALL #locinstFB2 (// FB2 freigeben
+           Req                      := FALSE);
+
+      U     #ErrorFB2; 
+      SPB   FAnl; 
+      U     #nckVersionV5; 
+      SPB   EAnl; // Daten V5 gelesen ? ->
+      L     #nckVersion; 
+      L     1.000000e+004; 
+      /R    ; 
+      L     1.700000e+001; 
+      >=R   ; 
+      =     #nckVersionV5; 
+      SPB   ENDE; 
+EAnl: R     #numParams_read; 
+      S     #numParams_ok; 
+      U     #MDBit[1]; 
+      SPBN  ENDE; 
+      L     #numToolParams_tu; 
+      T     "DB_WZV_DV".Anzahl_CC_T_Par; 
+      L     #numCuttEdgeParams_tu; 
+      T     "DB_WZV_DV".Anzahl_CC_D_Par; 
+      L     #numCuttEdgeParamstus; 
+      T     "DB_WZV_DV".Anzahl_CC_M_Par; 
+      SPA   ENDE; // Lesen beendet ohne Fehler  ->
+FAnl: L     6; 
+      L     #StateFB2; 
+      ==I   ; 
+      SPB   ENDE; // FIFO voll -> Lesen wiederholen 
+      S     #numParams_Error; 
+      R     #numParams_read; 
+      T     #StateFB2_3_4_gesp; // Fehlernummer speichern
+      SPA   ENDE; 
+PSW5: CALL #locinstFB2 (// -- Anzahl Parameter eines Magazinplatz lesen --
+           Req                      := TRUE,// Variable lesen
+           NumVar                   := 2,// Anzahl der zu lesenden Variablen
+           Addr1                    := "DB_WZV_NCVAR".N_Y_maskToolManagement,
+           Addr2                    := "DB_WZV_NCVAR".N_Y_maxnumCuttEdges_Tool,
+           Error                    := #ErrorFB2,// NC_VAR lesen beendet mit Fehler
+           NDR                      := #NDRFB2,// NC_VAR lesen beendet ohne Fehler
+           State                    := #StateFB2,// Fehler-Nummer bei Error = 1
+           RD1                      := #maskToolManagement,
+           RD2                      := #maxnumCuttEdges_Tool);
+
+      SPA   EFB2; 
+ANF2: U     #Req; 
+      SPB   REQT; 
+LOEP: R     #Done; // Ausgangsparameter Done nur 1 PLC-Zyklus        
+      R     #Error; // Ausgangsparameter Error nur 1 PLC-Zyklus
+      R     #Active; 
+      L     DW#16#0; //Fehler-Nr = 0
+      T     #State; 
+      SPA   ENDE; 
+REQT: U     #Done; 
+      O     #Error; 
+      SPB   ENDE; // Abbruch wenn Req nicht Null nach Ende
+      U     #Active; 
+      SPB   KC_A; 
+      R     #Done; 
+      R     #Error; 
+      R     #WZpr; 
+      L     DW#16#0; 
+      T     #State; 
+      T     #SR1; 
+      T     #SR2; 
+      T     #SR3; 
+      T     #SR4; 
+      T     #SR5; 
+      T     #AnzahlDurchlaeufe; 
+//-----------------------------------------
+// Überprüfung NC-Variable gelesen
+      L     W#16#46; 
+      U     #numParams_Error; 
+      SPB   FEHL; // Fehler-Nr --> 46 Fehler bei NC-Var. lesen 
+      L     0; 
+      T     #StateFB2_3_4_gesp; 
+      L     W#16#45; 
+      UN    #numParams_ok; 
+      SPB   FEHL; // Fehler-Nr --> 45 Fehler NC-Var. nicht gelesen  
+//-----------------------------------------
+// Überpruefung des K-Codes (K-Code<0 oder >20)
+      L     #K_Code; 
+      L     0; 
+      <I    ; 
+      L     W#16#10; // Fehler-Nr --> 10 negativer K-Code
+      SPB   FEHL; 
+      L     #K_Code; 
+      L     20; 
+      >I    ; 
+      L     W#16#20; // Fehler-Nr --> 20 K-Code größer als 20
+      SPB   FEHL; 
+      S     #Active; 
+      R     #Sem0A; 
+      R     #Sem0E; 
+      R     #Sem1E; 
+      R     #SemF; 
+      R     #SemF0; 
+      L     "DB_WZV_DV".Duplo_Nummer; 
+      T     #DuploNrTMCRTO; 
+      L     0; 
+      L     #K_Code; 
+      ==I   ; 
+      SPB   WZPr; 
+      L     2; 
+      <>I   ; 
+      SPB   KC_A; 
+WZPr: U     #MDBit[4]; 
+      =     #WZpr; 
+      R     #DuEn; 
+      R     #Dvor; 
+      U     #MDBit[4]; 
+      U     #MDBit[5]; 
+      U(    ; 
+      L     "DB_WZV_DV".Duplo_Nummer; 
+      L     0; 
+      <>I   ; 
+      )     ; 
+      R     #WZpr; 
+      SPA   KC_A; 
+//-----------------------------------------
+// Ausweten des K_Codes
+KC_A: L     #K_Code; 
+      T     #SR1; 
+      L     #SR1; 
+      SPL   S100; 
+      SPA   KC00; // Beladen mit und Werkzeug anlegen 
+      SPA   KC01; // Beladen mit WZ aus WZ-Liste
+      SPA   KC02; // Werkzeug anlegen WZ-Daten schreiben
+      SPA   KC03; // Schreiben der WZ-Daten
+      SPA   KC04; // Leerplatzsuche für WZ in Zwischenspeicher
+      SPA   KC05; // Reserve
+      SPA   KC06; // Reserve
+      SPA   KC07; // Reserve
+      SPA   KC08; // Reserve
+      SPA   KC09; // Reserve
+      SPA   KC10; // Entladen von Magazinplatz mit WZ löschen
+      SPA   KC11; // Entladen von Magazinplatz ohne WZ löschen
+      SPA   KC12; // Entladen ohne WZ-Daten bereitstellen mit WZ löschen
+      SPA   KC13; // Entladen ohne WZ-Daten bereitstellen ohne WZ löschen
+      SPA   KC14; // WZ-Daten lesen
+      SPA   KC15; // WZ löschen 
+      SPA   KC16; // Reserve
+      SPA   KC17; // Reserve
+      SPA   KC18; // Reserve
+      SPA   KC19; // Reserve
+      SPA   KC20; // interne T-Nummer lesen
+S100: L     W#16#100; // Fehler-Nr --> 100
+      SPA   FEHL; 
+//-----------------------------------------
+// Kommandocode 0
+// Beladen mit Leerplatzsuche
+KC00: L     #SR2; 
+      SPL   S200; 
+      SPA   SR00; // WZ Anlegen PI-TMCRTO
+      SPA   SR01; // erzeugte WZV-TNummer lesen
+      SPA   SR02; // Werkzeugschneiden anlegen
+      SPA   SR03; // WZ-Daten schreiben
+      SPA   SR04; // Leerplatz suchen PI-TMFDPL
+      SPA   SR05; // Rückgabeparameter PI-TMFDPL lesen
+      SPA   SR06; // Werkzeug beladen PI-TMMVTL
+      SPA   SR11; // Magazin-Status abfragen
+      SPA   SR07; // ENDE
+      SPA   SR12; // Werkzeug löschen bei Fehler
+      SPA   FBel; // Fehler beim Beladen    
+S200: L     W#16#200; // Fehler-Nr --> 200
+      SPA   FEHL; 
+
+//-----------------------------------------
+// Kommandocode 1
+// Beladen mit WZ aus WZ-Liste
+KC01: L     #SR2; 
+      SPL   S201; 
+      SPA   SR04; // Leerplatz suchen PI-TMFDPL
+      SPA   SR05; // Rückgabeparameter PI-TMFDPL lesen
+      SPA   SR06; // Werkzeug beladen PI-TMMVTL
+      SPA   SR11; // Magazin-Status abfragen
+      SPA   SR07; // ENDE
+S201: L     W#16#201; // Fehler-Nr --> 201
+      SPA   FEHL; 
+
+//-----------------------------------------
+// Kommandocode 2
+// WZ anlegen und WZ-Daten schreiben
+KC02: L     #SR2; 
+      SPL   S202; 
+      SPA   SR00; // WZ Anlegen PI-TMCRTO
+      SPA   SR01; // erzeugte WZV-TNummer lesen
+      SPA   SR02; // Werkzeugschneiden anlegen
+      SPA   SR03; // WZ-Daten schreiben
+      SPA   SR07; // ENDE
+      SPA   SR12; // Werkzeug löschen bei Fehler
+      SPA   FBel; // Fehler beim Beladen    
+S202: L     W#16#202; // Fehler-Nr --> 202
+      SPA   FEHL; 
+
+//-----------------------------------------
+// Kommandocode 3
+// WZ anlegen WZ-DAten schreiben
+KC03: L     #SR2; 
+      SPL   S203; 
+      SPA   SR08; // WZ-Nummer des WZ's auf PlatzNr n im MagazinNr m lesen
+      SPA   SR14; // Anzahl Schneiden eines WZ lesen
+      SPA   SR03; // WZ-Daten schreiben
+      SPA   SR07; // ENDE
+S203: L     W#16#203; // Fehler-Nr --> 203
+      SPA   FEHL; 
+
+//-----------------------------------------
+// Kommandocode 4
+// Schreiben der WZ-Daten
+KC04: L     #SR2; 
+      SPL   S204; 
+      SPA   SR09; // WZ-Nummer lesen
+      SPA   SR04; // Leerplatz suchen PI-TMFDPL
+      SPA   SR05; // Rückgabeparameter PI-TMFDPL lesen
+      SPA   SR07; // ENDE
+S204: L     W#16#204; // Fehler-Nr --> 204
+      SPA   FEHL; 
+
+//-----------------------------------------
+// Kommandocode 5
+// Reserve
+KC05: L     W#16#1005; 
+      SPA   FEHL; 
+//-----------------------------------------
+// Kommandocode 6
+KC06: L     W#16#1006; 
+      SPA   FEHL; 
+//-----------------------------------------
+// Kommandocode 7
+// Reserve
+KC07: L     W#16#1007; 
+      SPA   FEHL; 
+//-----------------------------------------
+// Kommandocode 8
+// Reserve
+KC08: L     W#16#1008; 
+      SPA   FEHL; 
+//-----------------------------------------
+// Kommandocode 9
+// Reserve
+KC09: L     W#16#1009; 
+      SPA   FEHL; 
+//-----------------------------------------
+// Kommandocode 10
+// Entladen von Magazinplatz mit WZ löschen
+KC10: L     #SR2; 
+      SPL   S210; 
+      SPA   SR08; // WZ-Nummer lesen
+      SPA   SR14; // Anzahl der Schneiden lesen
+      SPA   SR10; // WZ Entladen PI TMMVTL
+      SPA   SR03; // WZ-Daten lesen
+      SPA   SR13; // WZ-Bezeichner lesen
+      SPA   SR11; // Magazin-Status abfragen
+      SPA   SR12; // WZ Löschen
+      SPA   SR07; // ENDE
+S210: L     W#16#210; // Fehler-Nr --> 210
+      SPA   FEHL; 
+//-----------------------------------------
+// Kommandocode 11
+// Entladen von Magazinplatz ohne WZ löschen
+KC11: L     #SR2; 
+      SPL   S211; 
+      SPA   SR08; // WZ-Nummer lesen
+      SPA   SR14; // Anzahl der Schneiden lesen
+      SPA   SR03; // WZ-Daten lesen
+      SPA   SR13; // WZ-Bezeichner lesen
+      SPA   SR10; // WZ Entladen PI TMMVTL
+      SPA   SR11; // Magazin-Status abfragen
+      SPA   SR07; // ENDE
+S211: L     W#16#211; // Fehler-Nr --> 211
+      SPA   FEHL; 
+//-----------------------------------------
+// Kommandocode 12
+// WZ entladen ohne Daten bereitstellen mit WZ löschen
+KC12: L     #SR2; 
+      SPL   S212; 
+      SPA   SR08; // WZ-Nummer lesen
+      SPA   SR10; // WZ Entladen PI TMMVTL
+      SPA   SR11; // Magazin-Status abfragen
+      SPA   SR12; // WZ Löschen
+      SPA   SR07; // ENDE
+S212: L     W#16#212; // Fehler-Nr --> 212
+      SPA   FEHL; 
+//-----------------------------------------
+// Kommandocode 13
+// WZ entladen ohne Daten bereitstellen ohne WZ löschen
+KC13: L     #SR2; 
+      SPL   S213; 
+      SPA   SR08; // WZ-Nummer lesen
+      SPA   SR10; // WZ Entladen PI TMMVTL
+      SPA   SR11; // Magazin-Status abfragen
+      SPA   SR07; // ENDE
+S213: L     W#16#213; // Fehler-Nr --> 213
+      SPA   FEHL; 
+//-----------------------------------------
+// Kommandocode 14
+// WZ-Daten lesen
+KC14: L     #SR2; 
+      SPL   S214; 
+      SPA   SR08; // WZ-Nummer lesen
+      SPA   SR14; // Anzahl der Schneiden lesen
+      SPA   SR03; // WZ-Daten lesen
+      SPA   SR13; // WZ-Bezeichner lesen
+      SPA   SR07; // ENDE
+S214: L     W#16#214; // Fehler-Nr --> 214
+      SPA   FEHL; 
+//-----------------------------------------
+// Kommandocode 15
+// WZ löschen 
+KC15: L     #SR2; 
+      SPL   S215; 
+      SPA   SR12; // WZ Löschen
+      SPA   SR07; // ENDE
+S215: L     W#16#215; // Fehler-Nr --> 215
+      SPA   FEHL; 
+//-----------------------------------------
+// Kommandocode 16
+// WZ in WZ-Liste entladen Vorgabe der Platznummer und Magazinnummer
+KC16: L     W#16#1016; 
+      SPA   FEHL; 
+//-----------------------------------------
+// Kommandocode 17
+// Reserve
+KC17: L     W#16#1017; 
+      SPA   FEHL; 
+//-----------------------------------------
+// Kommandocode 18
+// Reserve
+KC18: L     W#16#1018; 
+      SPA   FEHL; 
+//-----------------------------------------
+// Kommandocode 19
+// Reserve
+KC19: L     W#16#1019; 
+      SPA   FEHL; 
+//-----------------------------------------
+// Kommandocode 20
+// interne T-Nummer lesen
+KC20: L     #SR2; 
+      SPL   S220; 
+      SPA   SR08; // interne T-Nummer lesen
+      SPA   SR07; // ENDE
+S220: L     W#16#220; // Fehler-Nr --> 220
+      SPA   FEHL; 
+//-----------------------------------------
+NETWORK
+TITLE =Code
+// WZ Anlegen PI-TMCRTO
+SR00: U     #WZpr; 
+      SPB   S5; // Werkzeug prüfen ->
+      U     #SemF; 
+      SPB   Sm10; // Semaphore = 0, FcNo=1 da PI-Dienst mit Fehler abgebrochen
+      U     #MDBit[3]; 
+      UN    #Sem1E; 
+      SPB   Sm11; // Semaphore = 1, FcNo=1  setzen
+      L     "DB_WZV_DV".TOA; 
+      T     #Unit; 
+      L     -1; 
+      T     #WVar1; 
+      L     #DuploNrTMCRTO; 
+      T     #WVar2; 
+      CALL #locinstFB4 (
+           Req                      := TRUE,
+           PIService                := "DB_SIEM_PI".TMCRTO,
+           Unit                     := #Unit,
+           Addr1                    := "DB_WZV_DV".WZ_Bezeichner,
+           WVar1                    := #WVar1,
+           WVar2                    := #WVar2,
+           Error                    := #ErrorFB4,
+           Done                     := #DoneFB4,
+           State                    := #StateFB4);
+// FB4 mit Fehler beendet oder NDR?
+      UN    #ErrorFB4; 
+      UN    #DoneFB4; 
+      SPB   ENDE; 
+      CALL #locinstFB4 (
+           Req                      := FALSE);
+
+      UN    #ErrorFB4; 
+      SPB   S01V; 
+      L     6; 
+      L     #StateFB4; 
+      ==I   ; // FB4 FIFO voll?
+      SPB   ENDE; 
+      L     #StateFB4; 
+      T     #StateFB2_3_4_gesp; 
+      L     W#16#4000; // Fehler-Nr --> 4000
+      UN    #Sem1E; 
+      SPB   FEHL; 
+      S     #SemF; // Semaphore=0 setzen da Fehler
+      T     #StateSem; // FehlerNr. speichern
+      SPA   ENDE; 
+S01V: L     1; 
+      T     #SR2; 
+      SPA   SR01; 
+//-----------------------------------------
+// erzeugte T-Nr lesen
+SR01: U     #Sem0A; 
+      SPB   Sm10; // Semaphore=0 aktiv ? ->
+      U     #Sem0E; 
+      SPB   AnzD; // Semaphore=0 beendet ? ->
+      L     "DB_WZV_DV".TOA; 
+      T     #Unit1; 
+      L     2; 
+      T     #Column1; 
+      L     1; 
+      T     #Line1; 
+      CALL #locinstFB2 (
+           Req                      := TRUE,
+           NumVar                   := 1,
+           Addr1                    := "DB_WZV_NCVAR".T0_TV_TnumWZV0_0,
+           Unit1                    := #Unit1,
+           Column1                  := #Column1,
+           Line1                    := #Line1,
+           Error                    := #ErrorFB2,
+           NDR                      := #NDRFB2,
+           State                    := #StateFB2,
+           RD1                      := "DB_WZV_DV".WZV_TNummer);
+// FB2 mit Fehler beendet oder NDR?
+      UN    #ErrorFB2; 
+      UN    #NDRFB2; 
+      SPB   ENDE; 
+      CALL #locinstFB2 (
+           Req                      := FALSE);
+
+      UN    #ErrorFB2; 
+      SPB   AnzD; 
+      L     6; 
+      L     #StateFB2; 
+      ==I   ; // FB2 FIFO voll?
+      SPB   ENDE; 
+      L     #StateFB2; 
+      T     #StateFB2_3_4_gesp; 
+      L     W#16#2010; // Fehler-Nr --> 2010
+      U     #Sem1E; 
+      SPBN  FEHL; // Fehler wenn Semaphore nicht gesetzt
+      S     #SemF; 
+      S     #Sem0A; // Semaphore = 0 setzen da Fehler
+      T     #StateSem; // Fehler-Nr. speichern
+      SPA   ENDE; 
+AnzD: U     #Sem1E; 
+      S     #Sem0A; // Semaphore = 0 setzen
+      SPB   ENDE; 
+      R     #Sem0E; 
+      L     "DB_WZV_DV".Anzahl_Schneiden; 
+      L     1; 
+      >I    ; 
+      SPB   S02V; // SR02 vorbereiten
+      L     3; 
+      T     #SR2; 
+      SPA   SR03; 
+S02V: L     2; // --> neue Schneide (D2)
+      T     #AktuelleSchneide; 
+      L     2; 
+      T     #SR2; 
+      SPA   SR02; 
+//-----------------------------------------
+// WZ-Schneide anlegen
+SR02: L     "DB_WZV_DV".TOA; 
+      T     #Unit; 
+      L     "DB_WZV_DV".WZV_TNummer; 
+      T     #WVar1; 
+      CALL #locinstFB4 (
+           Req                      := TRUE,
+           PIService                := "DB_SIEM_PI".CREACE,
+           Unit                     := #Unit,
+           WVar1                    := #WVar1,
+           Error                    := #ErrorFB4,
+           Done                     := #DoneFB4,
+           State                    := #StateFB4);
+// FB4 mit Fehler beendet oder NDR?
+      UN    #ErrorFB4; 
+      UN    #DoneFB4; 
+      SPB   ENDE; 
+      CALL #locinstFB4 (
+           Req                      := FALSE);
+
+      UN    #ErrorFB4; 
+      SPB   H010; 
+      L     6; 
+      L     #StateFB4; 
+      ==I   ; // FB4 FIFO voll?
+      SPB   ENDE; 
+      L     #StateFB4; 
+      T     #StateFB2_3_4_gesp; 
+      L     W#16#4010; // Fehler-Nr --> 4010
+      SPA   FEH0; 
+H010: L     #AktuelleSchneide; 
+      L     "DB_WZV_DV".Anzahl_Schneiden; 
+      ==I   ; 
+      SPB   S03V; 
+      L     #maxnumCuttEdges_Tool; 
+      L     #AktuelleSchneide; 
+      ==I   ; 
+      SPB   S03V; 
+      L     #AktuelleSchneide; 
+      INC   1; 
+      T     #AktuelleSchneide; 
+      SPA   ENDE; 
+S03V: L     3; 
+      T     #SR2; 
+      SPA   ENDE; 
+//-----------------------------------------
+// WZ-Daten lesen / schreiben
+SR03: L     #SR3; 
+      SPL   S300; 
+      SPA   S_30; //  9 WZ-Daten lesen / schreiben (TD)
+      SPA   S_31; // 10 CC-WZ-Daten lesen / schreiben (TU)
+      SPA   S_32; // 25 Schneidenparameter pro Schneide lesen / schreiben (TO)
+      SPA   S_33; //  4 Überwachungsdaten pro Schneide lesen / schreiben (TS)
+      SPA   S_34; // 10 CC-Schneidenparameter pro Schneide lesen / schreiben (TUE)
+      SPA   S_35; // 10 CC-Überwachungsparameter pro Schneide lesen / schreiben (TUS)
+S300: L     W#16#300; // Fehler-Nr --> 300
+      SPA   FEHL; 
+//-----------------------------------------
+//  9 WZ-Daten lesen / schreiben (TD)
+S_30: L     0; 
+      L     #AnzahlDurchlaeufe; 
+      ==I   ; 
+      SPBN  H020; 
+      L     1; 
+      T     #AnzahlDurchlaeufe; 
+      L     68; // DB227.Groesse_Links
+      T     #Ziel_Adr; 
+      L     2; 
+      T     #Offset_Ziel; 
+      L     1; 
+      T     #Offset_Column; 
+      L     10; 
+      T     #NCVAR_Adr; 
+      L     0; 
+      T     #Offset_Line; 
+      L     3; 
+      T     #Column_Nr; 
+      L     "DB_WZV_DV".WZV_TNummer; 
+      T     #Line_Nr; 
+      L     5; 
+      T     #Datentyp; 
+      L     8; 
+NumV: T     #NumVar; 
+      SPA   S010; 
+H020: L     #AnzahlDurchlaeufe; 
+      L     1; 
+      >I    ; 
+      SPBN  S010; 
+      L     1; 
+      SPA   NumV; 
+//-----------------------------------------
+// CC-WZ-Daten lesen / schreiben (TU)
+S_31: L     0; 
+      L     #AnzahlDurchlaeufe; 
+      ==I   ; 
+      SPB   H030; 
+      L     #AnzahlDurchlaeufe; 
+      L     1; 
+      >I    ; 
+      SPB   H040; 
+      SPA   S010; 
+H030: L     0; 
+      L     "DB_WZV_DV".Anzahl_CC_T_Par; 
+      ==I   ; 
+      SPB   S_32; 
+      L     "DB_WZV_DV".WZV_TNummer; 
+      T     #Line_Nr; 
+      L     0; 
+      T     #Offset_Line; 
+      L     1; 
+      T     #DNummer; 
+      T     #AnzahlDurchlaeufe; 
+      T     #Column_Nr; 
+      T     #Offset_Column; 
+      L     4; 
+      T     #Offset_Ziel; 
+      L     8; 
+      T     #Datentyp; 
+      L     40; 
+      T     #NCVAR_Adr; 
+      L     98; // DB227.CC_WZ_Parameter[1]
+      T     #Ziel_Adr; 
+      L     "DB_WZV_DV".Anzahl_CC_T_Par; 
+      L     8; 
+      >I    ; 
+      SPB   H050; 
+      L     "DB_WZV_DV".Anzahl_CC_T_Par; 
+H050: T     #NumVar; 
+      SPA   S010; 
+H040: L     "DB_WZV_DV".Anzahl_CC_T_Par; 
+      +     -8; 
+      T     #NumVar; 
+      SPA   S010; 
+// ---------------------------------------
+// Schneidenparameter lesen / schreiben (TO)
+S_32: L     0; 
+      L     #AnzahlDurchlaeufe; 
+      ==I   ; 
+      SPB   H060; 
+      L     4; 
+      ==I   ; 
+      SPB   H070; 
+      L     5; 
+      L     #AnzahlDurchlaeufe; 
+      ==I   ; 
+      SPB   H_70; 
+H080: L     8; 
+      SPA   SN10; 
+H_70: L     #numCuttEdgeParams; 
+      L     26; 
+      -I    ; 
+      SPA   SN10; 
+H060: L     2; 
+      T     #SR3; 
+      L     0; 
+      T     #Offset_Column; 
+      L     "DB_WZV_DV".WZV_TNummer; 
+      T     #Column_Nr; 
+      L     1; 
+      T     #DNummer; 
+      T     #AnzahlDurchlaeufe; 
+      T     #Offset_Line; 
+      T     #Line_Nr; 
+      L     4; 
+      T     #Offset_Ziel; 
+      L     8; 
+      T     #Datentyp; 
+      L     20; 
+      T     #NCVAR_Adr; 
+      L     148; // DB227.D1_Parameter[1]
+      T     #Ziel_Adr; 
+      SPA   H080; 
+H070: L     1; 
+SN10: T     #NumVar; 
+      SPA   S010; 
+//-----------------------------------------
+// Überwachungsdaten lesen / schreiben (TS)
+S_33: L     0; 
+      L     #AnzahlDurchlaeufe; 
+      ==I   ; 
+      SPB   H090; 
+      SPA   S010; 
+H090: UN    "DB_WZV_DV".Ueberwachung_aktiv; 
+      SPB   S_34; 
+      L     0; 
+      T     #Offset_Column; 
+      L     1; 
+      T     #DNummer; 
+      T     #AnzahlDurchlaeufe; 
+      T     #Offset_Line; 
+      T     #Line_Nr; 
+      L     4; 
+      T     #Offset_Ziel; 
+      U     #nckVersionV5; 
+      SPBN  H91; 
+      L     6; 
+H91:  T     #NumVar; 
+      L     8; 
+      T     #Datentyp; 
+      L     30; 
+      T     #NCVAR_Adr; 
+      L     248; // DB227.D1_Vorwarngrenze_min
+      T     #Ziel_Adr; 
+      L     "DB_WZV_DV".WZV_TNummer; 
+      T     #Column_Nr; 
+      SPA   S010; 
+//----------------------------------------
+// CC-Schneidenparameter lesen / schreiben (TUE)
+S_34: L     0; 
+      L     #AnzahlDurchlaeufe; 
+      ==I   ; 
+      SPB   H100; 
+      SPA   S010; 
+H100: L     0; 
+      L     "DB_WZV_DV".Anzahl_CC_D_Par; 
+      ==I   ; 
+      SPB   S_35; 
+      L     4; 
+      T     #SR3; 
+      L     0; 
+      T     #Offset_Column; 
+      L     1; 
+      T     #DNummer; 
+      T     #AnzahlDurchlaeufe; 
+      T     #Offset_Line; 
+      T     #Line_Nr; 
+      L     4; 
+      T     #Offset_Ziel; 
+      L     8; 
+      T     #Datentyp; 
+      L     50; 
+      T     #NCVAR_Adr; 
+      L     272; // DB 227.D1_CC_Parameter[1];
+      T     #Ziel_Adr; 
+      L     "DB_WZV_DV".WZV_TNummer; 
+      T     #Column_Nr; 
+      L     "DB_WZV_DV".Anzahl_CC_D_Par; 
+      L     7; 
+      >I    ; 
+      L     8; 
+      SPB   H110; 
+      L     "DB_WZV_DV".Anzahl_CC_D_Par; 
+H110: T     #NumVar; 
+      SPA   S010; 
+//-----------------------------------------
+// CC-Überwachungsparameter lesen / schreiben (TUS)
+S_35: L     0; 
+      L     #AnzahlDurchlaeufe; 
+      ==I   ; 
+      SPB   H120; 
+      SPA   S010; 
+H120: L     0; 
+      L     "DB_WZV_DV".Anzahl_CC_M_Par; 
+      ==I   ; 
+      SPB   H130; 
+      L     5; 
+      T     #SR3; 
+      L     0; 
+      T     #Offset_Column; 
+      L     1; 
+      T     #DNummer; 
+      T     #AnzahlDurchlaeufe; 
+      T     #Offset_Line; 
+      T     #Line_Nr; 
+      L     4; 
+      T     #Offset_Ziel; 
+      L     8; // Datentyp --> REAL
+      T     #Datentyp; 
+      L     60; 
+      T     #NCVAR_Adr; 
+      L     312; // DB227.D1_CC_Ueberwpar[1]
+      T     #Ziel_Adr; 
+      L     "DB_WZV_DV".WZV_TNummer; 
+      T     #Column_Nr; 
+      L     "DB_WZV_DV".Anzahl_CC_M_Par; 
+      L     7; 
+      >I    ; 
+      L     8; 
+      SPB   H140; 
+      L     "DB_WZV_DV".Anzahl_CC_M_Par; 
+H140: T     #NumVar; 
+      SPA   S010; 
+H130: L     #SR2; 
+      INC   1; 
+      T     #SR2; 
+      SPA   ENDE; 
+//-----------------------------------------
+// Generieren der Pointer
+S010: LAR1  P##adrNCVAR; // Pointer auf DB226 (NCVAR-Selektor)
+      L     B#16#10; 
+      T     LB [AR1,P#0.0]; 
+      L     B#16#2; 
+      T     LB [AR1,P#1.0]; 
+      L     10; 
+      T     LW [AR1,P#2.0]; 
+      AUF   "DB_WZV_NCVAR"; 
+      L     DBNO; // DB-Nummer. von WZV_NCVAR
+      T     LW [AR1,P#4.0]; 
+      L     #NCVAR_Adr; 
+      SLW   3; // --> Pointerformat Byte.Bit (Bit = 000)
+      OD    DW#16#84000000; // --> Bit 31 = 1 und Bit 26,25,24 = 100 d.h Kennung für DB
+      T     LD [AR1,P#6.0]; 
+
+// Pointer auf DB227.adrSD_RD_1  bis  DB227.adrSD_RD_8
+      L     #Ziel_Adr; 
+      T     #tmp_Ziel_Adr; 
+      L     0; 
+      T     #SR4; 
+PG:   L     #SR4; 
+      SPL   S400; 
+      SPA   P001; 
+      SPA   P002; 
+      SPA   P003; 
+      SPA   P004; 
+      SPA   P005; 
+      SPA   P006; 
+      SPA   P007; 
+      SPA   P008; 
+S400: L     W#16#400; // FehlerNr --> 0400
+      SPA   FEHL; 
+P001: LAR1  P##adrSD_RD_1; 
+      SPA   PG_G; 
+P002: LAR1  P##adrSD_RD_2; 
+      SPA   PG_G; 
+P003: LAR1  P##adrSD_RD_3; 
+      SPA   PG_G; 
+P004: LAR1  P##adrSD_RD_4; 
+      SPA   PG_G; 
+P005: LAR1  P##adrSD_RD_5; 
+      SPA   PG_G; 
+P006: LAR1  P##adrSD_RD_6; 
+      SPA   PG_G; 
+P007: LAR1  P##adrSD_RD_7; 
+      SPA   PG_G; 
+P008: LAR1  P##adrSD_RD_8; 
+      SPA   PG_G; 
+
+PG_G: L     B#16#10; 
+      T     LB [AR1,P#0.0]; 
+      L     #Datentyp; 
+      T     LB [AR1,P#1.0]; 
+      L     1; 
+      T     LW [AR1,P#2.0]; 
+      AUF   "DB_WZV_DV"; 
+      L     DBNO; // DB-Nummer. von WZV_DV
+      T     LW [AR1,P#4.0]; 
+      L     #tmp_Ziel_Adr; 
+      SLW   3; // --> Pointerformat Byte.Bit (Bit = 000)
+      OD    DW#16#84000000; // --> Bit 31 = 1 und Bit 26,25,24 = 100 d.h DB
+      T     LD [AR1,P#6.0]; 
+      L     #tmp_Ziel_Adr; 
+      L     #Offset_Ziel; 
+      +I    ; 
+      T     #tmp_Ziel_Adr; 
+      L     #SR4; 
+      INC   1; 
+      T     #SR4; 
+      L     8; 
+      <I    ; 
+      SPB   PG; 
+// Vorbesetzen der Unit-, Column- und Line-Parameter
+      L     "DB_WZV_DV".TOA; 
+      T     #Unit1; 
+      T     #Unit1; 
+      T     #Unit2; 
+      T     #Unit3; 
+      T     #Unit4; 
+      T     #Unit5; 
+      T     #Unit6; 
+      T     #Unit7; 
+      T     #Unit8; 
+      L     #Column_Nr; 
+      T     #Column1; 
+      L     #Offset_Column; 
+      +I    ; 
+      T     #Column2; 
+      L     #Offset_Column; 
+      +I    ; 
+      T     #Column3; 
+      L     #Offset_Column; 
+      +I    ; 
+      T     #Column4; 
+      L     #Offset_Column; 
+      +I    ; 
+      T     #Column5; 
+      L     #Offset_Column; 
+      +I    ; 
+      T     #Column6; 
+      L     #Offset_Column; 
+      +I    ; 
+      T     #Column7; 
+      L     #Offset_Column; 
+      +I    ; 
+      T     #Column8; 
+      L     #Line_Nr; 
+      T     #Line1; 
+      L     #Offset_Line; 
+      +I    ; 
+      T     #Line2; 
+      L     #Offset_Line; 
+      +I    ; 
+      T     #Line3; 
+      L     #Offset_Line; 
+      +I    ; 
+      T     #Line4; 
+      L     #Offset_Line; 
+      +I    ; 
+      T     #Line5; 
+      L     #Offset_Line; 
+      +I    ; 
+      T     #Line6; 
+      L     #Offset_Line; 
+      +I    ; 
+      T     #Line7; 
+      L     #Offset_Line; 
+      +I    ; 
+      T     #Line8; 
+
+// WZ-Daten lesen oder schreiben? (FB2 oder FB3)
+      L     #K_Code; 
+      L     10; 
+      <I    ; 
+      SPB   S020; 
+      CALL #locinstFB2 (
+           Req                      := TRUE,
+           NumVar                   := #NumVar,
+           Addr1                    := #adrNCVAR,
+           Unit1                    := #Unit1,
+           Column1                  := #Column1,
+           Line1                    := #Line1,
+           Addr2                    := #adrNCVAR,
+           Unit2                    := #Unit2,
+           Column2                  := #Column2,
+           Line2                    := #Line2,
+           Addr3                    := #adrNCVAR,
+           Unit3                    := #Unit3,
+           Column3                  := #Column3,
+           Line3                    := #Line3,
+           Addr4                    := #adrNCVAR,
+           Unit4                    := #Unit4,
+           Column4                  := #Column4,
+           Line4                    := #Line4,
+           Addr5                    := #adrNCVAR,
+           Unit5                    := #Unit5,
+           Column5                  := #Column5,
+           Line5                    := #Line5,
+           Addr6                    := #adrNCVAR,
+           Unit6                    := #Unit6,
+           Column6                  := #Column6,
+           Line6                    := #Line6,
+           Addr7                    := #adrNCVAR,
+           Unit7                    := #Unit7,
+           Column7                  := #Column7,
+           Line7                    := #Line7,
+           Addr8                    := #adrNCVAR,
+           Unit8                    := #Unit8,
+           Column8                  := #Column8,
+           Line8                    := #Line8,
+           Error                    := #ErrorFB2,
+           NDR                      := #NDRFB2,
+           State                    := #StateFB2,
+           RD1                      := #adrSD_RD_1,
+           RD2                      := #adrSD_RD_2,
+           RD3                      := #adrSD_RD_3,
+           RD4                      := #adrSD_RD_4,
+           RD5                      := #adrSD_RD_5,
+           RD6                      := #adrSD_RD_6,
+           RD7                      := #adrSD_RD_7,
+           RD8                      := #adrSD_RD_8);
+// FB2 mit Fehler beendet oder DONE?
+      UN    #ErrorFB2; 
+      UN    #NDRFB2; 
+      SPB   ENDE; 
+      CALL #locinstFB2 (
+           Req                      := FALSE);
+
+      U     #NDRFB2; 
+      SPB   S030; 
+      L     6; 
+      L     #StateFB2; 
+      ==I   ; // FB2 FIFO voll?
+      SPB   ENDE; 
+      L     #StateFB2; 
+      T     #StateFB2_3_4_gesp; 
+      L     W#16#2000; // Fehler-Nr --> 2000
+      L     #SR3; 
+      +I    ; 
+      SPA   FEH0; 
+
+S020: CALL #locinstFB3 (
+           Req                      := TRUE,
+           NumVar                   := #NumVar,
+           Addr1                    := #adrNCVAR,
+           Unit1                    := #Unit1,
+           Column1                  := #Column1,
+           Line1                    := #Line1,
+           Addr2                    := #adrNCVAR,
+           Unit2                    := #Unit2,
+           Column2                  := #Column2,
+           Line2                    := #Line2,
+           Addr3                    := #adrNCVAR,
+           Unit3                    := #Unit3,
+           Column3                  := #Column3,
+           Line3                    := #Line3,
+           Addr4                    := #adrNCVAR,
+           Unit4                    := #Unit4,
+           Column4                  := #Column4,
+           Line4                    := #Line4,
+           Addr5                    := #adrNCVAR,
+           Unit5                    := #Unit5,
+           Column5                  := #Column5,
+           Line5                    := #Line5,
+           Addr6                    := #adrNCVAR,
+           Unit6                    := #Unit6,
+           Column6                  := #Column6,
+           Line6                    := #Line6,
+           Addr7                    := #adrNCVAR,
+           Unit7                    := #Unit7,
+           Column7                  := #Column7,
+           Line7                    := #Line7,
+           Addr8                    := #adrNCVAR,
+           Unit8                    := #Unit8,
+           Column8                  := #Column8,
+           Line8                    := #Line8,
+           Error                    := #ErrorFB3,
+           Done                     := #DoneFB3,
+           State                    := #StateFB3,
+           SD1                      := #adrSD_RD_1,
+           SD2                      := #adrSD_RD_2,
+           SD3                      := #adrSD_RD_3,
+           SD4                      := #adrSD_RD_4,
+           SD5                      := #adrSD_RD_5,
+           SD6                      := #adrSD_RD_6,
+           SD7                      := #adrSD_RD_7,
+           SD8                      := #adrSD_RD_8);
+// FB3 mit Fehler beendet oder DONE?
+      UN    #ErrorFB3; 
+      UN    #DoneFB3; 
+      SPB   ENDE; 
+      CALL #locinstFB3 (
+           Req                      := FALSE);
+
+      U     #DoneFB3; 
+      SPB   S030; 
+      L     6; 
+      L     #StateFB3; 
+      ==I   ; // FB3 FIFO voll?
+      SPB   ENDE; 
+      L     #StateFB3; 
+      T     #StateFB2_3_4_gesp; 
+      L     W#16#3000; // Fehler-Nr --> 3000
+      L     #SR3; 
+      +I    ; 
+      SPA   FEH0; 
+//-----------------------------------------
+// Sprungverteiler4
+S030: L     #SR3; 
+      SPL   S401; 
+      SPA   SE30; // WZ-Daten schreiben
+      SPA   SE31; // CC-WZ-Daten schreiben
+      SPA   SE32; // Schneidenparameter schreiben
+      SPA   SE33; // Überwachungsdaten schreiben
+      SPA   SE34; // CC-Schneidenparameter schreiben
+      SPA   SE35; // CC-Überwachungsparameter schreiben
+S401: L     W#16#401; // Fehler-Nr --> 401
+      SPA   FEHL; 
+//-----------------------------------------
+// WZ-Daten lesen / schreiben
+SE30: L     2; 
+      L     #AnzahlDurchlaeufe; 
+      ==I   ; 
+      SPB   S040; 
+      L     #AnzahlDurchlaeufe; 
+      +     1; 
+      T     #AnzahlDurchlaeufe; 
+      L     11; 
+      T     #Column_Nr; 
+      L     84; 
+      T     #Ziel_Adr; 
+      SPA   ENDE; 
+S040: L     #SR3; 
+      INC   1; 
+      T     #SR3; 
+      L     0; 
+      T     #AnzahlDurchlaeufe; 
+      SET   ; 
+      R     #NDRFB2; 
+      R     #DoneFB3; 
+      R     #DoneFB4; 
+      SPA   ENDE; 
+//-----------------------------------------
+// CC-WZ-Daten lesen / schreiben
+SE31: L     2; 
+      L     #AnzahlDurchlaeufe; 
+      ==I   ; 
+      SPB   S040; 
+      L     "DB_WZV_DV".Anzahl_CC_T_Par; 
+      L     8; 
+      >I    ; 
+      SPBN  S040; 
+      L     2; 
+      T     #AnzahlDurchlaeufe; 
+      L     9; 
+      T     #Column_Nr; 
+      L     130; 
+      T     #Ziel_Adr; 
+      SPA   ENDE; 
+//-----------------------------------------
+// Schneidenparameter lesen / schreiben
+SE32: U     #MDBit[7]; 
+      U(    ; 
+      L     #numCuttEdgeParams; 
+      L     26; 
+      >I    ; 
+      )     ; 
+      =     #DPV; 
+      U(    ; 
+      L     4; 
+      L     #AnzahlDurchlaeufe; 
+      ==I   ; 
+      )     ; 
+      UN    #DPV; 
+      SPB   H200; 
+      L     4; 
+      >I    ; 
+      SPB   H200; 
+      L     4; 
+      L     #AnzahlDurchlaeufe; 
+      ==I   ; 
+      SPB   _DPV; 
+      L     #Ziel_Adr; 
+      +     32; 
+      T     #Ziel_Adr; 
+      L     #Line_Nr; 
+      +     8; 
+      T     #Line_Nr; 
+AnDu: L     #AnzahlDurchlaeufe; 
+      +     1; 
+      T     #AnzahlDurchlaeufe; 
+      SPA   ENDE; 
+//Varibale für DPV-Daten vorbesetzen
+_DPV: L     #DNummer; 
+      +     -1; 
+      L     32; 
+      *I    ; 
+      L     1988; 
+      +I    ; 
+      T     #Ziel_Adr; 
+      L     #Line_Nr; 
+      +     2; 
+      T     #Line_Nr; 
+      SPA   AnDu; 
+H200: L     #maxnumCuttEdges_Tool; 
+      L     #DNummer; 
+      ==I   ; 
+      SPB   S040; 
+      L     "DB_WZV_DV".Anzahl_Schneiden; 
+      ==I   ; 
+      SPB   S040; 
+      L     1; 
+      T     #AnzahlDurchlaeufe; 
+      L     #DNummer; 
+      L     204; // Abstand zwischen D(n)_Parameter und D(n+1)_Parameter
+      *I    ; 
+      +     148; // D1_Parameter 148
+      T     #Ziel_Adr; 
+      L     #DNummer; 
+      +     1; 
+      T     #DNummer; 
+      +     -1; 
+      L     #numCuttEdgeParams; 
+      *I    ; 
+      +     1; 
+      T     #Line_Nr; 
+      SPA   ENDE; 
+//-----------------------------------------
+// Überwachungsdaten lesen / schreiben
+SE33: L     1; 
+      L     #AnzahlDurchlaeufe; 
+      ==I   ; 
+      SPB   Wver; 
+H201: L     #maxnumCuttEdges_Tool; 
+      L     #DNummer; 
+      ==I   ; 
+      SPB   S040; 
+      L     "DB_WZV_DV".Anzahl_Schneiden; 
+      ==I   ; 
+      SPB   S040; 
+      L     #DNummer; 
+      L     204; // Abstand zwischen Dn_Vorwarngrenze_min und Dn+1_Vorwarngrenze_min
+      *I    ; 
+      +     248; // D1_Vorwarngrenze_min
+      T     #Ziel_Adr; 
+      L     #DNummer; 
+      L     #numCuttEdgeParams_ts; 
+      *I    ; 
+      +     1; 
+      T     #Line_Nr; 
+      L     #DNummer; 
+      +     1; 
+      T     #DNummer; 
+      L     1; 
+      T     #AnzahlDurchlaeufe; 
+      L     4; 
+      U     #nckVersionV5; 
+      SPBN  H911; 
+      L     6; 
+H911: T     #NumVar; 
+      SPA   ENDE; 
+Wver: U     #nckVersionV5; // Verschleißüberwachung bearbeiten
+      SPBN  H201; // Version <5 ->
+      L     #maskToolManagement; 
+      UW    W#16#20; // Bit 5 prüfen
+      SPZ   H201; // Bit 5 = 0 ->
+      U     #MDBit[2]; 
+      SPBN  H201; // MB-Bit Verschleiss lesen = 0 ->
+      L     #DNummer; 
+      +     -1; 
+      L     12; // Offset = 3*4Byte
+      *I    ; 
+      L     #AdrVerschlUeberwachung; 
+      +I    ; 
+      T     #Ziel_Adr; 
+      L     #Line_Nr; 
+      +     6; 
+      T     #Line_Nr; 
+      L     2; 
+      T     #AnzahlDurchlaeufe; 
+      L     3; 
+      T     #NumVar; 
+      SPA   ENDE; 
+//-----------------------------------------
+// CC-Schneidenparameter
+SE34: L     "DB_WZV_DV".Anzahl_CC_D_Par; 
+      L     8; 
+      >I    ; 
+      SPB   H210; 
+      SPA   H220; 
+H210: L     #NumVar; 
+      L     8; 
+      <I    ; 
+      SPB   H220; 
+      L     "DB_WZV_DV".Anzahl_CC_D_Par; 
+      +     -8; 
+      T     #NumVar; 
+      L     #DNummer; 
+      L     204; 
+      *I    ; 
+      +     100; 
+      T     #Ziel_Adr; 
+      L     #Line_Nr; 
+      +     8; 
+      T     #Line_Nr; 
+      L     #DNummer; 
+      +     1; 
+      T     #DNummer; 
+      SPA   ENDE; 
+H220: L     #maxnumCuttEdges_Tool; 
+      L     #AnzahlDurchlaeufe; 
+      ==I   ; 
+      SPB   S040; 
+      L     "DB_WZV_DV".Anzahl_Schneiden; 
+      L     #AnzahlDurchlaeufe; 
+      ==I   ; 
+      SPB   S040; 
+      L     #AnzahlDurchlaeufe; 
+      L     204; 
+      *I    ; 
+      +     272; 
+      T     #Ziel_Adr; 
+      L     #AnzahlDurchlaeufe; 
+      L     #numCuttEdgeParams_tu; 
+      *I    ; 
+      +     1; 
+      T     #Line_Nr; 
+      L     "DB_WZV_DV".Anzahl_CC_D_Par; 
+      L     7; 
+      >I    ; 
+      L     8; 
+      SPB   H230; 
+      L     "DB_WZV_DV".Anzahl_CC_D_Par; 
+H230: T     #NumVar; 
+      L     #AnzahlDurchlaeufe; 
+      +     1; 
+      T     #AnzahlDurchlaeufe; 
+      SPA   ENDE; 
+//-----------------------------------------
+// CC-Überwachungsparameter lesen / schreiben
+SE35: L     "DB_WZV_DV".Anzahl_CC_M_Par; 
+      L     8; 
+      >I    ; 
+      SPB   H250; 
+      SPA   H260; 
+H250: L     #NumVar; 
+      L     8; 
+      <I    ; 
+      SPB   H260; 
+      L     "DB_WZV_DV".Anzahl_CC_M_Par; 
+      +     -8; 
+      T     #NumVar; 
+      L     #DNummer; 
+      L     204; 
+      *I    ; 
+      +     140; 
+      T     #Ziel_Adr; 
+      L     #Line_Nr; 
+      +     8; 
+      T     #Line_Nr; 
+      SPA   ENDE; 
+H260: L     #maxnumCuttEdges_Tool; 
+      L     #AnzahlDurchlaeufe; 
+      ==I   ; 
+      SPB   H280; 
+      L     #AnzahlDurchlaeufe; 
+      L     "DB_WZV_DV".Anzahl_Schneiden; 
+      ==I   ; 
+      SPB   H280; 
+      L     #AnzahlDurchlaeufe; 
+      L     204; 
+      *I    ; 
+      +     312; // D1_CC_M_Parameter
+      T     #Ziel_Adr; 
+      L     #AnzahlDurchlaeufe; 
+      L     #numCuttEdgeParamstus; 
+      *I    ; 
+      +     1; 
+      T     #Line_Nr; 
+      L     "DB_WZV_DV".Anzahl_CC_M_Par; 
+      L     7; 
+      >I    ; 
+      L     8; 
+      SPB   H270; 
+      L     "DB_WZV_DV".Anzahl_CC_M_Par; 
+H270: T     #NumVar; 
+      L     #AnzahlDurchlaeufe; 
+      +     1; 
+      T     #AnzahlDurchlaeufe; 
+      SPA   ENDE; 
+H280: L     #SR2; 
+      INC   1; 
+      T     #SR2; 
+      SET   ; 
+      R     #NDRFB2; 
+      R     #DoneFB3; 
+      SPA   ENDE; 
+//-----------------------------------------
+// Leerplatz suchen
+SR04: U     #SemF; 
+      SPB   Sm20; // Semaphore = 0, FcNo=2 da PI-Dienst mit Fehler abgebrochen
+      U     #MDBit[3]; 
+      UN    #Sem1E; 
+      SPB   Sm21; // Semaphore = 1, FcNo=2  setzen
+      L     0; 
+      L     "DB_WZV_DV".Magazin_Nummer; 
+      ==I   ; 
+      L     -1; 
+      SPB   H300; 
+      L     "DB_WZV_DV".Magazin_Nummer; 
+H300: T     #WVar3; 
+      L     0; 
+      L     "DB_WZV_DV".Platz_Nummer; 
+      ==I   ; 
+      L     -1; 
+      SPB   H320; 
+      L     "DB_WZV_DV".Platz_Nummer; 
+H320: T     #WVar2; 
+      U     #MDBit[6]; 
+      SPB   LeBe; 
+      L     -1; 
+      T     #WVar4; 
+      T     #WVar5; 
+      SPA   Lesu; 
+LeBe: L     "DB_WZV_DV".PlatzNrBeladestelle; 
+      T     #WVar4; 
+      L     "DB_WZV_DV".MagNrBeladestelle; 
+      T     #WVar5; 
+Lesu: L     "DB_WZV_DV".WZV_TNummer; 
+      T     #WVar1; 
+      L     "DB_WZV_DV".TOA; 
+      T     #Unit; 
+      CALL #locinstFB4 (
+           Req                      := TRUE,
+           PIService                := "DB_SIEM_PI".TMFDPL,
+           Unit                     := #Unit,
+           WVar1                    := #WVar1,
+           WVar2                    := #WVar2,
+           WVar3                    := #WVar3,
+           WVar4                    := #WVar4,
+           WVar5                    := #WVar5,
+           Error                    := #ErrorFB4,
+           Done                     := #DoneFB4,
+           State                    := #StateFB4);
+// FB4 mit Fehler beendet oder NDR?
+      UN    #ErrorFB4; 
+      UN    #DoneFB4; 
+      SPB   ENDE; 
+      CALL #locinstFB4 (
+           Req                      := FALSE);
+
+      UN    #ErrorFB4; 
+      SPB   H340; 
+      L     6; 
+      L     #StateFB4; 
+      ==I   ; // FB4 FIFO voll?
+      SPB   ENDE; 
+      L     #StateFB4; 
+      T     #StateFB2_3_4_gesp; 
+      L     "DB_WZV_DV".Magazin_Nummer; 
+      L     0; 
+      >I    ; 
+      SPBN  H335; 
+      L     W#16#30; // Fehler-Nr --> 0030
+FE40: UN    #Sem1E; 
+      SPB   FEH0; 
+      S     #SemF; // Semaphore=0 setzen da Fehler
+      S     #SemF0; 
+      T     #StateSem; // FehlerNr. speichern
+      SPA   ENDE; 
+H335: L     "DB_WZV_DV".Platz_Nummer; 
+      L     0; 
+      >I    ; 
+      SPBN  H336; 
+      L     W#16#30; // Fehler-Nr --> 0030
+      SPA   FE40; 
+H336: L     W#16#4020; // Fehler-Nr --> 4020
+      SPA   FE40; 
+H340: L     #SR2; 
+      INC   1; 
+      T     #SR2; 
+      SET   ; 
+      R     #DoneFB4; 
+      SPA   ENDE; 
+//-----------------------------------------
+// Rückgabeparameter PI-TMFDPL lesen
+SR05: U     #Sem0A; 
+      SPB   Sm20; // Semaphore=0 aktiv ? ->
+      U     #Sem0E; 
+      SPB   H360; // Semaphore=0 beendet ? ->
+      L     "DB_WZV_DV".TOA; 
+      T     #Unit1; 
+      T     #Unit2; 
+      T     #Unit3; 
+      L     1; 
+      T     #Line1; 
+      T     #Line2; 
+      T     #Line3; 
+      L     9; 
+      T     #Column1; 
+      L     10; 
+      T     #Column2; 
+      L     8; 
+      T     #Column3; 
+      CALL #locinstFB2 (
+           Req                      := TRUE,
+           NumVar                   := 3,
+           Addr1                    := "DB_WZV_NCVAR".T0_TMC_magCBCmdState0_0,
+           Unit1                    := #Unit1,
+           Column1                  := #Column1,
+           Line1                    := #Line1,
+           Addr2                    := "DB_WZV_NCVAR".T0_TMC_magCBCmdState0_0,
+           Unit2                    := #Unit2,
+           Column2                  := #Column2,
+           Line2                    := #Line2,
+           Addr3                    := "DB_WZV_NCVAR".T0_TMC_magCBCmdState0_0,
+           Unit3                    := #Unit3,
+           Column3                  := #Column3,
+           Line3                    := #Line3,
+           Error                    := #ErrorFB2,
+           NDR                      := #NDRFB2,
+           State                    := #StateFB2,
+           RD1                      := "DB_WZV_DV".Gefundenes_Magazin,
+           RD2                      := "DB_WZV_DV".Gefundener_Platz,
+           RD3                      := #Magazin_Status);
+// FB2 mit Fehler beendet oder NDR?
+      UN    #ErrorFB2; 
+      UN    #NDRFB2; 
+      SPB   ENDE; 
+      CALL #locinstFB2 (
+           Req                      := FALSE);
+
+      UN    #ErrorFB2; 
+      SPB   H350; 
+      L     6; 
+      L     #StateFB2; 
+      ==I   ; // FB2 FIFO voll?
+      SPB   ENDE; 
+      L     #StateFB2; 
+      T     #StateFB2_3_4_gesp; 
+      L     W#16#2020; //  Fehler-Nr --> 2020
+FE50: U     #Sem1E; 
+      SPBN  FEH0; // Fehler wenn Semaphore nicht gesetzt
+      S     #SemF; 
+      S     #Sem0A; // Semaphore = 0 setzen da Fehler
+      T     #StateSem; // Fehler-Nr. speichern
+      SPA   ENDE; 
+H350: L     3; 
+      L     #Magazin_Status; 
+      ==I   ; 
+      SPB   H360; 
+      L     4; 
+      <>I   ; 
+      SPB   ENDE; 
+      L     W#16#30; // Fehler-Nr --> 0030
+      SPA   FE50; 
+H360: U     #Sem1E; 
+      S     #Sem0A; // Semaphore = 0 setzen
+      SPB   ENDE; 
+      R     #Sem0E; 
+      L     #SR2; 
+      INC   1; 
+      T     #SR2; 
+      SET   ; 
+      R     #NDRFB2; 
+      SPA   ENDE; 
+//-----------------------------------------
+// Magazinplatz beladen
+SR06: U     #SemF; 
+      SPB   Sm30; // Semaphore = 0, FcNo=3 da PI-Dienst mit Fehler abgebrochen
+      U     #MDBit[3]; 
+      UN    #Sem1E; 
+      SPB   Sm31; // Semaphore = 1, FcNo=3  setzen
+      L     "DB_WZV_DV".TOA; 
+      T     #Unit; 
+      L     "DB_WZV_DV".WZV_TNummer; 
+      T     #WVar1; 
+      L     "DB_WZV_DV".PlatzNrBeladestelle; 
+      T     #WVar2; 
+      L     "DB_WZV_DV".MagNrBeladestelle; 
+      T     #WVar3; 
+      L     "DB_WZV_DV".Gefundener_Platz; 
+      T     #WVar4; 
+      L     "DB_WZV_DV".Gefundenes_Magazin; 
+      T     #WVar5; 
+      CALL #locinstFB4 (
+           Req                      := TRUE,
+           PIService                := "DB_SIEM_PI".TMMVTL,
+           Unit                     := #Unit,
+           WVar1                    := #WVar1,
+           WVar2                    := #WVar2,
+           WVar3                    := #WVar3,
+           WVar4                    := #WVar4,
+           WVar5                    := #WVar5,
+           Error                    := #ErrorFB4,
+           Done                     := #DoneFB4,
+           State                    := #StateFB4);
+// FB4 mit Fehler beendet oder NDR?
+      UN    #ErrorFB4; 
+      UN    #DoneFB4; 
+      SPB   ENDE; 
+      CALL #locinstFB4 (
+           Req                      := FALSE);
+
+      UN    #ErrorFB4; 
+      SPB   H380; 
+      L     6; 
+      L     #StateFB4; 
+      ==I   ; // FB4 FIFO voll?
+      SPB   ENDE; 
+      L     #StateFB4; 
+      T     #StateFB2_3_4_gesp; 
+      L     W#16#4030; // Fehler-Nr --> 4030
+      UN    #Sem1E; 
+      SPB   FEH0; 
+      S     #SemF; // Semaphore=0 setzen da Fehler
+      S     #SemF0; 
+      T     #StateSem; // FehlerNr. speichern
+      SPA   ENDE; 
+H380: L     #SR2; 
+      INC   1; 
+      T     #SR2; 
+      SET   ; 
+      R     #DoneFB4; 
+      SPA   ENDE; 
+//-----------------------------------------
+SR07: SET   ; 
+      R     #NDRFB2; 
+      R     #ErrorFB2; 
+      R     #DoneFB3; 
+      R     #ErrorFB3; 
+      R     #DoneFB4; 
+      R     #ErrorFB4; 
+      S     #Done; 
+      R     #Active; 
+      SPA   ENDE; 
+//-----------------------------------------
+// lesen der WZ-Nummer des WZ's auf PlatzNr in MagazinNr
+SR08: L     "DB_WZV_DV".TOA; 
+      T     #Unit1; 
+      L     "DB_WZV_DV".Platz_Nummer; 
+      +     -1; 
+      L     #numMagPlaceParams; 
+      *I    ; 
+      +     3; 
+      T     #Line1; 
+      L     "DB_WZV_DV".Magazin_Nummer; 
+      T     #Column1; 
+      CALL #locinstFB2 (
+           Req                      := TRUE,
+           NumVar                   := 1,
+           Addr1                    := "DB_WZV_NCVAR".T0_TP_placeData0_0,
+           Unit1                    := #Unit1,
+           Column1                  := #Column1,
+           Line1                    := #Line1,
+           Error                    := #ErrorFB2,
+           NDR                      := #NDRFB2,
+           State                    := #StateFB2,
+           RD1                      := "DB_WZV_DV".WZV_TNummer);
+// FB2 mit Fehler beendet oder NDR?
+      UN    #ErrorFB2; 
+      UN    #NDRFB2; 
+      SPB   ENDE; 
+      CALL #locinstFB2 (
+           Req                      := FALSE);
+
+      UN    #ErrorFB2; 
+      SPB   H390; 
+      L     6; 
+      L     #StateFB2; 
+      ==I   ; // FB2 FIFO voll?
+      SPB   ENDE; 
+      L     #StateFB2; 
+      T     #StateFB2_3_4_gesp; 
+      L     W#16#2030; // Fehler-Nr --> 2030
+      SPA   FEHL; 
+H390: L     "DB_WZV_DV".WZV_TNummer; 
+      L     0; 
+      ==I   ; 
+      SPBN  H400; 
+      L     W#16#40; // Fehler-Nr --> 0040
+      SPA   FEHL; 
+H400: L     #SR2; 
+      INC   1; 
+      T     #SR2; 
+      SET   ; 
+      R     #NDRFB2; 
+      SPA   ENDE; 
+//-----------------------------------------
+// lesen der WZ-Nummer des WZ's auf ZwischenspeicherplatzNr in ZwischenspeichermagazinNr
+SR09: L     "DB_WZV_DV".TOA; 
+      T     #Unit1; 
+      L     "DB_WZV_DV".PlatzNrZwischenspeicher; 
+      +     -1; 
+      L     #numMagPlaceParams; 
+      *I    ; 
+      +     3; 
+      T     #Line1; 
+      L     "DB_WZV_DV".MagNrZwischenspeicher; 
+      T     #Column1; 
+      CALL #locinstFB2 (
+           Req                      := TRUE,
+           NumVar                   := 1,
+           Addr1                    := "DB_WZV_NCVAR".T0_TP_placeData0_0,
+           Unit1                    := #Unit1,
+           Column1                  := #Column1,
+           Line1                    := #Line1,
+           Error                    := #ErrorFB2,
+           NDR                      := #NDRFB2,
+           State                    := #StateFB2,
+           RD1                      := "DB_WZV_DV".WZV_TNummer);
+// FB2 mit Fehler beendet oder NDR?
+      UN    #ErrorFB2; 
+      UN    #NDRFB2; 
+      SPB   ENDE; 
+      CALL #locinstFB2 (
+           Req                      := FALSE);
+
+      UN    #ErrorFB2; 
+      SPB   H410; 
+      L     6; 
+      L     #StateFB2; 
+      ==I   ; // FB2 FIFO voll?
+      SPB   ENDE; 
+      L     #StateFB2; 
+      T     #StateFB2_3_4_gesp; 
+      L     W#16#2040; // Fehler-Nr --> 2040
+      SPA   FEHL; 
+H410: L     "DB_WZV_DV".WZV_TNummer; 
+      L     0; 
+      ==I   ; 
+      SPBN  H420; 
+      L     W#16#40; // Fehler-Nr --> 0040
+      SPA   FEHL; 
+H420: L     #SR2; 
+      INC   1; 
+      T     #SR2; 
+      SET   ; 
+      R     #NDRFB2; 
+      SPA   ENDE; 
+//-----------------------------------------
+// Werkzeug entladen
+SR10: U     #SemF; 
+      SPB   Sm30; // Semaphore = 0, FcNo=3 da PI-Dienst mit Fehler abgebrochen
+      U     #MDBit[3]; 
+      UN    #Sem1E; 
+      SPB   Sm31; // Semaphore = 1, FcNo=3  setzen
+      L     "DB_WZV_DV".TOA; 
+      T     #Unit; 
+      L     "DB_WZV_DV".WZV_TNummer; 
+      T     #WVar1; 
+      L     "DB_WZV_DV".Platz_Nummer; 
+      T     #WVar2; 
+      L     "DB_WZV_DV".Magazin_Nummer; 
+      T     #WVar3; 
+      L     "DB_WZV_DV".PlatzNrBeladestelle; 
+      T     #WVar4; 
+      L     "DB_WZV_DV".MagNrBeladestelle; 
+      T     #WVar5; 
+      CALL #locinstFB4 (
+           Req                      := TRUE,
+           PIService                := "DB_SIEM_PI".TMMVTL,
+           Unit                     := #Unit,
+           WVar1                    := #WVar1,
+           WVar2                    := #WVar2,
+           WVar3                    := #WVar3,
+           WVar4                    := #WVar4,
+           WVar5                    := #WVar5,
+           Error                    := #ErrorFB4,
+           Done                     := #DoneFB4,
+           State                    := #StateFB4);
+// FB4 mit Fehler beendet oder NDR?
+      UN    #ErrorFB4; 
+      UN    #DoneFB4; 
+      SPB   ENDE; 
+      CALL #locinstFB4 (
+           Req                      := FALSE);
+
+      UN    #ErrorFB4; 
+      SPB   H430; 
+      L     6; 
+      L     #StateFB4; 
+      ==I   ; // FB4 FIFO voll?
+      SPB   ENDE; 
+      L     #StateFB4; 
+      T     #StateFB2_3_4_gesp; 
+      L     W#16#4040; // Fehler-Nr --> 4040
+      UN    #Sem1E; 
+      SPB   FEHL; 
+      S     #SemF; // Semaphore=0 setzen da Fehler
+      T     #StateSem; // FehlerNr. speichern
+      SPA   ENDE; 
+H430: L     #SR2; 
+      INC   1; 
+      T     #SR2; 
+      SET   ; 
+      R     #DoneFB4; 
+      R     #ErrorFB4; 
+      SPA   ENDE; 
+//-----------------------------------------
+// Rückgabeparameter von TMMVTL lesen (Magazin-Satus)
+SR11: U     #Sem0A; 
+      SPB   Sm30; // Semaphore=0 aktiv ? ->
+      U     #Sem0E; 
+      SPB   H450; // Semaphore=0 beendet ? ->
+      L     "DB_WZV_DV".TOA; 
+      T     #Unit1; 
+      L     11; 
+      T     #Column1; 
+      L     "DB_WZV_DV".Magazin_Nummer; 
+      T     #Line1; 
+      L     9998; 
+      ==I   ; 
+      SPB   TMC; 
+      CALL #locinstFB2 (
+           Req                      := TRUE,
+           NumVar                   := 1,
+           Addr1                    := "DB_WZV_NCVAR".T0_TM_magCmdState0_0,
+           Unit1                    := #Unit1,
+           Column1                  := #Column1,
+           Line1                    := #Line1,
+           Error                    := #ErrorFB2,
+           NDR                      := #NDRFB2,
+           State                    := #StateFB2,
+           RD1                      := #Magazin_Status);
+
+      SPA   LeWe; 
+TMC:  L     1; 
+      T     #Line1; 
+      L     8; 
+      T     #Column1; 
+      CALL #locinstFB2 (
+           Req                      := TRUE,
+           NumVar                   := 1,
+           Addr1                    := "DB_WZV_NCVAR".T0_TMC_magCBCmdState0_0,
+           Unit1                    := #Unit1,
+           Column1                  := #Column1,
+           Line1                    := #Line1,
+           Error                    := #ErrorFB2,
+           NDR                      := #NDRFB2,
+           State                    := #StateFB2,
+           RD1                      := #Magazin_Status);
+// FB2 mit Fehler beendet oder NDR?
+LeWe: UN    #ErrorFB2; 
+      UN    #NDRFB2; 
+      SPB   ENDE; 
+      CALL #locinstFB2 (
+           Req                      := FALSE);
+
+      UN    #ErrorFB2; 
+      SPB   H440; 
+      L     6; 
+      L     #StateFB2; 
+      ==I   ; // FB2 FIFO voll?
+      SPB   ENDE; 
+      L     #StateFB2; 
+      T     #StateFB2_3_4_gesp; 
+      L     W#16#2040; // Fehler-Nr --> 2040
+FE11: T     #StateSem; // Fehler-Nr. speichern
+      L     10; 
+      L     #SR1; 
+      ==I   ; 
+      L     #StateSem; 
+      SPB   FEnt; // Fehler beim Entladen ? ja ->
+      L     11; 
+      L     #SR1; 
+      ==I   ; 
+      L     #StateSem; 
+      SPB   FEnt; // Fehler beim Entladen ? ja ->
+      U     #Sem1E; 
+      SPBN  FEH0; // Fehler wenn Semaphore nicht gesetzt
+      S     #SemF; 
+      S     #SemF0; 
+      S     #Sem0A; // Semaphore = 0 setzen da Fehler
+      SPA   ENDE; 
+FEnt: U     #Sem1E; 
+      SPBN  FEHL; // Fehler wenn Semaphore nicht gesetzt
+      S     #SemF; 
+      S     #Sem0A; // Semaphore = 0 setzen da Fehler
+      SPA   ENDE; 
+H440: L     3; 
+      L     #Magazin_Status; 
+      ==I   ; 
+      SPB   H450; 
+      L     4; 
+      <>I   ; 
+      SPB   ENDE; 
+      L     W#16#50; // Fehler-Nr --> 50
+      SPA   FE11; 
+H450: U     #Sem1E; 
+      S     #Sem0A; // Semaphore = 0 setzen
+      SPB   ENDE; 
+      R     #Sem0E; 
+      L     #SR2; 
+      INC   1; 
+      T     #SR2; 
+      SET   ; 
+      R     #NDRFB2; 
+      SPA   ENDE; 
+//-----------------------------------------
+// WZ löschen 
+SR12: L     "DB_WZV_DV".TOA; 
+      T     #Unit; 
+      L     "DB_WZV_DV".WZV_TNummer; 
+      T     #WVar1; 
+      CALL #locinstFB4 (
+           Req                      := TRUE,
+           PIService                := "DB_SIEM_PI".DELETO,
+           Unit                     := #Unit,
+           WVar1                    := #WVar1,
+           Error                    := #ErrorFB4,
+           Done                     := #DoneFB4,
+           State                    := #StateFB4);
+// FB4 mit Fehler beendet oder Done?
+      UN    #ErrorFB4; 
+      UN    #DoneFB4; 
+      SPB   ENDE; 
+      CALL #locinstFB4 (
+           Req                      := FALSE);
+
+      UN    #ErrorFB4; 
+      SPB   H470; 
+      L     6; 
+      L     #StateFB4; 
+      ==I   ; // FB4 FIFO voll?
+      SPB   ENDE; 
+      L     #StateFB4; 
+      T     #StateFB2_3_4_gesp; 
+      L     W#16#4050; // Fehler-Nr --> 4050
+      SPA   FEHL; 
+H470: L     #SR2; 
+      INC   1; 
+      T     #SR2; 
+      SET   ; 
+      R     #DoneFB4; 
+      SPA   ENDE; 
+//-----------------------------------------
+// WZ-Bezeichner lesen
+SR13: L     "DB_WZV_DV".TOA; 
+      T     #Unit1; 
+      L     1; 
+      T     #Column1; 
+      L     "DB_WZV_DV".WZV_TNummer; 
+      T     #Line1; 
+      L     2; 
+      T     #Column2; 
+      CALL #locinstFB2 (
+           Req                      := TRUE,
+           NumVar                   := 2,
+           Addr1                    := "DB_WZV_NCVAR".T0_TD_toolIdent0_0,
+           Unit1                    := #Unit1,
+           Column1                  := #Column1,
+           Line1                    := #Line1,
+           Addr2                    := "DB_WZV_NCVAR".T0_TD_numCuttEdges0_0,
+           Unit2                    := #Unit1,
+           Column2                  := #Column2,
+           Line2                    := #Line1,
+           Error                    := #ErrorFB2,
+           NDR                      := #NDRFB2,
+           State                    := #StateFB2,
+           RD1                      := "DB_WZV_DV".WZ_Bezeichner,
+           RD2                      := "DB_WZV_DV".Duplo_Nummer);
+
+// FB2 mit Fehler beendet oder NDR?
+      UN    #ErrorFB2; 
+      UN    #NDRFB2; 
+      SPB   ENDE; 
+      CALL #locinstFB2 (
+           Req                      := FALSE);
+
+      UN    #ErrorFB2; 
+      SPB   H480; 
+      L     6; 
+      L     #StateFB2; 
+      ==I   ; // FB2 FIFO voll?
+      SPB   ENDE; 
+      L     #StateFB2; 
+      T     #StateFB2_3_4_gesp; 
+      L     W#16#2050; //  Fehler-Nr --> 2050
+      SPA   FEHL; 
+H480: L     #SR2; 
+      INC   1; 
+      T     #SR2; 
+      SET   ; 
+      R     #NDRFB2; 
+      SPA   ENDE; 
+//-----------------------------------------
+// Anzahl der Schneiden eines WZ lesen
+SR14: L     "DB_WZV_DV".TOA; 
+      T     #Unit1; 
+      L     14; 
+      T     #Column1; 
+      L     "DB_WZV_DV".WZV_TNummer; 
+      T     #Line1; 
+      CALL #locinstFB2 (
+           Req                      := TRUE,
+           NumVar                   := 1,
+           Addr1                    := "DB_WZV_NCVAR".T0_TD_numCuttEdges0_0,
+           Unit1                    := #Unit1,
+           Column1                  := #Column1,
+           Line1                    := #Line1,
+           Error                    := #ErrorFB2,
+           NDR                      := #NDRFB2,
+           State                    := #StateFB2,
+           RD1                      := "DB_WZV_DV".Anzahl_Schneiden);
+// FB2 mit Fehler beendet oder NDR?
+      UN    #ErrorFB2; 
+      UN    #NDRFB2; 
+      SPB   ENDE; 
+      CALL #locinstFB2 (
+           Req                      := FALSE);
+
+      UN    #ErrorFB2; 
+      SPB   H490; 
+      L     6; 
+      L     #StateFB2; 
+      ==I   ; // FB2 FIFO voll?
+      SPB   ENDE; 
+      L     #StateFB2; 
+      T     #StateFB2_3_4_gesp; 
+      L     W#16#2060; //  Fehler-Nr --> 2060
+      SPA   FEHL; 
+H490: L     #SR2; 
+      INC   1; 
+      T     #SR2; 
+      SET   ; 
+      R     #NDRFB2; 
+      SPA   ENDE; 
+//-----------------------------------------
+// Sprungverteiler5
+S5:   L     #SR5; 
+      SPL   S501; 
+      SPA   SR50; // PI-Diebst TMGETT
+      SPA   SR51; // Rückgabeparameter lesen
+S501: L     W#16#501; // Fehler-Nr --> 501
+      SPA   FEHL; 
+//-----------------------------------------
+// T-Nummer eines WZs suchen PI-TMGETT
+SR50: U     #SemF; 
+      SPB   Sm10; // Semaphore = 0, FcNo=1 da PI-Dienst mit Fehler abgebrochen
+      U     #MDBit[3]; 
+      UN    #Sem1E; 
+      SPB   Sm51; // Semaphore = 1, FcNo=5  setzen
+      U     #Dvor; 
+      SPB   Dwei; // Duplo-Nummer vorbesetzt ?
+      L     0; 
+      L     "DB_WZV_DV".Duplo_Nummer; 
+      <>I   ; 
+      SPB   Dup1; 
+      L     1; 
+Dup1: T     #DuploNrTMGETT; 
+      S     #Dvor; 
+Dwei: L     "DB_WZV_DV".TOA; 
+      T     #Unit; 
+      CALL #locinstFB4 (
+           Req                      := TRUE,
+           PIService                := #TMGETT,
+           Unit                     := #Unit,
+           Addr1                    := "DB_WZV_DV".WZ_Bezeichner,
+           WVar1                    := #DuploNrTMGETT,
+           Error                    := #ErrorFB4,
+           Done                     := #DoneFB4,
+           State                    := #StateFB4);
+// FB4 mit Fehler beendet oder NDR?
+      UN    #ErrorFB4; 
+      UN    #DoneFB4; 
+      SPB   ENDE; 
+      CALL #locinstFB4 (
+           Req                      := FALSE);
+
+      UN    #ErrorFB4; 
+      SPB   S51V; 
+      L     6; 
+      L     #StateFB4; 
+      ==I   ; // FB4 FIFO voll?
+      SPB   ENDE; 
+      L     #StateFB4; 
+      T     #StateFB2_3_4_gesp; 
+      L     W#16#4060; // Fehler-Nr --> 4060
+      UN    #Sem1E; 
+      SPB   FEHL; 
+      S     #SemF; // Semaphore=0 setzen da Fehler
+      T     #StateSem; // FehlerNr. speichern
+      SPA   ENDE; 
+S51V: L     1; 
+      T     #SR5; 
+      SPA   S5; 
+//-----------------------------------------
+// Rückmeldungen TMGETT lesen
+SR51: U     #Sem0A; 
+      SPB   Sm50; // Semaphore=0 aktiv ? ->
+      U     #Sem0E; 
+      SPB   ok1; // Semaphore=0 beendet ? ->
+      L     "DB_WZV_DV".TOA; 
+      T     #Unit1; 
+      CALL #locinstFB2 (
+           Req                      := TRUE,
+           NumVar                   := 1,
+           Addr1                    := "DB_WZV_NCVAR".T0_TF_resultNrOfTools1_1,
+           Unit1                    := #Unit1,
+           Error                    := #ErrorFB2,
+           NDR                      := #NDRFB2,
+           State                    := #StateFB2,
+           RD1                      := #resultNrTMGETT);
+// FB2 mit Fehler beendet oder NDR?
+      UN    #ErrorFB2; 
+      UN    #NDRFB2; 
+      SPB   ENDE; 
+      CALL #locinstFB2 (
+           Req                      := FALSE);
+
+      UN    #ErrorFB2; 
+      SPB   ok; 
+      L     6; 
+      L     #StateFB2; 
+      ==I   ; // FB2 FIFO voll?
+      SPB   ENDE; 
+      L     #StateFB2; 
+      T     #StateFB2_3_4_gesp; 
+      L     W#16#2060; //  Fehler-Nr --> 2060
+FeD:  U     #Sem1E; 
+      SPBN  FEHL; // Fehler wenn Semaphore nicht gesetzt
+      S     #SemF; 
+      S     #Sem0A; // Semaphore = 0 setzen da Fehler
+      T     #StateSem; // Fehler-Nr. speichern
+      SPA   ENDE; 
+ok:   L     #resultNrTMGETT; 
+      L     0; 
+      >I    ; 
+      SPB   Du_1; // WZ gefunden ->
+      L     #DuploNrTMGETT; 
+      T     #DuploNrTMCRTO; 
+ok1:  U     #Sem1E; 
+      S     #Sem0A; // Semaphore = 0 setzen
+      SPB   ENDE; 
+      R     #Sem0E; 
+      R     #WZpr; 
+      SPA   ENDE; 
+Du_1: L     0; 
+      L     "DB_WZV_DV".Duplo_Nummer; 
+      <>I   ; 
+      SPB   Dup0; 
+      L     32000; 
+      L     #DuploNrTMGETT; 
+      ==I   ; 
+      SPB   DuFe; // Duplo-Nummerbereich beendet ->
+Du1:  +     1; 
+DuNr: T     #DuploNrTMGETT; 
+      L     0; 
+      T     #SR5; 
+      SPA   ENDE; 
+Dup0: L     32000; 
+      L     #DuploNrTMGETT; 
+      <>I   ; 
+      SPB   Du1; 
+      UN    #DuEn; 
+      S     #DuEn; 
+      L     1; 
+      SPB   DuNr; 
+DuFe: L     W#16#4061; // Fehler-Nr --> 4061
+      SPA   FeD; 
+//-----------------------------------------
+// Seamphoren setzen/löschen
+Sm10: L     1; 
+      SPA   FcNo; 
+Sm20: L     2; 
+      SPA   FcNo; 
+Sm30: L     3; 
+      SPA   FcNo; 
+Sm50: L     5; 
+FcNo: T     #SemFcNo; // Funktionsnummer Semaphore
+      L     0; 
+      SPA   PISe; 
+Sm11: L     1; 
+      SPA   FcN1; 
+Sm21: L     2; 
+      SPA   FcN1; 
+Sm31: L     3; 
+      SPA   FcN1; 
+Sm51: L     5; 
+FcN1: T     #SemFcNo; // Funktionsnummer Semaphore
+      L     1; 
+PISe: T     #SemValue; // Wert = 0
+      L     "DB_WZV_DV".TOA; 
+      T     #Unit; 
+      CALL #locinstFB4 (
+           Req                      := TRUE,
+           PIService                := "DB_SIEM_PI".MMCSEM,
+           Unit                     := #Unit,
+           WVar1                    := #SemFcNo,
+           WVar2                    := #SemValue,
+           Error                    := #ErrorFB4,
+           Done                     := #DoneFB4,
+           State                    := #StateFB4);
+// FB4 mit Fehler beendet oder Done?
+      UN    #ErrorFB4; 
+      UN    #DoneFB4; 
+      SPB   ENDE; 
+      CALL #locinstFB4 (
+           Req                      := FALSE);
+
+      UN    #ErrorFB4; 
+      SPB   SEen; // Auftrag mit Fehler beendet ? nein ->  
+      L     6; 
+      L     #StateFB4; 
+      ==I   ; // FB4 FIFO voll?
+      SPB   ENDE; 
+      L     0; 
+      L     #SemValue; 
+      ==I   ; 
+      SPB   Val0; // Semaphore = 0 ? -> 
+      L     #SemZaehler; 
+      +     1; 
+      T     #SemZaehler; 
+      L     300; 
+      <=I   ; 
+      SPB   ENDE; // Wartezeit aktiv ? ->
+Val0: L     #StateFB4; 
+      T     #StateFB2_3_4_gesp; 
+      L     W#16#4050; // Fehler-Nr --> 4050
+      SPA   FEHL; 
+SEen: U     #SemF; //*** PI-Semaphore ohne Fehler beendet
+      SPB   FSem; // Semaphore aktiviert da FB2/3/4 mit Fehler beendet ?
+      L     #SemValue; 
+      L     1; 
+      ==I   ; 
+      S     #Sem1E; 
+      SPB   ENDE; // Seamphore = 1 ? -> 
+      R     #Sem0A; 
+      S     #Sem0E; 
+      R     #Sem1E; 
+      SPA   ENDE; 
+FSem: L     #StateSem; 
+      U     #SemF0; 
+      SPB   FEH0; 
+      SPA   FEHL; 
+//-----------------------------------------
+// Fehlerauswertung
+FEH0: U     #MDBit[0]; 
+      SPBN  FEHL; 
+      T     #StateBel; 
+      L     #StateFB2_3_4_gesp; 
+      T     #StateFB2_3_4_Bel; 
+      L     0; 
+      L     #K_Code; 
+      <>I   ; 
+      SPB   KC_2; // WZ beladen ?
+      L     9; 
+      SPA   SrNr; 
+KC_2: L     2; 
+      <>I   ; 
+      L     #StateBel; 
+      SPB   FEHL; 
+      L     5; 
+SrNr: T     #SR2; // WZ löschen in WZ-Liste
+      SPA   ENDE; 
+FBel: L     #StateBel; 
+FEHL: SLD   16; 
+      L     #StateFB2_3_4_gesp; 
+      OD    ; 
+      T     #State; 
+      SET   ; 
+      S     #Error; 
+      R     #Active; 
+//-----------------------------------------
+// Gemeinsamer Teil
+
+//-----------------------------------------
+
+ENDE: NOP   0; 
+END_FUNCTION_BLOCK
+

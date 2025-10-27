@@ -1,0 +1,121 @@
+FUNCTION "FC_PRG_ANWAHL_1" : VOID
+
+TITLE = ''
+//$Revision: 1.9 $
+//$Date: 2007/10/19 07:26:54CEST $
+//$Author: hgc $
+
+VAR_INPUT
+i_bPalwechsel: BOOL; // Palewechsel anwaehlen
+i_iPWart: INT; // 1: M60, 2: M61, 3: M62
+iAnzahlJobs: INT;  
+END_VAR
+
+VAR_IN_OUT
+  // Durchgangsparameter
+END_VAR
+
+VAR_OUTPUT
+o_strPrg: STRING[32];
+o_strPfad: STRING[32];
+o_test: STRING;
+retWert: BOOL; // 1 --> Daten rangiert     
+ // Ausgangsparameter
+END_VAR
+
+
+VAR_TEMP
+  // temporäre Variablen
+t_strdummy1: STRING[64];
+t_strdummy2: STRING[64];
+i: INT;
+END_VAR
+
+
+// Vorher FC188
+
+IF i_bPalwechsel THEN
+   
+   o_strPfad:= '/_N_CMA_DIR/';
+  // "DB_JOB".Job_Aktiv:= 16#0; 
+   CASE i_iPWart OF 
+       1 :           o_strPrg:= '_N_DM_PWM60_SPF';
+                  retWert:=TRUE;
+                   
+       2 :           o_strPrg:= '_N_DM_PWM61_SPF';
+                   retWert:=TRUE; 
+                   
+       3 :           o_strPrg:= '_N_DM_PWM62_SPF';
+                   retWert:=TRUE; 
+
+       4 :           o_strPrg:= '_N_DM_PWM63_SPF';
+                   retWert:=TRUE; 
+
+   ELSE: 
+       retwert:= FALSE; 
+       RETURN; 
+   END_CASE ; 
+     
+
+ELSE
+   // Anweisungsteil
+   t_strdummy1:= '';
+   t_strdummy2:= '';
+   o_strPrg:='';
+   o_strPfad:='';
+
+    FOR i:=1 TO iAnzahlJobs BY 1 DO  
+      IF ("DB_PAL_NR".Platz[0].Prg_Name = "DB_JOB".Job[i].Prg_name) AND ("DB_JOB".Job[i].Prioritaet <> 16#0)THEN
+          "DB_JOB".Job_Aktiv:= WORD_TO_BYTE(INT_TO_WORD(i));
+          EXIT;
+      END_IF;
+    END_FOR; 
+
+   IF ("DB_PRG_LISTE".Platz[0].Seite[1].aktiv OR "DB_PRG_LISTE".Platz[0].Seite[2].aktiv OR "DB_PRG_LISTE".Platz[0].Seite[3].aktiv OR "DB_PRG_LISTE".Platz[0].Seite[4].aktiv) THEN
+
+     FOR i:=1 TO 4 BY 1 DO
+        
+        IF ("DB_PRG_LISTE".Platz[0].Seite[i].aktiv AND NOT("DB_PRG_LISTE".Platz[0].Seite[i].bearbeitet)) THEN
+            
+            // immer MPF Teil oder Werkstück
+            t_strdummy1 := CONCAT(IN1:='_N_', IN2:="DB_PRG_LISTE".Platz[0].Seite[i].Prg_Name); // _N_1234
+            t_strdummy2 := CONCAT(IN1:=t_strdummy1,IN2:='_MPF');
+            o_strPrg := t_strdummy2;
+
+            IF "DB_PRG_LISTE".Platz[0].Seite[i].TeiloWRS THEN
+                // Werkstück
+                t_strdummy1 := CONCAT(IN1:='/_N_WKS_DIR/_N_', IN2:="DB_PRG_LISTE".Platz[0].Seite[i].Ordner_Name); // _N_1234
+                t_strdummy2 := CONCAT(IN1:=t_strdummy1, IN2:='_WPD'); 
+                o_strPfad:=t_strdummy2;
+            ELSE
+                // Teileprogramm
+                o_strPfad:='/_N_MPF_DIR';
+            END_IF;
+
+            EXIT;
+
+        END_IF;
+
+     END_FOR; 
+
+   ELSE;
+       // immer MPF Teil oder Werkstück
+       t_strdummy1 := CONCAT(IN1:='_N_', IN2:="DB_PAL_NR".Platz[0].Prg_Name); // _N_1234
+       t_strdummy2 := CONCAT(IN1:=t_strdummy1,IN2:='_MPF');
+       o_strPrg := t_strdummy2;
+
+       IF "DB_PAL_NR".Platz[0].TeiloWRS THEN
+           // Werkstück
+           t_strdummy1 := CONCAT(IN1:='/_N_WKS_DIR/_N_', IN2:="DB_PAL_NR".Platz[0].Ordner_Name); // _N_1234
+           t_strdummy2 := CONCAT(IN1:=t_strdummy1, IN2:='_WPD'); 
+           o_strPfad:=t_strdummy2;
+       ELSE
+           // Teileprogramm
+           o_strPfad:='/_N_MPF_DIR';
+       END_IF;
+
+   END_IF;
+
+END_IF;
+   retwert:=TRUE;
+END_FUNCTION

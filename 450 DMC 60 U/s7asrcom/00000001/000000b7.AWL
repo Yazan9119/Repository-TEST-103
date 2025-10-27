@@ -1,0 +1,558 @@
+FUNCTION "FC_MA_KUEHLAGGREGAT" : VOID
+TITLE =
+//$Revision: 1.19 $
+//$Date: 2008/09/10 10:46:29CEST $
+//$Author: hgc $
+//
+//Logbuch:
+//
+//26.09.2001 SCH: Modul erstellt
+VERSION : 0.1
+
+
+VAR_INPUT
+  EX_Enable : BOOL ;	//Freigabe
+END_VAR
+BEGIN
+NETWORK
+TITLE =Modul Freigabe
+
+      UN    #EX_Enable; 
+      BEB   ; 
+
+NETWORK
+TITLE =Störungen löschen
+
+      U     "M_Ruecksetze_Fehler"; 
+      R     "DB_FEHLERMELDUNG".Warnung._701907_Sammel_Kuehl_Kue; 
+      R     "DB_FEHLERMELDUNG".Warnung._701908_Wasser_Mang_Kueh; 
+      R     "DB_FEHLERMELDUNG".Warnung._701909_Filter_versch_Ku; 
+      R     "DB_FEHLERMELDUNG".Warnung._701910_Wasser_Temp_Kueh; 
+      R     "DB_FEHLERMELDUNG".Warnung._701941_KA_Stroemw_0; 
+      R     "DB_FEHLERMELDUNG".Warnung._701942_KA_ND_Beg_0; 
+      R     "DB_FEHLERMELDUNG".Warnung._701942_KA_ND_Beg_0; 
+      R     "DB_FEHLERMELDUNG".WARNUNG3._700421_KA_Warnmeldung; 
+      R     "DB_FEHLERMELDUNG".WARNUNG3._700422_KA_Stoermeldung1; 
+      R     "DB_FEHLERMELDUNG".WARNUNG3._700423_KA_Stoermeldung2; 
+      R     "DB_FEHLERMELDUNG".WARNUNG3._700415_KA_FD_Sammel; 
+      R     "DB_FEHLERMELDUNG".WARNUNG3._700416_KA_FD_WasserMang; 
+      R     "DB_FEHLERMELDUNG".WARNUNG3._700417_KA_FD_Filtversch; 
+      R     "DB_FEHLERMELDUNG".WARNUNG3._700418_KA_FD_WasserTemp; 
+      R     "DB_FEHLERMELDUNG".WARNUNG3._700419_KA_FD_Durchfluss; 
+      R     "DB_FEHLERMELDUNG".WARNUNG3._700430_KA_SPI_Durchflus; 
+      R     "DB_FEHLERMELDUNG".WARNUNG4._702351_KA2_Warnmeldung; 
+      R     "DB_FEHLERMELDUNG".WARNUNG4._702352_KA2_Stoermeldun1; 
+      R     "DB_FEHLERMELDUNG".WARNUNG4._702353_KA2_Stoermeldun2; 
+      R     "DB_FEHLERMELDUNG".NotAus._700032_FD_Tischtemp; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700756_Sammel_Kuehl_Kue; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700757_Wasser_Mang_Kueh; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700758_Filter_versch_Ku; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700759_Wasser_Temp_Kueh; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700830_KA_Stroemw_0; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700831_KA_ND_Beg_0; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700832_KA_HD_Beg_0; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700961_KA_Warnmeldung; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700962_KA_Stoermeldung1; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700963_KA_Stoermeldung2; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700956_KA_FD_Sammel; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700957_KA_FD_WasserMang; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700958_KA_FD_Filtversch; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700959_KA_FD_WasserTemp; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700960_KA_FD_Durchfluss; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._701046_KA_SPI_Durchflus; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._701047_KA2_Warnmeldung; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700902_KA2_Stoermeldung; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700902_KA2_Stoermeldung; 
+      R     "DB_FEHLERMELDUNG".WARNUNG2._701339_MSS_Kuehlung; 
+
+
+NETWORK
+TITLE =Alarm NOT-AUS: FD Tischtemperatur zu hoch
+//mit Klemmung bei Option Drehbetrieb mit Hirthverzahnung
+      U(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._005_ANWAHL_SONDER_SPDL; 
+      L     2; 
+      ==I   ; 
+      )     ; 
+      SPBN  SEND; 
+
+      UN    "I_FD_TISCHTEMP_NOTAUS"; 
+      S     "DB_FEHLERMELDUNG".NotAus._700032_FD_Tischtemp; 
+
+SEND: NOP   0; 
+NETWORK
+TITLE =_701907 Kuehl-Aggregat: Sammelmeldung Störung
+
+      L     "DB_PLC_MD_DB20".UDInt._011_ANWAHL_MASCH_KUEHL; 
+      L     0; 
+      ==I   ; 
+      SPBN  aEND; 
+
+
+      UN    "I_KA_NEG_Luftfilter"; 
+      S     "DB_FEHLERMELDUNG".Warnung._701909_Filter_versch_Ku; 
+
+
+      U     "I_KA_NEG_Sammelfehler"; //Signale sind invertiert
+      SPBN  a01; 
+      L     0; 
+      T     "MB_Kuehl_Agg_Count"; 
+      SPA   aEND; 
+
+a01:  U     "M_Takt_2s"; 
+      UN(   ; 
+      L     "MB_Kuehl_Agg_Count"; 
+      L     150; 
+      >=I   ; 
+      )     ; 
+      SPBN  a02; 
+
+      L     "MB_Kuehl_Agg_Count"; 
+      INC   1; 
+      T     "MB_Kuehl_Agg_Count"; 
+
+
+a02:  L     30; 
+      L     "MB_Kuehl_Agg_Count"; 
+      >=I   ; 
+      U(    ; 
+      L     150; 
+      <=I   ; 
+      )     ; 
+      SPBN  a03; 
+
+      UN    "I_KA_NEG_Sammelfehler"; 
+      S     "DB_FEHLERMELDUNG".Warnung._701907_Sammel_Kuehl_Kue; 
+
+
+a03:  L     "MB_Kuehl_Agg_Count"; 
+      L     150; 
+      >=I   ; 
+      SPBN  aEND; 
+
+      UN    "I_KA_NEG_Sammelfehler"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700756_Sammel_Kuehl_Kue; 
+
+      UN    "I_KA_NEG_Luftfilter"; 
+      S     "DB_FEHLERMELDUNG".Warnung._701909_Filter_versch_Ku; 
+
+
+aEND: NOP   0; 
+
+NETWORK
+TITLE =Kühlaggregat 1
+
+      L     "DB_PLC_MD_DB20".UDInt._011_ANWAHL_MASCH_KUEHL; 
+      L     1; 
+      ==I   ; 
+      SPBN  LANF; 
+
+      U     "I_KA_NEG_Sammelfehler"; 
+      U     "I_KA_NEG_Luftfilter"; 
+      SPBN  K001; 
+      L     0; 
+      T     "MW_Kuehl_Agg_Count"; 
+      SPA   KEND; 
+
+K001: U     "M_Takt_10s"; 
+      UN(   ; 
+      L     "MW_Kuehl_Agg_Count"; 
+      L     18000; 
+      >=I   ; 
+      )     ; 
+      SPBN  K002; 
+
+      L     "MW_Kuehl_Agg_Count"; 
+      INC   1; 
+      T     "MW_Kuehl_Agg_Count"; 
+
+K002: L     6; 
+      L     "MW_Kuehl_Agg_Count"; 
+      <=I   ; 
+      SPBN  K003; 
+
+      UN    "I_KA_NEG_Sammelfehler"; 
+      S     "DB_FEHLERMELDUNG".Warnung._701907_Sammel_Kuehl_Kue; 
+      UN    "I_KA_NEG_Luftfilter"; 
+      S     "DB_FEHLERMELDUNG".Warnung._701909_Filter_versch_Ku; 
+
+K003: L     "MW_Kuehl_Agg_Count"; 
+      L     15; 
+      >=I   ; 
+      SPBN  K004; 
+
+      UN    "I_KA_NEG_Sammelfehler"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700756_Sammel_Kuehl_Kue; 
+      R     "DB_FEHLERMELDUNG".Warnung._701907_Sammel_Kuehl_Kue; 
+
+K004: L     "MW_Kuehl_Agg_Count"; // Filterverschmutzung führt erst nach 48 Stunden zum Fehler
+      L     17280; 
+      >=I   ; 
+      SPBN  KEND; 
+
+      UN    "I_KA_NEG_Luftfilter"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700758_Filter_versch_Ku; 
+      R     "DB_FEHLERMELDUNG".Warnung._701909_Filter_versch_Ku; 
+
+KEND: NOP   0; 
+
+NETWORK
+TITLE =Kühlaggregat 2
+
+LANF: L     "DB_PLC_MD_DB20".UDInt._011_ANWAHL_MASCH_KUEHL; 
+      L     2; 
+      ==I   ; 
+      SPBN  HANF; 
+
+      U     "I_KA_NEG_WARNMELDUNG"; 
+      U     "I_KA_NEG_STOERMELDUNG1"; 
+      U     "I_KA_NEG_STOERMELDUNG2"; 
+      SPBN  L001; 
+      L     0; 
+      T     "MW_Kuehl_Agg_Count"; 
+      SPA   LEND; 
+
+L001: U     "M_Takt_10s"; 
+      UN(   ; 
+      L     "MW_Kuehl_Agg_Count"; 
+      L     18000; 
+      >=I   ; 
+      )     ; 
+      SPBN  L002; 
+
+      L     "MW_Kuehl_Agg_Count"; 
+      INC   1; 
+      T     "MW_Kuehl_Agg_Count"; 
+
+L002: L     6; 
+      L     "MW_Kuehl_Agg_Count"; 
+      <=I   ; 
+      SPBN  L003; 
+
+      UN    "I_KA_NEG_WARNMELDUNG"; 
+      S     "DB_FEHLERMELDUNG".WARNUNG3._700421_KA_Warnmeldung; 
+      UN    "I_KA_NEG_STOERMELDUNG1"; 
+      S     "DB_FEHLERMELDUNG".WARNUNG3._700422_KA_Stoermeldung1; 
+      UN    "I_KA_NEG_STOERMELDUNG2"; 
+      S     "DB_FEHLERMELDUNG".WARNUNG3._700423_KA_Stoermeldung2; 
+
+L003: L     "MW_Kuehl_Agg_Count"; 
+      L     15; 
+      >=I   ; 
+      SPBN  LEND; 
+
+      UN    "I_KA_NEG_WARNMELDUNG"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700961_KA_Warnmeldung; 
+      R     "DB_FEHLERMELDUNG".WARNUNG3._700421_KA_Warnmeldung; 
+      UN    "I_KA_NEG_STOERMELDUNG1"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700962_KA_Stoermeldung1; 
+      R     "DB_FEHLERMELDUNG".WARNUNG3._700422_KA_Stoermeldung1; 
+      UN    "I_KA_NEG_STOERMELDUNG2"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700963_KA_Stoermeldung2; 
+      R     "DB_FEHLERMELDUNG".WARNUNG3._700423_KA_Stoermeldung2; 
+
+LEND: NOP   0; 
+
+NETWORK
+TITLE =Hochgenauigkeitspaket
+
+HANF: L     "DB_PLC_MD_DB20".UDInt._011_ANWAHL_MASCH_KUEHL; 
+      L     3; 
+      ==I   ; 
+      SPBN  FANF; 
+
+      U     "I_KA2_N_WARNMELDUNG"; 
+      U     "I_KA2_N_STOERMELDUNG1"; 
+      U     "I_KA2_N_STOERMELDUNG2"; 
+      U     "I_KA_NEG_WARNMELDUNG"; 
+      U     "I_KA_NEG_STOERMELDUNG1"; 
+      U     "I_KA_NEG_STOERMELDUNG2"; 
+      SPBN  H001; 
+      L     0; 
+      T     "MW_Kuehl_Agg_Count"; 
+      SPA   HEND; 
+
+H001: U     "M_Takt_10s"; 
+      UN(   ; 
+      L     "MW_Kuehl_Agg_Count"; 
+      L     18000; 
+      >=I   ; 
+      )     ; 
+      SPBN  H002; 
+
+      L     "MW_Kuehl_Agg_Count"; 
+      INC   1; 
+      T     "MW_Kuehl_Agg_Count"; 
+
+H002: L     6; 
+      L     "MW_Kuehl_Agg_Count"; 
+      <=I   ; 
+      SPBN  H003; 
+
+      UN    "I_KA_NEG_WARNMELDUNG"; 
+      S     "DB_FEHLERMELDUNG".WARNUNG3._700421_KA_Warnmeldung; 
+      UN    "I_KA_NEG_STOERMELDUNG1"; 
+      S     "DB_FEHLERMELDUNG".WARNUNG3._700422_KA_Stoermeldung1; 
+      UN    "I_KA_NEG_STOERMELDUNG2"; 
+      S     "DB_FEHLERMELDUNG".WARNUNG3._700423_KA_Stoermeldung2; 
+      UN    "I_KA2_N_WARNMELDUNG"; 
+      S     "DB_FEHLERMELDUNG".WARNUNG4._702351_KA2_Warnmeldung; 
+      UN    "I_KA2_N_STOERMELDUNG1"; 
+      S     "DB_FEHLERMELDUNG".WARNUNG4._702352_KA2_Stoermeldun1; 
+      UN    "I_KA2_N_STOERMELDUNG2"; 
+      S     "DB_FEHLERMELDUNG".WARNUNG4._702353_KA2_Stoermeldun2; 
+
+H003: L     "MW_Kuehl_Agg_Count"; 
+      L     15; 
+      >=I   ; 
+      SPBN  HEND; 
+
+      UN    "I_KA_NEG_WARNMELDUNG"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700961_KA_Warnmeldung; 
+      R     "DB_FEHLERMELDUNG".WARNUNG3._700421_KA_Warnmeldung; 
+      UN    "I_KA_NEG_STOERMELDUNG1"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700962_KA_Stoermeldung1; 
+      R     "DB_FEHLERMELDUNG".WARNUNG3._700422_KA_Stoermeldung1; 
+      UN    "I_KA_NEG_STOERMELDUNG2"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700963_KA_Stoermeldung2; 
+      R     "DB_FEHLERMELDUNG".WARNUNG3._700423_KA_Stoermeldung2; 
+      UN    "I_KA2_N_WARNMELDUNG"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._701047_KA2_Warnmeldung; 
+      R     "DB_FEHLERMELDUNG".WARNUNG4._702351_KA2_Warnmeldung; 
+      UN    "I_KA2_N_STOERMELDUNG1"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700902_KA2_Stoermeldung; 
+      R     "DB_FEHLERMELDUNG".WARNUNG4._702352_KA2_Stoermeldun1; 
+      UN    "I_KA2_N_STOERMELDUNG2"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700902_KA2_Stoermeldung; 
+      R     "DB_FEHLERMELDUNG".WARNUNG4._702353_KA2_Stoermeldun2; 
+
+HEND: NOP   0; 
+
+
+NETWORK
+TITLE =Kuehlaggragat für FD-Tisch
+
+FANF: U(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._011_ANWAHL_MASCH_KUEHL; 
+      L     1; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._011_ANWAHL_MASCH_KUEHL; 
+      L     2; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._011_ANWAHL_MASCH_KUEHL; 
+      L     3; 
+      ==I   ; 
+      )     ; 
+      SPBN  MANF; 
+
+
+      L     "DB_PLC_MD_DB20".UDInt._005_ANWAHL_SONDER_SPDL; 
+      L     2; 
+      <>I   ; 
+      SPB   FEND; 
+
+      U     "M_Ruecksetze_Fehler"; 
+      R     "DB_FEHLERMELDUNG".WARNUNG3._700415_KA_FD_Sammel; 
+      R     "DB_FEHLERMELDUNG".WARNUNG3._700416_KA_FD_WasserMang; 
+      R     "DB_FEHLERMELDUNG".WARNUNG3._700417_KA_FD_Filtversch; 
+      R     "DB_FEHLERMELDUNG".WARNUNG3._700418_KA_FD_WasserTemp; 
+      R     "DB_FEHLERMELDUNG".WARNUNG3._700419_KA_FD_Durchfluss; 
+
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700956_KA_FD_Sammel; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700957_KA_FD_WasserMang; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700958_KA_FD_Filtversch; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700959_KA_FD_WasserTemp; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700960_KA_FD_Durchfluss; 
+
+
+      UN    "I_FD_KA_NEG_Luftfilter"; 
+      S     "DB_FEHLERMELDUNG".WARNUNG3._700417_KA_FD_Filtversch; 
+
+      UN    "I_FD_KA_NEG_Durchflussw"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700960_KA_FD_Durchfluss; 
+
+      U     "I_FD_KA_NEG_Sammelfehler"; //Signale sind invertiert
+      U     "I_FD_KA_Temperaturregler"; 
+      U     "I_FD_KA_Fuellstand"; 
+      SPBN  F001; 
+      L     0; 
+      T     "MB_FD_Kuehl_Agg_Count"; 
+      SPA   FEND; 
+
+F001: U     "M_Takt_2s"; 
+      UN(   ; 
+      L     "MB_FD_Kuehl_Agg_Count"; 
+      L     150; 
+      >=I   ; 
+      )     ; 
+      SPBN  F002; 
+
+      L     "MB_FD_Kuehl_Agg_Count"; 
+      INC   1; 
+      T     "MB_FD_Kuehl_Agg_Count"; 
+
+F002: L     30; 
+      L     "MB_FD_Kuehl_Agg_Count"; 
+      >=I   ; 
+      U(    ; 
+      L     150; 
+      <=I   ; 
+      )     ; 
+      SPBN  F003; 
+
+      UN    "I_FD_KA_NEG_Sammelfehler"; 
+      S     "DB_FEHLERMELDUNG".WARNUNG3._700415_KA_FD_Sammel; 
+
+      UN    "I_FD_KA_Temperaturregler"; 
+      S     "DB_FEHLERMELDUNG".WARNUNG3._700418_KA_FD_WasserTemp; 
+
+      UN    "I_FD_KA_Fuellstand"; 
+      S     "DB_FEHLERMELDUNG".WARNUNG3._700416_KA_FD_WasserMang; 
+
+
+F003: L     "MB_FD_Kuehl_Agg_Count"; 
+      L     150; 
+      >=I   ; 
+      SPBN  FEND; 
+
+      UN    "I_FD_KA_NEG_Sammelfehler"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700956_KA_FD_Sammel; 
+
+      UN    "I_FD_KA_NEG_Luftfilter"; 
+      S     "DB_FEHLERMELDUNG".WARNUNG3._700417_KA_FD_Filtversch; 
+
+      UN    "I_FD_KA_Temperaturregler"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700959_KA_FD_WasserTemp; 
+
+      UN    "I_FD_KA_Fuellstand"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700957_KA_FD_WasserMang; 
+
+FEND: NOP   0; 
+
+NETWORK
+TITLE =Kuehlaggregat FD-Tisch Neu
+
+MANF: L     "DB_PLC_MD_DB20".UDInt._011_ANWAHL_MASCH_KUEHL; 
+      L     4; 
+      ==I   ; 
+      SPBN  WTAN; 
+
+      U     "I_KA_NEG_WARNMELDUNG"; 
+      U     "I_KA_NEG_STOERMELDUNG1"; 
+      U     "I_KA_NEG_STOERMELDUNG2"; 
+      U     "I_KA_N_SPI_DURCHFLUSSW"; 
+      U     "I_FD_NEG_DURCHFL_STATOR"; 
+      SPBN  M001; 
+
+      L     0; 
+      T     "MW_Kuehl_Agg_Count"; 
+      SPA   FDND; 
+
+M001: U     "M_Takt_10s"; 
+      UN(   ; 
+      L     "MW_Kuehl_Agg_Count"; 
+      L     18000; 
+      >=I   ; 
+      )     ; 
+      SPBN  M002; 
+
+      L     "MW_Kuehl_Agg_Count"; 
+      INC   1; 
+      T     "MW_Kuehl_Agg_Count"; 
+
+M002: L     6; 
+      L     "MW_Kuehl_Agg_Count"; 
+      <=I   ; 
+      SPBN  M003; 
+
+      UN    "I_KA_NEG_WARNMELDUNG"; 
+      S     "DB_FEHLERMELDUNG".WARNUNG3._700421_KA_Warnmeldung; 
+
+      UN    "I_KA_NEG_STOERMELDUNG1"; 
+      S     "DB_FEHLERMELDUNG".WARNUNG3._700422_KA_Stoermeldung1; 
+
+      UN    "I_KA_NEG_STOERMELDUNG2"; 
+      S     "DB_FEHLERMELDUNG".WARNUNG3._700423_KA_Stoermeldung2; 
+
+      UN    "I_KA_N_SPI_DURCHFLUSSW"; 
+      S     "DB_FEHLERMELDUNG".WARNUNG3._700430_KA_SPI_Durchflus; 
+
+      UN    "I_FD_NEG_DURCHFL_STATOR"; 
+      S     "DB_FEHLERMELDUNG".WARNUNG3._700419_KA_FD_Durchfluss; 
+
+
+M003: L     "MW_Kuehl_Agg_Count"; 
+      L     15; 
+      >=I   ; 
+      SPBN  FDND; 
+
+      UN    "I_KA_NEG_WARNMELDUNG"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700961_KA_Warnmeldung; 
+      R     "DB_FEHLERMELDUNG".WARNUNG3._700421_KA_Warnmeldung; 
+
+      UN    "I_KA_NEG_STOERMELDUNG1"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700962_KA_Stoermeldung1; 
+      R     "DB_FEHLERMELDUNG".WARNUNG3._700422_KA_Stoermeldung1; 
+
+      UN    "I_KA_NEG_STOERMELDUNG2"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700963_KA_Stoermeldung2; 
+      R     "DB_FEHLERMELDUNG".WARNUNG3._700423_KA_Stoermeldung2; 
+
+      UN    "I_KA_N_SPI_DURCHFLUSSW"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._701046_KA_SPI_Durchflus; 
+      R     "DB_FEHLERMELDUNG".WARNUNG3._700430_KA_SPI_Durchflus; 
+
+      UN    "I_FD_NEG_DURCHFL_STATOR"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700960_KA_FD_Durchfluss; 
+      R     "DB_FEHLERMELDUNG".WARNUNG3._700419_KA_FD_Durchfluss; 
+
+
+FDND: NOP   0; 
+
+
+NETWORK
+TITLE =Kühlaggregat nur Wärmetauscher
+
+WTAN: L     "DB_PLC_MD_DB20".UDInt._011_ANWAHL_MASCH_KUEHL; 
+      L     5; 
+      ==I   ; 
+      SPBN  x001; 
+      U     "I_KA_NEG_STOERMELDUNG1"; 
+      SPBN  n001; 
+      L     B#16#0; 
+      T     "MW_Kuehl_Agg_Count"; 
+      SPA   x001; 
+
+n001: U     "M_Takt_10s"; 
+      UN(   ; 
+      L     "MW_Kuehl_Agg_Count"; 
+      L     18000; 
+      >=I   ; 
+      )     ; 
+      SPBN  n002; 
+      L     "MW_Kuehl_Agg_Count"; 
+      INC   1; 
+      T     "MW_Kuehl_Agg_Count"; 
+
+n002: L     B#16#6; 
+      L     "MW_Kuehl_Agg_Count"; 
+      <=I   ; 
+      SPBN  n003; 
+      UN    "I_KA_NEG_STOERMELDUNG1"; 
+      S     "DB_FEHLERMELDUNG".WARNUNG3._700422_KA_Stoermeldung1; 
+
+n003: L     "MW_Kuehl_Agg_Count"; 
+      L     15; 
+      >=I   ; 
+      SPBN  x001; 
+      UN    "I_KA_NEG_STOERMELDUNG1"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700962_KA_Stoermeldung1; 
+      R     "DB_FEHLERMELDUNG".WARNUNG3._700422_KA_Stoermeldung1; 
+x001: NOP   0; 
+
+END_FUNCTION
+

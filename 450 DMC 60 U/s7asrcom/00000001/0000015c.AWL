@@ -1,0 +1,1312 @@
+FUNCTION_BLOCK "FB_PWGF"
+TITLE =
+//$Revision: 1.8 $
+//$Date: 2008/05/20 16:17:08CEST $
+//$Author: hgc $
+//
+//________________________________________________________________________________
+//Erstellt: 28.06.2006 / SPAC_SLH
+//Quelle  : Neu
+//Bst.Info: Palettenwechsler Grundstellung fahren
+//        :
+//        : 
+//Änderung: Datum      / Abteilung / Name  / Version x.y
+//Änderung: 12.02.2007 /            / slh  / 
+//        : Mit Auftrag #RqPalVh im FC_PW_FEHLERMODUL Alarm 700719 "keine Pal.im
+//        : Arbeitsraum" erzeugen, wenn keine Pal.erkannt wird bei autom.Gst.fahr.
+//Änderung:            /            /      / 
+//        : 
+//================================================================================
+AUTHOR : SPAC_slh
+VERSION : 0.2
+CODE_VERSION1
+
+
+VAR_INPUT
+  iReqGf : BOOL ;	//Anforderung Pw Grundstlg.fahren
+END_VAR
+VAR_OUTPUT
+  oPwRset : BOOL ;	//BefA:Pw.Reset
+  oPwh : BOOL ;	//BefA:PalWechsler heben
+  oPws : BOOL ;	//BefA:PalWechsler senken
+  oMdkh : BOOL ;	//BefA:Medienkupplung kuppeln bei FD
+  oMdks : BOOL ;	//BefA:Medienkupplung entkuppeln bei FD
+  oPArKlLoe : BOOL ;	//BefA:Palette ArbRaum entklemmen
+  oPArKlemm : BOOL ;	//BefA:Palette ArbRaum klemmen
+  oPwd0 : BOOL ;	//BefA:PalWechsler drehen -> 0°
+  oPwd180 : BOOL ;	//BefA:PalWechsler drehen -> 180°
+  oKtrPnE : BOOL ;	//BefA:Pal.Anwesenheitskontrolle im ArbRaum:Luft Ein
+  oKtrPnA : BOOL ;	//BefA:Pal.Anwesenheitskontrolle im ArbRaum:Luft Aus
+  oKmPE : BOOL ;	//BefA:KmPumpe Tischspülung ein
+  oKmPA : BOOL ;	//BefA:KmPumpe Tischspülung aus
+  oPRpKlemm : BOOL ;	//BefA:Palette Rüstplatz klemmen
+  oCRqPwPos : BOOL ;	//BefA:C-Achse Pw-Pos.anfahren
+  oTiAxRqDp : BOOL ;	//BefA:Tischachse freifahren zur Drehpos(bei SchwenkRt)
+  oTiAxRqPw : BOOL ;	//BefA:Tischachse fahren zur PalWechsPos.
+  oStpAsup2 : BOOL ;	//BefA:Halt Asup Maschine Nr.2
+  oKmVE : BOOL ;	//BefA:KmVentil Tischspülung ein
+  oKmVA : BOOL ;	//BefA:KmVentil Tischspülung aus
+  oKtrNPnE : BOOL ;	//BefA:Pal.Anwesenheitsktrl.im ArbRaum:neg.Luftventil Ein
+  oKtrNPnA : BOOL ;	//BefA:Pal.Anwesenheitsktrl.im ArbRaum:neg.Luftventil Aus
+  oMdkhSp : BOOL ;	//BefA:Medienkupplung kuppeln nicht FD
+  oRpMdkh : BOOL ;	//BefA:Rüstplatz Medienkupplung kuppeln
+END_VAR
+VAR
+  Sr : STRUCT 	//Schritt-Aktivmerker
+   PwRset : BOOL ;	//Schritt:Pw.Reset
+   pwh1 : BOOL ;	//Schritt:PalWechsler heben
+   pwh2 : BOOL ;	//Schritt:PalWechsler heben
+   pws : BOOL ;	//Schritt:PalWechsler senken
+   mdkh : BOOL ;	//Schritt:Medienkupplung kuppeln bei FD
+   mdks1 : BOOL ;	//Schritt:Medienkupplung entkuppeln bei FD
+   PArKlLoe : BOOL ;	//Schritt:Palette ArbRaum entklemmen
+   PArKlemm : BOOL ;	//Schritt:Palette ArbRaum klemmen
+   pwd0 : BOOL ;	//Schritt:PalWechsler drehen -> 0°
+   pwd180 : BOOL ;	//Schritt:PalWechsler drehen -> 180°
+   bx2 : BOOL ;	//Schritt:
+   KtrLuftA : BOOL ;	//Schritt:Pal.Anwesenheitskontrolle im ArbRaum:Luft Aus
+   KmVA : BOOL ;	//Schritt:KmVentil Tischspülung aus
+   KmPA : BOOL ;	//Schritt:KmPumpe Tischspülung aus
+   PRpKlemm : BOOL ;	//Schritt:Palette Rüstplatz klemmen
+   CRqPwPos : BOOL ;	//Schritt:C-Achse Pw-Pos.anfahren
+   TiAxRqDp : BOOL ;	//Schritt:Tischachse freifahren zur Drehpos(bei SchwenkRt)
+   TiAxRqPw : BOOL ;	//Schritt:Tischachse fahren zur PalWechsPos.
+   mdks2 : BOOL ;	//Schritt:Medienkupplung entkuppeln bei FD
+   mdkmplh : BOOL ;	//Schritt:Medienkupplung kuppeln
+   mdkh2 : BOOL ;	//Schritt:Medienkupplung kuppeln bei FD
+   PArKlLoe2 : BOOL ;	//Schritt:Palette ArbRaum entklemmen
+   RPmdkmplh : BOOL ;	//Schritt:Rüstplatz Medienkupplung ankuppeln
+   cx7 : BOOL ;	//Schritt:
+   dx0 : BOOL ;	//Schritt:
+   dx1 : BOOL ;	//Schritt:
+   dx2 : BOOL ;	//Schritt:
+   dx3 : BOOL ;	//Schritt:
+   dx4 : BOOL ;	//Schritt:
+   dx5 : BOOL ;	//Schritt:
+   dx6 : BOOL ;	//Schritt:
+   dx7 : BOOL ;	//Schritt:
+  END_STRUCT ;	
+  fk : ARRAY  [0 .. 15 ] OF //stat:Flankenhilfsmerker [n]
+  BOOL ;	
+  WTWa : S5TIME ;	//Wartezeit für aktuellen Schritt
+  WTUe : S5TIME ;	//Überwachungszeit für aktuellen Schritt
+  SkStrt : BOOL ;	//Schrittkette Start
+  TWaS : BOOL ;	//Wartezeit Start
+  stpAsup2 : BOOL ;	//Halt Asup Maschine Nr.2
+  PwJogBew : BOOL ;	//PalWechsler wurde im Jog bewegt
+  StrtP0 : BOOL ;	//Startposition:  0 Grad
+  StrtP180 : BOOL ;	//Startposition:180 Grad
+  SfPwRset : BOOL ;	//Schritt fertig:Palettenwechsel reset
+  RqPalVh : BOOL ;	//Kontrolle "Pal.vorhanden" bei autom.Gst.fahren
+  bx : BOOL ;	
+  bx1 : BOOL ;	
+  bx2 : BOOL ;	
+  bx3 : BOOL ;	
+  bx4 : BOOL ;	
+  bx5 : BOOL ;	
+  bx6 : BOOL ;	
+  bx7 : BOOL ;	
+  cx : BOOL ;	
+  cx1 : BOOL ;	
+  cx2 : BOOL ;	
+  cx3 : BOOL ;	
+  cx4 : BOOL ;	
+  cx5 : BOOL ;	
+  cx6 : BOOL ;	
+  cx7 : BOOL ;	
+  dx : BOOL ;	
+  dx1 : BOOL ;	
+  dx2 : BOOL ;	
+  dx3 : BOOL ;	
+  dx4 : BOOL ;	
+  dx5 : BOOL ;	
+  dx6 : BOOL ;	
+  dx7 : BOOL ;	
+END_VAR
+VAR_TEMP
+  svAr1 : DWORD ;	
+  Opt : STRUCT 	//Option, aus DB_PW_DATA
+   PwNcAchse : BOOL ;	//Option Palettenwechsler mit NC-Achse
+   RpNcAchse : BOOL ;	//Option Rüstplatz mit NC-Achse
+   HubMittStlg : BOOL ;	//Option Hub_Mittelstellung
+   HubMitteLgs : BOOL ;	//Option Hub_Mitte_langsam
+   PalVh : BOOL ;	//Option Kontrolle Palette vorhanden
+   Hand_Klemmung : BOOL ;	//Option Rüstpl.Hand_Klemmung
+   HydrRp_Klemmung : BOOL ;	//Option hydr.Rüstpl.Klemmung
+   NcAchse_mit_Eingang : BOOL ;	//Option NCAchse_mit_Eingang
+   NcAchse_ohne_Eingang : BOOL ;	//Option NcAchse_ohne_Eingang
+   Konen_Spuelung : BOOL ;	//Option Konenspülung
+   MaTypHorizontal : BOOL ;	//Option Maschine Typ Horizontal
+   Tisch_Spuelung : BOOL ;	//Option Tisch Spülung
+   SRt : BOOL ;	//Option Schwenkrundtisch
+   KopfAchse : BOOL ;	//Option KopfAchse
+   MaTy100_125 : BOOL ;	//Option MaschineTypFD_100_125
+   HubMitte_Desina_faehig : BOOL ;	//Option HubMitte_Desina_faehig
+  END_STRUCT ;	
+  Opt2 : STRUCT 	//Option2, aus DB_PW_DATA
+   MaTy70_80 : BOOL ;	//Option MaTypFD70_80
+   Rundsp : BOOL ;	//Option Rundspeicher
+   PalVerw : BOOL ;	//Option Palettenverwaltung
+   ax_3 : BOOL ;	
+   ax_4 : BOOL ;	
+   ax_5 : BOOL ;	
+   ax_6 : BOOL ;	
+   ax_7 : BOOL ;	
+   bx : BOOL ;	
+   bx_1 : BOOL ;	
+   bx_2 : BOOL ;	
+   bx_3 : BOOL ;	
+   bx_4 : BOOL ;	
+   bx_5 : BOOL ;	
+   bx_6 : BOOL ;	
+   bx_7 : BOOL ;	
+  END_STRUCT ;	
+  Meld : STRUCT 	
+   noChRset : BOOL ;	//PwGf:Kanal 1 muss im Resetzustand sein
+   noChAkt : BOOL ;	//PwGf:Kanal 1 darf nicht aktiv sein
+   CAxPniO : BOOL ;	//PwGf:kein autPwGf, C-Achse muss in Wechselpos.sein
+   noRett : BOOL ;	//kein autom.PwGf. bei aktivem Rettungsbild
+   ax4 : BOOL ;	
+   ax5 : BOOL ;	
+   ax6 : BOOL ;	
+   ax7 : BOOL ;	
+  END_STRUCT ;	
+  WertInt : INT ;	//Zwischenspeicher für Integerwert
+  Rdy : STRUCT 	//Ablauf ready (aus FB:VENTIL)
+   Pwh : BOOL ;	//Ablauf ready (aus FB_VENTIL_3E2A) Pw Hub heben
+   Pws : BOOL ;	//Ablauf ready (aus FB_VENTIL_3E2A) Pw Hub senken
+   PArKlemm : BOOL ;	//Ablauf ready (aus FB_VENTIL_2E2A) Pal.ArbRaum klemmen
+   PArKlLoe : BOOL ;	//Ablauf ready (aus FB_VENTIL_2E2A) Pal.ArbRaum Klemm.lösen
+   PRpKlemm : BOOL ;	//Ablauf ready (aus FB_VENTIL_2E2A) Pal.Rüstpl. klemmen
+   PRpKlLoe : BOOL ;	//Ablauf ready (aus FB_VENTIL_2E2A) Pal.Rüstpl. Klemm.lösen
+   Mdkh : BOOL ;	//Ablauf ready (aus FB_VENTIL_2E2A) MedKupplung heben
+   Mdks : BOOL ;	//Ablauf ready (aus FB_VENTIL_2E2A) MedKupplung senken
+  END_STRUCT ;	
+  loopctr : BYTE ;	
+  LOp0 : BOOL ;	//lokaler Operationsmerker 0, Zwischenmerker
+  LOp1 : BOOL ;	//lokaler Operationsmerker 1, Zwischenmerker
+  LOp2 : BOOL ;	//lokaler Operationsmerker 2, Zwischenmerker
+  Fa : BOOL ;	//Freigabe Ausgänge
+  Srw : BOOL ;	//Schrittwechsel
+  SKw : BOOL ;	//Schrittkette weiterschalten
+  nK0 : BOOL ;	//Schrittkette im Sr.0 bzw.kein Sr gesetzt
+  PwGst : BOOL ;	//Pw in Grundstellung
+  PwDataM60 : BOOL ;	//M60,aus "DB_PW_DATA".iMFunktion:Start Palettenwechsel
+  PwDataM61 : BOOL ;	//M61,aus "DB_PW_DATA".iMFunktion:Pal.1 in Maschinenraum einwechseln
+  PwDataM62 : BOOL ;	//M62,aus "DB_PW_DATA".iMFunktion:Pal.2 in Maschinenraum einwechseln
+  PwDataM63 : BOOL ;	//M63,aus "DB_PW_DATA".iMFunktion:Arbeitsraum leeren
+  PalSpVh : BOOL ;	//Palettenspeicher vorhanden (DB20UDInt.016_ANWAHL_PALSPEICHER=0)
+  PwPos0 : BOOL ;	//Palettenwechsler auf 0 Grad (aus DB182.dbx14.4)
+  PwPos180 : BOOL ;	//Palettenwechsler auf 180 Grad (aus DB182.dbx14.5)
+  fpiReqGf : BOOL ;	//Flanke Anford.Pw.Grundstlg.fahren
+END_VAR
+BEGIN
+NETWORK
+TITLE =Optionen aus "DB_PW_DATA" in Lokalbereich kopieren
+
+      CALL "BLKMOVE" (
+           SRCBLK                   := "DB_PW_DATA".Option,
+           RET_VAL                  := #WertInt,
+           DSTBLK                   := #Opt);
+      NOP   0; 
+NETWORK
+TITLE =Optionen2 aus "DB_PW_DATA" in Lokalbereich kopieren
+
+      CALL "BLKMOVE" (
+           SRCBLK                   := "DB_PW_DATA".Option2,
+           RET_VAL                  := #WertInt,
+           DSTBLK                   := #Opt2);
+      NOP   0; 
+NETWORK
+TITLE =Lokaldaten initialisieren
+
+      U     "m_eins"; 
+      =     L     17.0; 
+      U     L     17.0; 
+      BLD   102; 
+      R     #Srw; 
+      U     L     17.0; 
+      U     "DB_PW_DATA".bPW_0Grad; 
+      =     #PwPos0; 
+      U     L     17.0; 
+      U     "DB_PW_DATA".bPW_180Grad; 
+      =     #PwPos180; 
+      U     L     17.0; 
+      U     #iReqGf; 
+      FP    #fk[3]; 
+      =     #fpiReqGf; 
+NETWORK
+TITLE =M60 von Nc
+
+      L     "DB_PW_DATA".iMFunktion; 
+      L     60; 
+      ==I   ; 
+      =     #PwDataM60; 
+NETWORK
+TITLE =M61 von Nc
+
+      L     "DB_PW_DATA".iMFunktion; 
+      L     61; 
+      ==I   ; 
+      =     #PwDataM61; 
+NETWORK
+TITLE =M62 von Nc
+
+      L     "DB_PW_DATA".iMFunktion; 
+      L     62; 
+      ==I   ; 
+      =     #PwDataM62; 
+NETWORK
+TITLE =M63 von Nc
+
+      L     "DB_PW_DATA".iMFunktion; 
+      L     63; 
+      ==I   ; 
+      =     #PwDataM63; 
+NETWORK
+TITLE =Palettenspeicher vorhanden
+
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.Palettenspeicher_aktiv; 
+      =     #PalSpVh; 
+NETWORK
+TITLE =Ablauf ready Pw Hub
+
+      U     "DB_PW_DATA".AblaufReady.bPW_Hub; 
+      =     L     17.0; 
+      U     L     17.0; 
+      U     "DB_PW_DATA".Out.OX_PW_Hub_heben; 
+      =     #Rdy.Pwh; 
+      U     L     17.0; 
+      U     "DB_PW_DATA".Out.OX_PW_Hub_senken; 
+      =     #Rdy.Pws; 
+NETWORK
+TITLE =Ablauf Pal.Klemmung Arbeitsraum
+
+      U     "DB_PW_DATA".AblaufReady.bPW_Klemmung; 
+      =     L     17.0; 
+      U     L     17.0; 
+      U     "DB_PW_DATA".Out.OX_PW_AR_PAL_spannen; 
+      =     #Rdy.PArKlemm; 
+      U     L     17.0; 
+      U     "DB_PW_DATA".Out.OX_PW_AR_PAL_loesen; 
+      =     #Rdy.PArKlLoe; 
+NETWORK
+TITLE =Ablauf Pal.Klemmung Rüstplatz
+
+      U     "DB_PW_DATA".AblaufReady.bRP_Klemmung; 
+      U     "DB_PW_DATA".Out.OX_PW_RP_PAL_spannen; 
+      =     #Rdy.PRpKlemm; 
+NETWORK
+TITLE =Ablauf ready Medienkupplung
+
+      U     "DB_PW_DATA".AblaufReady.bFD_Medienkupplung; 
+      =     L     17.0; 
+      U     L     17.0; 
+      U     "O_PW_MPL_MDK_KUPPELN"; 
+      =     #Rdy.Mdkh; 
+      U     L     17.0; 
+      U     "O_PW_MPL_MDK_ENTKUPPELN"; 
+      =     #Rdy.Mdks; 
+NETWORK
+TITLE =Ausgangsstellung Palettenwechsler 0/180 Grad
+
+      U     "DB_PW_DATA".In.IX_PW_Hub_unten; 
+      =     L     17.0; 
+      U     L     17.0; 
+      FN    #fk[1]; 
+      =     L     17.1; 
+      U     L     17.1; 
+      U     #PwPos0; 
+      UN    #StrtP180; 
+      S     #StrtP0; 
+      U     L     17.1; 
+      U     #PwPos180; 
+      UN    #StrtP0; 
+      S     #StrtP180; 
+      U(    ; 
+      U     L     17.0; 
+      FP    #fk[2]; 
+      )     ; 
+      U(    ; 
+      O     #PwPos0; 
+      O     #PwPos180; 
+      )     ; 
+      R     #StrtP0; 
+      R     #StrtP180; 
+NETWORK
+TITLE =PW in Grundstellung
+
+      U(    ; 
+      O     "I_PW_RPL_PAL_GEKLEMMT"; 
+      ON    #Opt.HydrRp_Klemmung; 
+      O     "MX_ABST_Rundspeicher"; 
+      )     ; 
+      U     "M_PW_GRDST"; 
+      =     #PwGst; 
+NETWORK
+TITLE =Schrittkette rücksetzen
+
+      UN    #SkStrt; 
+      UN    "M_Einzelsatz"; 
+      O     ; 
+      U(    ; 
+      O     "M_Reset_Taste"; 
+      O     ; 
+      U     #PwGst; 
+      UN    #iReqGf; 
+      )     ; 
+      U     "M_Einzelsatz"; 
+      =     #LOp1; 
+NETWORK
+TITLE =wenn Bedingung erfüllt ... Schrittkette rücksetzen
+
+      UN    #LOp1; 
+      SPB   e002; 
+      R     #SfPwRset; 
+      TAR1  #svAr1; 
+      LAR1  P##Sr; 
+      L     B#16#0; 
+      T     DID [AR1,P#0.0]; 
+      LAR1  #svAr1; 
+e002: NOP   0; 
+NETWORK
+TITLE =Schrittkette im Sr0 bzw. kein Sr gesetzt
+
+      TAR1  #svAr1; 
+      LAR1  P##Sr; 
+      L     B#16#0; 
+      L     DID [AR1,P#0.0]; 
+      ==D   ; 
+      =     #nK0; 
+      LAR1  #svAr1; 
+NETWORK
+TITLE =Start Pw Grundstlg. fahren
+
+      U(    ; 
+      UN    "DB_SIEM_KANAL_1".E_ChanActive; 
+      U     "DB_SIEM_KANAL_1".E_ChanReset; 
+      U(    ; 
+      ON    "M_Einzelsatz"; 
+      O     #fpiReqGf; 
+      )     ; 
+      O     ; 
+      U     #SkStrt; 
+      U(    ; 
+      ON    "M_Einzelsatz"; 
+      ON    "T_PwgTWa"; 
+      )     ; 
+      UN    #nK0; 
+      )     ; 
+      U     #iReqGf; 
+      U     "DB_NC_PLC".PW_Anwahl; 
+      U     "M_Leistung_Steht_an"; 
+      =     #LOp1; 
+NETWORK
+TITLE =Start Pw Grundstlg. fahren
+//"m_konstruktion": Wzw. wurde im Einr.bewegt
+      U     #LOp1; 
+      U(    ; 
+      ON    #PwGst; 
+      ON    #nK0; 
+      )     ; 
+      UN    "DB_OEM".Einrichten_Aktiv; 
+      U(    ; 
+      U     #PalSpVh; 
+      U     "DB_LSSchnittstelle".IX_FreigabePWvonLS; 
+      O     ; 
+      UN    #PalSpVh; 
+      U     #iReqGf; 
+      )     ; 
+      U     "DB_FAMILIEN_MODUL".A_Freigabe_PW; 
+      =     #SkStrt; 
+      L     S5T#2S; 
+      SA    "Ta_PwgSt"; 
+NETWORK
+TITLE =Reset Start der Wartezeit
+
+      U     "m_eins"; 
+      R     #TWaS; 
+NETWORK
+TITLE =Schrittkette weiterschalten
+
+      U     #SkStrt; 
+      =     #SKw; 
+NETWORK
+TITLE =Gf:Pw Reset auslösen
+
+      U     #SKw; 
+      U     #nK0; 
+      S     #Sr.PwRset; 
+NETWORK
+TITLE =Gf:Pw heben
+
+      U     #Sr.PwRset; 
+      U     #SfPwRset; 
+      UN    #PwPos0; 
+      UN    #PwPos180; 
+      U(    ; 
+      O     "I_PW_RPL_PAL_GELOEST"; 
+      ON    #Opt.HydrRp_Klemmung; 
+      )     ; 
+      =     L     17.0; 
+      U     L     17.0; 
+      U     #SKw; 
+      R     #Sr.PwRset; 
+      S     #Sr.pwh1; 
+      S     #Srw; 
+      U     L     17.0; 
+      BLD   102; 
+      S     #TWaS; 
+NETWORK
+TITLE =Gf:MedKuppl.senken
+
+      U     #Sr.pwh1; 
+      U     "DB_PW_DATA".In.IX_PW_Hub_oben; 
+      UN    "I_PW_MPL_MDK_GEKUPPELT"; 
+      U     #Opt2.MaTy70_80; 
+      UN    "DB_PW_DATA".bAxisRundInWechselpos; 
+      =     L     17.0; 
+      U     L     17.0; 
+      U     "T_PwgTWa"; 
+      U     #SKw; 
+      R     #Sr.pwh1; 
+      S     #Sr.mdks1; 
+      S     #Srw; 
+      U     L     17.0; 
+      BLD   102; 
+      S     #TWaS; 
+      U     L     17.0; 
+      SPBNB _001; 
+      L     S5T#100MS; 
+      T     #WTWa; 
+_001: NOP   0; 
+NETWORK
+TITLE =Gf:C-Achse PwPos.anfahren, wenn MedKuppl.ni.oben
+
+      U     #Sr.mdks1; 
+      U     "I_PW_MPL_MDK_ENTKUPPELT"; 
+      UN    "I_PW_MPL_MDK_GEKUPPELT"; 
+      U     #Opt2.MaTy70_80; 
+      =     L     17.0; 
+      U     L     17.0; 
+      U     "T_PwgTWa"; 
+      U     #SKw; 
+      R     #Sr.PwRset; 
+      S     #Sr.CRqPwPos; 
+      S     #Srw; 
+      U     L     17.0; 
+      BLD   102; 
+      S     #TWaS; 
+      U     L     17.0; 
+      SPBNB _002; 
+      L     S5T#100MS; 
+      T     #WTWa; 
+_002: NOP   0; 
+NETWORK
+TITLE =Gf:MedKuppl.heben
+
+      U(    ; 
+      O     #Sr.CRqPwPos; 
+      O     ; 
+      U     #Sr.pwh1; 
+      U     "DB_PW_DATA".In.IX_PW_Hub_oben; 
+      )     ; 
+      U     "DB_PW_DATA".bAxisRundInWechselpos; 
+      U     #Opt2.MaTy70_80; 
+      =     L     17.0; 
+      U     L     17.0; 
+      U     "T_PwgTWa"; 
+      U     #SKw; 
+      R     #Sr.CRqPwPos; 
+      R     #Sr.pwh1; 
+      S     #Sr.mdkh; 
+      S     #Srw; 
+      U     L     17.0; 
+      BLD   102; 
+      S     #TWaS; 
+      U     L     17.0; 
+      SPBNB _003; 
+      L     S5T#100MS; 
+      T     #WTWa; 
+_003: NOP   0; 
+NETWORK
+TITLE =Gf:Pal.Klemmung ArbRaum lösen
+
+      U(    ; 
+      O     #Sr.mdkh; 
+      O     ; 
+      U     #Sr.pwh1; 
+      U     "DB_PW_DATA".In.IX_PW_Hub_oben; 
+      )     ; 
+      U(    ; 
+      O     "I_PW_MPL_MDK_GEKUPPELT"; 
+      ON    #Opt2.MaTy70_80; 
+      )     ; 
+      =     L     17.0; 
+      U     L     17.0; 
+      U     "T_PwgTWa"; 
+      U     #SKw; 
+      R     #Sr.mdkh; 
+      R     #Sr.pwh1; 
+      S     #Sr.PArKlLoe; 
+      S     #Srw; 
+      U     L     17.0; 
+      BLD   102; 
+      S     #TWaS; 
+      U     L     17.0; 
+      SPBNB _004; 
+      L     S5T#100MS; 
+      T     #WTWa; 
+_004: NOP   0; 
+NETWORK
+TITLE =Gf:Tisch freifahren -> Drehpos.
+
+      U     #Sr.PArKlLoe; 
+      U     "DB_PW_DATA".In.IX_PW_AR_PAL_geloest; 
+      UN    "DB_PW_DATA".bAxisTischDrehPosition; 
+      U     #Opt.SRt; 
+      =     L     17.0; 
+      U     L     17.0; 
+      U     "T_PwgTWa"; 
+      U     #SKw; 
+      R     #Sr.PArKlLoe; 
+      S     #Sr.TiAxRqDp; 
+      S     #Srw; 
+      U     L     17.0; 
+      BLD   102; 
+      S     #TWaS; 
+      U     L     17.0; 
+      SPBNB _005; 
+      L     S5T#100MS; 
+      T     #WTWa; 
+_005: NOP   0; 
+NETWORK
+TITLE =Gf:Pw drehen -> 0/180°
+
+      U(    ; 
+      O     #Sr.PArKlLoe; 
+      O     #Sr.TiAxRqDp; 
+      )     ; 
+      U     "DB_PW_DATA".In.IX_PW_AR_PAL_geloest; 
+      U(    ; 
+      O     "DB_PW_DATA".bAxisTischDrehPosition; 
+      ON    #Opt.SRt; 
+      )     ; 
+      =     L     17.0; 
+      U     L     17.0; 
+      U     #StrtP0; 
+      =     L     17.1; 
+      U     L     17.1; 
+      U     "T_PwgTWa"; 
+      U     #SKw; 
+      R     #Sr.PArKlLoe; 
+      R     #Sr.TiAxRqDp; 
+      S     #Sr.pwd180; 
+      S     #Srw; 
+      U     L     17.1; 
+      BLD   102; 
+      S     #TWaS; 
+      U     L     17.1; 
+      SPBNB _006; 
+      L     S5T#100MS; 
+      T     #WTWa; 
+_006: NOP   0; 
+      U     L     17.0; 
+      U     #StrtP180; 
+      =     L     17.1; 
+      U     L     17.1; 
+      U     "T_PwgTWa"; 
+      U     #SKw; 
+      R     #Sr.PArKlLoe; 
+      R     #Sr.TiAxRqDp; 
+      S     #Sr.pwd0; 
+      S     #Srw; 
+      U     L     17.1; 
+      BLD   102; 
+      S     #TWaS; 
+      U     L     17.1; 
+      SPBNB _007; 
+      L     S5T#100MS; 
+      T     #WTWa; 
+_007: NOP   0; 
+NETWORK
+TITLE =Gf:Pw heben
+
+      U(    ; 
+      U     #Sr.pwd0; 
+      U     #PwPos0; 
+      O     ; 
+      U     #Sr.pwd180; 
+      U     #PwPos180; 
+      O     ; 
+      U     #Sr.PwRset; 
+      U     #SfPwRset; 
+      U(    ; 
+      O     #PwPos0; 
+      O     #PwPos180; 
+      )     ; 
+      )     ; 
+      UN    "DB_PW_DATA".In.IX_PW_Hub_oben; 
+      UN    "DB_PW_DATA".bAxisTischInWechselpos; 
+      U     #Opt.SRt; 
+      U(    ; 
+      O     "I_PW_RPL_PAL_GELOEST"; 
+      ON    #Opt.HydrRp_Klemmung; 
+      )     ; 
+      =     L     17.0; 
+      U     L     17.0; 
+      U     "T_PwgTWa"; 
+      U     #SKw; 
+      R     #Sr.pwd0; 
+      R     #Sr.pwd180; 
+      R     #Sr.PwRset; 
+      S     #Sr.pwh2; 
+      S     #Srw; 
+      U     L     17.0; 
+      BLD   102; 
+      S     #TWaS; 
+      U     L     17.0; 
+      SPBNB _00b; 
+      L     S5T#100MS; 
+      T     #WTWa; 
+_00b: NOP   0; 
+NETWORK
+TITLE =Gf:Tisch Wechselpos.anfahren
+
+      U(    ; 
+      U     #Sr.pwd0; 
+      U     #PwPos0; 
+      O     ; 
+      U     #Sr.pwd180; 
+      U     #PwPos180; 
+      O     #Sr.pwh2; 
+      O     ; 
+      U     #Sr.PwRset; 
+      U     #SfPwRset; 
+      U(    ; 
+      O     #PwPos0; 
+      O     #PwPos180; 
+      )     ; 
+      )     ; 
+      U     "DB_PW_DATA".In.IX_PW_Hub_oben; 
+      UN    "DB_PW_DATA".bAxisTischInWechselpos; 
+      U     #Opt.SRt; 
+      =     L     17.0; 
+      U     L     17.0; 
+      U     "T_PwgTWa"; 
+      U     #SKw; 
+      R     #Sr.pwd0; 
+      R     #Sr.pwd180; 
+      R     #Sr.pwh2; 
+      R     #Sr.PwRset; 
+      S     #Sr.TiAxRqPw; 
+      S     #Srw; 
+      U     L     17.0; 
+      BLD   102; 
+      S     #TWaS; 
+      U     L     17.0; 
+      SPBNB _00c; 
+      L     S5T#100MS; 
+      T     #WTWa; 
+_00c: NOP   0; 
+NETWORK
+TITLE =Gf:Medienkupplung heben (2, wenn Hub nicht unten)
+
+      U     #Sr.PwRset; 
+      U     #SfPwRset; 
+      U(    ; 
+      O     #PwPos0; 
+      O     #PwPos180; 
+      )     ; 
+      UN    "DB_PW_DATA".In.IX_PW_Hub_unten; 
+      U     "DB_PW_DATA".bAxisRundInWechselpos; 
+      U     #Opt2.MaTy70_80; 
+      UN    "I_PW_MPL_MDK_GEKUPPELT"; 
+      =     L     17.0; 
+      U     L     17.0; 
+      U     "T_PwgTWa"; 
+      U     #SKw; 
+      R     #Sr.PwRset; 
+      S     #Sr.mdkh2; 
+      S     #Srw; 
+      U     L     17.0; 
+      BLD   102; 
+      S     #TWaS; 
+      U     L     17.0; 
+      SPBNB _013; 
+      L     S5T#100MS; 
+      T     #WTWa; 
+_013: NOP   0; 
+NETWORK
+TITLE =Gf:Pal.Klemmung ArbRaum lösen 2
+
+      U(    ; 
+      O     #Sr.mdkh2; 
+      O     ; 
+      U     #Sr.PwRset; 
+      U     #SfPwRset; 
+      U(    ; 
+      O     #PwPos0; 
+      O     #PwPos180; 
+      )     ; 
+      UN    "DB_PW_DATA".In.IX_PW_Hub_unten; 
+      )     ; 
+      U(    ; 
+      O     "I_PW_MPL_MDK_GEKUPPELT"; 
+      ON    #Opt2.MaTy70_80; 
+      )     ; 
+      =     L     17.0; 
+      U     L     17.0; 
+      U     "T_PwgTWa"; 
+      U     #SKw; 
+      R     #Sr.mdkh2; 
+      R     #Sr.PwRset; 
+      S     #Sr.PArKlLoe2; 
+      S     #Srw; 
+      U     L     17.0; 
+      BLD   102; 
+      S     #TWaS; 
+      U     L     17.0; 
+      SPBNB _014; 
+      L     S5T#100MS; 
+      T     #WTWa; 
+_014: NOP   0; 
+NETWORK
+TITLE =Gf:Pw absenken/KmPumpe Tischspül.aus
+
+      U(    ; 
+      U     #Sr.pwd0; 
+      U     #PwPos0; 
+      O     ; 
+      U     #Sr.pwd180; 
+      U     #PwPos180; 
+      O     #Sr.TiAxRqPw; 
+      O     ; 
+      U     #Sr.PArKlLoe2; 
+      U     "DB_PW_DATA".In.IX_PW_AR_PAL_geloest; 
+      )     ; 
+      U(    ; 
+      O     "DB_PW_DATA".bAxisTischInWechselpos; 
+      ON    #Opt.SRt; 
+      )     ; 
+      =     L     17.0; 
+      U     L     17.0; 
+      U     "T_PwgTWa"; 
+      U     #SKw; 
+      R     #Sr.pwd0; 
+      R     #Sr.pwd180; 
+      R     #Sr.TiAxRqPw; 
+      R     #Sr.PArKlLoe2; 
+      S     #Sr.pws; 
+      S     #Sr.KmPA; 
+      S     #Srw; 
+      U     L     17.0; 
+      BLD   102; 
+      S     #TWaS; 
+      U     L     17.0; 
+      SPBNB _015; 
+      L     S5T#100MS; 
+      T     #WTWa; 
+_015: NOP   0; 
+NETWORK
+TITLE =Gf:Pal.ArbRaum klemmen
+
+      U(    ; 
+      U     #Sr.KmPA; 
+      UN    "M_PW_Pumpe_Tischspuel"; 
+      U     #Sr.pws; 
+      O     ; 
+      U     #Sr.PwRset; 
+      U     #SfPwRset; 
+      U(    ; 
+      O     #PwPos0; 
+      O     #PwPos180; 
+      )     ; 
+      )     ; 
+      U     "DB_PW_DATA".In.IX_PW_Hub_unten; 
+      U(    ; 
+      O     "DB_PW_DATA".In.IX_PW_PAL_Vorhanden; 
+      O     #Opt.Konen_Spuelung; 
+      O     #PwDataM63; 
+      O     "M_PW_Pal_Vorhanden"; 
+      ON    #Opt.PalVh; 
+      )     ; 
+      =     L     17.0; 
+      U     L     17.0; 
+      U     "T_PwgTWa"; 
+      U     #SKw; 
+      R     #Sr.pws; 
+      R     #Sr.KmPA; 
+      R     #Sr.PwRset; 
+      S     #Sr.PArKlemm; 
+      S     #Sr.KtrLuftA; 
+      S     #Srw; 
+      U     L     17.0; 
+      BLD   102; 
+      S     #TWaS; 
+      U     L     17.0; 
+      SPBNB _016; 
+      L     S5T#100MS; 
+      T     #WTWa; 
+_016: NOP   0; 
+NETWORK
+TITLE =Gf:MedKuppl.heben
+
+      U     #Sr.PArKlemm; 
+      U     "I_PW_Palette_geklemmt"; 
+      =     #Sr.KmVA; 
+      U     #Sr.KmVA; 
+      UN    "O_PW_Ventil_Tischspuel"; 
+      U     #Sr.KtrLuftA; 
+      UN    "O_PW_N_VENTIL_ABFRAGE"; 
+      =     #LOp1; 
+      S     #RqPalVh; 
+NETWORK
+TITLE =Gf:MedKuppl.heben
+
+      U     #LOp1; 
+      U(    ; 
+      O     "DB_PW_DATA".In.IX_PW_PAL_Vorhanden; 
+      O     #Opt.Tisch_Spuelung; 
+      O     #PwDataM63; 
+      O     "M_PW_Pal_Vorhanden"; 
+      ON    #Opt.PalVh; 
+      )     ; 
+      =     L     17.0; 
+      U     L     17.0; 
+      U     "T_PwgTWa"; 
+      U     #SKw; 
+      R     #Sr.PArKlemm; 
+      R     #Sr.KtrLuftA; 
+      S     #Sr.mdkmplh; 
+      S     #Srw; 
+      R     #RqPalVh; 
+      U     L     17.0; 
+      BLD   102; 
+      S     #TWaS; 
+      U     L     17.0; 
+      SPBNB _017; 
+      L     S5T#100MS; 
+      T     #WTWa; 
+_017: NOP   0; 
+NETWORK
+TITLE =Gf:MedKuppl.senken bei FD
+
+      U     #Opt2.MaTy70_80; 
+      U(    ; 
+      U     "I_SP_MPL_GEKUPPELT"; 
+      UN    "I_SP_RPL_ENTKUPPELT"; 
+      ON    "DB_PLC_MD_DB20".UDHex._27_Bit4_MPLmitKupplung; 
+      )     ; 
+      U     #Sr.mdkmplh; 
+      =     L     17.0; 
+      U     L     17.0; 
+      U     "T_PwgTWa"; 
+      U     #SKw; 
+      R     #Sr.mdkmplh; 
+      S     #Sr.mdks2; 
+      S     #Srw; 
+      U     L     17.0; 
+      BLD   102; 
+      S     #TWaS; 
+      U     L     17.0; 
+      SPBNB _01b; 
+      L     S5T#200MS; 
+      T     #WTWa; 
+_01b: NOP   0; 
+NETWORK
+TITLE =Gf:Pal.Rp klemmen
+
+      U     #Sr.mdks2; 
+      U     #Opt2.MaTy70_80; 
+      U     "I_PW_MPL_MDK_ENTKUPPELT"; 
+      UN    "I_PW_MPL_MDK_GEKUPPELT"; 
+      O     ; 
+      U     #Sr.mdkmplh; 
+      UN    #Opt2.MaTy70_80; 
+      U     "I_SP_MPL_GEKUPPELT"; 
+      =     L     17.0; 
+      U     L     17.0; 
+      U     "T_PwgTWa"; 
+      U     #SKw; 
+      R     #Sr.mdks2; 
+      R     #Sr.mdkmplh; 
+      S     #Sr.PRpKlemm; 
+      S     #Srw; 
+      U     L     17.0; 
+      BLD   102; 
+      S     #TWaS; 
+      U     L     17.0; 
+      SPBNB _021; 
+      L     S5T#200MS; 
+      T     #WTWa; 
+_021: NOP   0; 
+NETWORK
+TITLE =Gf:Medienkupplung Rp ankuppeln
+
+      U     #Sr.PRpKlemm; 
+      U(    ; 
+      O     "I_PW_RPL_PAL_GEKLEMMT"; 
+      ON    #Opt.HydrRp_Klemmung; 
+      O     "MX_ABST_Rundspeicher"; 
+      )     ; 
+      =     L     17.0; 
+      U     L     17.0; 
+      U     "T_PwgTWa"; 
+      U     #SKw; 
+      R     #Sr.PRpKlemm; 
+      S     #Sr.RPmdkmplh; 
+      S     #Srw; 
+      U     L     17.0; 
+      BLD   102; 
+      S     #TWaS; 
+      U     L     17.0; 
+      SPBNB _022; 
+      L     S5T#100MS; 
+      T     #WTWa; 
+_022: NOP   0; 
+NETWORK
+TITLE =Grundstlg.fahren fertig, Ende SrKette
+
+      U     #Sr.RPmdkmplh; 
+      U(    ; 
+      O     "I_SP_RPL_GEKUPPELT"; 
+      ON    "DB_PLC_MD_DB20".UDHex._27_Bit3_RPLmitKupplung; 
+      O     "MX_ABST_Rundspeicher"; 
+      )     ; 
+      =     L     17.0; 
+      U     L     17.0; 
+      U     "T_PwgTWa"; 
+      U     #SKw; 
+      R     #Sr.RPmdkmplh; 
+      S     #Srw; 
+      U     L     17.0; 
+      BLD   102; 
+      S     #TWaS; 
+      U     L     17.0; 
+      BLD   102; 
+      S     "m_clrAl"; 
+      U     L     17.0; 
+      SPBNB _023; 
+      L     S5T#200MS; 
+      T     #WTWa; 
+_023: NOP   0; 
+NETWORK
+TITLE =Schrittkettenende
+
+NETWORK
+TITLE =Ansteuerung Wartezeit TWa
+//Verweilzeit zwischen den Schritten der Schrittkette
+//Die Zeitbasis wird jeweils über #WTWa übergeben! 
+      U     #TWaS; 
+      UN    #Srw; 
+      L     #WTWa; 
+      SE    "T_PwgTWa"; 
+NETWORK
+TITLE =Ansteuerung Überwachungszeit TUe
+//Verweilzeit zwischen den Schritten der Schrittkette
+//Die Zeitbasis wird jeweils über #WTWa übergeben! 
+      UN    #TWaS; 
+      UN    #Srw; 
+      U     #SkStrt; 
+      L     #WTUe; 
+      SE    "T_PwgTUe"; 
+NETWORK
+TITLE =Befehlsausgabe (BefA):PwRset auslösen
+
+      U     #Sr.PwRset; 
+      =     #oPwRset; 
+NETWORK
+TITLE =Schritt fertig:Palettenwechsel reset
+
+      U     #Sr.PwRset; 
+      U     "M_PW_Reset"; 
+      S     #SfPwRset; 
+NETWORK
+TITLE =BefA:Pw.heben
+
+      U(    ; 
+      U     #Sr.pwh1; 
+      UN    #PwPos0; 
+      UN    #PwPos180; 
+      O     ; 
+      U     #Sr.pwh2; 
+      U(    ; 
+      O     #PwPos0; 
+      O     #PwPos180; 
+      )     ; 
+      )     ; 
+      U(    ; 
+      UN    #PwPos0; 
+      UN    #PwPos180; 
+      O     "DB_PW_DATA".In.IX_PW_AR_PAL_geloest; 
+      )     ; 
+      U(    ; 
+      O     "DB_PW_DATA".In.IX_PW_RP_PAL_geloest; 
+      ON    #Opt.HydrRp_Klemmung; 
+      )     ; 
+      U     "DB_PW_DATA".bRP_GRDST; 
+      U     #SkStrt; 
+      =     #oPwh; 
+NETWORK
+TITLE =BefA:Pw.absenken
+
+      U     #Sr.pws; 
+      U(    ; 
+      O     #PwPos0; 
+      O     #PwPos180; 
+      )     ; 
+      U     "DB_PW_DATA".bRP_GRDST; 
+      U     "DB_PW_DATA".bAxisTischInWechselpos; 
+      U     "DB_PW_DATA".bAxisRundInWechselpos; 
+      U     "DB_PW_DATA".In.IX_PW_AR_PAL_geloest; 
+      U(    ; 
+      O     "DB_PW_DATA".In.IX_PW_RP_PAL_geloest; 
+      ON    #Opt.HydrRp_Klemmung; 
+      )     ; 
+      U     #SkStrt; 
+      =     #oPws; 
+NETWORK
+TITLE =Befa:Medienkupplung heben = kuppeln
+
+      U     #Sr.mdkmplh; 
+      U     "DB_PW_DATA".bAxisRundInWechselpos; 
+      U     #SkStrt; 
+      =     #oMdkhSp; 
+NETWORK
+TITLE =BefA:Medienkupplung heben = kuppeln bei FD
+
+      U(    ; 
+      O     #Sr.mdkh; 
+      O     #Sr.mdkh2; 
+      )     ; 
+      U     "DB_PW_DATA".bAxisRundInWechselpos; 
+      U     #SkStrt; 
+      =     #oMdkh; 
+NETWORK
+TITLE =BefA:Medienkupplung senken = entkuppeln bei FD
+
+      U(    ; 
+      O     #Sr.mdks1; 
+      O     #Sr.mdks2; 
+      )     ; 
+      U     #SkStrt; 
+      =     #oMdks; 
+NETWORK
+TITLE =BefA:Pal.im Arbeitsraum Klemmung lösen
+
+      U(    ; 
+      O     #Sr.PArKlLoe; 
+      O     #Sr.PArKlLoe2; 
+      )     ; 
+      U(    ; 
+      U     #Opt2.MaTy70_80; 
+      U     "I_PW_MPL_MDK_GEKUPPELT"; 
+      ON    #Opt2.MaTy70_80; 
+      )     ; 
+      U(    ; 
+      O     "I_SP_MPL_ENTKUPPELT"; 
+      ON    "DB_HR".ABST.SP_MPL_Kuppeln; 
+      )     ; 
+      U     "DB_PW_DATA".bAxisRundInWechselpos; 
+      U(    ; 
+      O     "DB_PW_DATA".bAxisSchenkrundWechsPos; 
+      ON    #Opt.SRt; 
+      )     ; 
+      U     #SkStrt; 
+      =     #oPArKlLoe; 
+NETWORK
+TITLE =BefA:Pal.im Arbeitsraum klemmen
+
+      U     #Sr.PArKlemm; 
+      U(    ; 
+      U     #Opt2.MaTy70_80; 
+      U     "I_PW_MPL_MDK_GEKUPPELT"; 
+      ON    #Opt2.MaTy70_80; 
+      )     ; 
+      U(    ; 
+      O     "I_SP_MPL_ENTKUPPELT"; 
+      ON    "DB_HR".ABST.SP_MPL_Kuppeln; 
+      )     ; 
+      U     "DB_PW_DATA".In.IX_PW_Hub_unten; 
+      U     #SkStrt; 
+      =     #oPArKlemm; 
+NETWORK
+TITLE =gemeinsame Voraussetzungen für Pal.Wechsler drehen
+
+      U     "DB_PW_DATA".bAxisKopfInWechselpos; 
+      U     "DB_PW_DATA".bAxisXInWechselpos; 
+      U(    ; 
+      U     #Opt.SRt; 
+      U     "DB_PW_DATA".bAxisTischDrehPosition; 
+      ON    #Opt.SRt; 
+      )     ; 
+      U     "DB_PW_DATA".In.IX_PW_Hub_oben; 
+      U     #SkStrt; 
+      =     #LOp1; 
+NETWORK
+TITLE =BefA:Pal.Wechsler drehen -> 0 Grad
+
+      U     #Sr.pwd0; 
+      U     #LOp1; 
+      =     #oPwd0; 
+NETWORK
+TITLE =BefA:Pal.Wechsler drehen -> 180 Grad
+
+      U     #Sr.pwd180; 
+      U     #LOp1; 
+      =     #oPwd180; 
+NETWORK
+TITLE =BefA:Pal.Anwesenheitskontrolle Pal.ArbRaum Luft Ein
+
+      U     #SkStrt; 
+      U     #RqPalVh; 
+      U     #Opt.PalVh; 
+      =     #oKtrPnE; 
+NETWORK
+TITLE =BefA:Pal.Anwesenheitskontrolle Pal.ArbRaum Luft Aus
+
+      U     #SkStrt; 
+      UN    #RqPalVh; 
+      =     #oKtrPnA; 
+NETWORK
+TITLE =BefA:Pal.Anwesenheitskontrolle Pal.ArbRaum, neg.Ventil Luft Ein
+
+      U     #Sr.pws; 
+      U     #Opt.Konen_Spuelung; 
+      U     #SkStrt; 
+      =     #oKtrNPnE; 
+NETWORK
+TITLE =BefA:Pal.Anwesenheitskontrolle Pal.ArbRaum, neg.Ventil Luft Aus
+
+      U     #Sr.KtrLuftA; 
+      =     #oKtrNPnA; 
+NETWORK
+TITLE =BefA:KmVentil Tischspülung Ein
+
+      U     #SkStrt; 
+      U     "DB_PW_DATA".In.IX_PW_Hub_oben; 
+      UN    "I_PW_Palette_geklemmt"; 
+      UN    "DB_PW_DATA".bTrockenbearbeitung; 
+      UN    #Sr.KmVA; 
+      U     #SkStrt; 
+      =     #oKmVE; 
+NETWORK
+TITLE =BefA:KmVentil Tischspülung Aus
+
+      U     #Sr.KmVA; 
+      =     #oKmVA; 
+NETWORK
+TITLE =BefA:KmPumpe Tischspülung Ein
+
+      U     #SkStrt; 
+      U     "DB_PW_DATA".In.IX_PW_Hub_oben; 
+      U     "M_KM_Anlage_angewaehlt"; 
+      UN    "DB_PW_DATA".bTrockenbearbeitung; 
+      UN    #Sr.KmPA; 
+      U     #SkStrt; 
+      =     #oKmPE; 
+NETWORK
+TITLE =BefA:KmPumpe Tischspülung Aus
+
+      U     #Sr.KmPA; 
+      =     #oKmPA; 
+NETWORK
+TITLE =BefA:Rüstplatz Medienkupplung kuppeln
+
+      U     #Sr.RPmdkmplh; 
+      =     #oRpMdkh; 
+NETWORK
+TITLE =BefA:Pal.Rüstplatz klemmen
+
+      U     #Sr.PRpKlemm; 
+      U     "DB_PW_DATA".In.IX_PW_Hub_unten; 
+      U(    ; 
+      O     "I_SP_RPL_ENTKUPPELT"; 
+      ON    "DB_HR".ABST.SpannHydraulik; 
+      )     ; 
+      U     #SkStrt; 
+      =     #oPRpKlemm; 
+NETWORK
+TITLE =BefA:C-Achse PwPos.anfahren
+
+      U     #Sr.CRqPwPos; 
+      U(    ; 
+      O     "DB_PW_DATA".In.IX_PW_Hub_oben; 
+      O     "DB_PW_DATA".In.IX_PW_Hub_unten; 
+      )     ; 
+      U(    ; 
+      O     "I_PW_MPL_MDK_ENTKUPPELT"; 
+      ON    #Opt2.MaTy70_80; 
+      )     ; 
+      U     #SkStrt; 
+      =     #oCRqPwPos; 
+NETWORK
+TITLE =BefA:Tischachse freifahren zur Drehpos.
+
+      U     #Sr.TiAxRqDp; 
+      U     "DB_PW_DATA".In.IX_PW_Hub_oben; 
+      U     #SkStrt; 
+      =     #oTiAxRqDp; 
+NETWORK
+TITLE =BefA:Tischachse fahren zur PalWechselpos.
+
+      U     #Sr.TiAxRqPw; 
+      U     "DB_PW_DATA".In.IX_PW_Hub_oben; 
+      U     #SkStrt; 
+      =     #oTiAxRqPw; 
+NETWORK
+TITLE =BefA:Halt Asup
+
+      UN    "DB_ASUP_MACHINE".Start_Asup; 
+      R     #oStpAsup2; 
+      UN    #oCRqPwPos; 
+      UN    #oTiAxRqDp; 
+      UN    #oTiAxRqPw; 
+      UN    #iReqGf; 
+      FP    #fk[0]; 
+      S     #oStpAsup2; 
+      NOP   0; 
+NETWORK
+TITLE =Wenn Pal.vh (oder keine Kontrolle)- dann Kontrollbit reset
+
+      U     "DB_PW_DATA".In.IX_PW_PAL_Vorhanden; 
+      UN    #SkStrt; 
+      O     #Opt.Tisch_Spuelung; 
+      O     #PwDataM63; 
+      O     "M_PW_Pal_Vorhanden"; 
+      ON    #Opt.PalVh; 
+      O(    ; 
+      U     "M_Fehler_Quit_Taste"; 
+      FP    #fk[4]; 
+      )     ; 
+      R     #RqPalVh; 
+NETWORK
+TITLE =Bedienungshinweise
+
+      U     #iReqGf; 
+      =     L     17.0; 
+      U     L     17.0; 
+      U     "DB_SIEM_KANAL_1".E_ChanActive; 
+      UN    #SkStrt; 
+      =     #Meld.noChAkt; 
+      U     L     17.0; 
+      UN    "DB_SIEM_KANAL_1".E_ChanReset; 
+      =     #Meld.noChRset; 
+      U     L     17.0; 
+      U     #Sr.PwRset; 
+      U     #SfPwRset; 
+      U(    ; 
+      O     #PwPos0; 
+      O     #PwPos180; 
+      )     ; 
+      UN    "DB_PW_DATA".In.IX_PW_Hub_unten; 
+      U     #Opt2.MaTy70_80; 
+      UN    "I_PW_MPL_MDK_GEKUPPELT"; 
+      UN    "DB_PW_DATA".bAxisRundInWechselpos; 
+      =     #Meld.CAxPniO; 
+      U     L     17.0; 
+      U     "DB_OEM".Einrichten_Aktiv; 
+      =     #Meld.noRett; 
+END_FUNCTION_BLOCK
+

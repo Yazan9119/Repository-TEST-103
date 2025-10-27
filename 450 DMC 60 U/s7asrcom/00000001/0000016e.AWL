@@ -1,0 +1,270 @@
+DATA_BLOCK "DB_WZVS"
+TITLE =
+//$Revision: 1.13 $
+//$Date: 2008/04/03 18:15:22CEST $
+//$Author: riedlh $
+VERSION : 0.1
+
+
+  STRUCT 	
+   Artis : STRUCT 	
+    PrgNr : INT ;	// Programmnummer für Werkzeugverschleisskontrolle
+    Schnitt : INT ;	// Bearbeitungsabschnitt für Werkzeugverschleisskontrolle
+    TNr : INT ;	// T-Nummer für Werkzeugverschleisskontrolle
+    DNr : INT ;	// D_nummer für Werkzeugverschleisskontrolle
+    Lernschnitt : BOOL ;	
+    AUS : BOOL ;	
+    DM_Kanal_1_aktiv : BOOL ;	//Kanal 1 aktiv
+    DM_Kanal_2_aktiv : BOOL ;	//Kanal 2 aktiv
+    DM_Kanal_3_aktiv : BOOL ;	//Kanal 3 aktiv
+    DM_Kanal_4_aktiv : BOOL ;	//Kanal 4 aktiv
+    WZ_sperren : BOOL ;	//Werkzeug sperren
+    Done_WZ_sperren : BOOL ;	
+    Error_WZ_sperren : BOOL ;	
+    Req_WZ_sperren : BOOL ;	//Start Werkzeug sperren
+    OVR_100 : BOOL ;	//Vorschuboverride 100%
+    FP_Vorschubsperre : BOOL ;	//HM FP Vorschubsperre
+    FP_WZ_sperren : BOOL ;	//HM FP Werkzeug sperren
+    Frei_10 : BYTE ;	
+    Frei_11 : BYTE ;	
+    Frei_12 : BYTE ;	
+    Frei_13 : BYTE ;	
+    Frei_14 : BYTE ;	
+    Frei_15 : BYTE ;	
+    Merker : STRUCT 	
+     ZYK_1_OVR_geaendert : BOOL ;	//Override wurde verändert (1.PLC-Zyklus)
+     ZYK_2_OVR_geaendert : BOOL ;	//Override wurde verändert (2.PLC-Zyklus)
+     frei_16_02 : BOOL ;	
+     frei_16_03 : BOOL ;	
+     OVR_Aenderung : BOOL ;	//Override-Stellung wurde verändert (2 PLC-Zyklen)
+     frei_16_05 : BOOL ;	
+     frei_16_06 : BOOL ;	
+     frei_16_07 : BOOL ;	
+     letzte_OVR_Stellung : BYTE ;	//Letzte Override-Stellung
+    END_STRUCT ;	
+   END_STRUCT ;	
+   STARTADRESSE : INT  := 510;	//Profibus Startadresse
+   MCU : STRUCT 	
+    PLC_IN : STRUCT 	
+     Alarm_Bruch : BOOL ;	//von MCU: Alarm Bruch
+     Alarm_G1_unterschritten : BOOL ;	//von MCU: Alarm Grenze 1 unterschritten
+     Alarm_G2_unterschritten : BOOL ;	//von MCU: Alarm Grenze 2 unterschritten
+     Alarm_G3_unterschritten : BOOL ;	//von MCU: Alarm Grenze 3 unterschritten
+     Ready : BOOL ;	//von MCU: Ready
+     Voralarm_Verschleiss : BOOL ;	//von MCU: Voralarm Verschleiss (Option)
+     Alarm_Verschleiss : BOOL ;	//von MCU: Alarm Verschleiss (Option)
+     Bruch_erhoeht : BOOL ;	//von MCU: Bruch erhöht
+     Grenze_1_erhoeht : BOOL ;	//von MCU: Grenze 1 erhöht
+     Grenze_2_erhoeht : BOOL ;	//von MCU: Grenze 2 erhöht
+     Grenze_3_erhoeht : BOOL ;	//von MCU: Grenze 3 erhöht
+     Bruch_deaktiviert : BOOL ;	//von MCU: Bruch deaktiviert
+     Grenze_1_deaktiviert : BOOL ;	//von MCU: Grenze 1 deaktiviert 
+     Grenze_2_deaktiviert : BOOL ;	//von MCU: Grenze 2 deaktiviert
+     Grenze_3_deaktiviert : BOOL ;	//von MCU: Grenze 3 deaktiviert
+     Grenzen_angenaehert : BOOL ;	//von MCU: Alle Grenzen sind angenähert
+     Lernen_aktiv : BOOL ;	//von MCU: Lernen aktiv
+     Alive_Signal : BOOL ;	//von MCU: Lebenszeichen-Überwachung (1s high 1s low)
+     Schnittsignal_RM : BOOL ;	//von MCU: Schnittsignal Rückmeldung
+     Reserve12 : BOOL ;	//von MCU: Alarm LP Voralarm
+     Reserve13 : BOOL ;	//von MCU: Alarm LP Alarm
+     Reserve14 : BOOL ;	//von MCU: Alarm LP Bruch
+     Reserve15 : BOOL ;	//von MCU: Reserve 
+     Reserve16 : BOOL ;	//von MCU: Reserve 
+     Reserve17 : BOOL ;	//von MCU: AC-Regelung Wert 1
+     Reserve18 : BOOL ;	//von MCU: AC-Regelung Wert 2
+     Reserve19 : BOOL ;	//von MCU: AC-Regelung Wert 4
+     Reserve20 : BOOL ;	//von MCU: AC-Regelung Wert 8
+     Reserve21 : BOOL ;	//von MCU: AC-Regelung Wert 16
+     Reserve22 : BOOL ;	//von MCU: AC-Regelung Wert 32
+     Reserve23 : BOOL ;	//von MCU: AC-Regelung Wert 64
+     Reserve24 : BOOL ;	//von MCU: AC-Regelung Wert 128
+    END_STRUCT ;	
+    PLC_OUT : STRUCT 	
+     Schnittsignal : BOOL ;	//an MCU: Schnittsignal
+     Alarm_quit : BOOL ;	//an MCU: Alarm quittieren
+     Bruch_Ausgangswert_set : BOOL ;	//an MCU: Bruch Ausgangswert setzen
+     G1_Ausgangswert_setzen : BOOL ;	//an MCU: Grenze 1 Ausgangswert setzen
+     G2_Ausgangswert_setzen : BOOL ;	//an MCU: Grenze 2 Ausgangswert setzen
+     G3_Ausgangswert_setzen : BOOL ;	//an MCU: Grenze 3 Ausgangswert setzen
+     Bruch_auf_Wert_P4_setzen : BOOL ;	//an MCU: Bruch auf Wert von P4 setzen
+     G1_auf_Wert_P4_setzen : BOOL ;	//an MCU: Grenze 1 auf Wert von P4 setzen  
+     G2_auf_Wert_P4_setzen : BOOL ;	//an MCU: Grenze 2 auf Wert von P4 setzen
+     G3_auf_Wert_P4_setzen : BOOL ;	//an MCU: Grenze 3 auf Wert von P4 setzen
+     G1_Ueberwachung_aktiv : BOOL ;	//an MCU: Grenze 1 Überwachung aktiv
+     G2_Ueberwachung_aktiv : BOOL ;	//an MCU: Grenze 2 Überwachung aktiv
+     G3_Ueberwachung_aktiv : BOOL ;	//an MCU: Grenze 3 Überwachung aktiv
+     Zeitachse_aktivieren : BOOL ;	//an MCU: Zeitachse aktivieren
+     Nacharbeit : BOOL ;	//an MCU: Nacharbeit
+     Zaehlen : BOOL ;	//an MCU: Zählen
+     Programm_Anfang : BOOL ;	//an MCU: Programm Anfang
+     Lernen : BOOL ;	//an MCU: an MCU: Lernen
+     Grenzen_erhoehen : BOOL ;	//an MCU: Grenzen erhöhen
+     Erhoehte_Grenzen_RESET : BOOL ;	//an MCU: Erhöhte Grenzen rücksetzen
+     Autolernen_deaktivieren : BOOL ;	//an MCU: Autolernen deaktivieren
+     Lernschnitt_ueberwachen : BOOL ;	//an MCU: Lernschnitt überwachen (Tieflochb.) nur bei Tieflochbohren
+     Werkzeug_neu : BOOL ;	//an MCU: neues Werkzeug (ohne untere Schnittgrenze)
+     Neu_lernen_LP : BOOL ;	//an MCU: neu Lernen Long Process
+     Akt_Max_Wert_uebern_LP : BOOL ;	//an MCU: aktuellen Maximalwert übernehmen Long Process
+     Werkzeug_neu_asynchron : BOOL ;	//an MCU: Werkzeug-Nr übergeben bei nicht aktiver Bearbeitung
+     Dynamik_Bruch_aus : BOOL ;	//an MCU: Dynamische Berechnung ausschalten
+     Grenzen_Temp_erhoehen : BOOL ;	//an MCU: Alle Grenzen temporär erhöhen
+     Lernschnitte_speichern : BOOL ;	//an MCU: Lernschnitte speichern
+     AC_Regelung_ein : BOOL ;	//an MCU: Adaptive Regelung einschalten
+     Sperre_Bedienung : BOOL ;	//an MCU: Bedienung einschränken
+     Reserve8 : BOOL ;	//an MCU: Reserve
+     Programmnummer : DINT ;	//an MCU: Programmnummer
+     Werkzeugnummer : DWORD ;	//an MCU: Werkzeugnummer
+     Bearbeitungsnummer : WORD ;	//an MCU: Bearbeitungsnummer
+     Offset : WORD ;	//an MCU: Offset / Maschinenmeldung
+    END_STRUCT ;	
+    Ablauf : STRUCT 	
+     Palette_1_M30_aktiv : BOOL ;	//Merker Palette 1 wurde mit M30 beendet
+     Palette_2_M30_aktiv : BOOL ;	//Merker Palette 2 wurde mit M30 beendet
+     HM_PI_WZM_Tuer_offen : BOOL ;	//HM PI WZ-Magazin-Beladetür offen
+     Toolinspect_Ein : BOOL ;	//Merker Toolinspect EIN
+     Toolinspect_Testbetrieb : BOOL ;	//Merker Toolinspect Testbetrieb
+     VS_Override_100Prozent : BOOL ;	//Vorschub-Override steht auf 100%
+     WZ_sperren : BOOL ;	//Werkzeug sperren
+     Req_WZ_sperren : BOOL ;	//Start Werkzeug sperren
+     FP_WZ_sperren : BOOL ;	//HM FP Werkzeug sperren
+     MH_PI_WMT_zu : BOOL ;	//HM PI WZ-Magazin-Tür zu
+     res13 : BOOL ;	
+     res14 : BOOL ;	
+     res15 : BOOL ;	
+     res16 : BOOL ;	
+     res17 : BOOL ;	
+     res18 : BOOL ;	
+    END_STRUCT ;	
+    WZ_Nummer_aus_NC_PRG : DINT ;	//Werkzeugnummer aus NC Programm
+    frei : ARRAY  [32 .. 39 ] OF BYTE ;	
+   END_STRUCT ;	
+  END_STRUCT ;	
+BEGIN
+   Artis.PrgNr := 0; 
+   Artis.Schnitt := 0; 
+   Artis.TNr := 0; 
+   Artis.DNr := 0; 
+   Artis.Lernschnitt := FALSE; 
+   Artis.AUS := FALSE; 
+   Artis.DM_Kanal_1_aktiv := FALSE; 
+   Artis.DM_Kanal_2_aktiv := FALSE; 
+   Artis.DM_Kanal_3_aktiv := FALSE; 
+   Artis.DM_Kanal_4_aktiv := FALSE; 
+   Artis.WZ_sperren := FALSE; 
+   Artis.Done_WZ_sperren := FALSE; 
+   Artis.Error_WZ_sperren := FALSE; 
+   Artis.Req_WZ_sperren := FALSE; 
+   Artis.OVR_100 := FALSE; 
+   Artis.FP_Vorschubsperre := FALSE; 
+   Artis.FP_WZ_sperren := FALSE; 
+   Artis.Frei_10 := B#16#0; 
+   Artis.Frei_11 := B#16#0; 
+   Artis.Frei_12 := B#16#0; 
+   Artis.Frei_13 := B#16#0; 
+   Artis.Frei_14 := B#16#0; 
+   Artis.Frei_15 := B#16#0; 
+   Artis.Merker.ZYK_1_OVR_geaendert := FALSE; 
+   Artis.Merker.ZYK_2_OVR_geaendert := FALSE; 
+   Artis.Merker.frei_16_02 := FALSE; 
+   Artis.Merker.frei_16_03 := FALSE; 
+   Artis.Merker.OVR_Aenderung := FALSE; 
+   Artis.Merker.frei_16_05 := FALSE; 
+   Artis.Merker.frei_16_06 := FALSE; 
+   Artis.Merker.frei_16_07 := FALSE; 
+   Artis.Merker.letzte_OVR_Stellung := B#16#0; 
+   STARTADRESSE := 510; 
+   MCU.PLC_IN.Alarm_Bruch := FALSE; 
+   MCU.PLC_IN.Alarm_G1_unterschritten := FALSE; 
+   MCU.PLC_IN.Alarm_G2_unterschritten := FALSE; 
+   MCU.PLC_IN.Alarm_G3_unterschritten := FALSE; 
+   MCU.PLC_IN.Ready := FALSE; 
+   MCU.PLC_IN.Voralarm_Verschleiss := FALSE; 
+   MCU.PLC_IN.Alarm_Verschleiss := FALSE; 
+   MCU.PLC_IN.Bruch_erhoeht := FALSE; 
+   MCU.PLC_IN.Grenze_1_erhoeht := FALSE; 
+   MCU.PLC_IN.Grenze_2_erhoeht := FALSE; 
+   MCU.PLC_IN.Grenze_3_erhoeht := FALSE; 
+   MCU.PLC_IN.Bruch_deaktiviert := FALSE; 
+   MCU.PLC_IN.Grenze_1_deaktiviert := FALSE; 
+   MCU.PLC_IN.Grenze_2_deaktiviert := FALSE; 
+   MCU.PLC_IN.Grenze_3_deaktiviert := FALSE; 
+   MCU.PLC_IN.Grenzen_angenaehert := FALSE; 
+   MCU.PLC_IN.Lernen_aktiv := FALSE; 
+   MCU.PLC_IN.Alive_Signal := FALSE; 
+   MCU.PLC_IN.Schnittsignal_RM := FALSE; 
+   MCU.PLC_IN.Reserve12 := FALSE; 
+   MCU.PLC_IN.Reserve13 := FALSE; 
+   MCU.PLC_IN.Reserve14 := FALSE; 
+   MCU.PLC_IN.Reserve15 := FALSE; 
+   MCU.PLC_IN.Reserve16 := FALSE; 
+   MCU.PLC_IN.Reserve17 := FALSE; 
+   MCU.PLC_IN.Reserve18 := FALSE; 
+   MCU.PLC_IN.Reserve19 := FALSE; 
+   MCU.PLC_IN.Reserve20 := FALSE; 
+   MCU.PLC_IN.Reserve21 := FALSE; 
+   MCU.PLC_IN.Reserve22 := FALSE; 
+   MCU.PLC_IN.Reserve23 := FALSE; 
+   MCU.PLC_IN.Reserve24 := FALSE; 
+   MCU.PLC_OUT.Schnittsignal := FALSE; 
+   MCU.PLC_OUT.Alarm_quit := FALSE; 
+   MCU.PLC_OUT.Bruch_Ausgangswert_set := FALSE; 
+   MCU.PLC_OUT.G1_Ausgangswert_setzen := FALSE; 
+   MCU.PLC_OUT.G2_Ausgangswert_setzen := FALSE; 
+   MCU.PLC_OUT.G3_Ausgangswert_setzen := FALSE; 
+   MCU.PLC_OUT.Bruch_auf_Wert_P4_setzen := FALSE; 
+   MCU.PLC_OUT.G1_auf_Wert_P4_setzen := FALSE; 
+   MCU.PLC_OUT.G2_auf_Wert_P4_setzen := FALSE; 
+   MCU.PLC_OUT.G3_auf_Wert_P4_setzen := FALSE; 
+   MCU.PLC_OUT.G1_Ueberwachung_aktiv := FALSE; 
+   MCU.PLC_OUT.G2_Ueberwachung_aktiv := FALSE; 
+   MCU.PLC_OUT.G3_Ueberwachung_aktiv := FALSE; 
+   MCU.PLC_OUT.Zeitachse_aktivieren := FALSE; 
+   MCU.PLC_OUT.Nacharbeit := FALSE; 
+   MCU.PLC_OUT.Zaehlen := FALSE; 
+   MCU.PLC_OUT.Programm_Anfang := FALSE; 
+   MCU.PLC_OUT.Lernen := FALSE; 
+   MCU.PLC_OUT.Grenzen_erhoehen := FALSE; 
+   MCU.PLC_OUT.Erhoehte_Grenzen_RESET := FALSE; 
+   MCU.PLC_OUT.Autolernen_deaktivieren := FALSE; 
+   MCU.PLC_OUT.Lernschnitt_ueberwachen := FALSE; 
+   MCU.PLC_OUT.Werkzeug_neu := FALSE; 
+   MCU.PLC_OUT.Neu_lernen_LP := FALSE; 
+   MCU.PLC_OUT.Akt_Max_Wert_uebern_LP := FALSE; 
+   MCU.PLC_OUT.Werkzeug_neu_asynchron := FALSE; 
+   MCU.PLC_OUT.Dynamik_Bruch_aus := FALSE; 
+   MCU.PLC_OUT.Grenzen_Temp_erhoehen := FALSE; 
+   MCU.PLC_OUT.Lernschnitte_speichern := FALSE; 
+   MCU.PLC_OUT.AC_Regelung_ein := FALSE; 
+   MCU.PLC_OUT.Sperre_Bedienung := FALSE; 
+   MCU.PLC_OUT.Reserve8 := FALSE; 
+   MCU.PLC_OUT.Programmnummer := L#0; 
+   MCU.PLC_OUT.Werkzeugnummer := DW#16#0; 
+   MCU.PLC_OUT.Bearbeitungsnummer := W#16#0; 
+   MCU.PLC_OUT.Offset := W#16#0; 
+   MCU.Ablauf.Palette_1_M30_aktiv := FALSE; 
+   MCU.Ablauf.Palette_2_M30_aktiv := FALSE; 
+   MCU.Ablauf.HM_PI_WZM_Tuer_offen := FALSE; 
+   MCU.Ablauf.Toolinspect_Ein := FALSE; 
+   MCU.Ablauf.Toolinspect_Testbetrieb := FALSE; 
+   MCU.Ablauf.VS_Override_100Prozent := FALSE; 
+   MCU.Ablauf.WZ_sperren := FALSE; 
+   MCU.Ablauf.Req_WZ_sperren := FALSE; 
+   MCU.Ablauf.FP_WZ_sperren := FALSE; 
+   MCU.Ablauf.MH_PI_WMT_zu := FALSE; 
+   MCU.Ablauf.res13 := FALSE; 
+   MCU.Ablauf.res14 := FALSE; 
+   MCU.Ablauf.res15 := FALSE; 
+   MCU.Ablauf.res16 := FALSE; 
+   MCU.Ablauf.res17 := FALSE; 
+   MCU.Ablauf.res18 := FALSE; 
+   MCU.WZ_Nummer_aus_NC_PRG := L#0; 
+   MCU.frei[32] := B#16#0; 
+   MCU.frei[33] := B#16#0; 
+   MCU.frei[34] := B#16#0; 
+   MCU.frei[35] := B#16#0; 
+   MCU.frei[36] := B#16#0; 
+   MCU.frei[37] := B#16#0; 
+   MCU.frei[38] := B#16#0; 
+   MCU.frei[39] := B#16#0; 
+END_DATA_BLOCK
+

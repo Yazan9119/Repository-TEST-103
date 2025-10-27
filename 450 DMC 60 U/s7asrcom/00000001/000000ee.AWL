@@ -1,0 +1,169 @@
+FUNCTION "FC_CO_PLC_NCK" : VOID
+TITLE =
+//$Revision: 1.20 $
+//$Date: 2008/08/28 09:45:22CEST $
+//$Author: fuh $
+//
+VERSION : 0.1
+
+
+VAR_INPUT
+  E_EN : BOOL ;	
+  E_Reset : BOOL ;	
+END_VAR
+VAR_TEMP
+  Error_FC21_write : BOOL ;	
+  ErrCode_FC21_write : INT ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =
+
+      UN    #E_EN; 
+      BEB   ; 
+
+//DUAL-Port-RAM: 10...11
+      CALL "FC_SIEM_PLC_NCK" (
+           Enable                   := TRUE,
+           Funct                    := B#16#4,
+           S7Var                    := "DB_NC_PLC".ASUP_Schrittkette,
+           IVAR1                    := 10,
+           IVAR2                    := -1,
+           Error                    := #Error_FC21_write,
+           ErrCode                  := #ErrCode_FC21_write);
+
+//DUAL-Port-RAM: 28...86
+      CALL "FC_SIEM_PLC_NCK" (
+           Enable                   := TRUE,
+           Funct                    := B#16#4,
+           S7Var                    := P#DB70.DBX28.0 BYTE 59,
+           IVAR1                    := 28,
+           IVAR2                    := -1,
+           Error                    := #Error_FC21_write,
+           ErrCode                  := #ErrCode_FC21_write);
+
+//DUAL-Port-RAM: 144..147 
+      CALL "FC_SIEM_PLC_NCK" (
+           Enable                   := TRUE,
+           Funct                    := B#16#4,
+           S7Var                    := "DB_NC_PLC".Red_Geschw_OVR,
+           IVAR1                    := 144,
+           IVAR2                    := -1,
+           Error                    := #Error_FC21_write,
+           ErrCode                  := #ErrCode_FC21_write);
+
+//DUAL-Port-RAM: 148  
+      CALL "FC_SIEM_PLC_NCK" (
+           Enable                   := TRUE,
+           Funct                    := B#16#4,
+           S7Var                    := DB70.DBB  148,
+           IVAR1                    := 148,
+           IVAR2                    := -1,
+           Error                    := #Error_FC21_write,
+           ErrCode                  := #ErrCode_FC21_write);
+
+//DUAL-Port-RAM: 150..151 
+      CALL "FC_SIEM_PLC_NCK" (
+           Enable                   := TRUE,
+           Funct                    := B#16#4,
+           S7Var                    := "DB_NC_PLC".ACC_OVR,
+           IVAR1                    := 150,
+           IVAR2                    := -1,
+           Error                    := #Error_FC21_write,
+           ErrCode                  := #ErrCode_FC21_write);
+
+//DUAL-Port-RAM: 152..155  "Teilenummer
+      CALL "FC_SIEM_PLC_NCK" (
+           Enable                   := TRUE,
+           Funct                    := B#16#4,
+           S7Var                    := "DB_NC_PLC".Teile_Nr,
+           IVAR1                    := 152,
+           IVAR2                    := -1,
+           Error                    := #Error_FC21_write,
+           ErrCode                  := #ErrCode_FC21_write);
+
+//DUAL-Port-RAM: 156...159
+      CALL "FC_SIEM_PLC_NCK" (
+           Enable                   := TRUE,
+           Funct                    := B#16#4,
+           S7Var                    := "DB_NC_PLC".Greifer_Geschwindigkeit,
+           IVAR1                    := 156,
+           IVAR2                    := -1,
+           Error                    := #Error_FC21_write,
+           ErrCode                  := #ErrCode_FC21_write);
+
+//DUAL-Port-RAM: 369
+      CALL "FC_SIEM_PLC_NCK" (
+           Enable                   := TRUE,
+           Funct                    := B#16#4,
+           S7Var                    := "DB_NC_PLC".PW_WiKo_SNR,
+           IVAR1                    := 269,
+           IVAR2                    := -1,
+           Error                    := #Error_FC21_write,
+           ErrCode                  := #ErrCode_FC21_write);
+
+//DUAL-Port-RAM: 364...413
+      CALL "FC_SIEM_PLC_NCK" (
+           Enable                   := TRUE,
+           Funct                    := B#16#4,
+           S7Var                    := "DB_NC_PLC".Zusatz.PLC_an_NC,
+           IVAR1                    := 364,
+           IVAR2                    := -1,
+           Error                    := #Error_FC21_write,
+           ErrCode                  := #ErrCode_FC21_write);
+
+//DUAL-Port-RAM: 416...427 PLC --> WZVS (Omative ACM)
+      CALL "FC_SIEM_PLC_NCK" (
+           Enable                   := TRUE,
+           Funct                    := B#16#4,
+           S7Var                    := "DB_NC_PLC".Zusatz.WZVS_DPR.PLC_an_WZVS,
+           IVAR1                    := 416,
+           IVAR2                    := -1,
+           Error                    := #Error_FC21_write,
+           ErrCode                  := #ErrCode_FC21_write);
+
+
+      O(    ; 
+      L     "DB_NC_PLC".FB_Fehler_Ausgeben; 
+      L     0; 
+      >I    ; 
+      )     ; 
+      O     "DB_NC_PLC".PW_NC_Aktiv; 
+      O     "DB_NC_PLC".PW_Dreh_Fertig; 
+      O     "DB_NC_PLC".PW_Start_Spuelung; 
+      O     "DB_NC_PLC".PW_Start_Spuelung_Sofort; 
+      O     DB70.DBX  108.0; 
+      O     "DB_NC_PLC".SK_NC_Aktiv; 
+      O     "DB_NC_PLC".WZW_NC_Aktiv; 
+      O     "DB_NC_PLC".WZW_NC_Beenden; 
+      O     "DB_NC_PLC".MANWZW_NC_Aktiv; 
+      O     "DB_NC_PLC".FB_NC_Aktiv; 
+      O     "DB_NC_PLC".LASER_Aktiv; 
+      O     "DB_NC_PLC".LASER_FEHLER; 
+      U     #E_Reset; 
+      SPBN  M001; 
+      L     0; 
+      T     DB70.DBB  102; 
+      T     "DB_NC_PLC".SKZ_LASER; 
+      T     DB70.DBB  109; 
+      T     "DB_NC_PLC".FB_Fehler_Ausgeben; 
+      T     DB70.DBB  111; 
+      T     DB70.DBB  112; 
+      T     DB70.DBB  113; 
+      T     DB70.DBB  114; 
+      T     DB70.DBB  116; 
+      T     DB70.DBB  117; 
+
+      CALL "FC_SIEM_PLC_NCK" (
+           Enable                   := TRUE,
+           Funct                    := B#16#4,
+           S7Var                    := P#DB70.DBX102.0 BYTE 10,
+           IVAR1                    := 102,
+           IVAR2                    := -1,
+           Error                    := #Error_FC21_write,
+           ErrCode                  := #ErrCode_FC21_write);
+
+M001: NOP   0; 
+
+END_FUNCTION
+

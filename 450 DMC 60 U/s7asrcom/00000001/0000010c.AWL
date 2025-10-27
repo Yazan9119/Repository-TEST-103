@@ -1,0 +1,425 @@
+FUNCTION "FC_ACHS_4" : VOID
+TITLE =
+//$Revision: 1.33 $
+//$Date: 2008/10/16 09:38:39CEST $
+//$Author: hgc $
+VERSION : 0.1
+
+
+VAR_TEMP
+  TX_Option_FD : BOOL ;	
+  Tx_4Ax_geloest : BOOL ;	
+  Tx_4Ax_geklemmt : BOOL ;	
+  TX_Ax4_Klemmung_perm_auf : BOOL ;	
+  TX_4Ax_FRG_Spindelmodul : BOOL ;	
+  TX_4Ax_FRG_Achsmodul : BOOL ;	
+  TX_Fehlerdummy1 : BOOL ;	
+  TX_Fehlerdummy2 : BOOL ;	
+  TX_Vorschub_Halt_Ax4 : BOOL ;	
+  TX_Takttisch_in_Position : BOOL ;	
+  TX_Taktt_Reset_EinlSp : BOOL ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =C(B)-Achse: Aktivierung Softwarenocken nach Achse ref.
+
+      UN    "DB_PLC_MD_DB20".UDHex._02_BIT3_ACHSE4_MESSYST; 
+      U     "DB_ACHSE4".E_RefSyn1; 
+      O     ; 
+      U     "DB_PLC_MD_DB20".UDHex._02_BIT3_ACHSE4_MESSYST; 
+      U     "DB_ACHSE4".E_RefSyn2; 
+      =     "DB_ACHSE4".A_SWCam; 
+NETWORK
+TITLE =Option FD 
+
+      L     "DB_PLC_MD_DB20".UDInt._005_ANWAHL_SONDER_SPDL; 
+      L     2; 
+      ==I   ; 
+      =     #TX_Option_FD; 
+NETWORK
+TITLE =Jog Fahranforderung Plus/Minus
+
+      O     "I_DM_Ta 4-Achse links"; 
+      O     "I_DM_Ta 4-Achse rechts"; 
+      =     "M_Jog_Req_4Ax_Plus_Minus"; 
+NETWORK
+TITLE =Reset Lokalvariablen
+
+      CLR   ; 
+      =     #Tx_4Ax_geloest; 
+      =     #Tx_4Ax_geklemmt; 
+      =     #TX_Ax4_Klemmung_perm_auf; 
+      =     #TX_4Ax_FRG_Spindelmodul; 
+      =     #TX_4Ax_FRG_Achsmodul; 
+      =     #TX_Fehlerdummy1; 
+      =     #TX_Fehlerdummy2; 
+      =     #TX_Vorschub_Halt_Ax4; 
+      =     #TX_Takttisch_in_Position; 
+NETWORK
+TITLE =Achse 4 C(B)-Achse -> Aufruf FC_ACHSE_RUND_ZUSATZ
+//
+//
+//
+      CALL "FC_ACHSE_RUND_ZUSATZ" (
+           EX_Enable                := TRUE,
+           EX_Reset_Taste           := "M_Reset_Taste",
+           EX_Ruecksetze_Fehler     := "M_Ruecksetze_Fehler",
+           EX_Init                  := "M_7_ter_OB1_Zyklus",
+           EX_Option_FD             := #TX_Option_FD,
+           EX_Resetstatus_Klemmung  := "DB_PLC_MD_DB20".UDHex._11_BIT4_Klemmung_BAxe,
+           EB_Achs_Typ              := "MB_4Achs_Typ",
+           EX_Ax_Spindel            := "DB_ACHSE4".E_SpNA,
+           EX_Kabine_zu             := "I_AL_Kabine_zu",
+           EX_Leistung_steht_an     := "M_Leistung_Steht_an",
+           EX_BHG_aktiv             := "DB_FEHLERMELDUNG".Meldung._702003_MBHG_aktiv,
+           EX_Klemmung_FD_geloest   := "I_FD_Tisch_geloest_1",
+           EX_Klemmung_FD_geklemmt  := "I_FD_Tisch_geklemmt",
+           EX_Klemmung_geloest      := "I_AL_4ACHS_KLE_auf",
+           EX_Klemmung_geklemmt     := "I_AL_4ACHS_KLE_zu",
+           EX_Klemmung_loesen       := "MX_AX4_O_Klemm_Auf",
+           EX_Rundachsanf_aktiv     := "MX_Rundachsanf_aktiv",
+           ET_Timer_Fehlerueb       := "Te_Klemm_Ueb",
+           EX_Opt_Dru_erh_Tisch     := "DB_PLC_MD_DB20".UDHex._37_Bit6_Opt_Dru_erh_Tis,
+           EX_1s_Takt               := "m_takt_1sec.",
+           EX_Maschine_Ein          := "M_MA_Maschine_Ein",
+           EX_Kle_Dru_Ventil        := "I_AL_4ACHS_KLE_geloest",
+           EX_Fahranforderung_Plus  := "DB_ACHSE4".E_TCPlus,
+           EX_Fahranforderung_Minus := "DB_ACHSE4".E_TCMinus,
+           AX_Achse_geloest         := #Tx_4Ax_geloest,
+           AX_Achse_geklemmt        := #Tx_4Ax_geklemmt,
+           AX_PLC_NC_FD_geloest     := "DB_NC_PLC".FD_Achse4_geloest,
+           AX_PLC_NC_FD_geklemmt    := "DB_NC_PLC".FD_Achse4_geklemmt,
+           AX_Klemmung_offen_halten := #TX_Ax4_Klemmung_perm_auf,
+           AX_FRG_Spindelmodul      := #TX_4Ax_FRG_Spindelmodul,
+           AX_FRG_Achsmodul         := #TX_4Ax_FRG_Achsmodul,
+           AX_FD_Klemmung_loesen    := "O_FD_Tisch_loesen",
+           AX_Tischklemmung_loesen  := "O_4_Klem_Bremse_Auf",
+           AX_Fehler_Kl_beide_0_Sig := #TX_Fehlerdummy1,
+           AX_Fehler_Kl_beide_1_Sig := #TX_Fehlerdummy2,
+           AX_Tischklemmung_loese   := "O_AL_4ACHS_KLE_LOESEN",
+           EAX_FP_Ax_Spindel        := "override schreiben",
+           EAX_M_Fkt_Klemm_loesen   := "DB_DM_M_FUNKTION".MX_M[11],
+           AB_Spindel_Override      := "DB_ACHSE4".A_SpOR,
+           EAX_FP_Tischkl_loesen    := "Mx_FP_Tischkl_loes",
+           EAX_FP_1s_Takt           := "Mx_FP_1s_Takt",
+           EAX_Fehler_Klemmung      := "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700836_Ax4_Klmm_zu_0Sig,
+           EAB_Zeit_Klem            := "MB_Tisch_Zeit Klem",
+           EAB_Anzahl_Takt          := "MB_Tisch_Takt");
+
+NETWORK
+TITLE =Klemmung permanent offen halten (bei Spindel / BHG)
+//Beim Takttisch nur in Verbindung mit Einrichtbit
+      U     #TX_Ax4_Klemmung_perm_auf; 
+      U(    ; 
+      ON    "DB_PLC_MD_DB20".UDHex._28_Bit7_B_C_Takttisch; 
+      O     ; 
+      U     "DB_PLC_MD_DB20".UDHex._28_Bit7_B_C_Takttisch; 
+      U     "DB_PLC_MD_DB20".UDHex._04_BIT4_EINRICHT_BETR; 
+      )     ; 
+      =     #TX_Ax4_Klemmung_perm_auf; 
+NETWORK
+TITLE =Achse 4 Takttisch vorhanden ?
+
+      UN    "DB_PLC_MD_DB20".UDHex._28_Bit7_B_C_Takttisch; 
+      SPB   ktak; 
+NETWORK
+TITLE =Achse 4 Takttisch: in Position
+
+      U(    ; 
+      O     "DB_ACHSE4".E_IndexAxisPos; 
+      O     "I_AL_4ACHS_KLE_zu"; 
+      )     ; 
+      UN    "DB_ACHSE4".E_TCMinus; 
+      UN    "DB_ACHSE4".E_TCPlus; 
+      =     #TX_Taktt_Reset_EinlSp; 
+      U     #TX_Taktt_Reset_EinlSp; 
+      L     S5T#200MS; 
+      SE    "T_TAKTTISCH_IN_POS_VERZ"; 
+      NOP   0; 
+      NOP   0; 
+      NOP   0; 
+      U     "T_TAKTTISCH_IN_POS_VERZ"; 
+      =     #TX_Takttisch_in_Position; 
+NETWORK
+TITLE =Achse 4 Takttisch: Ausgang Takttisch senken
+
+      UN    "O_4_Klem_Bremse_Auf"; 
+      U     #TX_Takttisch_in_Position; 
+      =     "O_PC_PAL_CAR_DOWN"; 
+NETWORK
+TITLE =Achse 4 Takttisch: MEL, Tischachse nicht auf Teilungsposition
+
+      UN    "DB_ACHSE4".E_TCMinus; 
+      UN    "DB_ACHSE4".E_TCPlus; 
+      UN    #TX_Takttisch_in_Position; 
+      =     "DB_FEHLERMELDUNG".Meldung4._702459_TT_NICHT_IN_POS; 
+NETWORK
+TITLE =Achse 4 Takttisch: MEL, VSH HptAX: Takttisch nicht unten
+//
+//
+//
+      U(    ; 
+      ON    "I_AL_4ACHS_KLE_zu"; 
+      O     "Mx_RFG_FD_Tisch"; 
+      )     ; 
+      U     "M_Handbetrieb"; 
+      UN    "DB_PLC_MD_DB20".UDHex._04_BIT4_EINRICHT_BETR; 
+      =     "DB_FEHLERMELDUNG".Meldung4._702460_TT_NICHT_UNTEN; 
+NETWORK
+TITLE =Achse 4 Takttisch:Einlesesperre unterbrechen
+
+      UN    "O_4_Klem_Bremse_Auf"; 
+      U     #TX_Taktt_Reset_EinlSp; 
+      U     "I_WW_1_Klappe_zu"; 
+      R     "M_EINL_SP_B_UNTERBRECHEN"; 
+      U     "M_WZW_Aktiv"; 
+      S     "M_EINL_SP_B_UNTERBRECHEN"; 
+      NOP   0; 
+NETWORK
+TITLE =Achse 4 Takttisch:Einlesesperre:Takttisch gelöst über Fahrbefehl
+
+      UN    "M_M11_aktiv"; 
+      UN    "M_EINL_SP_B_UNTERBRECHEN"; 
+      U(    ; 
+      O     "DB_SIEM_BAG".E_AUTO; 
+      O     "DB_SIEM_BAG".E_MDA; 
+      )     ; 
+      U(    ; 
+      ON    "I_AL_4ACHS_KLE_zu"; 
+      O     "Mx_RFG_FD_Tisch"; 
+      O     "O_4_Klem_Bremse_Auf"; 
+      O     "DB_ACHSE4".E_TCMinus; 
+      O     "DB_ACHSE4".E_TCPlus; 
+      )     ; 
+      =     "DB_FEHLERMELDUNG".Einlesesperre._700552; 
+NETWORK
+TITLE =Achse 4 C(B)-Achse -> Aufruf FC_ACHSE_RUND
+
+ktak: CALL "FC_ACHSE_RUND" (
+           EX_ENABLE                := TRUE,
+           EX_Reset_Taste           := FALSE,
+           EX_Ruecksetze_Fehler     := "M_Ruecksetze_Fehler",
+           EX_Achse_vorhanden       := "M_4Achse_existiert",
+           EX_I_Klemmung_Auf        := #Tx_4Ax_geloest,
+           EX_I_Klemmung_zu         := #Tx_4Ax_geklemmt,
+           EX_Fahranf_Plus          := "DB_ACHSE4".E_TCMinus,
+           EX_Fahranf_Minus         := "DB_ACHSE4".E_TCPlus,
+           EX_Achse_steht           := "DB_ACHSE4".E_Stat,
+           EX_Klemmvor_Aktiv        := "M_RundAchse_aktiv",
+           EX_Achs_Typ              := "MB_4Achs_Typ",
+           EX_Achs_Konfig           := "MB_4Achs_Konfig",
+           EW_Einsch_Verz           := "DB_PLC_MD_DB20".UDInt._080_EINSCHALTVERZ_4_AX,
+           EW_Aussch_Verz           := "DB_PLC_MD_DB20".UDInt._081_AUSSCHALTVERZ_4_AX,
+           ET_Timer_Klemmung        := "Tv_Ax4_Klemmung",
+           ET_Timer_Ueberwachung    := "Tv_Ax4_Fehl_Ueb",
+           EX_Klemmung_offen_halten := #TX_Ax4_Klemmung_perm_auf,
+           EX_Ax_E_f92x4            := "DB_ACHSE4".E_RLIact,
+           Ex_JogReqAx_plusminus    := "M_Jog_Req_4Ax_Plus_Minus",
+           EX_Takttisch             := "DB_PLC_MD_DB20".UDHex._28_Bit7_B_C_Takttisch,
+           EX_Takttisch_Teilungspos := #TX_Takttisch_in_Position,
+           EAX_Regler_ein           := "Mx_RFG_FD_Tisch",
+           EAX_Vorschub_Sperre      := "MX_Vorschubsperre_Ax4",
+           EAX_O_Klemmung_Auf       := "MX_O_4Ax_loesen",
+           EAX_Req_Auf_Klemmung     := "M_Achse4_loesen",
+           EAX_Req_Zu_Klemmung      := "M_Achse4_klemmen",
+           EAX_Ready_Klemmung       := "M_Achse4_Ready",
+           EAX_Achse_Geloest        := "M_Achse4_geloest",
+           EAX_Klemmung_Auf         := "M_A4_loes_aktiv",
+           EAX_TR_Pos               := "M_Tr_pos_Ax4",
+           EAX_TR_Neg               := "M_Tr_neg_Ax4",
+           EAX_TO_Klemmung_Auf      := "MX_AX4_O_Klemm_Auf",
+           EAX_Klemmvor_Aktiv       := "DB_FEHLERMELDUNG".Meldung._702040_Vor_Freig_4Ax,
+           EAX_FP1_FUE              := "MX_AX4_FP1_FUe",
+           EAX_FP2_FUE              := "MX_AX4_FP2_FUe",
+           EAX_Klemmung_Zu_Os       := "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700836_Ax4_Klmm_zu_0Sig,
+           EAX_Klemmung_Auf_0s      := "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700837_Ax4_Klmm_auf_0Si,
+           EAB_SKZ_Achse            := "MB_SKZ_4ACHS");
+NETWORK
+TITLE =Nahtstellensignal: Klemmen aktiv
+
+      U     "DB_PLC_MD_DB20".UDHex._28_Bit7_B_C_Takttisch; 
+      U(    ; 
+      ON    "M_Achse4_geloest"; 
+      O     "O_PC_PAL_CAR_DOWN"; 
+      )     ; 
+      =     "DB_ACHSE4".A_Clamp; 
+NETWORK
+TITLE =Achse 4 C(B)-Achse Vorschub Halt aktiv
+
+      O     "MX_Vorschubsperre_Ax4"; 
+      O     "DB_FAMILIEN_MODUL".Gesamt.A_Vorschub_Halt_4_Achse; 
+      =     #TX_Vorschub_Halt_Ax4; 
+NETWORK
+TITLE =Achse 4 C(B)-Achse -> Aufruf FC_ACHSE_HAUPT
+
+      CALL "FC_ACHSE_HAUPT" (
+           EX_EN                    := #TX_4Ax_FRG_Achsmodul,
+           EX_UDHex_00_IB_Bit_Achse := "DB_PLC_MD_DB20".UDHex._00_BIT3_ACHSE4_AUSBLEND,
+           EX_UDHex_01_Ax_Messystem := "DB_PLC_MD_DB20".UDHex._02_BIT3_ACHSE4_MESSYST,
+           EX_Option_Safety         := "O_INFEED_ENABLE_NCU",// Bei Solutionline bleibt RF und ImpFrg für 3 Sek. nach Not-Aus anstehen
+           EX_Safe_RF_aus           := FALSE,
+           EX_Safe_StopC_aktiv      := FALSE,
+           EX_Safe_StopA_aktiv      := "DB_ACHSE4".E_StopAB,
+           EX_Safe_Teststop_laeuft  := "DB_SPL".IPLC_ZD_GR1_RUN,
+           EX_Maschine_Ein          := "M_MA_Maschine_Ein",
+           EX_Antrieb_Sperre        := "DB_FAMILIEN_MODUL".Achssperre_extern.E_Ax_4,
+           EX_Freigabe_Regler       := "Mx_RFG_FD_Tisch",
+           EX_Leistung_steht_an     := "M_Leistung_Steht_an",
+           EX_GewSchn_Aktiv         := "M_Gewindeschneid_aktiv",
+           EX_VSHalt_EinzelAchse    := #TX_Vorschub_Halt_Ax4,
+           EX_VSHalt_Gruppe         := "M_Vorschub_Halt_Haupt",
+           EX_VSHalt_Kanal          := "DB_FAMILIEN_MODUL".Gesamt.A_Vorschub_Halt_Kanal,
+           EX_RefPkt_Achse          := FALSE,
+           EX_Ax_E_MotOK_93x5       := "DB_ACHSE4".E_MotOK,
+           EX_Ax_E_MTempWarn_94x0   := "DB_ACHSE4".E_MTempWarn,
+           EX_Ax_E_Steht_61x4       := "DB_ACHSE4".E_Stat,
+           EX_Ax_E_KTempWarn_94x1   := "DB_ACHSE4".E_HTempWarn,
+           EX_Ax_E_LageRegler_61x5  := "DB_ACHSE4".E_PositContr,
+           EX_Ax_E_IntSperr_93x6    := "DB_ACHSE4".E_IntegratDisable,
+           EX_Ax_E_ImpFrei_93x7     := "DB_ACHSE4".E_PulseEnable,
+           EX_Ax_E_DrehzRegler_61x6 := "DB_ACHSE4".E_SpeedContr,
+           EX_Ax_E_StromRegler_61x7 := "DB_ACHSE4".E_CurrentContr,
+           EX_Ax_E_FahrAF_61x0      := "DB_ACHSE4".E_TravRequ,
+           EX_Ax_E_FBMinus_64x6     := "DB_ACHSE4".E_TCMinus,
+           EX_Ax_E_FBPlus_64x7      := "DB_ACHSE4".E_TCPlus,
+           EX_Eilgang_aktiv         := "M_Anf_Eilgang",
+           EX_Fehler_Quit           := "M_Ruecksetze_Fehler",
+           EX_RefNeu_Sync           := FALSE,
+           EX_AxPark                := FALSE,
+           EB_Achs_Typ              := "MB_4Achs_Typ",
+           ET_Timer_Ax_Freigabe     := "Te_AX_A_Bremse_loesen",
+           EAX_Ax_A_KorrW_1x7       := "DB_ACHSE4".A_ORactive,
+           EAX_Ax_A_ReglerFrei_2x1  := "DB_ACHSE4".A_ContrEnable,
+           EAX_Ax_A_ImpFrei_21x7    := "DB_ACHSE4".A_PulseEnable,
+           EAX_Ax_A_VSSpHalt_4x3    := "DB_ACHSE4".A_FDSpStop,
+           EAX_Ax_A_ASpSperre_1x3   := "DB_ACHSE4".A_ASpDisable,
+           EAX_A_A_NachfBetr_1x4    := "DB_ACHSE4".A_Follow_upMode,
+           EAX_Ax_A_LageMess1_1x5   := "DB_ACHSE4".A_PosMeas1,
+           EAX_Ax_A_LageMess2_1x6   := "DB_ACHSE4".A_PosMeas2,
+           EAX_Ax_A_EGUeberlag_4x5  := "DB_ACHSE4".A_RapidTrOR,
+           EAX_Ax_A_RefVerzoeg_12x7 := "DB_ACHSE4".A_DelayRef,
+           EAX_AX_A_Sp1Syn_16x4     := "DB_ACHSE4".A_Sp1Syn,
+           EAX_Alarm_Regler         := "DB_FEHLERMELDUNG".Spi_VS_Halt._700119_4_IMP_REGFRG_0S,
+           EAX_Alarm_VSSP_Mot_Temp  := "DB_FEHLERMELDUNG".Spi_VS_Halt._700131_4_TEMP_ZU_HOCH,
+           EAX_Alarm_VSSP_KK_Temp   := "DB_FEHLERMELDUNG".Spi_VS_Halt1._510126_4_KK_TEMP_ZH,
+           EAX_Alarm_NA_MotOK       := "DB_FEHLERMELDUNG".Spi_VS_Halt3._701135_4_DR_READY_0,
+           EAX_M_Bremse_oeffnen     := "M_BR_CAX_ZU_ZD");
+NETWORK
+TITLE =Achse 4 C(B)-Achse Motorbremse auf
+//
+//
+//
+      U     "M_BR_CAX_ZU_ZD"; 
+      =     "O_AL_4ACHS_Bremse_auf"; 
+NETWORK
+TITLE =Achse 4 C(B)-Achse FC18 Restweg löschen
+
+      U     "M_Reset_Taste"; 
+      =     "MX_ASpdl_RestwegLoeschen"; 
+NETWORK
+TITLE =Achse 4 C(B)-Achse -> Aufruf FC_ACHSE_SPINDEL
+
+      CALL "FC_ACHSE_SPINDEL" (
+           EX_EN                    := #TX_4Ax_FRG_Spindelmodul,
+           EX_UDHex_00_IB_Bit_Achse := "DB_PLC_MD_DB20".UDHex._00_BIT3_ACHSE4_AUSBLEND,
+           EX_UDHex_01_Ax_Messystem := "DB_PLC_MD_DB20".UDHex._02_BIT3_ACHSE4_MESSYST,
+           EX_Spindel_Aktiv         := TRUE,
+           EX_Antrieb_Sperre        := "DB_FAMILIEN_MODUL".Achssperre_extern.E_Ax_4,
+           EX_Freigabe_Regler       := "I_FD_Tisch_geloest_1",
+           EX_Option_Safety         := "O_INFEED_ENABLE_NCU",// Bei Solutionline bleibt RF und ImpFrg für 3 Sek. nach Not-Aus anstehen
+           EX_Safe_StopA_abgewaehlt := "DB_ACHSE4".A_extStopA,
+           EX_Safe_Teststop_laeuft  := "DB_SPL".IPLC_ZD_GR1_RUN,
+           EX_Leistung_steht_an     := "M_Leistung_Steht_an",
+           EX_GewSchn_Aktiv         := "M_Gewindeschneid_aktiv",
+           EX_VSHalt_EinzelAchse    := #TX_Vorschub_Halt_Ax4,
+           EX_VSHalt_Gruppe         := FALSE,
+           EX_VSHalt_Kanal          := "M_Spindel_Halt_Kanal",
+           EX_RefPkt_Achse          := "MX_RefPkt_4Achse",
+           EX_Spdl_KorrWirksam      := "MX_ASpdl_KorrWirksam",
+           EX_Spdl_Neu_Referenz     := "MX_ASpdl_Neu_Referenz",
+           EX_Spdl_Bei_Pos_NeuRef   := "MX_ASpdl_Bei_Pos_NeuRef",
+           EX_Spdl_RestwegLoeschen  := "MX_ASpdl_RestwegLoeschen",
+           EX_Spdl_E_FahrAF_61x0    := "DB_ACHSE4".E_TravRequ,
+           EX_Spdl_E_Steht_61x4     := "DB_ACHSE4".E_Stat,
+           EX_Spdl_E_DrehzRegl_61x6 := "DB_ACHSE4".E_SpeedContr,
+           EX_Spdl_E_Handrad_64x0   := "DB_ACHSE4".E_HW1,
+           EX_Spdl_E_FBMinus_64x6   := "DB_ACHSE4".E_TCMinus,
+           EX_Spdl_E_FBPlus_64x7    := "DB_ACHSE4".E_TCPlus,
+           EX_Spdl_E_PLCASp_68x7    := "DB_ACHSE4".E_PLCASp,
+           EX_Spdl_E_GetrUmsch_82x3 := "DB_ACHSE4".E_GearChange,
+           EX_Spdl_E_DrehGrenz_83x0 := "DB_ACHSE4".E_SpeedLimit,
+           EX_Spdl_E_SollDZbeg_83x1 := "DB_ACHSE4".E_SetSpeedLimit,
+           EX_Spdl_E_SollBer_83x5   := "DB_ACHSE4".E_SetRange,
+           EX_Spdl_E_GewBohren_84x3 := "DB_ACHSE4".E_Tapping,
+           EX_Spdl_E_PosBetr_84x5   := "DB_ACHSE4".E_PosMode,
+           EX_Spdl_E_PendBetr_84x6  := "DB_ACHSE4".E_OscillMode,
+           EX_Spdl_E_MotOK_93x5     := "DB_ACHSE4".E_MotOK,
+           EX_Spdl_E_ImpFrei_93x7   := "DB_ACHSE4".E_PulseEnable,
+           EX_Spdl_E_MTempWarn_94x0 := "DB_ACHSE4".E_MTempWarn,
+           EX_Spdl_E_KTempWarn_94x1 := "DB_ACHSE4".E_HTempWarn,
+           EX_Spdl_E_RUCompl_94x2   := "DB_ACHSE4".E_RUComplete,
+           EX_Spdl_E_Meldung_94x7   := "DB_ACHSE4".E_Message,
+           EX_Fehler_Quit           := "M_Ruecksetze_Fehler",
+           EX_AxPark                := FALSE,
+           ES5T_RegFr_SA            := S5T#8S,
+           ET_Timer_RegFSA          := "Ta_RFGSpindelAbf_T60",
+           ET_Timer_RegFSE          := "Te_Timer_RegFES",
+           ET_Timer_Reg_Drive_ready := "TE_REQ_DRV_4_READY",
+           EDW_Spdl_SFunkt          := "DB_ACHSE4".E_SFunct,
+           EDW_Spdl_MFunkt          := "DB_ACHSE4".E_MFunct,
+           EB_A_SpOR                := "DB_ACHSE4".A_SpOR,
+           EAX_Spdl_A_ASpSperre_1x3 := "DB_ACHSE4".A_ASpDisable,
+           EAX_Spdl_A_NachfBetr_1x4 := "DB_ACHSE4".A_Follow_upMode,
+           EAX_Spdl_A_LageMess1_1x5 := "DB_ACHSE4".A_PosMeas1,
+           EAX_Spdl_A_LageMess2_1x6 := "DB_ACHSE4".A_PosMeas2,
+           EAX_Spdl_A_KorrW_1x7     := "DB_ACHSE4".A_ORactive,
+           EAX_Spdl_A_ReglFrei_2x1  := "DB_ACHSE4".A_ContrEnable,
+           EAX_Spdl_A_RWLSpRes_2x2  := "DB_ACHSE4".A_DelDTGSpReset,
+           EAX_Spdl_A_GeschDz_3x6   := "DB_ACHSE4".A_VelocSpeedLimit,
+           EAX_Spdl_A_VSSpHalt_4x3  := "DB_ACHSE4".A_FDSpStop,
+           EAX_Spdl_A_Para_A_9x0    := "DB_ACHSE4".A_Para_A,
+           EAX_Spdl_A_Sp1Syn_16x4   := "DB_ACHSE4".A_Sp1Syn,
+           EAX_Spdl_A_Sp1SynP_17x4  := "DB_ACHSE4".A_Sp1SynP,
+           EAX_Spdl_A_ImpFrei_21x7  := "DB_ACHSE4".A_PulseEnable,
+           EAX_Spdl_GetrUmsch_82x3  := "MX_ASpdl_GetrUmsch_82x3",
+           EAX_Spdl_PosBetr_84x5    := "MX_ASpdl_PosBetr_84x5",
+           EAX_Spdl_DrehGrenz_83x0  := "MX_ASpdl_DrehGrenz_83x0",
+           EAX_Spdl_GewBohren_84x3  := "MX_ASpdl_GewBohnre_84x3",
+           EAX_Spdl_SollBer_83x5    := "MX_ASpdl_SollBer_83x5",
+           EAX_Spdl_PendBetr_84x4   := "MX_ASpdl_PendBetr_84x5",
+           EAX_Spdl_E_RUCompl_94x2  := "MX_ASpdl_E_RUCompl_94x2_",
+           EAX_Spdl_E_Message_94x7  := "MX_ASpdl_Message_94x7",
+           EAX_Spdl_A_RefVerz_12x7  := "MX_ASpdl_A_RefVerz_12x7",
+           EAX_Alarm_Regler         := "DB_FEHLERMELDUNG".Spi_VS_Halt._700119_4_IMP_REGFRG_0S,
+           EAX_Alarm_VSSP_Mot_Temp  := "DB_FEHLERMELDUNG".Spi_VS_Halt._700131_4_TEMP_ZU_HOCH,
+           EAX_Alarm_VSSP_KK_Temp   := "DB_FEHLERMELDUNG".Spi_VS_Halt1._510126_4_KK_TEMP_ZH,
+           EAX_Alarm_NA_MotOK       := "DB_FEHLERMELDUNG".Spi_VS_Halt3._701135_4_DR_READY_0,
+           EAX_Spdl_M3              := "MX_ASpdl_M3",
+           EAX_Spdl_M4              := "MX_ASpdl_M4",
+           EAX_Spdl_M5              := "MX_ASpdl_M5",
+           EAX_Spdl_M3_M4           := "MX_ASpdl_M3_M4",
+           EAX_Spdl_IMP_M3          := "MX_ASpdl_IMP_M3",
+           EAX_Spdl_IMP_M4          := "MX_ASpdl_IMP_M4",
+           EAX_Spdl_IMP_M5          := "MX_ASpdl_IMP_M5",
+           EAX_Spdl_IMP_M3_M4       := "MX_ASpdl_IMP_M3_M4",
+           EAX_Spdl_Reset_M3_4      := "MX_ASpdl_Reset_M3_4",
+           EAX_Spdl_M3_Aktiv        := "MX_ASpdl_M3_Aktiv",
+           EAX_Spdl_M4_Aktiv        := "MX_ASpdl_M4_Aktiv",
+           EAX_Spdl_FP_M4           := "MX_ASpdl_FP_M4",
+           EAX_Spdl_FP_M3           := "MX_ASpdl_FP_M3",
+           EAX_Spdl_FP_M5           := "MX_ASpdl_FP_M5",
+           EAB_Spdl_A_SpOR          := "DB_ACHSE4".A_SpOR,
+           EAB_Spdl_SFunkt          := "MW_SFunct1");
+NETWORK
+TITLE =Betriebsstundenzähler FD-Tisch
+
+      U     "MX_ASpdl_M3_M4"; 
+      UN    "DB_ACHSE4".E_Stat; 
+      =     "O_FD_BETRIEBSTUNDE"; 
+NETWORK
+TITLE =Klemmung FD-Tisch klemmen
+
+      UN    "O_FD_Tisch_loesen"; 
+      =     "O_FD_Tisch_klemmen"; 
+END_FUNCTION
+

@@ -1,0 +1,257 @@
+FUNCTION "FC_SP_STERN_DREIECK" : VOID
+TITLE =
+//$Revision: 1.11 $
+//$Date: 2008/03/31 14:53:30CEST $
+//$Author: schmoelp $
+//$ProjectRevision: Last Checkpoint: 1.223 $
+//
+//Logbuch:
+//
+//27.02.2001 SCH: Modul erstellt
+
+VERSION : 0.1
+
+
+VAR_INPUT
+  EX_Enable : BOOL ;	//Freigabe
+  EX_Spdl_E_GearCh_82x3 : BOOL ;	//Getriebe Umschalten
+  EX_Spdl_E_Stat_61x4 : BOOL ;	//Spindel Steht
+  EX_Spdl_E_SetpGearA_82x0 : BOOL ;	//Sollgetriebestufe A
+  EX_Spdl_E_SetpGearB_82x1 : BOOL ;	//Sollgetriebestufe B
+  EX_Spdl_E_SetpGearC_82x2 : BOOL ;	//Sollgetriebestufe C
+  EX_Spdl_E_Stat_61x41 : BOOL ;	//Spindel steht
+  EX_I_Dreieck : BOOL ;	//Eingang Dreieck
+  EX_I_Stern : BOOL ;	//Eingang Stern
+  EI_Timer_YD : INT ;	//Timer YD Umschaltung
+  EI_Spindel_Db : INT ;	//Spindel DB
+  EI_Anwahl_Getriebe : INT ;	//MD Anwahl Getrieb
+  ET_S5Time_YD : S5TIME ;	//S5 Zeit YD Umschalten
+  ET_Timer_Ueberw : TIMER ;	//Timer Überwachung
+END_VAR
+VAR_IN_OUT
+  EAX_Spdl_A_ActGearA_16x0 : BOOL ;	//Aktuelle Getriebestufe A
+  EAX_Spdl_A_ActGearB_16x1 : BOOL ;	//Aktuelle Getriebestufe B
+  EAX_Spdl_A_ActGearC_16x2 : BOOL ;	//Aktuelle Getriebestufe C
+  EAX_Spdl_A_GearChan_16x3 : BOOL ;	//Getriebe umgeschaltet
+  EAX_O_Dreieck : BOOL ;	//Ausgang Dreieck
+  EAX_O_Stern : BOOL ;	//Ausgang Stern
+  EAX_Anforderung_Stern : BOOL ;	//Anforderung Stern
+  EAX_Anforderung_Dreieck : BOOL ;	//Anforderung Dreieck
+  EAX_Freigabe_Schalten : BOOL ;	//Freigabe Schalten
+  EAX_Start_Schalten : BOOL ;	//Start Schalten
+  EAX_YD_Umschalten : BOOL ;	//Merker Getriebe schalten
+  EAX_Impulsfreigabe : BOOL ;	//Merker Impulsfreigabe Spindel
+  EAX_FP_YD_Schalten : BOOL ;	//Flanke geschaltet
+  EAX_Fehler_Stern_0Sig : BOOL ;	//Fehler Endstellung Stern 0-Signal
+  EAX_Fehler_Dreieck_0Sig : BOOL ;	//Fehler Endstellung Dreieck 0-Signal
+  EAX_Undef_Zust_StDr : BOOL ;	//Fehler Undefinierter Zustand Stern-Dreieck
+  EAX_VorschubSperre_StDr : BOOL ;	//Meldung Vorschubsperre Stern-Dreieck
+  EAX_Zustand_YD : WORD ;	//Zustandsword YD (für FC17)
+END_VAR
+BEGIN
+NETWORK
+TITLE =NW 1: Modul Freigabe
+
+
+      UN    #EX_Enable; 
+      BEB   ; 
+
+      L     #EI_Anwahl_Getriebe; 
+      L     2; 
+      ==I   ; 
+      SPB   STRT; 
+
+      SET   ; 
+      R     #EAX_VorschubSperre_StDr; 
+      S     #EAX_Impulsfreigabe; 
+      BEA   ; 
+
+NETWORK
+TITLE =NW 2: Warten auf neuen Getriebeschaltbefehl
+//Warten auf Anforderung Getriebeschalten
+STRT: UN    #EX_Spdl_E_GearCh_82x3; 
+      UN    #EX_Spdl_E_Stat_61x4; 
+      SPB   LBL1; 
+NETWORK
+TITLE =NW 4: Getriebestufe 0,1
+
+      O(    ; 
+      UN    #EX_Spdl_E_SetpGearA_82x0; 
+      UN    #EX_Spdl_E_SetpGearB_82x1; 
+      UN    #EX_Spdl_E_SetpGearC_82x2; 
+      )     ; 
+      O(    ; 
+      U     #EX_Spdl_E_SetpGearA_82x0; 
+      UN    #EX_Spdl_E_SetpGearB_82x1; 
+      UN    #EX_Spdl_E_SetpGearC_82x2; 
+      )     ; 
+      U     #EX_Spdl_E_GearCh_82x3; 
+      O(    ; 
+      U     "M_Reset_Taste"; // Reset und Stern aktiv
+      U     #EX_I_Stern; 
+      )     ; 
+      S     #EAX_Anforderung_Stern; 
+      R     #EAX_Anforderung_Dreieck; 
+
+NETWORK
+TITLE =NW 5: Getriebestufe 2
+
+
+      UN    #EX_Spdl_E_SetpGearA_82x0; 
+      U     #EX_Spdl_E_SetpGearB_82x1; 
+      UN    #EX_Spdl_E_SetpGearC_82x2; 
+      U     #EX_Spdl_E_GearCh_82x3; 
+      O     ; 
+      U     "M_Reset_Taste"; // Reset und Dreieck aktiv
+      U     #EX_I_Dreieck; 
+      S     #EAX_Anforderung_Dreieck; 
+      R     #EAX_Anforderung_Stern; 
+NETWORK
+TITLE =Rückmeldung Getriebestufen
+
+
+LBL1: U     #EX_I_Stern; //Stufe A aktiv
+      UN    #EX_I_Dreieck; 
+      =     #EAX_Spdl_A_ActGearA_16x0; 
+
+      U     #EX_I_Dreieck; //Stufe B aktiv
+      UN    #EX_I_Stern; 
+      =     #EAX_Spdl_A_ActGearB_16x1; 
+
+      U     #EX_Spdl_E_SetpGearC_82x2; //Stufe C aktiv
+      =     #EAX_Spdl_A_ActGearC_16x2; 
+
+NETWORK
+TITLE =
+
+
+      U     #EX_Spdl_E_Stat_61x4; // Spindel steht
+      UN    "DB_ACHSE6_SPINDEL".E_PosMode; 
+//      U(    
+//      U     "DB_Spindel_DB36".E_ContrMode    // und Spindel im Steuerbetrieb
+//      O     "DB_Spindel_DB36".E_OscillMode
+//      )     
+//      U(                                // eine der beiden
+//      U     #EX_I_Stern                 // Endlagen da
+//      X     #EX_I_Dreieck
+//      )     
+      =     #EAX_Freigabe_Schalten; // Freigabe schalten
+
+      U     #EX_Spdl_E_GearCh_82x3; 
+      S     #EAX_Start_Schalten; // Start Wechseln
+
+// Umschaltung Dreieck -> Stern 
+
+      U     #EAX_Freigabe_Schalten; // Freigabe 
+      U     #EAX_Anforderung_Stern; 
+      U     #EAX_Start_Schalten; // Start
+      R     #EAX_Impulsfreigabe; // Anforderung Stern
+      R     #EAX_YD_Umschalten; // Impulsfreigabe ruecksetzen
+
+// Umschaltung Stern -> Dreieck
+
+      U     #EAX_Freigabe_Schalten; // Freigabe 
+      U     #EAX_Anforderung_Dreieck; 
+      U     #EAX_Start_Schalten; // Start
+      S     #EAX_YD_Umschalten; // Anforderung Dreieck
+      R     #EAX_Impulsfreigabe; // Impulsfreigabe ruecksetzen
+
+
+      U     #EAX_Anforderung_Stern; 
+      U     #EX_I_Stern; 
+      O(    ; 
+      U     #EAX_Anforderung_Dreieck; 
+      U     #EX_I_Dreieck; 
+      )     ; 
+      R     #EAX_Start_Schalten; // Start Wechseln
+      S     #EAX_Impulsfreigabe; // Impulsfreigabe setzen
+
+      U     "M_Reset_Taste"; 
+      R     #EAX_Start_Schalten; // Start Wechseln
+
+NETWORK
+TITLE =NW 7: Getriebeschalten - Polumschaltung
+//   "DB_SternDreieck_DB150".MX_Anforderung_StDr = 0 - Dreieck - Motordatensatz 1
+//   "DB_SternDreieck_DB150".MX_Anforderung_StDr = 1 - Stern   - Motordatensatz 2
+      NOP   0; 
+
+      CALL "FC_SIEM_YDELTA" (
+           YDelta                   := #EAX_YD_Umschalten,
+           SpindleIFNo              := #EI_Spindel_Db,
+           TimeVal                  := #ET_S5Time_YD,//S5T#100MS,
+           TimerNo                  := #EI_Timer_YD,//"TIMER_Spindel_YD"
+           Y                        := #EAX_O_Stern,
+           Delta                    := #EAX_O_Dreieck,
+           Ref                      := #EAX_Zustand_YD);
+
+NETWORK
+TITLE =NW 8: Rückmeldung Getriebe hat geschaltet an NC
+
+      O(    ; 
+      U     #EX_I_Dreieck; 
+      U     #EAX_Spdl_A_ActGearB_16x1; 
+      U     #EAX_O_Dreieck; 
+      )     ; 
+      O(    ; 
+      U     #EX_I_Stern; 
+      U     #EAX_Spdl_A_ActGearA_16x0; 
+      U     #EAX_O_Stern; 
+      )     ; 
+      U     #EAX_Impulsfreigabe; 
+      FP    #EAX_FP_YD_Schalten; 
+      =     #EAX_Spdl_A_GearChan_16x3; //Getriebe ist umgeschaltet
+
+NETWORK
+TITLE =
+
+
+      U     "M_Ruecksetze_Fehler"; 
+      R     #EAX_Fehler_Stern_0Sig; 
+      R     #EAX_Fehler_Dreieck_0Sig; 
+      R     #EAX_Undef_Zust_StDr; 
+
+      BEA   ; 
+
+      L     S5T#3S; 
+      U     #EAX_Start_Schalten; 
+      SE    #ET_Timer_Ueberw; 
+
+      U     #ET_Timer_Ueberw; 
+      SPBN  FE01; 
+
+      U     #EAX_Anforderung_Stern; 
+      S     #EAX_Fehler_Stern_0Sig; 
+      U     #EAX_Anforderung_Dreieck; 
+      S     #EAX_Fehler_Dreieck_0Sig; 
+      SPA   FE02; 
+
+FE01: UN    #EAX_Start_Schalten; 
+      U     "M_Leistung_Steht_an"; 
+      SPBN  FE02; 
+      U     #EX_I_Stern; 
+      X     #EX_I_Dreieck; 
+      SPB   FE02; 
+      S     #EAX_Undef_Zust_StDr; 
+      R     #EAX_Impulsfreigabe; 
+
+FE02: NOP   0; 
+NETWORK
+TITLE =NW 8: Signaltest
+
+//    BEA                               // inaktiv
+
+      U     #EAX_O_Dreieck; 
+      U     #EAX_O_Stern; 
+      U     #EAX_Spdl_A_ActGearA_16x0; 
+      U     #EAX_Spdl_A_ActGearC_16x2; 
+      U     #EAX_Spdl_A_ActGearC_16x2; 
+      U     #EAX_Spdl_A_GearChan_16x3; 
+      U     #EAX_Spdl_A_GearChan_16x3; 
+      U     #EX_Spdl_E_SetpGearA_82x0; 
+      U     #EX_Spdl_E_SetpGearB_82x1; 
+      U     #EX_Spdl_E_SetpGearC_82x2; 
+      U     #EAX_Spdl_A_GearChan_16x3; 
+      CLR   ; 
+
+END_FUNCTION
+

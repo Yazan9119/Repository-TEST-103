@@ -1,0 +1,1787 @@
+FUNCTION "FC_WZV_TELLER" : VOID
+TITLE =
+//$Revision: 1.37 $
+//$Date: 2008/09/09 14:24:16CEST $
+//$Author: schmoelp $
+VERSION : 0.1
+
+
+VAR_INPUT
+  Teststeuerung : BOOL ;	
+  Frg_Pos_Mag_1 : BOOL ;	
+  Frg_Pos_Mag_2 : BOOL ;	
+  Doppelmagazin : BOOL ;	
+  FM_del : BOOL ;	//Fehlermeldung löschen
+  Not_Aus : BOOL ;	//Not-Aus steht an
+  E_MSST_Reset : BOOL ;	//Reset Maschinensteuertafel
+  Abstand_WS : INT ;	//Abstand zur Waschstation
+  MAG_Laenge : INT ;	//Werkzeugmagazinlänge
+  MAG_Laenge_HSK : INT ;	
+  Abstand_Ls1 : INT ;	//Abstand zur Ladestation Magazin 1
+  Abstand_Ls2 : INT ;	//Abstand zur Ladestation Magazin 2
+END_VAR
+VAR_IN_OUT
+  Mag1_Pos : REAL ;	//Sollposition Magazin 1 in Grad
+  Mag2_Pos : REAL ;	//Sollposition Magazin 2 in Grad
+  Start_Pos_M1 : BOOL ;	//Start Positionieren Magazin 1
+  Start_Pos_M2 : BOOL ;	//Start Positionieren Magazin 2
+END_VAR
+VAR_TEMP
+  FC8_Start : BOOL ;	
+  FC8_Error : BOOL ;	
+  Vorbereiten : BOOL ;	
+  Vorbereiten_HWW : BOOL ;	
+  Vorbereiten_T0_HWW : BOOL ;	
+  Vorbereiten_ohneHWW : BOOL ;	
+  Anf_PosWechselstelle : BOOL ;	
+  Anf_PosLadestation : BOOL ;	
+  Umsetzen : BOOL ;	
+  Beladen_S1 : BOOL ;	
+  Beladen_M1 : BOOL ;	
+  Entladen_S1 : BOOL ;	
+  Entladen_M1 : BOOL ;	
+  Position_S1 : BOOL ;	
+  Position_M1 : BOOL ;	
+  Spindel_belegt : BOOL ;	
+  WZW : BOOL ;	
+  Quelle_ZS : BOOL ;	
+  Ziel_ZS : BOOL ;	
+  Quelle_Mag : BOOL ;	
+  Ziel_Mag : BOOL ;	
+  QuelleSpin : BOOL ;	
+  ZielSpin : BOOL ;	
+  PI_Ladetuer1_zu : BOOL ;	
+  AB_WZB : BOOL ;	
+  t_inPos_Ladestation : BOOL ;	
+  t_Frg_PosLST : BOOL ;	
+  PI_WZW : BOOL ;	
+  Mag1_Laenge_DINT : DINT ;	
+  Mag1_Abstand : REAL ;	
+  PI_Anf_Pos_M1_LST : BOOL ;	
+  PI_Anf_Pos_M1_WST_KR : BOOL ;	
+  AB_HSK : BOOL ;	
+  NI_MAG_Hub_ein : BOOL ;	
+  Reset_PosM_M1 : BOOL ;	
+  Quitt_Laden_M1 : BOOL ;	
+  Abbruch : BOOL ;	
+  Aufruf_T0 : BOOL ;	
+  Aufruf_Spindel_WZ : BOOL ;	
+  Mag1_Laenge_REAL : REAL ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =Ermittlung Abstand zweier Taschen
+// Netzwerk-Übersicht
+// ==================
+// NW 1: Ermittlung Abstand zweier Taschen
+// NW 2: Ausbaustufe HSK
+// NW 3: Ausbaustufe Bohrerbruchkontrolle mechanisch
+// NW 4: Spindel_belegt
+// NW 5: Aufruf T0
+// NW 6: Aufruf Spindelwerkzeug
+// NW 7: Werkzeugwechsel steht an
+// NW 8: Befehl Handwerkzeug einwechseln
+// NW 9: Befehl Handwerkzeug auswechseln
+// NW 10: Vorbereiten steht an
+// NW 11: Vorbereiten Handwerkzeug einwechseln
+// NW 12: Vorbereiten Handwerkzeug auswechseln
+// NW 13: Vorbereiten Magazin 1 steht an
+// NW 14: Vorbereiten Magazin 2 steht an
+// NW 15: Reset Perform
+// NW 16: Abbruchbedingung
+// NW 17: Übernahme der Be- Entladeaufträge von Beladestelle Spindel
+// NW 18: Übernahme der Be- Entladeaufträge von Beladestelle Magazin 1
+// NW 19: Übernahme der Be- Entladeaufträge von Beladestelle Magazin 2
+// NW 20: Laden quittieren Magazin 1
+// NW 21: Flanke Beladetür Magazin 1 geschlossen
+// NW 22: Rücksetzen Beladen Magazin 1
+// NW 23: Flanke Beladetür Magazin 2 geschlossen
+// NW 24: Rücksetzen Beladen Magazin 2
+// NW 25: PI: Anforderung Positionieren zur Beladestation Magazin 1
+// NW 26: Anforderung Vorbereiten Magazin 1
+// NW 27: Negative Flanke Magazinhub eingefahren Magazin 1
+// NW 28: Löschen letzte angefahrene Position
+// NW 29: Rücksetzbedingung Positionsmerker Magazin 1
+// NW 30: Rücksetzen Magazin 1 für Kegelreinigung positioniert
+// NW 31: Rücksetzen Magazin 1 für Spindel positioniert
+// NW 32: Rücksetzen Magazin 1 für Ladestation positioniert
+// NW 33: Positionieren zur Ladestation Magazin 1
+// NW 34: Positionieren zur Ladestation Magazin 2
+// NW 35: Positionieren zur Bruchkontrolle 2te Messung
+// NW 36: Positionieren zur Kegelreinigung / Bruchkontrolle 1te Messung
+// NW 37: Positionieren Wechsel vorbereiten Magazin 1
+// NW 38: Berechnung Sollposition Magazin 1 in Grad
+// NW 39: Berechnung Sollposition Magazin 2 in Grad
+// NW 40: Rücksetzen Datentauschfehler
+// NW 41: Meldung: Quittierung Entladen / Beladen
+// NW 42: Quittieren Abbruch
+// NW 43: Quittieren Vorbereiten Teller
+// NW 44: Quittieren Werkzeugwechsel Pickup Spindel -> Magazin
+// NW 45: Quittieren Werkzeugwechsel Pickup Magazin -> Spindel
+// NW 46: Quittieren Umsetzen
+// NW 47: Quittieren Beladen Spindel
+// NW 48: Quittieren Beladen Ladestation Magazin 1
+// NW 49: Quittieren Beladen Ladestation Magazin 2
+// NW 50: Quittieren Entladen Spindel
+// NW 51: Quittieren Entladen Ladestation Magazin 1
+// NW 52: Quittieren Entladen Ladestation Magazin 2
+// NW 53: Quittieren Positionieren Spindel
+// NW 54: Quittieren Positionieren Ladestation 1
+// NW 55: Quittieren Positionieren Ladestation 2
+// NW 56: FC8-Aufruf: quittieren Aufträge Werkzeugverwaltung
+// NW 57: FC8-Auswertung: FC8 mit Fehler beendet
+// NW 58: FC8-Auswertung: erfolgreich beendet
+// NW 59: FC8-Auswertung: Rücksetzen Vorbereiten
+// NW 60: FC8-Auswertung: keine weitere Auswertung bei Abbruch
+// NW 61: FC8-Auswertung: Rücksetzen Altplatz Spindelwerkzeug
+// NW 62: FC8-Auswertung: Rücksetzen Datentausch Teller
+// NW 63: FC8-Auswertung: Umsetzen Definitionen Quelle / Ziel
+// NW 64: FC8-Auswertung: Quelle und Ziel Greifer beim Umsetzen
+// NW 65: FC8-Auswertung: Quelle Greifer beim Umsetzen
+// NW 66: FC8-Auswertung: Ziel Greifer beim Umsetzen
+// NW 67: FC8-Auswertung: Quelle Magazin und Ziel Spindel beim Umsetzen
+// NW 68: FC8-Auswertung: Quelle Spindel und Ziel Magazin beim Umsetzen
+// NW 69: Lesen Werkzeugdaten neues Werkzeug fuer Bruchkontrolle
+// 
+      U(    ; 
+      U(    ; 
+      L     #MAG_Laenge; 
+      T     #Mag1_Laenge_DINT; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+      U     BIE; 
+      )     ; 
+      SPBNB _001; 
+      L     #Mag1_Laenge_DINT; 
+      DTR   ; 
+      T     #Mag1_Laenge_REAL; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+_001: U     BIE; 
+      )     ; 
+      SPBNB _002; 
+      L     #Mag1_Laenge_REAL; 
+      L     3.600000e+002; 
+      /R    ; 
+      T     #Mag1_Abstand; 
+_002: NOP   0; 
+
+
+
+NETWORK
+TITLE =Lesen Anzahl Parameter Magazinplatzdaten
+
+      U     "m_neustart"; 
+      =     L     18.0; 
+      BLD   103; 
+      CALL "FB_TM_LEERPLATZ" , "DI_TM_LEERPLATZ" (
+           Start                    := L     18.0,
+           MagNr_ZW                 := 9998,
+           LocNr_ZW                 := 1,
+           MagNr                    := 1);
+
+      NOP   0; 
+NETWORK
+TITLE =Ausbaustufe HSK
+
+      L     #MAG_Laenge_HSK; // Werkzeugmagazingröße
+      L     0; 
+      >I    ; 
+      =     "DB_WZV".AB_HSK; // ABST: Werkzeugwaschen
+      =     #AB_HSK; 
+
+NETWORK
+TITLE =Ausbaustufe Bohrerbruchkontrolle mechanisch
+
+      L     "DB_PLC_MD_DB20".UDInt._010_ANWAHL_WERZEUGBRUCH; 
+      L     0; 
+      <>I   ; 
+      =     #AB_WZB; 
+
+NETWORK
+TITLE =Spindel_belegt
+
+      L     "TMSpindleIF".IF[1].TLoc; // Zielplatz Spindelwerkzeug von WZV
+      L     0; 
+      <>I   ; 
+      =     #Spindel_belegt; 
+
+NETWORK
+TITLE =Aufruf T0
+
+      L     "TMSpindleIF".IF[1].SLoc; 
+      L     0; 
+      ==I   ; 
+      =     #Aufruf_T0; 
+
+NETWORK
+TITLE =Aufruf Spindelwerkzeug
+
+      U(    ; 
+      L     "TMSpindleIF".IF[1].SMag; 
+      L     9998; 
+      ==I   ; 
+      )     ; 
+      U(    ; 
+      L     "TMSpindleIF".IF[1].SLoc; 
+      L     1; 
+      ==I   ; 
+      )     ; 
+      =     #Aufruf_Spindel_WZ; 
+NETWORK
+TITLE =Werkzeugwechsel steht an
+
+      U     "TMSpindleIF".IFNo[1]; // Schnittstelle 1 aktiv
+      U     "TMSpindleIF".IF[1].Perform; // Befehl Werkzeugwechsel
+      UN    "TMSpindleIF".IF[1].Prepare; // Wechsel vorbereiten
+      =     #WZW; // Werkzeugwechsel Schnittstelle 1
+
+NETWORK
+TITLE =Befehl Handwerkzeug einwechseln
+
+      U     #WZW; // Werkzeugwechsel Schnittstelle 1
+      U(    ; 
+      L     "TMSpindleIF".IF[1].SMag; // NEUES WERKZEUG
+      L     9999; 
+      ==I   ; 
+      )     ; 
+      =     "DB_WZV".WW_Hand_einwechseln; 
+
+NETWORK
+TITLE =Befehl Handwerkzeug auswechseln
+
+      U     #WZW; // Werkzeugwechsel Schnittstelle 1
+      U(    ; 
+      L     "TMSpindleIF".IF[1].TMag; // ALTES WERKZEUG
+      L     9999; 
+      ==I   ; 
+      )     ; 
+      UN    "DB_WZV".WW_Hand_einwechseln; 
+      =     "DB_WZV".WW_Hand_auswechseln; 
+
+NETWORK
+TITLE =Vorbereiten steht an
+
+      U     "TMSpindleIF".IFNo[1]; // Schnittstelle 1 aktiv
+      U     "TMSpindleIF".IF[1].Prepare; // Wechsel vorbereiten
+      UN    "TMSpindleIF".IF[1].Perform; // Befehl Werkzeugwechsel
+      =     #Vorbereiten; 
+
+NETWORK
+TITLE =Vorbereiten Handwerkzeug einwechseln
+
+      U     #Vorbereiten; 
+      U(    ; 
+      L     "TMSpindleIF".IF[1].SMag; // Magazin neu
+      L     9999; 
+      ==I   ; 
+      )     ; 
+      =     #Vorbereiten_HWW; 
+
+NETWORK
+TITLE =Vorbereiten Handwerkzeug auswechseln
+
+      U     #Vorbereiten; 
+      U(    ; 
+      L     "TMSpindleIF".IF[1].TMag; // Magazin alt
+      L     9999; 
+      ==I   ; 
+      )     ; 
+      =     #Vorbereiten_T0_HWW; 
+
+NETWORK
+TITLE =Vorbereiten Magazin 1 steht an
+
+      U(    ; 
+      UN    #Spindel_belegt; 
+      U(    ; 
+      L     1; 
+      L     "TMSpindleIF".IF[1].SMag; // Magazin neu
+      ==I   ; 
+      )     ; 
+      O     ; 
+      U     #Spindel_belegt; 
+      U(    ; 
+      L     1; 
+      L     "TMSpindleIF".IF[1].TMag; // Magazin neu
+      ==I   ; 
+      )     ; 
+      )     ; 
+      U     #Vorbereiten; 
+      UN    #Vorbereiten_HWW; 
+      =     #Vorbereiten_ohneHWW; 
+
+NETWORK
+TITLE =Reset Perform
+
+      UN    "TMSpindleIF".IFNo[1]; 
+      R     "TMSpindleIF".IF[1].Perform; 
+NETWORK
+TITLE =Abbruchbedingung
+
+      U(    ; 
+      O     #E_MSST_Reset; //Taste Reset
+      O     "M_RESET_WZV"; 
+      O     ; 
+      U     #Not_Aus; //510300  *** NOT-AUS ***
+      UN    #Teststeuerung; // IB-Bit: Teststeuerung
+      O     ; 
+      U     "I_WM_WZ_entnehmen"; 
+      U     "I_WM_WZ_einlegen"; 
+      )     ; 
+      U(    ; 
+      UN    "DB_WW".WW_DT_ablegen; 
+      UN    "DB_WW".WW_DT_aufnehmen; 
+      UN    "DB_WW".DT_aufnehmen; // Datentausch 1
+      UN    "DB_WW".DT_wechseln; // Datentausch 2
+      UN    "DB_WW".DT_ablegen; // Datentausch 3
+      ON    "DB_WZV".FC8_Start; // FC8 Quittung läuft ( Datentausch )
+      )     ; 
+      =     #Abbruch; 
+
+NETWORK
+TITLE =Auftrag Werkzeugverwaltung Umsetzen
+
+      U     "TMLoadIF".IFNo[1]; 
+      U     "TMLoadIF".IF[1].Reloading; 
+      =     #Umsetzen; 
+NETWORK
+TITLE =Auftrag Werkzeugverwaltung Beladen Spindel
+
+      U     "TMLoadIF".IFNo[1]; 
+      U     "TMLoadIF".IF[1].Loading; 
+      =     #Beladen_S1; 
+NETWORK
+TITLE =Auftrag Werkzeugverwaltung Entladen Spindel
+
+      U     "TMLoadIF".IFNo[1]; 
+      U     "TMLoadIF".IF[1].Unloading; 
+      =     #Entladen_S1; 
+NETWORK
+TITLE =Auftrag Werkzeugverwaltung Positionieren Spindel
+
+      U     "TMLoadIF".IFNo[1]; 
+      U     "TMLoadIF".IF[1].Positioning; 
+      =     #Position_S1; 
+NETWORK
+TITLE =Auftrag Werkzeugverwaltung Beladen Magazin 1
+
+      U     "TMLoadIF".IFNo[2]; 
+      U     "TMLoadIF".IF[2].Loading; 
+      =     #Beladen_M1; 
+NETWORK
+TITLE =Auftrag Werkzeugverwaltung Entladen Magazin 1
+
+      U     "TMLoadIF".IFNo[2]; 
+      U     "TMLoadIF".IF[2].Unloading; 
+      =     #Entladen_M1; 
+NETWORK
+TITLE =Auftrag Werkzeugverwaltung Positionieren Magazin 1
+
+      U     "TMLoadIF".IFNo[2]; 
+      U     "TMLoadIF".IF[2].Positioning; 
+      =     #Position_M1; 
+NETWORK
+TITLE =Laden quittieren Magazin 1
+
+      O     "I_WM_WZ_einlegen"; 
+      O     "I_WM_WZ_entnehmen"; 
+      ON    "DB_PLC_MD_DB20".UDHex._08_BIT2_Quit_Beladen; 
+      O     #Teststeuerung; 
+      =     #Quitt_Laden_M1; // IB-Bit: Teststeuerung
+NETWORK
+TITLE =Flanke Beladetür Magazin 1 geschlossen
+
+      U     "I_WM_Beladung_zu"; // Wz-Magazintür geschlossen
+      FP    "DB_WZV".PF_Ladetuer1_zu; // FLM: WZM-Ladetür 1 geschlossen
+      =     #PI_Ladetuer1_zu; // IPM: WZM-Ladetür 1 geschlossen 
+
+NETWORK
+TITLE =Rücksetzen Beladen Magazin 1
+
+      U     "DB_WZV".Mag1_Laden_aktiv; // Be- Entladen Magazin 1 oder Spindel aktiv
+      UN    #Beladen_S1; // Beladen Spindel
+      UN    #Beladen_M1; // Beladen Magazin 1
+      UN    #Entladen_S1; // Entladen Spindel
+      UN    #Entladen_M1; // Entladen Magazin 1
+      UN    #Position_S1; // Positionieren OP03X Spindel
+      UN    #Position_M1; // Positionieren OP03X Magazin 1
+      U(    ; 
+      O     #Quitt_Laden_M1; 
+      O     #PI_Ladetuer1_zu; // IPM: WZM-Ladetür 1 geschlossen 
+      )     ; 
+      O     #Abbruch; 
+      R     "DB_WZV".Mag1_Laden_aktiv; // Be- Entladen Magazin 1 oder Spindel aktiv
+
+      R     "DB_WZV".M1_Rueckmeldung_Pos; 
+      R     "DB_ACHS7_WZM".MX_Rueck_Positionieren; 
+NETWORK
+TITLE =Freigabe positionieren Ladestation
+
+      UN    "O_WW_1_Klappe_auf"; 
+      U     "I_WW_1_Klappe_zu"; // Magazinklappe geschlossen
+      =     #t_Frg_PosLST; 
+
+NETWORK
+TITLE =Anforderung Magazin 1 Laden aktiv mit Tasten
+
+      UN    "DB_WZV".Mag1_Laden_aktiv; // Be- Entladen Magazin 1 oder Spindel aktiv
+      U     "M_Programm_Aktiv_Kanal_1"; 
+      U(    ; 
+      O     "I_WM_ZUSTIMMTASTE"; 
+      O     "I_WM_Taste_links"; 
+      O     "I_WM_Taste_rechts"; 
+      )     ; 
+      U     #Frg_Pos_Mag_1; 
+      U     #t_Frg_PosLST; 
+      UN    "DB_WZV".WZB.Req_read; 
+      UN    "DB_WZV".Pos_M1_WST_HUBein; 
+      UN    "DB_WZV".Pos_M1_WST_HUBaus; 
+      UN    "DB_WZV".Pos_M1_KR; 
+      S     "DB_WZV".Mag1_Laden_aktiv; // Be- Entladen Magazin 1 oder Spindel aktiv
+
+NETWORK
+TITLE =PI: Anforderung Positionieren zur Beladestation Magazin 1
+
+      U(    ; 
+      O     #Beladen_M1; // Beladen Magazin 1
+      O     #Entladen_M1; // Entladen Magazin 1
+      O     #Position_M1; // Positionieren OP03X Magazin 1
+      )     ; 
+      U     #Frg_Pos_Mag_1; 
+      U     #t_Frg_PosLST; 
+      UN    "DB_WZV".WZB.Req_read; 
+      UN    "DB_WZV".Pos_M1_WST_HUBein; 
+      UN    "DB_WZV".Pos_M1_WST_HUBaus; 
+      UN    "DB_WZV".Pos_M1_KR; 
+      =     L     18.0; 
+
+      U     L     18.0; 
+      BLD   102; 
+      =     #Anf_PosLadestation; 
+      U     L     18.0; 
+      FP    "DB_WZV".PF_Anf_Pos_M1_LST; 
+      =     #PI_Anf_Pos_M1_LST; 
+
+NETWORK
+TITLE =M-EINGANG: Werkzeugwechsler Tuer geschlossen
+
+      U     #WZW; 
+      FP    "DB_WZV".PF_WZW; 
+      =     #PI_WZW; 
+NETWORK
+TITLE =Anforderung Positionieren Vorbereiten Magazin 1
+
+      U(    ; 
+      O     #Vorbereiten_ohneHWW; 
+      O     ; 
+      U     #PI_WZW; 
+      UN    "DB_WZV".Mag1_inPos_WST; // Be- Entladen Magazin 1 oder Spindel aktiv
+      )     ; 
+      UN    "DB_WZV".Mag1_Laden_aktiv; 
+
+      UN    "DB_WZV".FC8_Start; 
+      =     L     18.0; 
+      U     L     18.0; 
+      BLD   102; 
+      =     #Anf_PosWechselstelle; 
+      U     L     18.0; 
+      FP    "DB_WZV".PF_Anf_Pos_M1_WST_KR; 
+      =     #PI_Anf_Pos_M1_WST_KR; 
+NETWORK
+TITLE =Negative Flanke Magazinhub eingefahren Magazin 1
+
+      U     "I_WW_1_ZYL_SPI"; //"I_WW_Wz_inSPI"
+      FN    "DB_WW".PN_MAG_Hub_eingefahren; 
+      =     #NI_MAG_Hub_ein; 
+
+NETWORK
+TITLE =Löschen letzte angefahrene Position
+
+      U(    ; 
+      O     "DB_ACHSE7".E_TCMinus; 
+      O     "DB_ACHSE7".E_TCPlus; 
+      )     ; 
+      U     "I_WW_1_ZYL_GST"; // Magazin aus Spindel
+      ON    "DB_ACHSE7".E_IndexAxisPos; 
+      =     "DB_WZV".del_letzte_Pos; 
+
+NETWORK
+TITLE =Rücksetzbedingung Positionsmerker Magazin 1
+
+      O     "DB_WZV".del_letzte_Pos; 
+      O     #PI_Anf_Pos_M1_WST_KR; 
+      O     #PI_Anf_Pos_M1_LST; 
+      O     #NI_MAG_Hub_ein; 
+      =     #Reset_PosM_M1; 
+
+NETWORK
+TITLE =Rücksetzen Magazin 1 für Kegelreinigung positioniert
+
+      U     #Reset_PosM_M1; 
+      R     "DB_WZV".Mag1_inPos_KR; 
+      R     "DB_WZV".Bruchdaten_gelesen; 
+
+NETWORK
+TITLE =Rücksetzen Magazin 1 für Spindel positioniert
+
+      U     #Reset_PosM_M1; 
+      R     "DB_WZV".Mag1_inPos_WST; 
+
+NETWORK
+TITLE =Rücksetzen Magazin 1 für Ladestation positioniert
+
+      U     #Reset_PosM_M1; 
+      R     "DB_WZV".Mag1_inPos_LST; 
+
+NETWORK
+TITLE =Positionieren zur Ladestation Magazin 1
+
+      U     #Anf_PosLadestation; 
+      UN    "DB_WZV".Mag1_inPos_LST; 
+      UN    "DB_WZV".Pos_M1_LST; 
+      S     "DB_WZV".Mag1_Laden_aktiv; // Be- Entladen Magazin 1 oder Spindel aktiv
+      SPBN  EPL1; 
+
+      U     #Beladen_M1; // Beladen Magazin 1
+      SPB   PB_1; 
+
+      L     "TMLoadIF".IF[2].SLoc; 
+      SPA   EPB1; 
+
+PB_1: L     "TMLoadIF".IF[2].TLoc; 
+
+EPB1: L     #Abstand_Ls1; 
+      +I    ; 
+      L     #Mag1_Laenge_DINT; 
+      >I    ; 
+      SPBN  TLS1; 
+
+      -I    ; 
+      SPA   PLS1; 
+
+TLS1: TAK   ; 
+
+PLS1: T     "DB_WZV".Mag1_Pos_Loc; 
+      L     "DB_WZV".M1_letzte_Pos_LST; 
+      ==I   ; 
+      S     "DB_WZV".Mag1_inPos_LST; 
+
+      UN    "DB_WZV".Mag1_inPos_LST; 
+      S     "DB_WZV".Pos_M1_LST; 
+
+EPL1: NOP   0; 
+
+NETWORK
+TITLE =Positionieren zur Bruchkontrolle 2te Messung
+
+      U     #Anf_PosWechselstelle; 
+      U     "DB_WZV".WZB.WZ_messen; 
+      U     #AB_WZB; 
+      UN    "DB_WZV".Mag1_inPos_KR; 
+      UN    "DB_WZV".Mag1_inPos_WST; 
+      UN    "DB_WZV".Pos_M1_WST_HUBein; 
+      UN    "DB_WZV".Pos_M1_WST_HUBaus; 
+      UN    "DB_WZV".Pos_M1_KR; 
+      UN    "DB_WZV".Pos_M1_LST; 
+      SPBN  EPBK; 
+
+      L     "DB_WZV".WZB.LocNo; // Position abgelegtes Werkzeug
+      L     #Abstand_WS; // Differenz zwischen Spindelplatz und Waschstation
+      +I    ; 
+      L     #Mag1_Laenge_DINT; // Anzahl Magazinplätze
+      >I    ; 
+      SPBN  TA_2; 
+
+      -I    ; 
+      SPA   POSB; 
+
+TA_2: TAK   ; 
+
+POSB: T     "DB_WZV".Mag1_Pos_Loc; 
+
+      S     "DB_WZV".Pos_M1_KR; 
+
+EPBK: NOP   0; 
+
+NETWORK
+TITLE =Positionieren zur Kegelreinigung / Bruchkontrolle 1te Messung
+
+      U     #Anf_PosWechselstelle; 
+      U(    ; 
+      U     #AB_WZB; 
+      UN    "DB_WZV".Bruchdaten_gelesen; 
+      O     #AB_HSK; // ABST: Werkzeug waschen
+      )     ; 
+      UN    #Aufruf_T0; 
+      UN    "DB_WZV".Mag1_inPos_KR; 
+      UN    "DB_WZV".Mag1_inPos_WST; 
+      UN    "DB_WZV".Pos_M1_WST_HUBein; 
+      UN    "DB_WZV".Pos_M1_WST_HUBaus; 
+      UN    "DB_WZV".Pos_M1_KR; 
+      UN    "DB_WZV".Pos_M1_LST; 
+      SPBN  EPRE; 
+      L     "TMSpindleIF".IF[1].SMag; 
+      L     9999; 
+      ==I   ; 
+      R     "DI_WZ_BRUCH".SX_GRF_ANF; 
+      NOT   ; 
+      U     #AB_WZB; 
+      S     "DB_WZV".WZB.Req_read; 
+
+      O     "DB_WZV".WZB.Done; 
+      ON    "DB_WZV".WZB.Req_read; 
+      SPBN  EPRE; 
+
+      S     "M_Req_write_Bruchdaten"; 
+
+      U     "DB_WZV".WZB.Done; 
+      U     "DB_WZV".WZB.Req_read; 
+      S     "DB_WZV".Bruchdaten_gelesen; 
+
+      U     "DB_WZV".WZB.Req_read; 
+      U     "DB_WZV".WZB.WZB_aktiviert; 
+      =     "DI_WZ_BRUCH".SX_GRF_ANF; 
+      SPBN  EGRL; 
+      L     "DI_TM_WZBRUCH_R".TC_DPC5; // kein Messwert dann neu messen
+      L     0.000000e+000; 
+      ==R   ; 
+      SPB   EGRL; 
+      L     "DI_TM_WZBRUCH_R".TC_DPC5; 
+      RND   ; 
+      T     "DI_WZ_BRUCH".SW_GRF_LAENGE; // wenn Messwert vorhanden, diesen laden und nicht das 1.mal messsen
+EGRL: NOP   0; 
+
+      O     "DI_WZ_BRUCH".SX_GRF_ANF; 
+      O     #AB_HSK; // ABST: Werkzeug waschen
+      SPBN  EPRE; 
+
+      L     "TMSpindleIF".IF[1].SLoc; // Position neues Werkzeug
+      L     #Abstand_WS; // Differenz zwischen Spindelplatz und Waschstation
+      +I    ; 
+      L     #Mag1_Laenge_DINT; // Anzahl Magazinplätze
+      >I    ; 
+      SPBN  TA_1; 
+
+      -I    ; 
+      SPA   POSW; 
+
+TA_1: TAK   ; 
+
+POSW: T     "DB_WZV".Mag1_Pos_Loc; 
+      L     "DB_WZV".M1_letzte_Pos_KR; 
+      ==I   ; 
+      U(    ; 
+      L     "DI_TM_WZBRUCH_R".TC_DPC5; 
+      L     0.000000e+000; 
+      >R    ; // erste Messung wurde bereits durchgefuehrt
+      ON    "DB_WZV".WZB.WZB_aktiviert; 
+      )     ; 
+      S     "DB_WZV".Mag1_inPos_KR; 
+
+      UN    "DB_WZV".Mag1_inPos_KR; 
+      S     "DB_WZV".Pos_M1_KR; 
+
+EPRE: NOP   0; 
+
+NETWORK
+TITLE =Positionieren Wechsel vorbereiten Magazin 1
+
+      U     #Anf_PosWechselstelle; 
+      UN    "DB_WZV".Mag1_inPos_WST; 
+      UN    "DB_WZV".WZB.Req_read; 
+      UN    "DB_WZV".Pos_M1_WST_HUBein; 
+      UN    "DB_WZV".Pos_M1_WST_HUBaus; 
+      UN    "DB_WZV".Pos_M1_KR; 
+      UN    "DB_WZV".Pos_M1_LST; 
+      SPBN  EPWV; 
+
+      U     #Spindel_belegt; // Spindel ist belegt
+      SPB   A_PL; // Altplatz anfahren
+
+      L     "TMSpindleIF".IF[1].SLoc; // Platznummer neues Werkzeug
+      T     "DB_WZV".Mag1_Pos_Loc; 
+
+      L     "DB_WZV".M1_letzte_Pos_WST; 
+      ==I   ; 
+      S     "DB_WZV".Mag1_inPos_WST; 
+
+      UN    "DB_WZV".Mag1_inPos_WST; 
+      S     "DB_WZV".Pos_M1_WST_HUBaus; // --> Nach MAgazinppositionieren Hub ausfahren !!
+      SPA   EPWV; 
+
+A_PL: L     "TMSpindleIF".IF[1].TLoc; // Altplatz Spindelwerkzeug
+      T     "DB_WZV".Mag1_Pos_Loc; 
+
+      L     "DB_WZV".M1_letzte_Pos_WST; 
+      ==I   ; 
+      S     "DB_WZV".Mag1_inPos_WST; 
+
+      UN    "DB_WZV".Mag1_inPos_WST; 
+      S     "DB_WZV".Pos_M1_WST_HUBein; // nach MAgazinpositionierung Hub einfahren
+      SPA   EPWV; 
+
+EPWV: NOP   0; 
+
+NETWORK
+TITLE =Berechnung Sollposition Magazin 1 in Grad
+
+      U(    ; 
+      O     "DB_WZV".Pos_M1_WST_HUBein; 
+      O     "DB_WZV".Pos_M1_WST_HUBaus; 
+      O     "DB_WZV".Pos_M1_LST; 
+      O     "DB_WZV".Pos_M1_KR; 
+      )     ; 
+      =     #Start_Pos_M1; 
+      SPBN  KPM1; 
+
+      L     "DB_WZV".Mag1_Pos_Loc; 
+      DTR   ; 
+
+      SPA   P_M1; 
+
+KPM1: L     0.000000e+000; 
+
+P_M1: T     #Mag1_Pos; 
+
+NETWORK
+TITLE =Rücksetzen Datentauschfehler
+
+      O     #FM_del; // Fehler löschen
+      O     #Umsetzen; 
+      R     "DB_FEHLERMELDUNG".VS_Halt._700436; 
+
+NETWORK
+TITLE =Position Ladestation ist angefahren
+
+      U     "DB_WZV".Mag1_inPos_LST; 
+      U     "DB_WZV".Mag1_Laden_aktiv; 
+      =     #t_inPos_Ladestation; 
+NETWORK
+TITLE =702105 "MEL, Warten auf Quittierung Entladen"
+
+      U     #t_inPos_Ladestation; 
+      U(    ; 
+      UN    #Entladen_M1; 
+      UN    #Beladen_M1; 
+      O     #Entladen_M1; 
+      )     ; 
+      =     "DB_FEHLERMELDUNG".Meldung._702105_Quit_Entladen; 
+NETWORK
+TITLE =Meldung: Quittierung Beladen
+
+      U     #t_inPos_Ladestation; 
+      U(    ; 
+      UN    #Entladen_M1; 
+      UN    #Beladen_M1; 
+      O     #Beladen_M1; 
+      )     ; 
+      =     "DB_FEHLERMELDUNG".Meldung._702026_Quit_Beladen; 
+NETWORK
+TITLE =Quittieren Abbruch
+
+      U     #Abbruch; 
+      SPBN  EABB; 
+
+      R     "DB_WZV".SchreibenFPS; 
+      R     "DB_WZV".SchreibenFPM1; 
+      R     "DB_WZV".SchreibenFPM2; 
+      R     "DB_WZV".StartSchreibenFP; 
+      R     "DB_WZV".StartSchreibenFP; 
+      R     "DB_WZV".StartSchreibenFPS; 
+      R     "DB_WZV".StartSchreibenFPM1; 
+      R     "DB_WZV".Sp_AltPl_gelesen; // Altplatz Spindelwerkzeug ist gelesen
+      R     "DB_WZV".Sp_AltPl_lesen; // Abfrage Belegung Altplatz Spindelwerkzeug
+      R     "DB_WZV".Sp_AltPl_leer; // Altplatz Spindelwerkzeug ist leer
+      R     "DB_WZV".Gr_AltPl_gelesen; // Altplatz Greiferwerkzeug ist gelesen
+      R     "DB_WZV".Gr_AltPl_lesen; // Abfrage Belegung Altplatz Greiferwerkzeug
+      R     "DB_WZV".Gr_AltPl_leer; // Altplatz Greiferwerkzeug ist leer
+
+      R     "DB_WZV".LeerPl_an_BS1; // Leeren Platz an Beladestation 1 fahren
+      R     "DB_WZV".LeerPl_an_BS2; // Leeren Platz an Beladestation 2 fahren
+
+      L     3; 
+      T     "DB_WZV".FC8_Status; // Status
+
+      L     2; 
+
+      U     "TMSpindleIF".IFNo[1]; // Wechsel-Schnittstelle 1 aktiv
+      SPB   SS12; 
+
+      L     1; 
+
+      U     "TMLoadIF".IFNo[3]; // Lade-Schnittstelle 3 aktiv
+      SPB   SS3; 
+
+      U     "TMLoadIF".IFNo[2]; // Lade-Schnittstelle 2 aktiv
+      SPB   SS2; 
+
+      UN    "TMLoadIF".IFNo[1]; // Lade-Schnittstelle 1 aktiv
+      SPB   EABB; 
+
+
+      T     "DB_WZV".FC8_TaskIdent; // 1=Ladestelle, 2=Wechselstelle, 4=PLC-Auftrag
+
+      L     1; 
+      T     "DB_WZV".FC8_TaskIdentNo; // Schnittstellen-Nr
+
+      L     "TMLoadIF".IF[1].SMag; // Magazin neu
+      T     "DB_WZV".FC8_NewToolMag; // Magazin neu
+
+      L     "TMLoadIF".IF[1].SLoc; // Platz neu
+      T     "DB_WZV".FC8_NewToolLoc; // Platz neu
+
+      L     "TMLoadIF".IF[1].TMag; // Magazin alt
+      T     "DB_WZV".FC8_OldToolMag; // Magazin alt
+
+      L     "TMLoadIF".IF[1].TLoc; // Platz alt
+      T     "DB_WZV".FC8_OldToolLoc; // Platz alt
+
+      L     0; 
+      T     DB71.DBW    4; // Rücksetzen Auftrags-Bits
+
+      SET   ; 
+      S     "DB_WZV".FC8_Start; 
+
+      SPA   QUIT; // Abbruch Status 3 Schnittstell 1
+
+
+SS12: T     "DB_WZV".FC8_TaskIdent; // 1=Ladestelle, 2=Wechselstelle, 4=PLC-Auftrag
+
+      L     1; 
+      T     "DB_WZV".FC8_TaskIdentNo; // Schnittstellen-Nr
+
+      L     "TMSpindleIF".IF[1].SMag; // Magazin neu
+      T     "DB_WZV".FC8_NewToolMag; // Magazin neu
+
+      L     "TMSpindleIF".IF[1].SLoc; // Platz neu
+      T     "DB_WZV".FC8_NewToolLoc; // Platz neu
+
+      L     "TMSpindleIF".IF[1].TMag; // Magazin alt
+      T     "DB_WZV".FC8_OldToolMag; // Magazin alt
+
+      L     "TMSpindleIF".IF[1].TLoc; // Platz alt
+      T     "DB_WZV".FC8_OldToolLoc; // Platz alt
+
+      L     0; 
+      T     DB72.DBW    4; // Rücksetzen Auftrags-Bits
+
+      SET   ; 
+      S     "DB_WZV".FC8_Start; 
+
+      SPA   QUIT; // Abbruch Status 3 Schnittstell 1
+
+
+SS2:  T     "DB_WZV".FC8_TaskIdent; // 1=Ladestelle, 2=Wechselstelle, 4=PLC-Auftrag
+
+      L     2; 
+      T     "DB_WZV".FC8_TaskIdentNo; // Schnittstellen-Nr
+
+      L     "TMLoadIF".IF[2].SMag; // Magazin neu
+      T     "DB_WZV".FC8_NewToolMag; // Magazin neu
+
+      L     "TMLoadIF".IF[2].SLoc; // Platz neu
+      T     "DB_WZV".FC8_NewToolLoc; // Platz neu
+
+      L     "TMLoadIF".IF[2].TMag; // Magazin alt
+      T     "DB_WZV".FC8_OldToolMag; // Magazin alt
+
+      L     "TMLoadIF".IF[2].TLoc; // Platz alt
+      T     "DB_WZV".FC8_OldToolLoc; // Platz alt
+
+      L     0; // Rücksetzen Auftrags-Bits
+      T     DB71.DBW   34; 
+
+      SET   ; 
+      S     "DB_WZV".FC8_Start; 
+
+      SPA   QUIT; // Abbruch Status 3 Schnittstell 2
+
+
+SS3:  T     "DB_WZV".FC8_TaskIdent; // 1=Ladestelle, 2=Wechselstelle, 4=PLC-Auftrag
+
+      L     3; 
+      T     "DB_WZV".FC8_TaskIdentNo; // Schnittstellen-Nr
+
+      L     "TMLoadIF".IF[3].SMag; // Magazin neu
+      T     "DB_WZV".FC8_NewToolMag; // Magazin neu
+
+      L     "TMLoadIF".IF[3].SLoc; // Platz neu
+      T     "DB_WZV".FC8_NewToolLoc; // Platz neu
+
+      L     "TMLoadIF".IF[3].TMag; // Magazin alt
+      T     "DB_WZV".FC8_OldToolMag; // Magazin alt
+
+      L     "TMLoadIF".IF[3].TLoc; // Platz alt
+      T     "DB_WZV".FC8_OldToolLoc; // Platz alt
+
+      L     0; // Rücksetzen Auftrags-Bits
+      T     DB71.DBW   64; 
+
+      SET   ; 
+      S     "DB_WZV".FC8_Start; 
+
+      SPA   QUIT; // Abbruch Status 3 Schnittstell 2
+
+EABB: NOP   0; 
+
+NETWORK
+TITLE =Quittieren Vorbereiten Teller
+
+      U     "DB_WZV".FC8_Start; 
+      SPB   EQWV; 
+
+// bei Satzvorlauf wird der letzte Vorbereitungsbefehl ausgegeben,
+// auch wenn das Werkzeug bereits in der Spindel ist.
+// Diese Anforderung muss ohne Positionsänderung quittiert werden
+
+      U     #Vorbereiten; 
+      U     #Aufruf_Spindel_WZ; 
+      UN    #Spindel_belegt; 
+      O     ; 
+      U     #Vorbereiten; 
+      U     #Aufruf_T0; 
+      UN    #Spindel_belegt; 
+      SPBN  ESV1; 
+
+      L     2; 
+      T     "DB_WZV".FC8_TaskIdent; // 1=Ladestelle, 2=Wechselstelle, 4=PLC-Auftrag
+
+      L     1; 
+      T     "DB_WZV".FC8_TaskIdentNo; // Schnittstellen-Nr
+
+      L     -1; 
+      T     "DB_WZV".FC8_NewToolMag; // Magazin neu
+      T     "DB_WZV".FC8_NewToolLoc; // Platz neu
+      T     "DB_WZV".FC8_OldToolMag; // Magazin alt
+      T     "DB_WZV".FC8_OldToolLoc; // Platz alt
+
+      L     1; 
+      T     "DB_WZV".FC8_Status; // Status
+
+      SET   ; 
+      S     "DB_WZV".FC8_Start; 
+
+      SPA   QUIT; // Vorbereiten Teller Spindel belegt
+
+ESV1: U     #Vorbereiten_ohneHWW; // Wechsel vorbereiten Magazin 1
+      U     "DB_WZV".Mag1_inPos_WST; 
+      O     #Vorbereiten_HWW; 
+      O     #Vorbereiten_T0_HWW; 
+      SPBN  EQWV; 
+
+      L     2; 
+      T     "DB_WZV".FC8_TaskIdent; // 1=Ladestelle, 2=Wechselstelle, 4=PLC-Auftrag
+
+      L     1; 
+      T     "DB_WZV".FC8_TaskIdentNo; // Schnittstellen-Nr
+
+      L     "TMSpindleIF".IF[1].SMag; // Magazin neu
+      T     "DB_WZV".FC8_NewToolMag; // Magazin neu
+
+      L     "TMSpindleIF".IF[1].SLoc; // Platz neu
+      T     "DB_WZV".FC8_NewToolLoc; // Platz neu
+
+      L     "TMSpindleIF".IF[1].TMag; // Magazin alt
+      T     "DB_WZV".FC8_OldToolMag; // Magazin alt
+
+      L     "TMSpindleIF".IF[1].TLoc; // Platz alt
+      T     "DB_WZV".FC8_OldToolLoc; // Platz alt
+
+      L     1; 
+      T     "DB_WZV".FC8_Status; // Status
+
+      SET   ; 
+      S     "DB_WZV".FC8_Start; 
+
+      UN    #Spindel_belegt; // Spindel ist belegt
+      R     "TMSpindleIF".IF[1].Prepare; // Wechsel vorbereiten
+      SPB   QUIT; // Vorbereiten Teller Spindel leer
+
+      L     "TMSpindleIF".IF[1].IdentBuff; // Magazin Zwischenspeicher
+      T     "DB_WZV".FC8_OldToolMag; // Magazin alt
+
+      L     "TMSpindleIF".IF[1].NoBuff; // Platz Zwischenspeicher
+      T     "DB_WZV".FC8_OldToolLoc; // Platz alt
+
+      SPA   QUIT; // Vorbereiten Teller Spindel belegt
+
+EQWV: NOP   0; 
+
+NETWORK
+TITLE =Quittieren Werkzeugwechsel Pickup Spindel -> Magazin
+
+      U     "DB_WZV".FC8_Start; 
+      SPB   EQSM; 
+
+// Nach Satzvorlauf wird ein Werkzeugwechsel aufgerufen, obwohl das Werkzeug
+// bereits in der Spindel ist. Deshalb muss dieser Befehl ohne Positionsänderung
+// quittiert werden.
+
+      U     #WZW; 
+      U     #Aufruf_Spindel_WZ; 
+      UN    #Spindel_belegt; 
+      O     ; 
+      U     #WZW; 
+      U     #Aufruf_T0; 
+      UN    #Spindel_belegt; 
+      SPBN  ESV2; 
+
+      L     2; 
+      T     "DB_WZV".FC8_TaskIdent; // 1=Ladestelle, 2=Wechselstelle, 4=PLC-Auftrag
+
+      L     1; 
+      T     "DB_WZV".FC8_TaskIdentNo; // Schnittstellen-Nr
+
+      L     -1; 
+      T     "DB_WZV".FC8_NewToolMag; // Magazin neu
+      T     "DB_WZV".FC8_NewToolLoc; // Platz neu
+      T     "DB_WZV".FC8_OldToolMag; // Magazin alt
+      T     "DB_WZV".FC8_OldToolLoc; // Platz alt
+
+      L     1; 
+      T     "DB_WZV".FC8_Status; // Status
+
+      SET   ; 
+      S     "DB_WZV".FC8_Start; 
+
+      SPA   QUIT; // Vorbereiten Teller Spindel belegt
+
+ESV2: U(    ; 
+      U     "DB_WW".WW_vorwaerts; // Schrittkette vorwärts
+      O     "DB_WW".WW_rueckwaerts; // Schrittkette rückwärts
+      O     #WZW; // Wechsel durchfuehren
+      )     ; 
+      U     "DB_WW".WW_DT_ablegen; // Datentausch 1 Spindel -> Magazin
+      O     ; 
+      U     "DB_WZV".WW_Hand_auswechseln; 
+      U     "M_Man_WZSP_Auf"; // "O_AL_WZ_Spanner_Loesen"
+      U     "I_WZ_SPA_geloest"; 
+      SPBN  EQSM; 
+
+      R     "DB_WZV".Mag1_inPos_WST; 
+
+// Abspeichern der Position für Bruchkontrolle
+      U     "DB_WW".WW_DT_ablegen; // Datentausch 1 Spindel -> Magazin
+      U     "DI_WZ_BRUCH".SX_SP_ANF; 
+      U     #AB_WZB; 
+      SPBN  ESBK; 
+
+      S     "DB_WZV".WZB.WZ_messen; 
+
+      L     1; 
+      T     "DB_WZV".WZB.MagNo; 
+
+      L     "DB_WZV".M1_letzte_Pos_WST; 
+      T     "DB_WZV".WZB.LocNo; 
+
+ESBK: NOP   0; 
+
+      L     1; 
+      T     "DB_WZV".FC8_TaskIdentNo; // Schnittstellen-Nr
+
+      U     #WZW; // Wechsel durchfuehren
+      SPB   AUT1; 
+
+// Freifahren Werkzeugwechsler
+
+      L     4; // PLC-Auftrag
+      T     "DB_WZV".FC8_TaskIdent; // 1=Ladestelle, 2=Wechselstelle, 4=PLC-Auftrag
+
+      L     1; // Schnittstelle
+      T     "DB_WZV".FC8_Status; // Status
+
+      U     "DB_WW".WW_vorwaerts; // Schrittkette vorwärts
+      SPB   VW1; 
+
+// rückwärts Freifahren Magazin -> Spindel
+
+      L     9998; // Zwischenspeicher
+      T     "DB_WZV".FC8_NewToolMag; // Magazin neu
+
+      L     1; //Spindel
+      T     "DB_WZV".FC8_NewToolLoc; // Platz neu
+
+//      L     "DB_WZV".Sp_letzte_MagNr    // zuletzt für Spindel angefahrenes Magazin
+      L     1; 
+      T     "DB_WZV".FC8_OldToolMag; // Magazin alt
+
+//      L     "DB_WZV".Sp_letzte_PlNr     // zuletzt für Spindel angefahrener Platz
+      L     "DB_WZV".M1_letzte_Pos_WST; 
+      T     "DB_WZV".FC8_OldToolLoc; // Platz alt
+
+      SET   ; 
+      S     "DB_WZV".FC8_Start; 
+
+      U     #AB_WZB; 
+      S     "MX_T_WechselRdy"; 
+
+      SPA   QUIT; // Handbedienung Teller Magazin -> Spindel
+
+// vorwärts Freifahren Spindel -> Magazin
+
+//      L     "DB_WZV".Sp_letzte_MagNr    // zuletzt für Spindel angefahrenes Magazin
+VW1:  L     1; 
+      T     "DB_WZV".FC8_NewToolMag; // Magazin neu
+
+//      L     "DB_WZV".Sp_letzte_PlNr     // zuletzt für Spindel angefahrener Platz
+      L     "DB_WZV".M1_letzte_Pos_WST; 
+      T     "DB_WZV".FC8_NewToolLoc; // Platz neu
+
+      L     9998; // Zwischenspeicher
+      T     "DB_WZV".FC8_OldToolMag; // Magazin alt
+
+      L     1; //Spindel
+      T     "DB_WZV".FC8_OldToolLoc; // Platz alt
+
+      SET   ; 
+      S     "DB_WZV".FC8_Start; 
+
+      U     #AB_WZB; 
+      S     "MX_T_WechselRdy"; 
+
+      SPA   QUIT; // Handbedienung Teller Spindel -> Magazin
+
+AUT1: L     2; 
+      T     "DB_WZV".FC8_TaskIdent; // 1=Ladestelle, 2=Wechselstelle, 4=PLC-Auftrag
+
+      L     "TMSpindleIF".IF[1].SMag; // Magazin neu
+      T     "DB_WZV".FC8_NewToolMag; // Magazin neu
+
+      L     "TMSpindleIF".IF[1].SLoc; // Platz neu
+      T     "DB_WZV".FC8_NewToolLoc; // Platz neu
+
+      L     "TMSpindleIF".IF[1].TMag; // Magazin alt
+      T     "DB_WZV".FC8_OldToolMag; // Magazin alt
+
+      L     "TMSpindleIF".IF[1].TLoc; // Platz alt
+      T     "DB_WZV".FC8_OldToolLoc; // Platz alt
+
+      L     0; 
+      L     "TMSpindleIF".IF[1].SMag; // Magazin neu
+      ==I   ; // neues Werkzeug T0
+      L     1; 
+      SPB   ST; 
+
+      L     105; 
+
+
+ST:   T     "DB_WZV".FC8_Status; // Status
+      L     1; 
+      ==I   ; 
+      U     #AB_WZB; 
+      S     "MX_T_WechselRdy"; 
+
+      SET   ; 
+      S     "DB_WZV".FC8_Start; 
+
+      SPA   QUIT; // Wechsel Teller Spindel -> Magazin
+
+EQSM: NOP   0; 
+
+NETWORK
+TITLE =Quittieren Werkzeugwechsel Pickup Magazin -> Spindel
+
+      U     "DB_WZV".FC8_Start; 
+      SPB   EQMS; 
+
+      U(    ; 
+      U     "DB_WW".WW_vorwaerts; // Schrittkette vorwärts
+      O     "DB_WW".WW_rueckwaerts; // Schrittkette rückwärts
+      O     #WZW; // Wechsel durchfuehren
+      )     ; 
+      U     "DB_WW".WW_DT_aufnehmen; // Datentausch 2
+      O     ; 
+      U     "DB_WZV".WW_Hand_einwechseln; 
+      U     "M_Man_WZSP_Auf"; // "O_AL_WZ_Spanner_Loesen"
+      U     "I_WZ_SPA_geloest"; 
+      SPBN  EQMS; 
+
+      R     "DB_WZV".Mag1_inPos_WST; 
+
+      L     1; // Schnittstelle
+      T     "DB_WZV".FC8_TaskIdentNo; // Schnittstellen-Nr
+
+      U     #WZW; // Wechsel durchfuehren
+      SPB   AUT2; 
+
+// Freifahren Werkzeugwechsler
+
+      L     4; // PLC-Auftrag
+      T     "DB_WZV".FC8_TaskIdent; // 1=Ladestelle, 2=Wechselstelle, 4=PLC-Auftrag
+
+      L     1; // Schnittstelle
+      T     "DB_WZV".FC8_Status; // Status
+
+      U     "DB_WW".WW_vorwaerts; // Schrittkette vorwärts
+      SPB   VW2; 
+
+// rückwärts Freifahren Spindel -> Magazin
+
+//      L     "DB_WZV".Sp_letzte_MagNr    // zuletzt für Spindel angefahrenes Magazin
+      L     1; 
+      T     "DB_WZV".FC8_NewToolMag; // Magazin neu
+
+//      L     "DB_WZV".Sp_letzte_PlNr     // zuletzt für Spindel angefahrener Platz
+      L     "DB_WZV".M1_letzte_Pos_WST; 
+      T     "DB_WZV".FC8_NewToolLoc; // Platz neu
+
+      L     9998; // Zwischenspeicher
+      T     "DB_WZV".FC8_OldToolMag; // Magazin alt
+
+      L     1; //Spindel
+      T     "DB_WZV".FC8_OldToolLoc; // Platz alt
+
+      U     #AB_WZB; 
+      S     "MX_T_WechselRdy"; 
+
+      SET   ; 
+      S     "DB_WZV".FC8_Start; 
+
+      SPA   QUIT; // Handbedienung Teller Spindel -> Magazin
+
+// vorwärts Freifahren Magazin -> Spindel
+
+VW2:  L     9998; // Zwischenspeicher
+      T     "DB_WZV".FC8_NewToolMag; // Magazin neu
+
+      L     1; //Spindel
+      T     "DB_WZV".FC8_NewToolLoc; // Platz neu
+
+      L     1; 
+      T     "DB_WZV".FC8_OldToolMag; // Magazin alt
+
+      L     "DB_WZV".M1_letzte_Pos_WST; 
+      T     "DB_WZV".FC8_OldToolLoc; // Platz alt
+
+      U     #AB_WZB; 
+      S     "MX_T_WechselRdy"; 
+
+      SET   ; 
+      S     "DB_WZV".FC8_Start; 
+
+      SPA   QUIT; // Handbedienung Teller Magazin -> Spindel
+
+AUT2: L     2; 
+      T     "DB_WZV".FC8_TaskIdent; // 1=Ladestelle, 2=Wechselstelle, 4=PLC-Auftrag
+
+      L     9998; // Magazin Spindel
+      T     "DB_WZV".FC8_NewToolMag; // Magazin neu
+
+      L     "TMSpindleIF".IF[1].NoBuff; // Platz Zwischenspeicher
+      T     "DB_WZV".FC8_NewToolLoc; // Platz neu
+
+      L     "TMSpindleIF".IF[1].TMag; // Magazin alt
+      T     "DB_WZV".FC8_OldToolMag; // Magazin alt
+
+      L     "TMSpindleIF".IF[1].TLoc; // Platz alt
+      T     "DB_WZV".FC8_OldToolLoc; // Platz alt
+
+      L     1; 
+      T     "DB_WZV".FC8_Status; // Status
+
+      U     #AB_WZB; 
+      S     "MX_T_WechselRdy"; 
+
+      SET   ; 
+      S     "DB_WZV".FC8_Start; 
+
+      SPA   QUIT; // Wechsel Teller Magazin -> Spindel
+
+EQMS: NOP   0; 
+
+NETWORK
+TITLE =Quittieren Umsetzen
+
+      U     #Umsetzen; // Umladen Schnittstelle 1
+      SPBN  E_UM; 
+
+      L     1; 
+      T     "DB_WZV".FC8_TaskIdent; // 1=Ladestelle, 2=Wechselstelle, 4=PLC-Auftrag
+
+      L     1; 
+      T     "DB_WZV".FC8_TaskIdentNo; // Schnittstelle
+
+      L     "TMLoadIF".IF[1].TMag; // Magazin alt
+      T     "DB_WZV".FC8_NewToolMag; // Magazin neu
+
+      L     "TMLoadIF".IF[1].TLoc; // Platz alt
+      T     "DB_WZV".FC8_NewToolLoc; // Platz neu
+
+      L     "TMLoadIF".IF[1].SMag; // Magazin neu
+      T     "DB_WZV".FC8_OldToolMag; // Magazin alt
+
+      L     "TMLoadIF".IF[1].SLoc; // Platz neu
+      T     "DB_WZV".FC8_OldToolLoc; // Platz alt
+
+      L     1; 
+      T     "DB_WZV".FC8_Status; // Status
+
+      SET   ; 
+      S     "DB_WW".AQ_umsetzen; // Auswertung Quittung Umsetzen
+      S     "DB_WZV".FC8_Start; 
+
+      SPA   QUIT; // Umsetzen Status 1
+
+E_UM: NOP   0; 
+
+NETWORK
+TITLE =Quittieren Beladen Spindel
+
+      U     "DB_WZV".FC8_Start; 
+      SPB   EQBS; 
+
+      U     #Beladen_S1; // Beladen Spindel
+      SPBN  EQBS; 
+
+      L     1; 
+      T     "DB_WZV".FC8_TaskIdent; // 1=Ladestelle, 2=Wechselstelle, 4=PLC-Auftrag
+
+      L     1; 
+      T     "DB_WZV".FC8_TaskIdentNo; // Schnittstelle
+
+      L     "TMLoadIF".IF[1].TMag; // Magazin neu
+      T     "DB_WZV".FC8_NewToolMag; // Magazin neu
+
+      L     "TMLoadIF".IF[1].TLoc; // Platz neu
+      T     "DB_WZV".FC8_NewToolLoc; // Platz neu
+
+      L     0; 
+      T     "DB_WZV".FC8_OldToolMag; // Magazin alt
+      T     "DB_WZV".FC8_OldToolLoc; // Platz alt
+
+      L     1; 
+      T     "DB_WZV".FC8_Status; // Status
+
+      SET   ; 
+      S     "DB_WZV".FC8_Start; 
+
+      SPA   QUIT; // Quittieren Beladen Spindel
+
+EQBS: NOP   0; 
+
+NETWORK
+TITLE =Quittieren Beladen Ladestation Magazin 1
+
+      U     "DB_WZV".FC8_Start; 
+      SPB   EQB1; 
+
+      U     #Beladen_M1; // Beladen Magazin 1
+      U     "DB_WZV".Mag1_inPos_LST; 
+      U     #Quitt_Laden_M1; 
+      SPBN  EQB1; 
+
+      L     1; 
+      T     "DB_WZV".FC8_TaskIdent; // 1=Ladestelle, 2=Wechselstelle, 4=PLC-Auftrag
+
+      L     2; 
+      T     "DB_WZV".FC8_TaskIdentNo; // Schnittstelle
+
+      L     "TMLoadIF".IF[2].TMag; // Magazin neu
+      T     "DB_WZV".FC8_NewToolMag; // Magazin neu
+
+      L     "TMLoadIF".IF[2].TLoc; // Platz neu
+      T     "DB_WZV".FC8_NewToolLoc; // Platz neu
+
+      L     0; // Magazin alt
+      T     "DB_WZV".FC8_OldToolMag; // Magazin alt
+      T     "DB_WZV".FC8_OldToolLoc; // Platz alt
+
+      L     1; 
+      T     "DB_WZV".FC8_Status; // Status
+
+      SET   ; 
+      S     "DB_WZV".FC8_Start; 
+
+      SPA   QUIT; 
+
+EQB1: UN    "DB_WZV".Pos_M1_LST; 
+      UN    #Entladen_M1; // Entladen Magazin 1
+      U     "DB_WZV".Mag1_Laden_aktiv; 
+      U(    ; 
+      U     "m_takt_1sec."; 
+      U     "DB_WW".MFkt_06; 
+      ON    "DB_WW".MFkt_06; 
+      )     ; 
+      U(    ; 
+      UN    "DB_WW".VSP_WZM_Wechsler; 
+      ON    "I_WM_WZ_ZYL_CLAMP"; 
+      )     ; 
+      O     ; 
+      U     "m_takt_1sec."; 
+      U(    ; 
+      O     "DB_WW".VSP_WZM_Wechsler; 
+      O     "DB_FEHLERMELDUNG".Warnung._701860_Rueck_Pos_Umg; 
+      )     ; 
+      U     "I_WM_WZ_ZYL_CLAMP"; 
+      U     "I_WW_1_ZYL_GST"; 
+      U     "M_Leistung_Steht_an"; 
+      =     "O_WM_WZ_STAT_einlegen"; 
+
+NETWORK
+TITLE =Quittieren Entladen Spindel
+
+      U     "DB_WZV".FC8_Start; 
+      SPB   EQES; 
+
+      U     #Entladen_S1; // Entladen Spindel
+      SPBN  EQES; 
+
+      L     1; 
+      T     "DB_WZV".FC8_TaskIdent; // 1=Ladestelle, 2=Wechselstelle, 4=PLC-Auftrag
+
+      L     1; 
+      T     "DB_WZV".FC8_TaskIdentNo; // Schnittstelle
+
+      L     0; 
+      T     "DB_WZV".FC8_NewToolMag; // Magazin neu
+      T     "DB_WZV".FC8_NewToolLoc; // Platz neu
+
+      L     9999; // Entlade-Magazin
+      T     "DB_WZV".FC8_OldToolMag; // Magazin alt
+
+      L     "TMLoadIF".IF[1].NoLoad; // Nummer Beladestelle
+      T     "DB_WZV".FC8_OldToolLoc; // Platz alt
+
+      L     1; 
+      T     "DB_WZV".FC8_Status; // Status
+
+      SET   ; 
+      S     "DB_WZV".FC8_Start; 
+
+      SPA   QUIT; // Quittieren Beladen Spindel
+
+EQES: NOP   0; 
+
+NETWORK
+TITLE =Quittieren Entladen Ladestation Magazin 1
+
+      U     "DB_WZV".FC8_Start; 
+      SPB   EQE1; 
+
+      U     #Entladen_M1; // Entladen Magazin 1
+      U     "DB_WZV".Mag1_inPos_LST; 
+      U(    ; 
+      O     "M_Ruecksetze_Fehler"; 
+      O     "I_WM_WZ_entnehmen"; 
+      ON    "DB_PLC_MD_DB20".UDHex._08_BIT2_Quit_Beladen; 
+      O     #Teststeuerung; // IB-Bit: Teststeuerung
+      )     ; 
+      SPBN  EQE1; 
+
+      L     1; 
+      T     "DB_WZV".FC8_TaskIdent; // 1=Ladestelle, 2=Wechselstelle, 4=PLC-Auftrag
+
+      L     2; 
+      T     "DB_WZV".FC8_TaskIdentNo; // Schnittstelle
+
+      L     0; // Magazin alt
+      T     "DB_WZV".FC8_NewToolMag; // Magazin neu
+      T     "DB_WZV".FC8_NewToolLoc; // Platz neu
+
+      L     9999; // Magazin Lademagazin
+      T     "DB_WZV".FC8_OldToolMag; // Magazin alt
+
+      L     "TMLoadIF".IF[2].NoLoad; // Platz alt
+      T     "DB_WZV".FC8_OldToolLoc; // Platz alt
+
+      L     1; 
+      T     "DB_WZV".FC8_Status; // Status
+
+      SET   ; 
+      S     "DB_WZV".FC8_Start; 
+
+      SPA   QUIT; 
+
+EQE1: UN    "DB_WZV".Pos_M1_LST; 
+      UN    #Beladen_M1; 
+      U     "DB_WZV".Mag1_Laden_aktiv; 
+      U(    ; 
+      UN    "m_takt_1sec."; 
+      U     "DB_WW".MFkt_06; 
+      ON    "DB_WW".MFkt_06; 
+      )     ; 
+      U(    ; 
+      UN    "DB_WW".VSP_WZM_Wechsler; 
+      ON    "I_WM_WZ_ZYL_CLAMP"; 
+      )     ; 
+      O     ; 
+      U     "m_takt_1sec."; 
+      U(    ; 
+      O     "DB_WW".VSP_WZM_Wechsler; 
+      O     "DB_FEHLERMELDUNG".Warnung._701860_Rueck_Pos_Umg; 
+      )     ; 
+      U     "I_WM_WZ_ZYL_CLAMP"; 
+      U     "I_WW_1_ZYL_GST"; 
+      U     "M_Leistung_Steht_an"; 
+      =     "O_WM_WZ_STAT_entnehmen"; 
+
+NETWORK
+TITLE =Quittieren Positionieren Spindel
+
+      U     "DB_WZV".FC8_Start; 
+      SPB   EPS1; 
+
+      U     #Position_S1; // Positionieren OP03X Spindel
+      SPBN  EPS1; 
+
+      L     1; 
+      T     "DB_WZV".FC8_TaskIdent; // 1=Ladestelle, 2=Wechselstelle, 4=PLC-Auftrag
+
+      L     1; 
+      T     "DB_WZV".FC8_TaskIdentNo; // Schnittstelle
+
+      L     9999; 
+      T     "DB_WZV".FC8_NewToolMag; // Magazin neu
+
+      L     1; 
+      T     "DB_WZV".FC8_NewToolLoc; // Platz neu
+
+      L     0; 
+      T     "DB_WZV".FC8_OldToolMag; // Magazin alt
+      T     "DB_WZV".FC8_OldToolLoc; // Platz alt
+
+      L     5; // Status: Vorgang beendet ohne Änderung
+      T     "DB_WZV".FC8_Status; // Status
+
+      SET   ; 
+      S     "DB_WZV".FC8_Start; 
+
+      SPA   QUIT; 
+
+EPS1: NOP   0; 
+
+NETWORK
+TITLE =Quittieren Positionieren Ladestation 1
+
+      U     "DB_WZV".FC8_Start; 
+      SPB   EP_1; 
+
+      U     #Position_M1; // Positionieren OP03X Magazin 1
+      U     "DB_WZV".Mag1_inPos_LST; 
+      SPBN  EP_1; 
+
+      L     1; 
+      T     "DB_WZV".FC8_TaskIdent; // 1=Ladestelle, 2=Wechselstelle, 4=PLC-Auftrag
+
+      L     2; 
+      T     "DB_WZV".FC8_TaskIdentNo; // Schnittstelle
+
+      L     9999; 
+      T     "DB_WZV".FC8_NewToolMag; // Magazin neu
+
+      L     2; 
+      T     "DB_WZV".FC8_NewToolLoc; // Platz neu
+
+      L     0; 
+      T     "DB_WZV".FC8_OldToolMag; // Magazin alt
+      T     "DB_WZV".FC8_OldToolLoc; // Platz alt
+
+      L     5; // Status: Vorgang beendet ohne Änderung
+      T     "DB_WZV".FC8_Status; // Status
+
+      SET   ; 
+      S     "DB_WZV".FC8_Start; 
+
+      SPA   QUIT; 
+
+EP_1: NOP   0; 
+
+NETWORK
+TITLE =FC8-Aufruf: quittieren Aufträge Werkzeugverwaltung
+
+QUIT: U     "DB_WZV".FC8_Start; // Startbit Qittieren
+      UN    "DB_WZV".FC8_beendet; // Transfer beendet
+      =     #FC8_Start; // Start
+
+      CALL "FC_SIEM_TM_TRANS" (
+           Start                    := #FC8_Start,
+           TaskIdent                := "DB_WZV".FC8_TaskIdent,// 1=Ladestelle, 2=Wechselstelle, 4=PLC-Auftrag
+           TaskIdentNo              := "DB_WZV".FC8_TaskIdentNo,// Schnittstelle
+           NewToolMag               := "DB_WZV".FC8_NewToolMag,// Magazin-Nr neues Werkzeug
+           NewToolLoc               := "DB_WZV".FC8_NewToolLoc,// Platz-Nr neues Werkzeug
+           OldToolMag               := "DB_WZV".FC8_OldToolMag,// Magazin-Nr altes Werkzeug
+           OldToolLoc               := "DB_WZV".FC8_OldToolLoc,// Platz-Nr altes Werkzeug
+           Status                   := "DB_WZV".FC8_Status,// 1=beendet, 3=abgebrochen, 5=positioniert, 105=veränderte Position
+           Ready                    := "DB_WZV".FC8_Ready,// durchgeführt
+           Error                    := "DB_WZV".FC8_Error);// Fehler
+
+
+NETWORK
+TITLE =FC8-Auswertung: FC8 mit Fehler beendet
+
+      L     "DB_WZV".FC8_Error; 
+      L     0; 
+      <>I   ; 
+      =     #FC8_Error; 
+      R     "DB_WZV".FC8_Start; // Startbit Qittieren
+
+      L     "DB_WZV".FC8_TaskIdent; 
+      L     1; 
+      >I    ; 
+      U     #FC8_Error; 
+      UN    "DB_WZV".Umsetzen; // Auswertung Quittung Umsetzen
+      S     "DB_FEHLERMELDUNG".VS_Halt._700436; // VS-H, Werkzeugdatentausch nicht durchgeführt
+
+NETWORK
+TITLE =FC8-Auswertung: erfolgreich beendet
+
+      U     "DB_WZV".FC8_Ready; // Transfer beendet
+      R     "DB_WZV".FC8_Start; // Startbit Qittieren
+      SPBN  E_QU; 
+
+NETWORK
+TITLE =FC8-Auswertung: Rücksetzen Vorbereiten
+
+      U(    ; 
+      L     "DB_WZV".FC8_TaskIdent; // 1=Ladestelle, 2=Wechselstelle, 4=PLC-Auftrag
+      L     2; 
+      ==I   ; 
+      )     ; 
+      U(    ; 
+      L     "DB_WZV".FC8_Status; // 1=beendet, 3=abgebrochen, 5=positioniert, 105=veränderte Position
+      L     1; 
+      ==I   ; 
+      )     ; 
+      U     #Vorbereiten; // Wechselvorbereiten
+      R     "TMSpindleIF".IF[1].Prepare; // Wechsel vorbereiten
+
+NETWORK
+TITLE =FC8-Auswertung: keine weitere Auswertung bei Abbruch
+
+      L     3; 
+      L     "DB_WZV".FC8_Status; // 1=beendet, 3=abgebrochen, 5=positioniert, 105=veränderte Position
+      ==I   ; 
+      SPB   E_QU; // bei Abbruch kein Rücksetzen der Datentauschmerker
+
+NETWORK
+TITLE =FC8-Auswertung: Rücksetzen Altplatz Spindelwerkzeug
+//// Da von der Werkzeugverwaltung nach Qittierung M6 T0 der Altplatz Spindel-
+//// werkzeug nicht gelöscht wird und das DW30 für die Auswertung Werkzeug in
+//// Spindel verwendet wird muss es vom PLC gelöscht werden.
+//// Da von der Werkzeugverwaltung nach Qittierung M6 T0 der Altplatz Spindel-
+//// werkzeug nicht gelöscht wird und das DW30 für die Auswertung Werkzeug in
+//// Spindel verwendet wird muss es vom PLC gelöscht werden.
+//
+      U     "DB_WW".WW_DT_ablegen; // Datentausch 1
+      U     "DB_WW".WW_T_Folge_3; // ABLAUFFOLGE 3 M6 T0
+      SPBN  ERAP; 
+
+      L     0; 
+      T     "TMSpindleIF".IF[1].TLoc; // Altplatz Spindelwerkzeug
+
+ERAP: NOP   0; 
+
+NETWORK
+TITLE =FC8-Auswertung: Rücksetzen Datentausch Teller
+
+      SET   ; 
+      R     "DB_WW".WW_DT_ablegen; // Datentausch 1
+      R     "DB_WW".WW_DT_aufnehmen; // Datentausch 2
+
+NETWORK
+TITLE =FC8-Auswertung: Umsetzen Definitionen Quelle / Ziel
+
+      U     "DB_WZV".Umsetzen; // Auswertung Quittung Umsetzen
+      R     "DB_WZV".Umsetzen; // Auswertung Quittung Umsetzen
+      SPBN  E_QU; 
+
+      L     "DB_WZV".FC8_OldToolMag; 
+      L     9998; 
+      ==I   ; 
+      =     #Quelle_ZS; // Quelle Zwischenspeicher
+
+      L     "DB_WZV".FC8_NewToolMag; 
+      ==I   ; 
+      =     #Ziel_ZS; // Ziel Zwischenspeicher
+
+      L     1; 
+      L     "DB_WZV".FC8_OldToolMag; 
+      ==I   ; 
+      O(    ; 
+      L     2; 
+      ==I   ; 
+      )     ; 
+      =     #Quelle_Mag; // Quelle Magazin
+
+      L     1; 
+      L     "DB_WZV".FC8_NewToolMag; 
+      ==I   ; 
+      O(    ; 
+      L     2; 
+      ==I   ; 
+      )     ; 
+      =     #Ziel_Mag; // Ziel Magazin
+
+      L     "DB_WZV".FC8_OldToolLoc; 
+      L     1; 
+      ==I   ; 
+      U     #Quelle_ZS; // Quelle Zwischenspeicher
+      =     #QuelleSpin; // Quelle Spindel
+
+      L     "DB_WZV".FC8_NewToolLoc; 
+      L     1; 
+      ==I   ; 
+      U     #Ziel_ZS; // Ziel Zwischenspeicher
+      =     #ZielSpin; // Ziel Spindel
+
+NETWORK
+TITLE =FC8-Auswertung: Quelle Magazin und Ziel Spindel beim Umsetzen
+
+      U     #Quelle_Mag; // Quelle Magazin
+      U     #ZielSpin; // Ziel Spindel
+      SPBN  QSZM; 
+
+      L     "DB_WZV".FC8_OldToolMag; // Magazinnummer
+      SLW   8; 
+      L     "DB_WZV".FC8_OldToolLoc; // Magazinplatz des umgesetzten Werkzeugs
+      OW    ; 
+      T     "DB_WZV".Sp_Altplatz; // Altplatz Spindelwerkzeug
+
+      L     0; 
+      T     "DB_WZV".SP_int_TNr; // interne T-Nummer Spindelwerkzeug
+      T     "DB_WZV".Sp_Groesse; // Werkzeuggrösse Spindelwerkzeug
+      SPA   E_QU; 
+
+NETWORK
+TITLE =FC8-Auswertung: Quelle Spindel und Ziel Magazin beim Umsetzen
+
+QSZM: U     #QuelleSpin; // Quelle Spindel
+      U     #Ziel_Mag; // Ziel Magazin
+      SPBN  E_QU; 
+
+      L     0; 
+      T     "DB_WZV".Sp_Altplatz; // Altplatz Spindelwerkzeug
+      T     "DB_WZV".SP_int_TNr; // interne T-Nummer Spindelwerkzeug
+      T     "DB_WZV".Sp_Groesse; // Werkzeuggrösse Spindelwerkzeug
+      SPA   E_QU; 
+
+E_QU: NOP   0; 
+
+NETWORK
+TITLE =Lesen Werkzeugdaten neues Werkzeug fuer Bruchkontrolle
+
+      O     "DB_WZV".WZB.Done; 
+      O     "DB_WZV".WZB.Error; 
+      O     #Abbruch; 
+      R     "DB_WZV".WZB.Req_read; 
+      R     "DB_WZV".WZB.Done; 
+      R     "DB_WZV".WZB.Error; 
+
+      CALL "FB_TM_WZBRUCH_R" , "DI_TM_WZBRUCH_R" (
+           E_TNR_READ               := "TMSpindleIF".IF[1].T_no,
+           E_READ                   := "DB_WZV".WZB.Req_read,
+           EA_WZBRUCH               := "DB_WZV".WZB.WZB_aktiviert,
+           EA_Error_Read            := "DB_WZV".WZB.Error,
+           EA_DONE_Read             := "DB_WZV".WZB.Done);
+
+      U     "M_Ruecksetze_Fehler"; 
+      R     "DB_FEHLERMELDUNG".Warnung._701902_WZB_LESEFEHLER; 
+
+      U     "DB_WZV".WZB.Error; 
+      S     "DB_FEHLERMELDUNG".Warnung._701902_WZB_LESEFEHLER; 
+
+END_FUNCTION
+

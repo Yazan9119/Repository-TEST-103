@@ -1,0 +1,2336 @@
+FUNCTION "FC_KUEHLMITTEL" : VOID
+TITLE =
+//$Revision: 1.94 $
+//$Date: 2008/11/25 11:13:07CET $
+//$Author: hgc $
+//V0.2 31-07-00 SJA
+//              --> umkonfiguriert auf 
+//              M96, M97, M98
+//
+//              M96: Spänespülung, Werkstückreinigung AUS 
+//              M97: Spänespülung EIN
+//              M98: Werkstückreinigung EIN
+//
+//V0.1 01-07-00 SJA
+//              Spaenespuelung und Werkstueckreinigung
+{ S7_language := '7(1) Deutsch (Deutschland)  27.03.2008  13:58:39' }
+AUTHOR : SJA
+VERSION : 0.1
+
+
+VAR_TEMP
+  Zeitwert : S5TIME ;	
+  t_pumpen_ein : BOOL ;	
+  t_80bar_aktiv : BOOL ;	
+  tx_KMTL_Knoll_SOKO : BOOL ;	
+  t_Druckvorgabe1 : INT ;	
+  t_Druckvorgabe2 : INT ;	
+  t_IKZ_Durchfluss_OK : BOOL ;	
+  t_KSA7_MIT_SPALTSIEB : BOOL ;	
+  t_KSA7_OHNE_SPALTSIEB : BOOL ;	
+  t_KSA_Anlage_aktiv : BOOL ;	
+  t_BA_Wechsel_M8 : BOOL ;	
+  dummy : BOOL ;	
+  t_T_Max_RPLDusche : BOOL ;	//Max. Laufzeit für Rüstplatz-Dusche abgelaufen
+  t_Byte : BYTE ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =Taste Kühlmittel
+// Netzwerk-Übersicht
+// ==================
+// NW 1: Taste Kühlmittel
+// NW 2: Taste innere Kühlmittelzufuhr (IKZ)
+// NW 3: Kühlmittelanlage angewählt
+// NW 4: Reset der gespeicherten M-Funktionen M7/M8/M9
+// NW 5: Pumpen eingeschaltet
+// NW 6: Auswertung der M-Funktionen bei Satzsuchlauf
+// NW 7: Auswertung der H-Funktionen bei Satzsuchlauf
+// NW 8: M7 / M8 ausschalten durch Taste
+// NW 9: Auswertung der M-Funktionen M7 aktiv
+// NW 10: Meldung: IKZ M7 nicht erlaubt in dieser Betriebsart
+// NW 11: Meldung: IKZ M7 mit diesem Werkzeug gesperrt
+// NW 12: Auswertung der M-Funktionen M8 aktiv
+// NW 13: Kühlmittel LED`s
+// NW 14: Reset der M-Funktion M7
+// NW 15: Clear "DB_DM_M_FUNKTION".MX_M[391]
+// NW 16: Wechsel in BA2, BA3 oder BA4 löscht Merker M_M8_Act
+// NW 17: Reset der M-Funktion M8
+// NW 18: MEL, M8 nicht erlaubt in dieser Betriebsart
+// NW 19: Clear "DB_DM_M_FUNKTION".MX_M[392]
+// NW 20: Umschaltung Wasser / Luft
+// NW 21: M-AUSGANG: Pumpe Kühlmittel 2 'Ein' (M7)
+// NW 22: M-AUSGANG: M7 Luftkuehlung
+// NW 23: M-AUSGANG: Pumpe Kühlmittel 1 'Ein' (M8)
+// NW 24: ----- IKZ DRUCKSTUFEN -------------------------
+// NW 25: IKZ war aktiv
+// NW 26: Ausblasen der IKZ-Leitung
+// NW 27: Auswertung Werkstueckspülung / Spänespülung ausschalten
+// NW 28: Auswertung Werkstueckspülung / Spänespülung einschalten
+// NW 29: M-AUSGANG: Spänespülung
+// NW 30: M-AUSGANG: Werkstückspülung
+// NW 31: KSA-Anlage ist aktiv
+// NW 32: PI Rüstplatz Taste Spülung ein
+// NW 33: Max. Laufzeit für Rüstplatz-Dusche abgelaufen
+// NW 34: MA G1-36.7 KM-Anlage Rüstplatz-Dusche Ventil Ein
+// NW 35: MA B2-87.1 KM-Anlage Rüstplatz-Dusche Pumpe Ein
+// NW 36: MA xx-xx.x KM-Anlage Rüstplatz-Dusche Meldelampe Ein
+// NW 37: RESET: Fehlermeldungen  
+// NW 38: Fehlermeldungen  bei INTEGER_019>0 (Kühlmittelanlage angewählt)
+// NW 39: Kühlmittel Temperatur zu hoch
+// NW 40: Motorschutzschalter Kratzförderer
+// NW 41: Motorschutzschalter Späneförderer Schnecke 
+// NW 42: INT_019 = 3: KSA - Konzernkühlmittelanlage
+// NW 43: INT_019 = 2: KSA - Inline (DMC80S)
+// NW 44: INT_019 = 4 oder 9: KSA2 oder KSA2.1 - INTERLIT 
+// NW 45: INT_019 = 5: KSA4 - INTERLIT mit Kratzförderer
+// NW 46: INT_019 = 6: KSA3 - BÜRENER Bandfilteranlage
+// NW 47: INT_019 = 7 oder 8: KSA-Knoll oder KSA-SOKO
+// NW 48: INT_019 = 10: KSA3.1 BÜRENER mit zusätzlichem Späneförderer
+// NW 49: INT_019 = 11 oder 12: KSA7 - BLECHTECHNIK
+// NW 50: 700808 "SPVS-HA-HPT, IKZ: Druckschalter Leckageüberwachung 0-Sig
+// NW 51: ----- IKZ-Durchfluss überwachen --------------------------------
+// NW 52: Merker Kühlmittel unterdrücken
+// NW 53: IKZ-Durchfluss ist OK
+// NW 54: "Gelbe Taste" für Simulation "Durchfluss vorhanden"
+// NW 55: CALL "FC_IKZ_UEBERWACHUNG"
+// NW 56: 702301 "WAR, Filter fuer Kuehlmittel-Feinbereich wechseln"
+// NW 57: 702456 "MEL, Kühlmittelanlage: Wartung erforderlich!"
+// NW 58: 510110 "SPVS-HA-HPT, Kühlmittel: Freigabe Druckstufenumschaltung
+// NW 59: 510110 "SPVS-HA-HPT, Kühlmittel: Freigabe Druckstufenumschaltung
+      U     "I_DM_Ta_KMTL"; 
+      FP    "M_FP_KMTL_Taste"; 
+      =     "M_KMTL_Taste"; 
+NETWORK
+TITLE =Taste innere Kühlmittelzufuhr (IKZ)
+
+      U     "I_DM_Ta_IKZ"; 
+      FP    "M_FP_IKZ_Taste"; 
+      =     "M_IKZ_Taste"; 
+NETWORK
+TITLE =Kühlmittelanlage angewählt
+
+      L     "DB_PLC_MD_DB20".UDInt._019_ANWAHL_KMTL_ANLAGE; 
+      L     0; 
+      <>I   ; 
+      =     "M_KM_Anlage_angewaehlt"; 
+NETWORK
+TITLE =Reset der gespeicherten M-Funktionen M7/M8/M9
+
+      U     "M_Reset_Taste"; 
+      R     "DB_NC_PLC".KMTL_M7; 
+      R     "DB_NC_PLC".KMTL_M8; 
+      R     "DB_NC_PLC".KMTL_M9; 
+NETWORK
+TITLE =Pumpen eingeschaltet
+
+      O     "O_KM_M7_Ein"; 
+      O     "O_KM_Spuelpumpe_ein"; 
+      O     "O_KM_Pumpe_Dach"; 
+      O     "O_KM_M8_Ein"; 
+      =     #t_pumpen_ein; 
+NETWORK
+TITLE =Auswertung der M-Funktionen bei Satzsuchlauf
+//
+//
+      U     "DB_SIEM_KANAL_1".E_ActBlock; 
+      FP    "M_TR_Start_Suchlauf"; 
+      SPBN  BS1; 
+      L     0; 
+      T     DB70.DBB   85; 
+      T     DB70.DBB   86; 
+
+BS1:  U     "DB_SIEM_KANAL_1".E_ActBlock; 
+      SPBN  NOBS; 
+
+      U     "DB_DM_M_FUNKTION".MX_M[7]; 
+      S     "DB_NC_PLC".KMTL_M7; 
+      R     "DB_DM_M_FUNKTION".MX_M[7]; 
+
+      U     "DB_DM_M_FUNKTION".MX_M[8]; 
+      S     "DB_NC_PLC".KMTL_M8; 
+      R     "DB_DM_M_FUNKTION".MX_M[8]; 
+
+      U     "DB_DM_M_FUNKTION".MX_M[9]; 
+      S     "DB_NC_PLC".KMTL_M9; 
+      R     "DB_DM_M_FUNKTION".MX_M[9]; 
+
+      U     "DB_DM_M_FUNKTION".MX_M[72]; 
+      S     "DB_NC_PLC".KMTL_M72; 
+      R     "DB_DM_M_FUNKTION".MX_M[72]; 
+
+      U     "DB_DM_M_FUNKTION".MX_M[73]; 
+      S     "DB_NC_PLC".KMTL_M73; 
+      R     "DB_DM_M_FUNKTION".MX_M[73]; 
+
+      U     "DB_DM_M_FUNKTION".MX_M[96]; 
+      S     "DB_NC_PLC".KMTL_M96; 
+      R     "DB_DM_M_FUNKTION".MX_M[96]; 
+
+      U     "DB_DM_M_FUNKTION".MX_M[97]; 
+      S     "DB_NC_PLC".KMTL_M97; 
+      R     "DB_DM_M_FUNKTION".MX_M[97]; 
+
+      U     "DB_DM_M_FUNKTION".MX_M[98]; 
+      S     "DB_NC_PLC".KMTL_M98; 
+      R     "DB_DM_M_FUNKTION".MX_M[98]; 
+
+      U     "DB_DM_M_FUNKTION".MX_M[34]; 
+      S     "DB_NC_PLC".KMTL_M34; 
+      R     "DB_DM_M_FUNKTION".MX_M[34]; 
+
+      U     "DB_DM_M_FUNKTION".MX_M[35]; 
+      S     "DB_NC_PLC".KMTL_M35; 
+      R     "DB_DM_M_FUNKTION".MX_M[35]; 
+
+      U     "DB_DM_M_FUNKTION".MX_M[391]; 
+      S     "DB_NC_PLC".KMTL_M391; 
+      R     "DB_DM_M_FUNKTION".MX_M[391]; 
+
+      U     "DB_DM_M_FUNKTION".MX_M[392]; 
+      S     "DB_NC_PLC".KMTL_M392; 
+      R     "DB_DM_M_FUNKTION".MX_M[392]; 
+
+NETWORK
+TITLE =Auswertung der H-Funktionen bei Satzsuchlauf
+
+      U     "DB_H_FUNKTION".HX_M[67]; 
+      SPBN  k67; 
+      L     "DB_H_FUNKTION".HX_Real_Wert[67]; 
+      T     DB70.DBB   82; 
+
+
+k67:  L     "DB_PLC_MD_DB20".UDInt._045_ANWAHL_DRUCKSTUFEN; 
+      L     1000; 
+      >I    ; 
+      O(    ; 
+      U(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._045_ANWAHL_DRUCKSTUFEN; 
+      L     0; 
+      ==I   ; 
+      )     ; 
+      U(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._053_IO_SONDER; 
+      L     1; 
+      ==I   ; 
+      )     ; 
+      )     ; 
+      SPB   adrs; 
+
+      U     "DB_H_FUNKTION".HX_M[7]; 
+      SPBN  NOBS; 
+      L     "DB_H_FUNKTION".HX_Real_Wert[7]; 
+      TRUNC ; 
+      L     1.000000e+000; 
+      ==R   ; 
+      S     "DB_NC_PLC".KMTL_DS1; 
+      TAK   ; 
+      L     2.000000e+000; 
+      ==R   ; 
+      S     "DB_NC_PLC".KMTL_DS2; 
+      SPA   NOBS; 
+
+adrs: U     "DB_H_FUNKTION".HX_M[7]; 
+      SPBN  NOBS; 
+      L     "DB_H_FUNKTION".HX_Real_Wert[7]; 
+      T     DB70.DBB   84; 
+
+
+
+
+
+NOBS: NOP   0; 
+
+
+
+NETWORK
+TITLE =M7 / M8 ausschalten durch Taste
+
+      U     "M_IKZ_Taste"; 
+      U     "M_M7_Act"; 
+      R     "M_M7_Act"; 
+      SPB   M001; 
+
+      U     "M_KMTL_Taste"; 
+      U     "M_M8_Act"; 
+      R     "M_M8_Act"; 
+      SPB   M001; 
+NETWORK
+TITLE =Auswertung der M-Funktionen M7 aktiv
+
+      U(    ; 
+      U     "DB_DM_M_FUNKTION".MX_M[7]; 
+      O     "M_M7_aktivieren_Wiko"; 
+      UN    "DB_SIEM_KANAL_1".E_ActBlock; 
+      O     ; 
+      U     "M_IKZ_Taste"; 
+      UN    "M_M7_Act"; 
+      )     ; 
+      UN    "M_3Te_Betriebsart"; 
+      UN    "M_4Te_Betriebsart"; 
+      UN    "M_Einrichtbetrieb"; 
+      U(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._021_ANWAHL_IKUEZ; 
+      L     1; 
+      >=I   ; 
+      )     ; 
+      S     "M_M7_Act"; 
+NETWORK
+TITLE =Meldung: IKZ M7 nicht erlaubt in dieser Betriebsart
+
+      U     "M_Ruecksetze_Fehler"; 
+      R     "DB_FEHLERMELDUNG".Meldung._702024_M7_SonderBA; 
+      U(    ; 
+      O     "DB_DM_M_FUNKTION".MX_M[7]; 
+      O     ; 
+      U     "M_IKZ_Taste"; 
+      UN    "M_M7_Act"; 
+      )     ; 
+      U(    ; 
+      O     "M_3Te_Betriebsart"; 
+      O     "M_4Te_Betriebsart"; 
+      O     "M_Einrichtbetrieb"; 
+      )     ; 
+      S     "DB_FEHLERMELDUNG".Meldung._702024_M7_SonderBA; 
+      NOP   0; 
+NETWORK
+TITLE =Meldung: IKZ M7 mit diesem Werkzeug gesperrt
+
+      U     "M_Ruecksetze_Fehler"; 
+      R     "DB_FEHLERMELDUNG".Meldung._702034_M7_gesperrt_WZ; 
+      U(    ; 
+      O     "DB_DM_M_FUNKTION".MX_M[7]; 
+      O     ; 
+      U     "M_IKZ_Taste"; 
+      UN    "M_M7_Act"; 
+      O     "M_M7_WZ_Tab"; 
+      )     ; 
+      U     "DB_FAMILIEN_MODUL".A_inneres_Wasser_Aus; 
+      S     "DB_FEHLERMELDUNG".Meldung._702034_M7_gesperrt_WZ; 
+      NOP   0; 
+NETWORK
+TITLE =Meldung: Vorschubfreigabe von innerer Kühlmittelzufuhr(IKZ)fehlt
+
+      U(    ; 
+      U     "M_M7_Act"; 
+      UN    "MX_IKZ_Freigabe_Vorschub"; 
+      O     "MX_IKZ_OVR_0"; 
+      )     ; 
+      L     S5T#2S; 
+      SE    "TE_IKZ_OVERRIDE_0"; 
+      NOP   0; 
+      NOP   0; 
+      NOP   0; 
+      U     "TE_IKZ_OVERRIDE_0"; 
+      =     "DB_FEHLERMELDUNG".MELDUNG5._510224_IKZ_OVERRIDE_0; 
+NETWORK
+TITLE =Auswertung der M-Funktionen M8 aktiv
+
+      U     "DB_DM_M_FUNKTION".MX_M[8]; 
+      UN    "DB_SIEM_KANAL_1".E_ActBlock; 
+      O     ; 
+      U     "M_KMTL_Taste"; 
+      UN    "M_M8_Act"; 
+      S     "M_M8_Act"; 
+NETWORK
+TITLE =Kühlmittel LED
+
+M001: O     "M_M8_Act"; 
+      O     "M_M8_WZ_Tab"; 
+      =     "DM_LED Kühlmittel"; 
+NETWORK
+TITLE =IKZ LED
+
+      O     "M_M7_Act"; 
+      O     "M_M7_WZ_Tab"; 
+      =     "DM_LED IKZ_ein_aus"; 
+NETWORK
+TITLE =Reset der M-Funktion M7
+
+      O     "DB_DM_M_FUNKTION".MX_M[391]; 
+      O     "M_Reset_Taste"; 
+      O     "DB_FAMILIEN_MODUL".A_Wasser_Abschalten; 
+      O     "M_Hauptprogramm_Ende"; 
+      R     "M_M7_Act"; 
+NETWORK
+TITLE =Clear "DB_DM_M_FUNKTION".MX_M[391]
+
+      U     "DB_DM_M_FUNKTION".MX_M[391]; 
+      R     "DB_DM_M_FUNKTION".MX_M[391]; 
+NETWORK
+TITLE =Wechsel in BA2, BA3 oder BA4 löscht Merker M_M8_Act
+//Merker M_M8_Act wird beim wechsel in Betriebsarten mit offener Kabine 
+//abgelöscht 
+//--> sonst schwimmt der Werker bei der Anwahl nach öffnen der Türe
+      U(    ; 
+      O     "M_3Te_Betriebsart"; 
+      O     "M_4Te_Betriebsart"; 
+      O     "M_Einrichtbetrieb"; 
+      )     ; 
+      FP    "M_FP_BA_Wechsel_M8_deakt"; 
+      =     #t_BA_Wechsel_M8; 
+NETWORK
+TITLE =Reset der M-Funktion M8
+
+      U     "M_FP_BA_Wechsel_M8_deakt"; 
+      U     "DB_PLC_MD_DB20".UDHex._54_Bit1_KMTL_M8_BA4; 
+      O     "DB_DM_M_FUNKTION".MX_M[392]; 
+      O     "M_Reset_Taste"; 
+      O     "DB_FAMILIEN_MODUL".A_Wasser_Abschalten; 
+      O     "M_Hauptprogramm_Ende"; 
+      O     #t_BA_Wechsel_M8; 
+      O     "M_M8_Sperre_Wiko"; 
+      R     "M_M8_Act"; 
+NETWORK
+TITLE =MEL, M8 nicht erlaubt in dieser Betriebsart
+
+      U     "M_Reset_Taste"; 
+      R     "DB_FEHLERMELDUNG".MELDUNG2._701257_M8_SonderBA; 
+      U(    ; 
+      O     "DB_DM_M_FUNKTION".MX_M[8]; 
+      O     ; 
+      U     "M_KMTL_Taste"; 
+      UN    "M_M8_Act"; 
+      )     ; 
+      U     "M_FP_BA_Wechsel_M8_deakt"; 
+      U     "DB_PLC_MD_DB20".UDHex._54_Bit1_KMTL_M8_BA4; 
+      S     "DB_FEHLERMELDUNG".MELDUNG2._701257_M8_SonderBA; 
+      NOP   0; 
+
+
+NETWORK
+TITLE =Clear "DB_DM_M_FUNKTION".MX_M[392]
+
+      U     "DB_DM_M_FUNKTION".MX_M[392]; 
+      R     "DB_DM_M_FUNKTION".MX_M[392]; 
+NETWORK
+TITLE =Umschaltung Wasser / Luft
+
+      O     "M_Reset_Taste"; 
+      O     "DB_FAMILIEN_MODUL".A_Wasser_Abschalten; 
+      O     "M_Hauptprogramm_Ende"; 
+      R     "DB_DM_M_FUNKTION".MX_M[9]; 
+      R     "DB_DM_M_FUNKTION".MX_M[72]; 
+      R     "DB_DM_M_FUNKTION".MX_M[73]; 
+      R     "M_Umschalt_KMTL"; 
+
+
+      U     "DB_DM_M_FUNKTION".MX_M[7]; 
+      R     "DB_DM_M_FUNKTION".MX_M[7]; 
+
+      U     "DB_DM_M_FUNKTION".MX_M[8]; 
+
+      R     "DB_DM_M_FUNKTION".MX_M[8]; 
+
+      U     "DB_DM_M_FUNKTION".MX_M[72]; 
+      O(    ; 
+      U     "M_WZ_Liste_Luftumsch."; //WZ-spezifische M-Fkt. Wasser-Luftumscchaltung
+      FP    "M_FP_KMTL_UM"; 
+      )     ; 
+      R     "DB_DM_M_FUNKTION".MX_M[72]; 
+      S     "M_Umschalt_KMTL"; 
+
+      U     "DB_DM_M_FUNKTION".MX_M[73]; 
+      R     "DB_DM_M_FUNKTION".MX_M[73]; 
+      R     "M_Umschalt_KMTL"; 
+      R     "M_WZ_Liste_Luftumsch."; //WZ-spezifische M-Fkt. Wasser-Luftumscchaltung
+
+      U     "DB_DM_M_FUNKTION".MX_M[13]; 
+      O     "M_Reset_Taste"; 
+      O     "M_Hauptprogramm_Ende"; 
+      O     "DB_FAMILIEN_MODUL".A_Wasser_Abschalten; 
+      R     "M_Umschalt_KMTL"; 
+
+
+NETWORK
+TITLE =M-AUSGANG: Pumpe Kühlmittel 2 'Ein' (M7)
+
+      U(    ; 
+      U     "M_M7_Act"; 
+      O     "M_M7_WZ_Tab"; 
+      U     "M_MA_Maschine_Ein"; 
+      U     "I_AL_NEG_SPI_VS_Halt"; 
+      UN    "M_OEM_IKZ_GESP"; 
+      UN    "M_Fehler_Kmtl_Anlage"; 
+      UN    "O_WZ_MIN_SCH_MV1"; 
+      UN    "M_Spindel_Halt_Kanal"; 
+      U     "M_Spritz_Tuer_Zu"; 
+      UN    "DB_FAMILIEN_MODUL".A_Wasser_Aus; 
+      U     "I_AL_Kabine_Verriegelt"; 
+      U(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._162_IKUEZ_KONFIGURATION; 
+      L     0; 
+      ==I   ; 
+      ON    "M_Hauptspindel_steht"; 
+      )     ; 
+      O(    ; 
+      U     "M_PW_Pumpe_Tischspuel"; 
+      U     "M_KM_Anlage_angewaehlt"; 
+      U     "M_MA_Maschine_Ein"; 
+      UN    "M_Fehler_Kmtl_Anlage"; 
+      U     "M_Spritz_Tuer_Zu"; 
+      )     ; 
+      )     ; 
+      UN    "DB_FEHLERMELDUNG".VS_SpiVerz_Halt._700319_IKZ_Anlauf; 
+      UN    "DB_FEHLERMELDUNG".VS_SpiVerz_Halt._700320_IKZ_G1; 
+      =     "O_KM_M7_Ein"; 
+NETWORK
+TITLE =M-AUSGANG: M7 Luftkuehlung
+
+      U     "O_KM_M7_Ein"; 
+      UN    "M_OEM_IKZ_GESP"; 
+      U     "M_Umschalt_KMTL"; 
+      U(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._020_ANWAHL_KMTL_LUFT; 
+      L     1; 
+      >I    ; 
+      )     ; 
+      UN    "M_MinMg_Schmier_Aktiv"; 
+      =     "O_M7_Luftkuehlung"; 
+      R     "O_KM_M7_Ein"; 
+NETWORK
+TITLE =M-AUSGANG: Pumpe Kühlmittel 1 'Ein' (M8)
+
+      U     "M_M8_Act"; 
+      O     "M_M8_WZ_Tab"; 
+      U     "M_MA_Maschine_Ein"; 
+      U     "I_AL_NEG_SPI_VS_Halt"; 
+      UN    "M_Fehler_Kmtl_Anlage"; 
+      UN    "M_Spindel_Halt_Kanal"; 
+      UN    "O_WZ_MIN_SCH_MV1"; 
+      UN    "DB_FAMILIEN_MODUL".A_Wasser_Aus; 
+      U(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._161_KMTL_KONFIGURATION; 
+      L     0; 
+      ==I   ; 
+      ON    "M_Hauptspindel_steht"; 
+      )     ; 
+      U(    ; // Tuere zu oder Sonder-BA
+      U     "M_Spritz_Tuer_Zu"; 
+      O     "M_3Te_Betriebsart"; 
+      O     "M_4Te_Betriebsart"; 
+      O     "M_Einrichtbetrieb"; 
+      )     ; 
+      =     "O_KM_M8_Ein"; 
+
+      U     "O_KM_M8_Ein"; 
+      U     "M_Umschalt_KMTL"; 
+      U(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._020_ANWAHL_KMTL_LUFT; 
+      L     1; 
+      >=I   ; 
+      )     ; 
+      =     "O_AL_Blasluft_M25"; 
+      R     "O_KM_M8_Ein"; 
+      U     "M_MinMg_Schmier_Aktiv"; 
+      R     "O_AL_Blasluft_M25"; 
+      R     "O_KM_M8_Ein"; 
+NETWORK
+TITLE =----- IKZ DRUCKSTUFEN -------------------------
+// Druckstufen/Rückmeldung M7
+      SET   ; 
+      R     "DB_H_FUNKTION".HX_QuitPflicht[7]; 
+
+      L     "DB_PLC_MD_DB20".UDInt._045_ANWAHL_DRUCKSTUFEN; // Analoge Druckstufen mit Prop-Ventil(en)
+      L     1000; 
+      >=I   ; 
+      SPB   ANA; 
+
+      L     "DB_PLC_MD_DB20".UDInt._045_ANWAHL_DRUCKSTUFEN; 
+      L     1; 
+      >=I   ; 
+      SPB   DS1; 
+      SET   ; 
+      U     "DB_H_FUNKTION".HX_M[7]; 
+      R     "DB_H_FUNKTION".HX_M[7]; 
+
+DS1:  NOP   0; 
+      O     "M_Reset_Taste"; 
+      O     "M_Reset_Druckstufen"; // "M_Reset_Druckstufen"
+      O     "M_8_ter_OB1_Zyklen"; 
+      SPBN  DS2; 
+      SET   ; 
+      R     "M_Reset_Druckstufen"; 
+      S     "MX_DS1_AKtiv"; 
+      R     "MX_DS2_Aktiv"; 
+      R     "MX_DS3_Aktiv"; 
+      R     "MX_DS4_Aktiv"; 
+      R     "MX_DS5_Aktiv"; 
+      R     "MX_DS6_Aktiv"; 
+      R     "Mx_DX7_aktiv"; 
+      S     "MX_IKZ_Freigabe_Vorschub"; 
+      S     "Mx_Freigabe_DS"; 
+      R     "DB_H_FUNKTION".HX_M[7]; 
+
+DS2:  U     "DB_H_FUNKTION".HX_IM[7]; 
+      FP    "M_FP_H30"; //"M_FP_H30"
+      SPBN  DS3; 
+      U     "O_KM_M7_Ein"; 
+      O     "O_KM_DRUCK2_M7_EIN"; 
+      SPBN  DS4; 
+      R     "Mx_Freigabe_DS"; 
+      CLR   ; 
+      SV    "T_druckstufe"; 
+      SET   ; 
+      L     S5T#2S; 
+      SV    "T_druckstufe"; 
+
+DS4:  SET   ; 
+      R     "MX_DS1_AKtiv"; 
+      R     "MX_DS2_Aktiv"; 
+      R     "MX_DS3_Aktiv"; 
+      R     "MX_DS4_Aktiv"; 
+      R     "MX_DS5_Aktiv"; 
+      R     "MX_DS6_Aktiv"; 
+      R     "Mx_DX7_aktiv"; 
+
+      L     "DB_PLC_MD_DB20".UDInt._045_ANWAHL_DRUCKSTUFEN; 
+      ITD   ; 
+      DTR   ; 
+      L     "DB_H_FUNKTION".HX_Real_Wert[7]; 
+      <R    ; 
+      SPB   DS5; 
+
+      L     "DB_H_FUNKTION".HX_Real_Wert[7]; 
+      L     1.000000e+000; 
+      <R    ; 
+
+      SPBN  DS3; 
+DS5:  SET   ; 
+      U     "DB_H_FUNKTION".HX_M[7]; 
+      R     "DB_H_FUNKTION".HX_M[7]; 
+      SET   ; // Ungültige Anwahl => Stufe 1
+      S     "MX_DS1_AKtiv"; 
+
+DS3:  UN    "T_druckstufe"; 
+      S     "Mx_Freigabe_DS"; 
+
+      L     "DB_PLC_MD_DB20".UDInt._045_ANWAHL_DRUCKSTUFEN; // Analog (noch nicht realisiert)
+      L     0; 
+      ==I   ; 
+      SPB   DEND; 
+
+      CALL "FC_IKZ_DRUCKSTUFEN" (
+           EX_Anwahl_MD_RueckMeld   := "DB_PLC_MD_DB20".UDHex._12_BIT0_DS1_RUECKMELD,
+           EX_Anwahl_Ueberwachung   := "DB_PLC_MD_DB20".UDHex._13_BIT0_DS1_FREIGABE,
+           EI_Druckstufe            := 1,
+           EX_Eingang_Freigabe      := "I_KM_DRUCK1_M7_ENABLE",
+           EX_Eingang_Rueckmeldung  := "I_KM_DRUCK1_M7_EIN",
+           EAX_Anforderung          := "DB_H_FUNKTION".HX_M[7],
+           EAX_Druckstufe_Aktiv     := "MX_DS1_AKtiv",
+           EAX_Fehler_Freigabe      := "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700910_FRG_DS1_0_Sig,
+           EAX_Fehler_Rueckm_0      := "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700911_RM_DS1_0_Sig,
+           EAB_Zaehler_Ueberw       := "MB_KMTL_DS1_Zahler");
+
+// Druckstufen 2-
+
+      U     "m_UiSpi"; 
+      =     "MX_Freigabe_KM_30Bar"; 
+      U(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._045_ANWAHL_DRUCKSTUFEN; // Analog (noch nicht realisiert)
+      L     1000; 
+      >=I   ; 
+      )     ; 
+      O     "m_UiSpi"; 
+      SPB   DEND; 
+
+      CALL "FC_IKZ_DRUCKSTUFEN" (
+           EX_Anwahl_MD_RueckMeld   := "DB_PLC_MD_DB20".UDHex._12_BIT1_DS2_RUECKMELD,
+           EX_Anwahl_Ueberwachung   := "DB_PLC_MD_DB20".UDHex._13_BIT1_DS2_FREIGABE,
+           EI_Druckstufe            := 2,
+           EX_Eingang_Freigabe      := "I_KM_DRUCK2_M7_ENABLE",//FALSE   //"I_KM_DRUCK0_M7_EIN"
+           EX_Eingang_Rueckmeldung  := "I_KM_DRUCK2_M7_EIN",
+           EAX_Anforderung          := "DB_H_FUNKTION".HX_M[7],
+           EAX_Druckstufe_Aktiv     := "MX_DS2_Aktiv",
+           EAX_Fehler_Freigabe      := "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700912_FRG_DS2_0_Sig,
+           EAX_Fehler_Rueckm_0      := "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700913_RM_DS2_0_Sig,
+           EAB_Zaehler_Ueberw       := "MB_KMTL_DS2_Zahler");
+
+
+      SPA   DEND; 
+
+// analoge Druckstufenumschaltung
+
+ANA:  NOP   0; 
+
+      CALL "FC_IKZ_ANALOG_DRUCK" ;
+
+      L     "DB_PLC_MD_DB20".UDInt._045_ANWAHL_DRUCKSTUFEN; // Analoge Druckstufe 0-80 Bar  mit einem Prop-Ventil 
+      L     3000; 
+      >=I   ; 
+      SPB   GTRE; 
+
+      U(    ; // Analoge Druckstufen mit zwei Prop-Ventilen
+      L     "DB_PLC_MD_DB20".UDInt._045_ANWAHL_DRUCKSTUFEN; 
+      L     2000; 
+      >I    ; 
+      U(    ; 
+      L     "DB_REMANENT".M7_analogDruckvorgabe; 
+      L     40; // 80
+      >I    ; 
+      )     ; 
+      )     ; 
+      SPB   ZteD; 
+
+      L     "DB_REMANENT".M7_analogDruckvorgabe; // Ein Prop-Ventil Druck kleiner/gleich 80
+      T     #t_Druckvorgabe1; // Zwei Prop-Ventile Druck kleiner/gleich 40
+
+      L     0; 
+      T     #t_Druckvorgabe2; 
+
+      SET   ; 
+      S     "MX_DS1_AKtiv"; 
+      R     "MX_DS2_Aktiv"; 
+
+      SET   ; 
+      S     "MX_IKZ_Freigabe_Vorschub"; 
+
+      CALL "FB_Norm_AnalogA" , "DI_FB_Norm_AnalogA" (
+           Untergrenze              := 0,
+           Obergrenze               := "DB_PLC_MD_DB20".UDInt._105_MAX_DRUCK_GREIF,//120
+           Max_Analogwert           := 2.764800e+004,
+           Normierter_Wert          := #t_Druckvorgabe1,
+           Analogwert               := "O_KM_PROP_VENTIL1");
+
+      SPA   DEND; 
+
+ZteD: L     "DB_REMANENT".M7_analogDruckvorgabe; // Zwei Prop-Ventile Druck größer 40 kleiner/gleich 80
+      T     #t_Druckvorgabe2; 
+      L     0; 
+      T     #t_Druckvorgabe1; 
+
+      SET   ; 
+      S     "MX_DS2_Aktiv"; 
+      R     "MX_DS1_AKtiv"; 
+
+      SET   ; 
+      S     "MX_IKZ_Freigabe_Vorschub"; 
+
+      CALL "FB_Norm_AnalogA" , "DI_FB_Norm_AnalogA" (
+           Untergrenze              := 0,
+           Obergrenze               := "DB_PLC_MD_DB20".UDInt._106_MAX_DRUCK_PINOLE,//120
+           Max_Analogwert           := 2.764800e+004,
+           Normierter_Wert          := #t_Druckvorgabe2,
+           Analogwert               := "O_KM_PROP_VENTIL2");
+
+      U     "m_UiSpi"; 
+      =     "MX_Freigabe_KM_30Bar"; 
+
+      SPA   DEND; 
+
+GTRE: U     "M_Ruecksetze_Fehler"; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt._700211_IKZ_H7; 
+
+      U     "m_UiSpi"; 
+      U(    ; 
+      L     "DB_H_FUNKTION".HX_Real_Wert[7]; 
+      L     3.000000e+001; 
+      >R    ; 
+      )     ; 
+      =     "MX_Freigabe_KM_30Bar"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt._700211_IKZ_H7; 
+
+      U     "MX_Freigabe_KM_30Bar"; 
+      L     0.000000e+000; 
+      T     "DB_H_FUNKTION".HX_Real_Wert[7]; 
+      SPB   DEND; 
+
+      L     "DB_REMANENT".M7_analogDruckvorgabe; // Prop-Ventil 0-80 Bar
+      T     #t_Druckvorgabe2; 
+      L     0; 
+      T     #t_Druckvorgabe1; 
+
+      SET   ; 
+      S     "MX_DS2_Aktiv"; 
+      R     "MX_DS1_AKtiv"; 
+
+      SET   ; 
+      S     "MX_IKZ_Freigabe_Vorschub"; 
+      S     "MX_FREIG_ANAL_80BAR"; 
+
+      CALL "FB_Norm_AnalogA" , "DI_FB_Norm_AnalogA" (
+           Untergrenze              := 0,
+           Obergrenze               := "DB_PLC_MD_DB20".UDInt._106_MAX_DRUCK_PINOLE,//120
+           Max_Analogwert           := 2.764800e+004,
+           Normierter_Wert          := #t_Druckvorgabe2,
+           Analogwert               := "O_KM_PROP_VENTIL1");
+
+DEND: NOP   0; 
+
+      L     "DB_PLC_MD_DB20".UDInt._019_ANWAHL_KMTL_ANLAGE; // KSA Knoll VRF250   programmiert von KNOLL
+      L     7; 
+      ==I   ; 
+      O(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._019_ANWAHL_KMTL_ANLAGE; // SOKO KSA rogrammiert von Petz Andi
+      L     8; 
+      ==I   ; 
+      )     ; 
+      =     #tx_KMTL_Knoll_SOKO; 
+      SPBN  _IKV; 
+
+
+      U     "O_KM_M7_Ein"; 
+      U     #tx_KMTL_Knoll_SOKO; 
+      U     "DB_KMTL_KNOLL".I_KUEHLMITTEL_2_OK; 
+      ON    #tx_KMTL_Knoll_SOKO; 
+      ON    "O_KM_M7_Ein"; 
+      =     "MX_IKZ_Freigabe_Vorschub"; 
+
+_IKV: U     "O_KM_M7_Ein"; 
+
+
+      UN    "DB_REMANENT".IKZ_Leckage_vorhanden; 
+      UN    "M_MinMg_Schmier_Aktiv"; 
+      UN    "O_M7_Luftkuehlung"; 
+      =     "MX_IKZ_Pumpen_Ein"; 
+
+
+      U     "MX_IKZ_Pumpen_Ein"; 
+      U     "MX_DS1_AKtiv"; 
+      UN    "MX_DS2_Aktiv"; 
+      O     ; 
+      U     "MX_IKZ_Pumpen_Ein"; 
+      U     "M_PW_Aktiv"; 
+      =     "O_KM_DRUCK1_M7_EIN"; 
+
+
+      L     "DB_PLC_MD_DB20".UDInt._045_ANWAHL_DRUCKSTUFEN; 
+      L     0; 
+      ==I   ; 
+      U     "DB_PLC_MD_DB20".UDHex._12_BIT0_DS1_RUECKMELD; 
+      SPBN  kdr; 
+
+// sja, 
+// wenn keine Druckstufe, aber trotzdem Rückmeldung von M7 dann wird 
+// 14512[12] Bit 0 als aktivierung genommen 
+
+      U     "O_KM_DRUCK1_M7_EIN"; 
+      U     "DB_PLC_MD_DB20".UDHex._12_BIT0_DS1_RUECKMELD; 
+      U     "I_KM_DRUCK0_M7_EIN"; 
+      ON    "O_KM_DRUCK1_M7_EIN"; 
+      ON    "DB_PLC_MD_DB20".UDHex._12_BIT0_DS1_RUECKMELD; 
+      =     "MX_IKZ_Freigabe_Vorschub"; 
+
+      U     "O_KM_DRUCK1_M7_EIN"; 
+      UN    "I_KM_DRUCK0_M7_EIN"; 
+      U     "DB_PLC_MD_DB20".UDHex._12_BIT0_DS1_RUECKMELD; 
+      L     S5T#6S; 
+      SE    "TE_RCKMLD_Druck0_OK"; 
+
+      U     "M_Ruecksetze_Fehler"; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700911_RM_DS1_0_Sig; 
+      U     "TE_RCKMLD_Druck0_OK"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700911_RM_DS1_0_Sig; 
+
+kdr:  U(    ; 
+      U     "MX_FREIG_ANAL_80BAR"; 
+      ON    "M_PW_Aktiv"; 
+      )     ; 
+      U     "MX_IKZ_Pumpen_Ein"; 
+      UN    "MX_DS1_AKtiv"; 
+      U     "MX_DS2_Aktiv"; 
+      UN    "MX_Freigabe_KM_30Bar"; 
+      =     "O_KM_DRUCK2_M7_EIN"; 
+NETWORK
+TITLE =IKZ war aktiv
+
+      U     "O_KM_M7_Ein"; 
+      S     "MX_IKZ_WZ_war_aktiv"; 
+
+      U     "Mx_X_ACHSE_WZW_POS"; 
+      R     "MX_IKZ_WZ_war_aktiv"; 
+      NOP   0; 
+NETWORK
+TITLE =Ausblasen der IKZ-Leitung
+
+      U(    ; 
+      O     "O_MinSchm_IKZ_ausblasen"; 
+      O     ; 
+      U     "DB_PLC_MD_DB20".UDHex._03_BIT7_IKZ_ausblasen; 
+      U(    ; 
+      O     "M_WZW_Aktiv"; 
+      O     "DB_WW".MFkt_06; 
+      )     ; 
+      U     "MX_IKZ_WZ_war_aktiv"; 
+      UN    "DB_NC_PLC".MANWZW_NC_Aktiv; 
+      O     ; 
+      U     "M_NC_Konus_ausblasen"; 
+      U     "I_AL_Kabine_zu"; 
+      U     "I_AL_Kabine_Verriegelt"; 
+      )     ; 
+      UN    "M_Einrichtbetrieb"; 
+      UN    "M_3Te_Betriebsart"; 
+      UN    "M_4Te_Betriebsart"; 
+      =     "O_AusBlasen_IKZ"; 
+NETWORK
+TITLE =Auswertung Werkstueckspülung / Spänespülung ausschalten
+
+      U     "M_PW_Aktiv"; 
+      FP    "M_FP_PW_AKTIV"; //Beim starten des PW laufende Dachspülung ausschalten sth 25.03.05
+      O     "M_Reset_Taste"; 
+      O     "DB_FAMILIEN_MODUL".A_Wasser_Abschalten; 
+      O     "DB_DM_M_FUNKTION".MX_M[160]; 
+      O     "M_Hauptprogramm_Ende"; 
+      R     "M_M161_aktiviert"; 
+      R     "M_M162_aktiviert"; 
+      R     "DB_DM_M_FUNKTION".MX_M[161]; 
+      R     "DB_DM_M_FUNKTION".MX_M[162]; 
+      R     "DB_DM_M_FUNKTION".MX_M[160]; 
+NETWORK
+TITLE =Auswertung Werkstueckspülung / Spänespülung einschalten
+//  
+//
+// 1. -- bei gegenseitiger Verriegelung Werkstueckspülung / Spänespülung
+      L     "DB_PLC_MD_DB20".UDInt._159_KMTL_VERRIEGELUNG; 
+
+      L     1; 
+      ==I   ; 
+      SPBN  M005; 
+      U     "DB_DM_M_FUNKTION".MX_M[161]; 
+      S     "M_M161_aktiviert"; 
+      R     "M_M162_aktiviert"; 
+      R     "DB_DM_M_FUNKTION".MX_M[161]; 
+
+      U     "DB_DM_M_FUNKTION".MX_M[162]; 
+      S     "M_M162_aktiviert"; 
+      R     "M_M161_aktiviert"; 
+      R     "DB_DM_M_FUNKTION".MX_M[162]; 
+      SPA   M004; 
+
+// 2. -- ohne gegenseitige Verriegelung Werkstueckspülung / Spänespülung
+M005: U     "DB_DM_M_FUNKTION".MX_M[161]; 
+      S     "M_M161_aktiviert"; 
+      R     "DB_DM_M_FUNKTION".MX_M[161]; 
+
+      U     "DB_DM_M_FUNKTION".MX_M[162]; 
+      S     "M_M162_aktiviert"; 
+      R     "DB_DM_M_FUNKTION".MX_M[162]; 
+NETWORK
+TITLE =M-AUSGANG: Spänespülung
+
+M004: U     "M_M161_aktiviert"; 
+      UN    "M_Vorschub_Halt_Kanal"; 
+      UN    "M_Vorschub_Halt_Haupt"; 
+      U     "M_MA_Maschine_Ein"; 
+      UN    "DB_FAMILIEN_MODUL".A_Wasser_Aus; 
+      U     "I_AL_NEG_SPI_VS_Halt"; 
+      UN    "M_Fehler_Kmtl_Anlage"; 
+      U     "M_Spritz_Tuer_Zu"; 
+      U     "M_KM_Anlage_angewaehlt"; 
+      =     "O_KM_Spuelpumpe_ein"; 
+NETWORK
+TITLE =M-AUSGANG: Werkstückspülung
+
+      U(    ; 
+      U     "M_M162_aktiviert"; 
+      U(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._019_ANWAHL_KMTL_ANLAGE; 
+      L     12; 
+      <>I   ; 
+      )     ; 
+      O     ; 
+      U     "Mx_PW_Werkstückspülung"; 
+      U     "M_PW_Aktiv"; 
+      )     ; 
+      UN    "M_Vorschub_Halt_Kanal"; 
+      UN    "M_Vorschub_Halt_Haupt"; 
+      U     "M_MA_Maschine_Ein"; 
+      U(    ; 
+      ON    "DB_FAMILIEN_MODUL".A_Wasser_Aus; 
+      O     "M_PW_Aktiv"; 
+      )     ; 
+      U     "I_AL_NEG_SPI_VS_Halt"; 
+      UN    "M_Fehler_Kmtl_Anlage"; 
+      U     "M_KM_Anlage_angewaehlt"; 
+      =     "O_KM_Pumpe_Dach"; 
+      =     "O_KM_SPUELUNG_GREIFER"; 
+NETWORK
+TITLE =KSA-Anlage ist aktiv
+
+      U(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._019_ANWAHL_KMTL_ANLAGE; 
+      L     1; 
+      >=I   ; 
+      )     ; 
+      U     "M_MA_Maschine_Ein"; 
+      =     #t_KSA_Anlage_aktiv; 
+NETWORK
+TITLE =PI Rüstplatz Taste Spülung ein
+
+      U     "I_RPL_TASTE_DUSCHE_EIN"; 
+      FP    "HM_PI_T_Spuelung_ein"; 
+      =     "PI_RPT_T_Spuelung_ein"; 
+NETWORK
+TITLE =Max. Laufzeit für Rüstplatz-Dusche abgelaufen
+//[DB700.DBB36]  "DB_CONFIG".Allg.Tmax_Laufzeit_RPL_Dusche
+//               Max. Laufzeit für Rüstplatz-Dusche in [10s] init: 12
+//
+//W#16#3000 = 10s-Einheit
+      U(    ; 
+      U(    ; 
+      U(    ; 
+      O     "O_KM_RP_Dusche_Ventil"; 
+      O     "DB_HR".vonROB.Bef_RP_spuelen; 
+      )     ; 
+      SPBNB _003; 
+      L     "DB_CONFIG".Allg.Tmax_Laufzeit_RPL_Dusche; 
+      ITB   ; 
+      T     #t_Byte; 
+      UN    OV; 
+      SAVE  ; 
+      CLR   ; 
+_003: U     BIE; 
+      )     ; 
+      SPBNB _005; 
+      L     #t_Byte; 
+      L     W#16#3000; 
+      OW    ; 
+      T     #Zeitwert; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+_005: U     BIE; 
+      )     ; 
+      L     #Zeitwert; 
+      SE    "Te_Max_RPL_Dusche"; 
+      NOP   0; 
+      NOP   0; 
+      NOP   0; 
+      U     "Te_Max_RPL_Dusche"; 
+      =     #t_T_Max_RPLDusche; 
+NETWORK
+TITLE =MA G1-36.7 KM-Anlage Rüstplatz-Dusche Ventil Ein
+
+      U     "O_KM_RP_Dusche_Ventil"; 
+      U     "PI_RPT_T_Spuelung_ein"; 
+      ON    "I_PW_Tueren_zu"; 
+      ON    #t_KSA_Anlage_aktiv; 
+      O     "M_PW_Aktiv"; 
+      O     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700735_Fehler_KMTL_Anl; 
+      O     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700718_Ueberl_Kmtl_Anl; 
+      O     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._701002_KMTL_KSA3_SPVH; 
+      O     "DB_FEHLERMELDUNG".SPI_VS_HALT_G0._702233_KM_Vlies_tr_defe; 
+      O     "M_KSA_Sammelfehler"; 
+      O     #t_T_Max_RPLDusche; 
+      R     "O_KM_RP_Dusche_Ventil"; 
+      R     "DB_KMTL_KNOLL".O_KM_RP_Dusche_Ventil; 
+      SPB   SpSp; 
+      U     "PI_RPT_T_Spuelung_ein"; 
+      UN    "O_KM_RP_Dusche_Ventil"; 
+      UN    "M_PW_Aktiv"; 
+      U     #t_KSA_Anlage_aktiv; 
+      U     "I_PW_Tueren_zu"; 
+      S     "O_KM_RP_Dusche_Ventil"; 
+      S     "DB_KMTL_KNOLL".O_KM_RP_Dusche_Ventil; 
+SpSp: NOP   0; 
+NETWORK
+TITLE =MA B2-87.1 KM-Anlage Rüstplatz-Dusche Pumpe Ein
+
+      U(    ; 
+      U     "O_KM_RP_Dusche_Ventil"; 
+      UN    "DB_ROB_IF".STAT.Roboter.Automation_ein; 
+      O     ; 
+      U     "DB_HR".vonROB.Bef_RP_spuelen; 
+      U     "DB_ROB_IF".STAT.Roboter.Automation_ein; 
+      )     ; 
+      U     #t_KSA_Anlage_aktiv; 
+      UN    "M_PW_Aktiv"; 
+      UN    "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700735_Fehler_KMTL_Anl; 
+      UN    "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700718_Ueberl_Kmtl_Anl; 
+      UN    "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._701002_KMTL_KSA3_SPVH; 
+      UN    "DB_FEHLERMELDUNG".SPI_VS_HALT_G0._702233_KM_Vlies_tr_defe; 
+      UN    "M_KSA_Sammelfehler"; 
+      UN    #t_T_Max_RPLDusche; 
+      =     "O_RPL_KM_SPUELUNG_EIN"; 
+NETWORK
+TITLE =MA xx-xx.x KM-Anlage Rüstplatz-Dusche Meldelampe Ein
+
+      U     "O_KM_RP_Dusche_Ventil"; 
+      =     "O_RPL_DUSCHE_EIN"; 
+NETWORK
+TITLE =RESET: Fehlermeldungen  
+
+      U     "M_Ruecksetze_Fehler"; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700715_Grob_Kmtl_Mangel; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700716_Fein_Kmlt_Mangel; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700717_Feinst_Kmtl_Mang; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700718_Ueberl_Kmtl_Anl; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700735_Fehler_KMTL_Anl; 
+      R     "M_Fehler_Kmtl_Anlage"; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700903_KM_Dur_Fein_0S; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700914_Stoer_KMTL; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700904_KM_Filt_Fein_0S; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700905_KM_Ueberlauf; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700908_KM_Papierband; 
+      R     "DB_FEHLERMELDUNG".WARNUNG2._701358_KM_MSchutz_SPP; 
+      R     "DB_FEHLERMELDUNG".WARNUNG2._701356_MSS_Kratzerfoerd; 
+      R     "DB_FEHLERMELDUNG".WARNUNG2._701340_MSS_Schnecken; 
+      R     "DB_FEHLERMELDUNG".WARNUNG2._701338_Vorw_Min_Kmtl; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700834_KM_MSS_0Sig; 
+      R     "DB_FEHLERMELDUNG".WARNUNG3._700428_KSS_TEMP_ZU_HOCH; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._701001_VLIES_SCHALT_DEF; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700931_PNOZ_KMTL_Anlage; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700932_BTB_ALLE_Pumpen; 
+      R     "DB_FEHLERMELDUNG".WARNUNG2._701360_NEG_MSS_KSA; 
+      R     "DB_FEHLERMELDUNG".Einlesesperre._700560_MSS_SF_Kratzfoer; 
+      R     "DB_FEHLERMELDUNG".Einlesesperre._700561_MSS_SF_Schnecken; 
+NETWORK
+TITLE =Fehlermeldungen  bei INTEGER_019>0 (Kühlmittelanlage angewählt)
+
+      L     "DB_PLC_MD_DB20".UDInt._019_ANWAHL_KMTL_ANLAGE; 
+      L     0; 
+      <>I   ; 
+      SPBN  X001; 
+NETWORK
+TITLE =Kühlmittel Temperatur zu hoch
+
+      U     "I_KM_WARN_KSS_TEMP"; 
+      U     "DB_PLC_MD_DB20".UDHex._16_BIT2_KM_Temperierung; 
+      S     "DB_FEHLERMELDUNG".WARNUNG3._700428_KSS_TEMP_ZU_HOCH; 
+NETWORK
+TITLE =Warnung: Motorschutzschalter Kratzförderer
+
+      UN    "I_SF_NEG_MSS"; 
+      U     "M_MA_Maschine_Ein"; 
+      S     "DB_FEHLERMELDUNG".WARNUNG2._701356_MSS_Kratzerfoerd; 
+NETWORK
+TITLE =Einlesesperre: Motorschutzschalter Kratzförderer
+
+      U     "DB_FEHLERMELDUNG".WARNUNG2._701356_MSS_Kratzerfoerd; 
+      U     "DB_PLC_MD_DB20".UDHex._56_Bit2_WAR_plus_EinlSP; 
+      S     "DB_FEHLERMELDUNG".Einlesesperre._700560_MSS_SF_Kratzfoer; 
+NETWORK
+TITLE =Warnung: Motorschutzschalter Späneförderer Schnecke 
+
+      UN    "I_SF_NEG_MSS_Schnecken"; 
+      U     "M_MA_Maschine_Ein"; 
+      S     "DB_FEHLERMELDUNG".WARNUNG2._701340_MSS_Schnecken; 
+
+NETWORK
+TITLE =Einlesesperre: Motorschutzschalter Späneförderer Schnecke 
+
+      U     "DB_FEHLERMELDUNG".WARNUNG2._701340_MSS_Schnecken; 
+      U     "DB_PLC_MD_DB20".UDHex._56_Bit2_WAR_plus_EinlSP; 
+      S     "DB_FEHLERMELDUNG".Einlesesperre._700561_MSS_SF_Schnecken; 
+
+NETWORK
+TITLE =INT_019 = 3: KSA - Konzernkühlmittelanlage
+
+X001: L     "DB_PLC_MD_DB20".UDInt._019_ANWAHL_KMTL_ANLAGE; 
+      L     3; 
+      ==I   ; 
+      SPBN  K006; 
+
+      U     "O_PW_Ventil_Tischspuel"; 
+      UN    "I_D_PW_Tischspuelung"; 
+      =     "DB_FEHLERMELDUNG".WARNUNG2._701412_D_PW_Tischspuel; 
+
+      U     "I_D_KM_TPF_PAPIER_ENDE"; 
+      U     "I_KM_TPF_PAPIER_ENDE"; 
+      O     ; 
+      UN    "I_D_KM_TPF_PAPIER_ENDE"; 
+      UN    "I_KM_TPF_PAPIER_ENDE"; 
+      =     "DB_FEHLERMELDUNG".WARNUNG2._701405_D_KM_TPF_PAP_END; 
+
+      U     "I_KM_TPF_PAPIER_WARN"; 
+      U     "I_D_KM_TPF_PAPIER_WARN"; 
+      O     ; 
+      UN    "I_KM_TPF_PAPIER_WARN"; 
+      UN    "I_D_KM_TPF_PAPIER_WARN"; 
+      =     "DB_FEHLERMELDUNG".WARNUNG2._701407_D_KM_TPF_PAP_WAR; 
+
+      U     "I_D_KM_TPF_MOTOR_EIN"; 
+      U     "I_KM_TPF_MOTOR_EIN"; 
+      O     ; 
+      UN    "I_D_KM_TPF_MOTOR_EIN"; 
+      UN    "I_KM_TPF_MOTOR_EIN"; 
+      L     S5T#300MS; 
+      SE    "Te_Diagnoseschalter"; 
+      U     "Te_Diagnoseschalter"; 
+      =     "DB_FEHLERMELDUNG".WARNUNG2._701408_D_KM_TPF_MOT_EIN; 
+
+      UN    "I_KM_TPF_PAPIER_ENDE"; 
+      U     "I_D_KM_TPF_PAPIER_ENDE"; 
+      UN    "I_KM_TPF_PAPIER_WARN"; 
+      U     "I_D_KM_TPF_PAPIER_WARN"; 
+      U     "I_KM_TPF_MOTOR_EIN"; 
+      UN    "I_D_KM_TPF_MOTOR_EIN"; 
+      L     S5T#10S; 
+      SE    "Te_Papierband_ende"; 
+
+      U     "Te_Papierband_ende"; 
+      =     "O_KM_TPF_MOTOR_EIN"; 
+
+//SPIVH Papier Ende
+      U     "I_KM_TPF_PAPIER_ENDE"; 
+      U(    ; 
+      U     "M_M7_Act"; 
+      O     "M_M8_Act"; 
+      UN    "M_Umschalt_KMTL"; 
+      O     "O_KM_Spuelpumpe_ein"; //"O_KM_Spuelpumpe_ein"
+      O     "O_KM_Pumpe_Dach"; 
+      O     "O_PW_Ventil_Tischspuel"; 
+      O     "O_KM_Spruehpistole_ein"; 
+      )     ; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700908_KM_Papierband; 
+
+//Warnung Papier Ende
+      U     "I_KM_TPF_PAPIER_WARN"; 
+      =     "DB_FEHLERMELDUNG".Warnung._701961_KM_Papierband_En; 
+
+// Überwachung Füllstand
+      L     S5T#30S; 
+      U     "I_KM_NEG_MIN_FUELL"; 
+      UN    "I_KM_NEG_VOR_FUELL"; 
+      UN    "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700716_Fein_Kmlt_Mangel; 
+      SE    "TV_Vorwarnung_KMTL"; 
+
+      U     "TV_Vorwarnung_KMTL"; 
+      =     "DB_FEHLERMELDUNG".WARNUNG2._701338_Vorw_Min_Kmtl; 
+
+      UN    "I_KM_NEG_MIN_FUELL"; 
+      UN    "I_KM_NEG_VOR_FUELL"; 
+      U(    ; 
+      O     "O_KM_M8_Ein"; 
+      O     "O_KM_M7_Ein"; 
+      O     "O_KM_Spuelpumpe_ein"; 
+      O     "O_KM_Pumpe_Dach"; 
+      O     "O_KM_Spruehpistole_ein"; 
+      )     ; 
+      U     "M_MA_Maschine_Ein"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700716_Fein_Kmlt_Mangel; 
+      S     "M_Fehler_Kmtl_Anlage"; 
+
+
+
+//MSS Kühlmittelanlage
+
+      UN    "I_KM_NEG_KSA_MELDUNG"; //e58.1
+      =     "DB_FEHLERMELDUNG".WARNUNG2._701409_NEG_KSA_MELDUNG; 
+
+      U     "I_SF_PUMPE_EIN"; 
+      UN    "I_SF_PUMPE_AUS"; 
+      S     "O_SF_PUMPE_EIN"; 
+
+      O     "I_SF_PUMPE_AUS"; 
+      R     "O_SF_PUMPE_EIN"; 
+
+
+// MSS KMTL_Anlage
+
+      UN    "I_KM_NEG_MSS_SSA"; 
+      S     "M_Fehler_Kmtl_Anlage"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700834_KM_MSS_0Sig; 
+
+//SPIVH Kühlmittelanlage
+
+      U     "M_MA_Maschine_Ein"; 
+      UN    "I_KM_NEG_MSS_KSA"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700914_Stoer_KMTL; 
+
+
+      U     "I_SF_UEBERLAUF"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700735_Fehler_KMTL_Anl; 
+      S     "M_Fehler_Kmtl_Anlage"; 
+// Ueberlauf KMTL Anlage
+
+      L     8192; // Zeitbasis 1s laden
+      L     "DB_PLC_MD_DB20".UDInt._160_KMTL_ABPUMP_ZEIT; // MD in BCD wandeln und mit Zeitbasis
+      ITB   ; // verodern
+      OW    ; 
+
+
+      U     "I_SF_PUMPE_EIN"; 
+      SV    "Te_Kmtl_Ueberlauf"; 
+
+      UN    "Te_Kmtl_Ueberlauf"; 
+      U     "I_SF_PUMPE_EIN"; 
+      O     ; 
+      UN    "I_KM_NEG_MIN_FUELL"; 
+      U     "I_KM_NEG_VOR_FUELL"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700718_Ueberl_Kmtl_Anl; 
+      S     "M_Fehler_Kmtl_Anlage"; 
+
+K006: NOP   0; 
+NETWORK
+TITLE =INT_019 = 2: KSA - Inline (DMC80S)
+
+      L     "DB_PLC_MD_DB20".UDInt._019_ANWAHL_KMTL_ANLAGE; 
+      L     2; 
+      ==I   ; 
+      SPBN  M017; 
+
+      ON    "I_D_SF_NEG_PUMPE_EIN"; 
+      ON    "I_D_SF_NEG_PUMPE_AUS"; 
+      ON    "I_D_SF_NEG_UEBERLAUF"; 
+      S     "M_Fehler_Kmtl_Anlage"; 
+
+      UN    "I_D_SF_NEG_PUMPE_EIN"; 
+      =     "DB_FEHLERMELDUNG".WARNUNG2._701335_D_HebePumpe_Ein; 
+      UN    "I_D_SF_NEG_PUMPE_AUS"; 
+      =     "DB_FEHLERMELDUNG".WARNUNG2._701336_D_HebePumpe_Aus; 
+      UN    "I_D_SF_NEG_UEBERLAUF"; 
+      =     "DB_FEHLERMELDUNG".WARNUNG3._700341_D_SF_NEG_UEBER; 
+
+      U     "I_SF_PUMPE_EIN"; 
+      UN    "I_SF_PUMPE_AUS"; 
+      S     "O_SF_PUMPE_EIN"; 
+
+      O     "I_SF_PUMPE_AUS"; 
+      R     "O_SF_PUMPE_EIN"; 
+
+// Überlauf Überwachung
+
+      L     8192; // Zeitbasis 1s laden
+      L     "DB_PLC_MD_DB20".UDInt._160_KMTL_ABPUMP_ZEIT; // MD in BCD wandeln und mit Zeitbasis
+      ITB   ; // verodern
+      OW    ; 
+
+      U     "I_SF_PUMPE_EIN"; 
+      SV    "Te_Kmtl_Ueberlauf"; 
+
+      UN    "Te_Kmtl_Ueberlauf"; 
+      U     "I_SF_PUMPE_EIN"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700718_Ueberl_Kmtl_Anl; 
+      S     "M_Fehler_Kmtl_Anlage"; 
+
+// MSS KMTL_Anlage
+
+      UN    "I_KM_NEG_MSS_SSA"; 
+      S     "M_Fehler_Kmtl_Anlage"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700834_KM_MSS_0Sig; 
+
+// Papierband
+      U     "I_D_KM_TPF_PAPIER_ENDE"; 
+      U     "I_KM_TPF_PAPIER_ENDE"; 
+      O     ; 
+      UN    "I_D_KM_TPF_PAPIER_ENDE"; 
+      UN    "I_KM_TPF_PAPIER_ENDE"; 
+      =     "DB_FEHLERMELDUNG".WARNUNG2._701405_D_KM_TPF_PAP_END; 
+
+      U     "I_KM_TPF_PAPIER_WARN"; 
+      U     "I_D_KM_TPF_PAPIER_WARN"; 
+      O     ; 
+      UN    "I_KM_TPF_PAPIER_WARN"; 
+      UN    "I_D_KM_TPF_PAPIER_WARN"; 
+      =     "DB_FEHLERMELDUNG".WARNUNG2._701407_D_KM_TPF_PAP_WAR; 
+
+      U     "I_D_KM_TPF_MOTOR_EIN"; 
+      U     "I_KM_TPF_MOTOR_EIN"; 
+      O     ; 
+      UN    "I_D_KM_TPF_MOTOR_EIN"; 
+      UN    "I_KM_TPF_MOTOR_EIN"; 
+      =     "DB_FEHLERMELDUNG".WARNUNG2._701408_D_KM_TPF_MOT_EIN; 
+
+      UN    "I_KM_TPF_PAPIER_ENDE"; 
+      U     "I_D_KM_TPF_PAPIER_ENDE"; 
+      UN    "I_KM_TPF_PAPIER_WARN"; 
+      U     "I_D_KM_TPF_PAPIER_WARN"; 
+      U     "I_KM_TPF_MOTOR_EIN"; 
+      UN    "I_D_KM_TPF_MOTOR_EIN"; 
+      =     "O_KM_TPF_MOTOR_EIN"; 
+
+      U     "I_KM_TPF_PAPIER_ENDE"; 
+      U     "I_KM_TPF_PAPIER_WARN"; 
+      U(    ; 
+      O     "O_KM_M8_Ein"; 
+      O     "O_KM_M7_Ein"; 
+      O     "O_KM_Spuelpumpe_ein"; 
+      O     "O_KM_Pumpe_Dach"; 
+      O     "O_KM_Spruehpistole_ein"; 
+      )     ; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700908_KM_Papierband; 
+
+      U     "I_KM_TPF_PAPIER_WARN"; 
+      =     "DB_FEHLERMELDUNG".Warnung._701961_KM_Papierband_En; 
+
+
+// Überwachung Füllstand
+      L     S5T#30S; 
+      U     "I_KM_NEG_MIN_FUELL"; 
+      UN    "I_KM_NEG_VOR_FUELL"; 
+      UN    "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700716_Fein_Kmlt_Mangel; 
+      SE    "TV_Vorwarnung_KMTL"; 
+
+      U     "TV_Vorwarnung_KMTL"; 
+      =     "DB_FEHLERMELDUNG".WARNUNG2._701338_Vorw_Min_Kmtl; 
+
+      UN    "I_KM_NEG_MIN_FUELL"; 
+      U(    ; 
+      O     "O_KM_M8_Ein"; 
+      O     "O_KM_M7_Ein"; 
+      O     "O_KM_Spuelpumpe_ein"; 
+      O     "O_KM_Pumpe_Dach"; 
+      )     ; 
+      U     "M_MA_Maschine_Ein"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700716_Fein_Kmlt_Mangel; 
+      S     "M_Fehler_Kmtl_Anlage"; 
+
+
+// Ende 
+
+      UN    "I_KM_NEG_MSS_KSA"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700914_Stoer_KMTL; 
+      S     "M_Fehler_Kmtl_Anlage"; 
+
+      UN    "I_KM_NEG_KSA_MELDUNG"; 
+      =     "DB_FEHLERMELDUNG".WARNUNG2._701409_NEG_KSA_MELDUNG; 
+
+M017: NOP   0; 
+NETWORK
+TITLE =INT_019 = 4 oder 9: KSA2 oder KSA2.1 - INTERLIT 
+//INT_019 = 4: KSA2   - INTERLIT
+//INT_019 = 9: KSA2.1 - INTERLIT mit Feinstbereich
+      U(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._019_ANWAHL_KMTL_ANLAGE; // KSA 2
+      L     4; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._019_ANWAHL_KMTL_ANLAGE; 
+      L     9; 
+      ==I   ; 
+      )     ; 
+      SPBN  M007; 
+
+
+      U     "I_SF_UEBERLAUF"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700735_Fehler_KMTL_Anl; 
+      S     "M_Fehler_Kmtl_Anlage"; 
+
+      ON    "I_D_SF_NEG_PUMPE_EIN"; 
+      ON    "I_D_SF_NEG_PUMPE_AUS"; 
+      ON    "I_D_SF_NEG_UEBERLAUF"; 
+      S     "M_Fehler_Kmtl_Anlage"; 
+
+      UN    "I_D_SF_NEG_PUMPE_EIN"; 
+      =     "DB_FEHLERMELDUNG".WARNUNG2._701335_D_HebePumpe_Ein; 
+      UN    "I_D_SF_NEG_PUMPE_AUS"; 
+      =     "DB_FEHLERMELDUNG".WARNUNG2._701336_D_HebePumpe_Aus; 
+      UN    "I_D_SF_NEG_UEBERLAUF"; 
+      =     "DB_FEHLERMELDUNG".WARNUNG3._700341_D_SF_NEG_UEBER; 
+
+      U     "I_SF_PUMPE_EIN"; 
+      UN    "I_SF_PUMPE_AUS"; 
+      S     "O_SF_PUMPE_EIN"; 
+
+      O     "I_SF_PUMPE_AUS"; 
+      R     "O_SF_PUMPE_EIN"; 
+
+// Überlauf Überwachung
+
+      L     8192; // Zeitbasis 1s laden
+      L     "DB_PLC_MD_DB20".UDInt._160_KMTL_ABPUMP_ZEIT; // MD in BCD wandeln und mit Zeitbasis
+      ITB   ; // verodern
+      OW    ; 
+
+      U     "I_SF_PUMPE_EIN"; 
+      SV    "Te_Kmtl_Ueberlauf"; 
+
+      UN    "Te_Kmtl_Ueberlauf"; 
+      U     "I_SF_PUMPE_EIN"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700718_Ueberl_Kmtl_Anl; 
+      S     "M_Fehler_Kmtl_Anlage"; 
+
+
+      U     "I_A_KM_TPF_PAPIER_ENDE"; 
+      U     "I_KM_TPF_PAPIER_ENDE"; 
+      O     ; 
+      UN    "I_A_KM_TPF_PAPIER_ENDE"; 
+      UN    "I_KM_TPF_PAPIER_ENDE"; 
+      O     ; 
+      U     "I_A_KM_TPF_MOTOR_EIN"; 
+      U     "I_KM_TPF_MOTOR_EIN"; 
+      O     ; 
+      UN    "I_A_KM_TPF_MOTOR_EIN"; 
+      UN    "I_KM_TPF_MOTOR_EIN"; 
+      O     ; 
+      U     "I_KM_TPF_PAPIER_WARN"; 
+      U     "I_A_KM_TPF_PAPIER_WARN"; 
+      O     ; 
+      UN    "I_KM_TPF_PAPIER_WARN"; 
+      UN    "I_A_KM_TPF_PAPIER_WARN"; 
+      L     S5T#500MS; 
+      SE    "Te_Diagnoseschalter"; 
+
+
+      U(    ; 
+      U     "I_A_KM_TPF_PAPIER_ENDE"; 
+      U     "I_KM_TPF_PAPIER_ENDE"; 
+      O     ; 
+      UN    "I_A_KM_TPF_PAPIER_ENDE"; 
+      UN    "I_KM_TPF_PAPIER_ENDE"; 
+      )     ; 
+      U     "Te_Diagnoseschalter"; 
+      =     "DB_FEHLERMELDUNG".WARNUNG2._701405_D_KM_TPF_PAP_END; 
+
+      U(    ; 
+      U     "I_KM_TPF_PAPIER_WARN"; 
+      U     "I_A_KM_TPF_PAPIER_WARN"; 
+      O     ; 
+      UN    "I_KM_TPF_PAPIER_WARN"; 
+      UN    "I_A_KM_TPF_PAPIER_WARN"; 
+      )     ; 
+      U     "Te_Diagnoseschalter"; 
+      =     "DB_FEHLERMELDUNG".WARNUNG2._701407_D_KM_TPF_PAP_WAR; 
+
+      U(    ; 
+      U     "I_A_KM_TPF_MOTOR_EIN"; 
+      U     "I_KM_TPF_MOTOR_EIN"; 
+      O     ; 
+      UN    "I_A_KM_TPF_MOTOR_EIN"; 
+      UN    "I_KM_TPF_MOTOR_EIN"; 
+      )     ; 
+      U     "Te_Diagnoseschalter"; 
+      =     "DB_FEHLERMELDUNG".WARNUNG2._701408_D_KM_TPF_MOT_EIN; 
+
+      UN    "I_KM_TPF_PAPIER_ENDE"; 
+      U     "I_A_KM_TPF_PAPIER_ENDE"; 
+      UN    "I_KM_TPF_PAPIER_WARN"; 
+      U     "I_A_KM_TPF_PAPIER_WARN"; 
+      U     "I_KM_TPF_MOTOR_EIN"; 
+      UN    "I_A_KM_TPF_MOTOR_EIN"; 
+      L     S5T#1S; 
+      SE    "T_TPF_Motor_Ein"; 
+
+      U     "T_TPF_Motor_Ein"; 
+      UN    "Mx_TPF_Motor_ein"; 
+      UN    "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._701001_VLIES_SCHALT_DEF; 
+      =     "O_KM_TPF_MOTOR_EIN"; 
+
+// Fehlerüberwachung Papierband
+
+      L     "DB_PLC_MD_DB20".UDInt._182_VLIESS_SCHALT_DEF; // MD in BCD wandeln und mit Zeitbasis
+      L     0; 
+      >I    ; 
+      SPB   TI01; 
+      L     S5T#20S; 
+      SPA   TI02; 
+
+TI01: L     8192; // Zeitbasis 1s laden
+      L     "DB_PLC_MD_DB20".UDInt._182_VLIESS_SCHALT_DEF; // MD in BCD wandeln und mit Zeitbasis
+      ITB   ; // verodern
+      OW    ; 
+
+TI02: U     "O_KM_TPF_MOTOR_EIN"; 
+      UN    "Mx_TPF_Motor_ein"; 
+      SV    "Tv_KM_TPFMOTOR_EIN"; 
+
+      UN    "Tv_KM_TPFMOTOR_EIN"; 
+      U     "O_KM_TPF_MOTOR_EIN"; 
+      =     "Mx_TPF_Motor_ein"; 
+
+      U     "Mx_TPF_Motor_ein"; 
+      L     S5T#20S; 
+      SE    "T_Trigger_HaSyst"; 
+
+      U     "Mx_TPF_Motor_ein"; 
+      U(    ; 
+      O     "M_G00_aktiv"; 
+      O     "M_Hauptachsen_stehen"; 
+      O     "T_Trigger_HaSyst"; 
+      )     ; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._701001_VLIES_SCHALT_DEF; 
+
+// Fehlermeldung Papierband zu Ende
+      U     "I_KM_TPF_PAPIER_ENDE"; 
+      U(    ; 
+      O     "O_KM_M8_Ein"; 
+      O     "O_KM_M7_Ein"; 
+      O     "O_KM_Spuelpumpe_ein"; 
+      O     "O_KM_Pumpe_Dach"; 
+      )     ; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700908_KM_Papierband; 
+
+      U     "I_KM_TPF_PAPIER_WARN"; 
+      =     "DB_FEHLERMELDUNG".Warnung._701961_KM_Papierband_En; 
+
+// Überwachung Füllstand
+
+      L     S5T#30S; 
+      U     "I_KM_VOR_MIN_NIVEAU"; 
+      UN    "I_KM_MIN_MAX_NIVEAU"; 
+      SE    "TV_Vorwarnung_KMTL"; 
+
+      U     "TV_Vorwarnung_KMTL"; 
+      =     "DB_FEHLERMELDUNG".WARNUNG2._701338_Vorw_Min_Kmtl; 
+
+      U     "I_KM_MIN_MAX_NIVEAU"; 
+      U     "I_KM_VOR_MIN_NIVEAU"; 
+      U(    ; 
+      O     "O_KM_M8_Ein"; 
+      O     "O_KM_M7_Ein"; 
+      O     "O_KM_Spuelpumpe_ein"; 
+      O     "O_KM_Pumpe_Dach"; 
+      O     "O_KM_Spruehpistole_ein"; 
+      )     ; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700716_Fein_Kmlt_Mangel; 
+
+      L     S5T#10S; 
+      U     "I_KM_MIN_MAX_NIVEAU"; 
+      UN    "I_KM_VOR_MIN_NIVEAU"; 
+      SE    "Te_KM_MAX_NIVEAU"; 
+
+      U     "Te_KM_MAX_NIVEAU"; 
+      =     "DB_FEHLERMELDUNG".WARNUNG2._701359_REIN_FUELL_MAX_0; 
+
+      UN    "I_KM_NEG_KSA_MELDUNG"; 
+      =     "DB_FEHLERMELDUNG".WARNUNG2._701409_NEG_KSA_MELDUNG; 
+
+      UN    "I_D_KM_MIN_MAX_NIVEAU"; 
+      =     "DB_FEHLERMELDUNG".WARNUNG3._700338_D_MIN_MAX_NIVEAU; 
+
+      UN    "I_D_KM_VOR_MIN_NIVEAU"; 
+      =     "DB_FEHLERMELDUNG".WARNUNG3._700339_D_VOR_MIN_NIVEAU; 
+
+      L     S5T#500MS; 
+      UN    "I_KM_BTB_PNOZ"; 
+      U     #t_pumpen_ein; 
+      UN    "M_PW_Aktiv"; 
+      U     "I_AL_Kabine_zu"; 
+      SE    "Te_Ende_SpNachschm"; 
+
+      U     "Te_Ende_SpNachschm"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700931_PNOZ_KMTL_Anlage; 
+
+      UN    "I_KM_BTB_ALLE_PUMPEN"; 
+      U(    ; 
+      O     "O_KM_M7_Ein"; 
+      O     "O_KM_Spuelpumpe_ein"; 
+      O     "O_KM_Pumpe_Dach"; 
+      )     ; 
+      UN    "M_PW_Aktiv"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700932_BTB_ALLE_Pumpen; 
+
+      UN    "I_KM_NEG_MSS_KSA"; 
+      U     "M_MA_Maschine_Ein"; 
+      S     "DB_FEHLERMELDUNG".WARNUNG2._701360_NEG_MSS_KSA; 
+
+      UN    "I_KM_NEG_MSS_KSA"; 
+      U     #t_pumpen_ein; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700735_Fehler_KMTL_Anl; 
+
+
+
+
+// KSA 2.1 (Interlit) --> Anwahl 9 
+// Pumpe Feinstbereich
+
+
+      L     "DB_PLC_MD_DB20".UDInt._019_ANWAHL_KMTL_ANLAGE; 
+      L     9; 
+      ==I   ; 
+      SPBN  M007; 
+
+// Förderpumpe Feinstbereich ein
+      UN    "I_KM_FEINSTB_AUS"; 
+      U     "I_KM_FEINSTB_EIN"; 
+      S     "O_KM_FEINSTB_PUMPE"; 
+
+// Pumpe Feinstbereich aus
+      U     "I_KM_FEINSTB_AUS"; 
+      O     "I_KM_FEINB_MIN"; 
+      O     "DB_FEHLERMELDUNG".WARNUNG3._700345_Feinst_Kmtl_max; 
+      O     "DB_FEHLERMELDUNG".SAFE_MELD._701519; 
+      O     "DB_FEHLERMELDUNG".SAFE_MELD._701518; 
+      O     "DB_FEHLERMELDUNG".SAFE_MELD._701522; 
+      R     "O_KM_FEINSTB_PUMPE"; 
+
+// Notaus Feinstbereich min
+      U     "O_KM_DRUCK1_M7_EIN"; 
+      O     "O_KM_DRUCK2_M7_EIN"; 
+      U     "I_KM_FEINSTB_MIN"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700717_Feinst_Kmtl_Mang; 
+
+// Vorschub-Halt bei KSA-Fehlermeldung oder zu hoher Temperatur
+      U     "DB_FEHLERMELDUNG".WARNUNG2._701360_NEG_MSS_KSA; // "DB_FEHLERMELDUNG".WARNUNG2._701409_NEG_KSA_MELDUNG
+      O     "DB_FEHLERMELDUNG".WARNUNG3._700428_KSS_TEMP_ZU_HOCH; 
+      U(    ; 
+      O     "O_KM_M7_Ein"; 
+      O     "O_KM_M8_Ein"; 
+      )     ; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700914_Stoer_KMTL; 
+
+// Diagnoseschalter Feinsbereich/Feinbereich
+      UN    "I_D_KM_FEINSTB_MIN"; 
+      =     "DB_FEHLERMELDUNG".SAFE_MELD._701520; 
+
+      UN    "I_D_KM_FEINSTB_EIN"; 
+      =     "DB_FEHLERMELDUNG".SAFE_MELD._701519; 
+
+      UN    "I_D_KM_FEINSTB_AUS"; 
+      =     "DB_FEHLERMELDUNG".SAFE_MELD._701518; 
+
+M007: NOP   0; 
+NETWORK
+TITLE =INT_019 = 5: KSA4 - INTERLIT mit Kratzförderer
+
+      L     "DB_PLC_MD_DB20".UDInt._019_ANWAHL_KMTL_ANLAGE; // KSA 4
+      L     5; 
+      ==I   ; 
+      SPBN  M008; 
+
+      U     "O_KM_DRUCK2_M7_EIN"; 
+      =     #t_80bar_aktiv; 
+
+
+      CALL "FC_KMTL_KSA4" (
+           MX_Pumpen_ein            := #t_pumpen_ein,
+           MX_M7_aktiv              := "O_KM_M7_Ein",
+           MX_M8_aktiv              := "O_KM_M8_Ein",
+           MX_80bar_aktiv           := #t_80bar_aktiv);
+
+M008: NOP   0; 
+NETWORK
+TITLE =INT_019 = 6: KSA3 - BÜRENER Bandfilteranlage
+
+      L     "DB_PLC_MD_DB20".UDInt._019_ANWAHL_KMTL_ANLAGE; // KSA 3
+      L     6; 
+      ==I   ; 
+      SPBN  M009; 
+
+      U     "I_SF_UEBERLAUF"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700735_Fehler_KMTL_Anl; 
+      S     "M_Fehler_Kmtl_Anlage"; 
+
+      ON    "I_D_SF_NEG_PUMPE_EIN"; 
+      ON    "I_D_SF_NEG_PUMPE_AUS"; 
+      ON    "I_D_SF_NEG_UEBERLAUF"; 
+      S     "M_Fehler_Kmtl_Anlage"; 
+
+      UN    "I_D_SF_NEG_PUMPE_EIN"; 
+      =     "DB_FEHLERMELDUNG".WARNUNG2._701335_D_HebePumpe_Ein; 
+      UN    "I_D_SF_NEG_PUMPE_AUS"; 
+      =     "DB_FEHLERMELDUNG".WARNUNG2._701336_D_HebePumpe_Aus; 
+      UN    "I_D_SF_NEG_UEBERLAUF"; 
+      =     "DB_FEHLERMELDUNG".WARNUNG3._700341_D_SF_NEG_UEBER; 
+
+      U     "I_SF_PUMPE_EIN"; 
+      UN    "I_SF_PUMPE_AUS"; 
+      S     "O_SF_PUMPE_EIN"; 
+
+      O     "I_SF_PUMPE_AUS"; 
+      R     "O_SF_PUMPE_EIN"; 
+
+// Überlauf Überwachung
+
+      L     8192; // Zeitbasis 1s laden
+      L     "DB_PLC_MD_DB20".UDInt._160_KMTL_ABPUMP_ZEIT; // MD in BCD wandeln und mit Zeitbasis
+      ITB   ; // verodern
+      OW    ; 
+
+      U     "I_SF_PUMPE_EIN"; 
+      SV    "Te_Kmtl_Ueberlauf"; 
+
+      UN    "Te_Kmtl_Ueberlauf"; 
+      U     "I_SF_PUMPE_EIN"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700718_Ueberl_Kmtl_Anl; 
+      S     "M_Fehler_Kmtl_Anlage"; 
+
+
+
+      CALL "FC_KMTL_KSA3" (
+           i_I_KM_MAX_NIVEAU        := "I_KM_MAX_NIVEAU",
+           i_I_KM_MIN_NIVEAU        := "I_KM_MIN_NIVEAU",
+           i_I_KM_MIN_VOR_NIVEAU    := "I_KM_MIN_VOR_NIVEAU",
+           i_I_A_KM_TPF_PAPIER_ENDE := "I_A_KM_TPF_PAPIER_ENDE",
+           i_I_A_KM_TPF_PAPIER_WARN := "I_A_KM_TPF_PAPIER_WARN",
+           i_I_D_KM_MAX_NIVEAU      := "I_D_KM_MAX_NIVEAU",
+           i_I_D_KM_MIN_NIVEAU      := "I_D_KM_MIN_NIVEAU",
+           i_I_D_KM_MIN_VOR_NIVEAU  := "I_D_KM_MIN_VOR_NIVEAU",
+           i_I_D_PW_Tischspuelung   := "I_D_PW_Tischspuelung",
+           i_I_KM_BTB_ALLE_PUMPEN   := "I_KM_BTB_ALLE_PUMPEN",
+           i_I_KM_BTB_PNOZ          := "I_KM_BTB_PNOZ",
+           i_I_KM_NEG_KSA_MELDUNG   := "I_KM_NEG_KSA_MELDUNG",
+           i_I_KM_NEG_MSS_KSA       := "I_KM_NEG_MSS_KSA",
+           i_I_KM_NEG_MSS_SSA       := TRUE,
+           i_I_KM_TPF_PAPIER_WARN   := "I_KM_TPF_PAPIER_WARN",
+           i_I_KM_TPF_PAPIER_ENDE   := "I_KM_TPF_PAPIER_ENDE",
+           i_I_KM_TPF_MOTOR_EIN     := "I_KM_TPF_MOTOR_EIN",
+           i_O_KM_Spuelpumpe_ein    := "O_KM_Spuelpumpe_ein",
+           i_O_KM_Pumpe_Dach        := "O_KM_Pumpe_Dach",
+           i_O_KM_Pumpe_Dach2       := "O_KM_Pumpe_Dach2",
+           i_O_KM_M8_Ein            := "O_KM_M8_Ein",
+           i_O_KM_M7_Ein            := "O_KM_M7_Ein",
+           i_Timer_max              := "T_KSA3_KSA7_MAX",
+           i_Timer_min              := "T_KSA3_KSA7_MIN",
+           i_Timer_vorw             := "T_KSA3_KSA7_VORW",
+           i_Timer_vorw_reaktion    := "T_KSA3_KSA7_VORW_REAKT",
+           i_Timer_Vlies_max_Laufz  := "T_KSA3_Vlies_max_Lau",
+           i_Timer_entpr_Vlies_ein  := "T_KSA3_Entpr_Vlies_EIN",
+           i_Timer_Laufzeit_Vlies   := "T_Laufzeit_Vlies",
+           i_Counter_min_Zwangstakt := "Z_min_Takt_Vlies",
+           i_Counter_sec_Zwangstakt := "Z_sec_Takt_Vlies",
+           i_O_SF_PUMPE_EIN         := "O_SF_PUMPE_EIN",
+           i_Timer_Entprell_KSA_Mel := "T_KSA3_KSA_Mel_Entprelle",
+           io_M_Fehler_Kmtl_Anlage  := "M_Fehler_Kmtl_Anlage",
+           io_M_M97_M98_unterd      := "M_M97_M98_unterdrücken",
+           io_Mel_max               := "DB_FEHLERMELDUNG".MELDUNG3._700510_KSA3_MAX,
+           io_Mel_min               := "DB_FEHLERMELDUNG".MELDUNG3._700511_KSA3_MIN,
+           io_Mel_vorwaerts         := "DB_FEHLERMELDUNG".MELDUNG3._700512_KSA3_Vorwar,
+           io_Mel_BTB_PNOZ          := "DB_FEHLERMELDUNG".MELDUNG3._700514_KSA3_BTB_PNOZ,
+           io_Mel_Papiermangel      := "DB_FEHLERMELDUNG".MELDUNG3._700516_KSA3_Papierb_War,
+           io_Mel_Papierband_Ende   := "DB_FEHLERMELDUNG".Warnung._701961_KM_Papierband_En,
+           io_Mel_KSA               := "DB_FEHLERMELDUNG".WARNUNG2._701409_NEG_KSA_MELDUNG,
+           io_Mel_SSA               := #dummy,// "DB_FEHLERMELDUNG".WARNUNG2._701409_NEG_KSA_MELDUNG
+           io_SPVHLT                := "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._701002_KMTL_KSA3_SPVH,
+           io_O_KM_TPF_MOTOR_EIN    := "O_KM_TPF_MOTOR_EIN",
+           io_Mel_Schalter_Defekt   := "DB_FEHLERMELDUNG".MELDUNG3._700513_Schalter_Defekt,
+           io_Mel_BTB_Alle_Pumpen   := "DB_FEHLERMELDUNG".MELDUNG3._700515_KSA3_BTB_Alle_Pu,
+           io_Mel_Vlies_Trans_Defe  := "DB_FEHLERMELDUNG".SPI_VS_HALT_G0._702233_KM_Vlies_tr_defe,
+           io_Temp_Meldung_VORW     := "MX_Temp_Vorw",
+           io_Temp_Motor_Aus        := "M_Motor_Aus",
+           io_KSA_SammelFehler      := "M_KSA_Sammelfehler",
+           io_MSS_KSA               := "DB_FEHLERMELDUNG".WARNUNG2._701360_NEG_MSS_KSA);
+
+M009: NOP   0; 
+NETWORK
+TITLE =INT_019 = 7 oder 8: KSA-Knoll oder KSA-SOKO
+
+      L     "DB_PLC_MD_DB20".UDInt._019_ANWAHL_KMTL_ANLAGE; // KSA Knoll VRF250   programmiert von KNOLL
+      L     7; 
+      ==I   ; 
+      O(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._019_ANWAHL_KMTL_ANLAGE; // SOKO KSA rogrammiert von Petz Andi
+      L     8; 
+      ==I   ; 
+      )     ; 
+      O     "DB_PLC_MD_DB20".UDHex._25_Bit3_SOKO_Kuehlm; // SOKO Kühlmittel Sonderfunktionen
+      SPBN  M010; 
+
+
+      U     "DB_PLC_MD_DB20".UDHex._18_BIT7_KM_Sammelbehael; 
+      SPB   _SF1; 
+
+// Normale Überwachung des Sammelbehälters mit 2 Eingängen für Minimum und Maximum
+      U     "I_SF_UEBERLAUF"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700718_Ueberl_Kmtl_Anl; 
+      S     "M_Fehler_Kmtl_Anlage"; 
+
+      ON    "I_D_SF_NEG_PUMPE_EIN"; 
+      ON    "I_D_SF_NEG_PUMPE_AUS"; 
+      ON    "I_D_SF_NEG_UEBERLAUF"; 
+      S     "M_Fehler_Kmtl_Anlage"; 
+
+      UN    "I_D_SF_NEG_PUMPE_EIN"; 
+      =     "DB_FEHLERMELDUNG".WARNUNG2._701335_D_HebePumpe_Ein; 
+      UN    "I_D_SF_NEG_PUMPE_AUS"; 
+      =     "DB_FEHLERMELDUNG".WARNUNG2._701336_D_HebePumpe_Aus; 
+      UN    "I_D_SF_NEG_UEBERLAUF"; 
+      =     "DB_FEHLERMELDUNG".WARNUNG3._700341_D_SF_NEG_UEBER; 
+
+      U     "I_SF_PUMPE_EIN"; 
+      UN    "I_SF_PUMPE_AUS"; 
+      S     "O_SF_PUMPE_EIN"; 
+
+      O     "I_SF_PUMPE_AUS"; 
+      R     "O_SF_PUMPE_EIN"; 
+
+      L     8192; // Zeitbasis 1s laden
+      L     "DB_PLC_MD_DB20".UDInt._160_KMTL_ABPUMP_ZEIT; // MD in BCD wandeln und mit Zeitbasis
+      ITB   ; // verodern
+      OW    ; 
+
+      U     "I_SF_PUMPE_EIN"; 
+      UN    "I_SF_UEBERLAUF"; 
+      SV    "Te_Kmtl_Ueberlauf"; 
+
+      UN    "Te_Kmtl_Ueberlauf"; 
+      U     "I_SF_PUMPE_EIN"; 
+      UN    "I_SF_UEBERLAUF"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700735_Fehler_KMTL_Anl; 
+      S     "M_Fehler_Kmtl_Anlage"; 
+
+      SPA   _SF0; 
+
+_SF1: NOP   0; 
+
+// Neue Überwachung des Sammelbehälters mit 1 Eingang für Minimum und Maximum
+      UN    "I_SF_NEG_UEBERLAUF"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700718_Ueberl_Kmtl_Anl; 
+      S     "M_Fehler_Kmtl_Anlage"; 
+
+      U     "I_SF_PUMPE_EIN"; 
+      =     "O_SF_PUMPE_EIN"; 
+
+      L     8192; // Zeitbasis 1s laden
+      L     "DB_PLC_MD_DB20".UDInt._160_KMTL_ABPUMP_ZEIT; // MD in BCD wandeln und mit Zeitbasis
+      ITB   ; // verodern
+      OW    ; 
+
+      U     "I_SF_PUMPE_EIN"; 
+      U     "I_SF_NEG_UEBERLAUF"; 
+      SV    "Te_Kmtl_Ueberlauf"; 
+
+      UN    "Te_Kmtl_Ueberlauf"; 
+      U     "I_SF_PUMPE_EIN"; 
+      U     "I_SF_NEG_UEBERLAUF"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700735_Fehler_KMTL_Anl; 
+      S     "M_Fehler_Kmtl_Anlage"; 
+
+_SF0: NOP   0; 
+
+// MSS KMTL_Anlage  
+      UN    "I_KM_NEG_MSS_SSA"; 
+      S     "M_Fehler_Kmtl_Anlage"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700834_KM_MSS_0Sig; 
+
+      CALL "FC_KMTL_KNOLL" (
+           I_KUEHLMITTEL_1_OK       := "DB_KMTL_KNOLL".I_KUEHLMITTEL_1_OK,
+           I_KUEHLMITTEL_2_OK       := "DB_KMTL_KNOLL".I_KUEHLMITTEL_2_OK,
+           I_MELDUNG_KSA            := "DB_KMTL_KNOLL".I_MELDUNG_KSA,
+           I_NOT_AUS_KSA            := "DB_KMTL_KNOLL".I_NOT_AUS_KSA,
+           I_SPINDEL_VORSCHUB_HALT  := "DB_KMTL_KNOLL".I_SPINDEL_VORSCHUB_HALT,
+           I_SPI_VORSCHUB_HALT_G0   := "DB_KMTL_KNOLL".I_SPI_VORSCHUB_HALT_G0,
+           I_FEHLER_SCHALTERDIAGNOS := "DB_KMTL_KNOLL".I_FEHLER_SCHALTERDIAGNOS,
+           I_KUEHLMITTEL_AUTOMATIK  := "DB_KMTL_KNOLL".I_KUEHLMITTEL_AUTOMATIK,
+           I_MSS_KSA                := "DB_KMTL_KNOLL".I_MSS_KSA,
+           I_MSS_KSA_MELDUNG        := "DB_KMTL_KNOLL".I_MSS_KSA_MELDUNG,
+           I_KSA_FUELLSTAND_MAX     := "DB_KMTL_KNOLL".I_KSA_FUELLSTAND_MAX,
+           I_KSA_FUELLSTAND_MIN_VOR := "DB_KMTL_KNOLL".I_KSA_FUELLSTAND_MIN_VOR,
+           I_KSA_FUELLSTAND_MIN     := "DB_KMTL_KNOLL".I_KSA_FUELLSTAND_MIN,
+           I_TPF_PAPIER_ENDE        := "DB_KMTL_KNOLL".I_TPF_PAPIER_ENDE,
+           I_TPF_PAPIER_VORWARNUNG  := "DB_KMTL_KNOLL".I_TPF_PAPIER_VORWARNUNG,
+           I_QUIT_H21               := "DB_KMTL_KNOLL".IX_QUIT_FUNCTION1,
+           I_KM_MIN_MAX_NIVEAU      := "I_KM_MIN_MAX_NIVEAU",
+           I_KM_VOR_MIN_NIVEAU      := "I_KM_VOR_MIN_NIVEAU",
+           I_SF_UEBERLAUF           := "I_SF_UEBERLAUF",
+           IW_FEHLERNUMMER          := "DB_KMTL_KNOLL".IW_FEHLERNUMMER,
+           IW_RUECKMELD_DRUCKSTUFE  := "DB_KMTL_KNOLL".IW_RUECKMELD_DRUCKSTUFE,
+           O_KABINE_GESCHLOSSEN     := "DB_KMTL_KNOLL".O_KABINE_GESCHLOSSEN,
+           O_MASCHINE_BTB           := "DB_KMTL_KNOLL".O_MASCHINE_BTB,
+           O_ALARM_RESET            := "DB_KMTL_KNOLL".O_ALARM_RESET,
+           O_KUEHLMITTEL_1_EIN      := "DB_KMTL_KNOLL".O_KUEHLMITTEL_1_EIN,
+           O_KUEHLMITTEL_2_EIN      := "DB_KMTL_KNOLL".O_KUEHLMITTEL_2_EIN,
+           O_PUMPE_SPRUEHPISTOL_EIN := "DB_KMTL_KNOLL".O_PUMPE_SPRUEHPISTOL_EIN,
+           O_SPAENESPUEL_LASER_EIN  := "DB_KMTL_KNOLL".O_SPAENESPUEL_LASER_EIN,
+           O_DACHSPUELUNG_EIN       := "DB_KMTL_KNOLL".O_DACHSPUELUNG_EIN,
+           O_VENTIL_TISCHSPU_PW_EIN := "DB_KMTL_KNOLL".O_VENTIL_TISCHSPU_PW_EIN,
+           O_SPAENESPUEL_TUER_EIN   := "DB_KMTL_KNOLL".O_SPAENESPUEL_TUER_EIN,
+           OX_PC_ACTIVE             := "DB_KMTL_KNOLL".OX_PC_ACTIVE,
+           OX_TOOL_CHANGE_ACTIVE    := "DB_KMTL_KNOLL".OX_TOOL_CHANGE_ACTIVE,
+           OX_ERROR                 := "DB_KMTL_KNOLL".OX_ERROR,
+           OX_PROGRAM_END           := "DB_KMTL_KNOLL".OX_PROGRAM_END,
+           OX_STROBE_FUNCTION1      := "DB_KMTL_KNOLL".OX_STROBE_FUNCTION1,
+           OW_ANWAHL_DRUCKSTUFE     := "DB_KMTL_KNOLL".OW_ANWAHL_DRUCKSTUFE,
+           OW_KSA_KONFIGURATION     := "DB_KMTL_KNOLL".OW_KSA_KONFIGURATION,
+           O_COOLANT_BACKFLOW       := "DB_KMTL_KNOLL".O_COOLANT_BACKFLOW,
+           O_Pneumatic_OK           := "DB_KMTL_KNOLL".O_Pneumatic_OK,
+           OX_KM_MIN_MAX_NIVEAU     := "DB_KMTL_KNOLL".IX_KM_MAG_MIN_NIVEAU,
+           OX_KM_VOR_MIN_NIVEAU     := "DB_KMTL_KNOLL".IX_KM_VOR_MIN_NIVEAU,
+           OX_SF_UEBERLAUF          := "DB_KMTL_KNOLL".IX_SF_UEBERLAUF,
+           OW_FUNCTION_1            := "DB_KMTL_KNOLL".OW_FUNCTION_1,
+           OW_PARAMETER_2           := "DB_KMTL_KNOLL".OW_PARAMETER_2,
+           Meldung_Papierband_Vorw  := "DB_FEHLERMELDUNG".MELDUNG3._700516_KSA3_Papierb_War,
+           Meldung_Papierband_Ende  := "DB_FEHLERMELDUNG".Warnung._701961_KM_Papierband_En,
+           Meldung_Fuell_Min        := "DB_FEHLERMELDUNG".MELDUNG3._700511_KSA3_MIN,
+           Meldung_Fuell_Min_Vorw   := "DB_FEHLERMELDUNG".MELDUNG3._700512_KSA3_Vorwar,
+           Meldung_Fuell_Max        := "DB_FEHLERMELDUNG".MELDUNG3._700510_KSA3_MAX,
+           Meldung_MSS_KSA_Meldung  := "DB_FEHLERMELDUNG".WARNUNG2._701360_NEG_MSS_KSA,
+           Meldung_MSS_KSA_Fehler   := "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700834_KM_MSS_0Sig,
+           Meldung_Schalterdiagnose := "DB_FEHLERMELDUNG".MELDUNG3._700513_Schalter_Defekt,
+           Meldung_SPI_VS_Halt_G0   := "DB_FEHLERMELDUNG".SPI_VS_HALT_G0._702234_KMTL_KSA3_SPVHG0,
+           Meldung_SPI_VS_Halt      := "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._701002_KMTL_KSA3_SPVH,
+           Meldung_Not_Aus_KSA      := "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700833_KM_Foerderp_NOTA,
+           Meldung_KSA_Warnung      := "DB_FEHLERMELDUNG".WARNUNG2._701409_NEG_KSA_MELDUNG,
+           IO_Strobe_Druckumsch     := "DB_KMTL_KNOLL".O_STROBE_DRUCKUMSCHALT);
+
+M010: NOP   0; 
+
+
+NETWORK
+TITLE =INT_019 = 10: KSA3.1 BÜRENER mit zusätzlichem Späneförderer
+
+      L     "DB_PLC_MD_DB20".UDInt._019_ANWAHL_KMTL_ANLAGE; // KSA 3
+      L     10; 
+      ==I   ; 
+      SPBN  M011; 
+
+      U     "I_SF_UEBERLAUF"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700735_Fehler_KMTL_Anl; 
+      S     "M_Fehler_Kmtl_Anlage"; 
+
+      ON    "I_D_SF_NEG_PUMPE_EIN"; 
+      ON    "I_D_SF_NEG_PUMPE_AUS"; 
+      ON    "I_D_SF_NEG_UEBERLAUF"; 
+      S     "M_Fehler_Kmtl_Anlage"; 
+
+      UN    "I_D_SF_NEG_PUMPE_EIN"; 
+      =     "DB_FEHLERMELDUNG".WARNUNG2._701335_D_HebePumpe_Ein; 
+      UN    "I_D_SF_NEG_PUMPE_AUS"; 
+      =     "DB_FEHLERMELDUNG".WARNUNG2._701336_D_HebePumpe_Aus; 
+      UN    "I_D_SF_NEG_UEBERLAUF"; 
+      =     "DB_FEHLERMELDUNG".WARNUNG3._700341_D_SF_NEG_UEBER; 
+
+      U     "I_SF_PUMPE_EIN"; 
+      UN    "I_SF_PUMPE_AUS"; 
+      S     "O_SF_PUMPE_EIN"; 
+
+      O     "I_SF_PUMPE_AUS"; 
+      R     "O_SF_PUMPE_EIN"; 
+
+// Überlauf Überwachung
+
+      L     8192; // Zeitbasis 1s laden
+      L     "DB_PLC_MD_DB20".UDInt._160_KMTL_ABPUMP_ZEIT; // MD in BCD wandeln und mit Zeitbasis
+      ITB   ; // verodern
+      OW    ; 
+
+      U     "I_SF_PUMPE_EIN"; 
+      SV    "Te_Kmtl_Ueberlauf"; 
+
+      UN    "Te_Kmtl_Ueberlauf"; 
+      U     "I_SF_PUMPE_EIN"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700718_Ueberl_Kmtl_Anl; 
+      S     "M_Fehler_Kmtl_Anlage"; 
+
+      CALL "FC_KMTL_KSA3.1" (
+           i_I_KM_MAX_NIVEAU        := "I_KM_MAX_NIVEAU",
+           i_I_KM_MIN_NIVEAU        := "I_KM_MIN_NIVEAU",
+           i_I_KM_MIN_VOR_NIVEAU    := "I_KM_MIN_VOR_NIVEAU",
+           i_I_A_KM_TPF_PAPIER_ENDE := "I_A_KM_TPF_PAPIER_ENDE",
+           i_I_A_KM_TPF_PAPIER_WARN := "I_A_KM_TPF_PAPIER_WARN",
+           i_I_D_KM_MAX_NIVEAU      := "I_D_KM_MAX_NIVEAU",
+           i_I_D_KM_MIN_NIVEAU      := "I_D_KM_MIN_NIVEAU",
+           i_I_D_KM_MIN_VOR_NIVEAU  := "I_D_KM_MIN_VOR_NIVEAU",
+           i_I_D_PW_Tischspuelung   := "I_D_PW_Tischspuelung",
+           i_I_KM_BTB_ALLE_PUMPEN   := "I_KM_BTB_ALLE_PUMPEN",
+           i_I_KM_BTB_PNOZ          := "I_KM_BTB_PNOZ",
+           i_I_KM_NEG_KSA_MELDUNG   := "I_KM_NEG_KSA_MELDUNG",
+           i_I_KM_NEG_MSS_KSA       := "I_KM_NEG_MSS_KSA",
+           i_I_KM_NEG_MSS_SSA       := TRUE,
+           i_I_KM_TPF_PAPIER_WARN   := "I_KM_TPF_PAPIER_WARN",
+           i_I_KM_TPF_PAPIER_ENDE   := "I_KM_TPF_PAPIER_ENDE",
+           i_I_KM_TPF_MOTOR_EIN     := "I_KM_TPF_MOTOR_EIN",
+           i_O_KM_Spuelpumpe_ein    := "O_KM_Spuelpumpe_ein",
+           i_O_KM_Pumpe_Dach        := "O_KM_Pumpe_Dach",
+           i_O_KM_Pumpe_Dach2       := "O_KM_Pumpe_Dach2",
+           i_O_KM_M8_Ein            := "O_KM_M8_Ein",
+           i_O_KM_M7_Ein            := "O_KM_M7_Ein",
+           i_Timer_max              := "T_KSA3_KSA7_MAX",
+           i_Timer_min              := "T_KSA3_KSA7_MIN",
+           i_Timer_vorw             := "T_KSA3_KSA7_VORW",
+           i_Timer_vorw_reaktion    := "T_KSA3_KSA7_VORW_REAKT",
+           i_Timer_Vlies_max_Laufz  := "T_KSA3_Vlies_max_Lau",
+           i_Timer_entpr_Vlies_ein  := "T_KSA3_Entpr_Vlies_EIN",
+           i_Timer_Laufzeit_Vlies   := "T_Laufzeit_Vlies",
+           i_Counter_min_Zwangstakt := "Z_min_Takt_Vlies",
+           i_Counter_sec_Zwangstakt := "Z_sec_Takt_Vlies",
+           i_O_SF_PUMPE_EIN         := "O_SF_PUMPE_EIN",
+           i_I_KM_SF_KRATZ_NIV_MAX  := "I_KM_SF_KRATZ_NIV_MAX",
+           iI_D_KM_SF_KRATZ_NIV_MAX := "I_D_KM_SF_KRATZ_NIV_MAX",
+           i_I_KM_SF_PUMPE_EIN      := "I_KM_SF_PUMPE_EIN",
+           iI_D_KM_SF_NEG_PUMPE_EIN := "I_D_KM_SF_NEG_PUMPE_EIN",
+           i_I_KM_SF_PUMPE_AUS      := "I_KM_SF_PUMPE_AUS",
+           iI_D_KM_SF_NEG_PUMPE_AUS := "I_D_KM_SF_NEG_PUMPE_AUS",
+           i_I_KM_SF_TANK_NIV_MAX   := "I_KM_SF_TANK_NIV_MAX",
+           i_I_D_KM_SF_NEG_TANK_MAX := "I_D_KM_SF_NEG_TANK_MAX",
+           i_Timer_Meldung          := "T_KSA3.1_Meldung",
+           i_Timer_reaktion         := "T_KSA3.1_Reaktion",
+           i_Timer_Kratz            := "T_KSA3.1_Kratz",
+           io_M_Fehler_Kmtl_Anlage  := "M_Fehler_Kmtl_Anlage",
+           io_M_M97_M98_unterd      := "M_M97_M98_unterdrücken",
+           io_Mel_max               := "DB_FEHLERMELDUNG".MELDUNG3._700510_KSA3_MAX,
+           io_Mel_min               := "DB_FEHLERMELDUNG".MELDUNG3._700511_KSA3_MIN,
+           io_Mel_vorwaerts         := "DB_FEHLERMELDUNG".MELDUNG3._700512_KSA3_Vorwar,
+           io_Mel_BTB_PNOZ          := "DB_FEHLERMELDUNG".MELDUNG3._700514_KSA3_BTB_PNOZ,
+           io_Mel_Papiermangel      := "DB_FEHLERMELDUNG".MELDUNG3._700516_KSA3_Papierb_War,
+           io_Mel_Papierband_Ende   := "DB_FEHLERMELDUNG".Warnung._701961_KM_Papierband_En,
+           io_Mel_KSA               := "DB_FEHLERMELDUNG".WARNUNG2._701409_NEG_KSA_MELDUNG,
+           io_Mel_SSA               := "DB_FEHLERMELDUNG".WARNUNG2._701409_NEG_KSA_MELDUNG,
+           io_SPVHLT                := "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._701002_KMTL_KSA3_SPVH,
+           io_O_KM_TPF_MOTOR_EIN    := "O_KM_TPF_MOTOR_EIN",
+           io_Mel_Schalter_Defekt   := "DB_FEHLERMELDUNG".MELDUNG3._700513_Schalter_Defekt,
+           io_Mel_BTB_Alle_Pumpen   := "DB_FEHLERMELDUNG".MELDUNG3._700515_KSA3_BTB_Alle_Pu,
+           io_Mel_Vlies_Trans_Defe  := "DB_FEHLERMELDUNG".SPI_VS_HALT_G0._702233_KM_Vlies_tr_defe,
+           io_Temp_Meldung_VORW     := "MX_Temp_Vorw",
+           io_Temp_Motor_Aus        := "M_Motor_Aus",
+           io_O_KM_SF_KRATZER_EIN_V := "O_KM_SF_KRATZER_EIN_V",
+           io_O_KM_SF_HEBEPUMPE_EIN := "O_KM_SF_HEBEPUMPE_EIN",
+           io_Mel_MAX_Fuell_Kratz   := "M_Mel_MAX_Fuell_Kratz");
+
+M011: NOP   0; 
+NETWORK
+TITLE =INT_019 = 11 oder 12: KSA7 - BLECHTECHNIK
+// KSA 7  Kühlmittelanlage mit IKZ und Spaltsieb
+      L     "DB_PLC_MD_DB20".UDInt._019_ANWAHL_KMTL_ANLAGE; 
+      L     11; 
+      ==I   ; 
+      =     #t_KSA7_MIT_SPALTSIEB; 
+// KSA 7 Kühlmittelanlage ohne IKZ und Spaltsieb   
+      L     "DB_PLC_MD_DB20".UDInt._019_ANWAHL_KMTL_ANLAGE; 
+      L     12; 
+      ==I   ; 
+      =     #t_KSA7_OHNE_SPALTSIEB; 
+      U     #t_KSA7_MIT_SPALTSIEB; 
+      O     #t_KSA7_OHNE_SPALTSIEB; 
+      SPBN  M012; 
+      U     "I_SF_UEBERLAUF"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700735_Fehler_KMTL_Anl; 
+      S     "M_Fehler_Kmtl_Anlage"; 
+      ON    "I_D_SF_NEG_PUMPE_EIN"; 
+      ON    "I_D_SF_NEG_PUMPE_AUS"; 
+      ON    "I_D_SF_NEG_UEBERLAUF"; 
+      S     "M_Fehler_Kmtl_Anlage"; 
+      UN    "I_D_SF_NEG_PUMPE_EIN"; 
+      =     "DB_FEHLERMELDUNG".WARNUNG2._701335_D_HebePumpe_Ein; 
+      UN    "I_D_SF_NEG_PUMPE_AUS"; 
+      =     "DB_FEHLERMELDUNG".WARNUNG2._701336_D_HebePumpe_Aus; 
+      UN    "I_D_SF_NEG_UEBERLAUF"; 
+      =     "DB_FEHLERMELDUNG".WARNUNG3._700341_D_SF_NEG_UEBER; 
+      U     "I_SF_PUMPE_EIN"; 
+      UN    "I_SF_PUMPE_AUS"; 
+      S     "O_SF_PUMPE_EIN"; 
+      O     "I_SF_PUMPE_AUS"; 
+      R     "O_SF_PUMPE_EIN"; 
+// Überlauf Überwachung
+      L     8192; // Zeitbasis 1s laden
+      L     "DB_PLC_MD_DB20".UDInt._160_KMTL_ABPUMP_ZEIT; // MD in BCD wandeln und mit Zeitbasis
+      ITB   ; // verodern
+      OW    ; 
+      U     "I_SF_PUMPE_EIN"; 
+      SV    "Te_Kmtl_Ueberlauf"; 
+      UN    "Te_Kmtl_Ueberlauf"; 
+      U     "I_SF_PUMPE_EIN"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700718_Ueberl_Kmtl_Anl; 
+      S     "M_Fehler_Kmtl_Anlage"; 
+      CALL "FC_KMTL_KSA7" (
+           i_KSA7_OHNE_SPALTSIEB    := #t_KSA7_OHNE_SPALTSIEB,
+           i_I_KM_MAX_NIVEAU        := "I_KM_MAX_NIVEAU",
+           i_I_KM_MIN_NIVEAU        := "I_KM_MIN_NIVEAU",
+           i_I_KM_MIN_VOR_NIVEAU    := "I_KM_MIN_VOR_NIVEAU",
+           i_I_D_KM_MAX_NIVEAU      := "I_D_KM_MAX_NIVEAU",
+           i_I_D_KM_MIN_NIVEAU      := "I_D_KM_MIN_NIVEAU",
+           i_I_D_KM_MIN_VOR_NIVEAU  := "I_D_KM_MIN_VOR_NIVEAU",
+           i_I_KM_BTB_ALLE_PUMPEN   := "I_KM_BTB_ALLE_PUMPEN",
+           i_I_KM_BTB_PNOZ          := "I_KM_BTB_PNOZ",
+           i_I_KM_NEG_KSA_MELDUNG   := "I_KM_NEG_KSA_MELDUNG",
+           i_I_KM_NEG_MSS_SSA       := "I_KM_NEG_MSS_SSA",
+           i_I_KM_NEG_MSS_KSA       := "I_KM_NEG_MSS_KSA",
+           i_I_CU_GAP_SCREEN_CL_UPP := "I_CU_GAP_SCREEN_CL_UPP",
+           i_I_CU_GAP_SCREEN_CL_LOW := "I_CU_GAP_SCREEN_CL_LOW",
+           i_I_CU_NEG_PRESS_MONITOR := "I_CU_NEG_PRESS_MONITOR",
+           i_O_KM_Spuelpumpe_ein    := "O_KM_Spuelpumpe_ein",
+           i_O_KM_Pumpe_Dach        := "O_KM_Pumpe_Dach",
+           i_O_KM_Pumpe_Dach2       := "O_KM_Pumpe_Dach2",
+           i_O_KM_M8_Ein            := "O_KM_M8_Ein",
+           i_O_KM_M7_Ein            := "O_KM_M7_Ein",
+           i_Timer_max              := "T_KSA3_KSA7_MAX",
+           i_Timer_min              := "T_KSA3_KSA7_MIN",
+           i_Timer_vorw             := "T_KSA3_KSA7_VORW",
+           i_Timer_vorw_reaktion    := "T_KSA3_KSA7_VORW_REAKT",
+           i_Timer_DS_Unterdruck    := "T_KSA7_DS_UNTERDRUCK",
+           i_Timer_Spaltsieb_Laufz  := "T_KSA7_SPALTSIEB_LAUFZ",
+           i_Counter_min_Intervall  := "Z_MIN_TAKT_SPALTSIEB",
+           i_Counter_sec_Intervall  := "Z_SEC_TAKT_SPALTSIEB",
+           i_Counter_Spaltsiebtakte := "Z_SPALTSIEB_TAKTE",
+           i_O_SF_PUMPE_EIN         := "O_SF_PUMPE_EIN",
+           io_M_Fehler_Kmtl_Anlage  := "M_Fehler_Kmtl_Anlage",
+           io_M_Spuelung_unterdruek := "M_M97_M98_unterdrücken",
+           io_Mel_max               := "DB_FEHLERMELDUNG".MELDUNG3._700510_KSA3_MAX,
+           io_Mel_min               := "DB_FEHLERMELDUNG".MELDUNG3._700511_KSA3_MIN,
+           io_Mel_Vorwarnung        := "DB_FEHLERMELDUNG".MELDUNG3._700512_KSA3_Vorwar,
+           io_Mel_BTB_PNOZ          := "DB_FEHLERMELDUNG".MELDUNG3._700514_KSA3_BTB_PNOZ,
+           io_Mel_KSA               := "DB_FEHLERMELDUNG".WARNUNG2._701409_NEG_KSA_MELDUNG,
+           io_SPVHLT                := "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._701002_KMTL_KSA3_SPVH,
+           io_Mel_Schalter_Defekt   := "DB_FEHLERMELDUNG".MELDUNG3._700513_Schalter_Defekt,
+           io_Mel_BTB_Alle_Pumpen   := "DB_FEHLERMELDUNG".MELDUNG3._700515_KSA3_BTB_Alle_Pu,
+           io_Temp_Meldung_VORW     := "MX_Temp_Vorw",
+           io_War_Spaltsieb_Zylind  := "DB_FEHLERMELDUNG".WARNUNG4._702316_Spaltsieb_lz,
+           io_Mel_IKZ_Unterdruck    := "DB_FEHLERMELDUNG".MELDUNG5._510229_KSA_IKZ_UNTERDRU,
+           io_Spaltsieb_reinig_akt  := "M_KMTL_SPALTSIEB_AKTIV",
+           io_Spaltsieb_gereinigt   := "M_KMTL_SPALTSIEB_GEREINI",
+           io_O_CU_GAP_SCREEN_CLEAN := "O_CU_GAP_SCREEN_CLEAN");
+M012: NOP   0; 
+NETWORK
+TITLE =700808 "SPVS-HA-HPT, IKZ: Druckschalter Leckageüberwachung 0-Sig
+
+      UN    "DB_PLC_MD_DB20".UDHex._11_BIT5_LECKAGE_UEBERW; 
+      R     "DB_REMANENT".IKZ_Leckage_vorhanden; 
+
+      U     "M_Ruecksetze_Fehler"; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700808_IKZ_Leckage; 
+
+      U     "DB_PLC_MD_DB20".UDHex._11_BIT5_LECKAGE_UEBERW; 
+      SPBN  M006; 
+
+      L     W#16#2000; // sekunden
+      L     "DB_PLC_MD_DB20".UDInt._126_ZEIT_LECK_DREHD; 
+      OW    ; 
+      T     #Zeitwert; 
+
+      UN    "M_MinMg_Schmier_Aktiv"; 
+      U     "M_M7_Act"; 
+      UN    "M_Umschalt_KMTL"; 
+      U(    ; 
+      U     "DB_REMANENT".IKZ_Leckage_vorhanden; 
+      ON    "I_KM_Leckueberw_OK"; 
+      )     ; 
+      UN    "M_WZW_Aktiv"; 
+      L     #Zeitwert; 
+      SE    "Te_Ueberw_Drehdurchführ"; 
+      U     "Te_Ueberw_Drehdurchführ"; 
+      S     "DB_REMANENT".IKZ_Leckage_vorhanden; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700808_IKZ_Leckage; 
+
+M006: NOP   0; 
+NETWORK
+TITLE =----- IKZ-Durchfluss überwachen --------------------------------
+//Bei DB50.DBX15.7 = 1 (Test IKZ) ist
+//das Signal "Durchfluss vorhanden" von der "gelben Taste" abhängig.
+//
+//UDHex._25_Bit0_IKZ_DFW           KSA: IKZ-Durchflusswächter vorhanden
+//UDHex._25_Bit5_IKZ_Abschaltung   KSA: IKZ-Überwachung-Abschaltphase ausschalten
+//
+//Überwachungszeiten:
+//DB700.DBB 0    Anlauf-Überwachung     initial:  5 #05 [s]
+//DB700.DBB 1    Betriebs-Überwachung   initial: 10 #0A [100ms]
+//DB700.DBB 2    Ausschalt-Überwachung  initial: 20 #14 [s]
+//DB50.DBD 234    "DB_HR".IKZ_Zeiten.maxEinbruch_G1  [100ms] (nur Anzeige)
+//
+//=========== alte Anwahl Ausbaustufe =====================================
+//alt: DB50.DBX 218.1  "DB_HR".ABST.IKZ_Durchfluss
+//
+//DB50.DBB 230    Anlauf-Überwachung     initial:  5 #05 [s]
+//DB50.DBB 231    Betriebs-Überwachung   initial: 10 #0A [100ms]
+//DB50.DBB 232    Ausschalt-Überwachung  initial: 20 #14 [s]
+//DB50.DBD 234    "DB_HR".IKZ_Zeiten.maxEinbruch_G1  [100ms] (nur Anzeige)
+      NOP   0; 
+
+NETWORK
+TITLE =Merker Kühlmittel unterdrücken
+
+      U(    ; 
+      O(    ; 
+      L     1; 
+      L     "DB_PLC_MD_DB20".UDInt._032_ANWAHL_WZVERMESSUNG; 
+      ==I   ; // Blum 1 mit Abdeckung
+      )     ; 
+      O(    ; 
+      L     2; 
+      ==I   ; // Blum 2 mit Abdeckung
+      )     ; 
+      )     ; 
+      UN    "I_LA_eingeschwenkt"; 
+      O     "DB_NC_PLC".LASER_Aktiv; 
+      O     "I_WW_1_Klappe_auf"; 
+      O     "O_WW_1_Klappe_auf"; 
+      O(    ; 
+      U     "DB_NC_PLC".PW_Anwahl; 
+      UN    "DB_PW_DATA".In.IX_PW_Hub_unten; //  "I_PW_Hub_unten"
+      )     ; 
+      ON    "I_AL_Kabine_Verriegelt"; 
+      O     "DB_FEHLERMELDUNG".Meldung._702029_VSSPH_Taste_Auto; 
+      O     ; 
+      U(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._162_IKUEZ_KONFIGURATION; 
+      L     0; 
+      >I    ; 
+      U     "M_Hauptspindel_steht"; 
+      )     ; 
+      =     "M_KM_unterdruecken"; 
+NETWORK
+TITLE =IKZ-Durchfluss ist OK
+//Bei DB50.DBX15.7 = 1 (Test IKZ) ist
+//das Signal "Durchfluss vorhanden" von der "gelben Taste" abhängig.
+      U     "I_KM_DURCHFLUSS_HD_OK"; 
+      UN    "DB_HR".KSA.ABST_Test_IKZ; 
+      O     ; 
+      U     E      1.3; 
+      U     "DB_HR".KSA.ABST_Test_IKZ; 
+      =     #t_IKZ_Durchfluss_OK; 
+NETWORK
+TITLE ="Gelbe Taste" für Simulation "Durchfluss vorhanden"
+
+      U     "m_neustart"; 
+      R     "DB_HR".KSA.ABST_Test_IKZ; 
+NETWORK
+TITLE =CALL "FC_IKZ_UEBERWACHUNG"
+
+      U     "DB_PLC_MD_DB20".UDHex._25_Bit0_IKZ_DFW; 
+      UN    "DB_ANWENDER_SOFTKEY".Anwender.Kuehlmittel.Wasser_inaktiv; 
+      =     L     10.0; 
+      U     "I_KM_M7_DFW_LTG_OK"; 
+      =     L     10.1; 
+      BLD   103; 
+      U     #t_IKZ_Durchfluss_OK; 
+      =     L     10.2; 
+      BLD   103; 
+      U     "M_KM_unterdruecken"; 
+      =     L     10.3; 
+      BLD   103; 
+      U     L     10.0; 
+      SPBNB _006; 
+      CALL "FC_IKZ_UEBERWACHUNG" (
+           i_Leitung_OK_CTRL        := L     10.1,
+           i_Durchfluss_vorhanden   := L     10.2,
+           i_KM_unterdruecken       := L     10.3,
+           o_IKZ_OVR_0              := "MX_IKZ_OVR_0");
+_006: NOP   0; 
+      U     L     10.0; 
+      NOT   ; 
+      R     "DB_FEHLERMELDUNG".VS_SpiVerz_Halt._700319_IKZ_Anlauf; 
+      R     "DB_FEHLERMELDUNG".VS_SpiVerz_Halt._700320_IKZ_G1; 
+      R     "DB_FEHLERMELDUNG".VS_SpiVerz_Halt._700321_IKZ_aus; 
+      R     "DB_FEHLERMELDUNG".VS_SpiVerz_Halt._700324; 
+      R     "MX_IKZ_OVR_0"; 
+NETWORK
+TITLE =702456 "MEL, Kühlmittelanlage: Wartung erforderlich!"
+//
+//
+//
+      U     "DB_PLC_MD_DB20".UDHex._25_Bit1_Filter_Feinb; 
+      U(    ; 
+      U     "DB_PLC_MD_DB20".UDHex._25_Bit6_DUF_40Bar_PUM; 
+      U(    ; 
+      O     "I_KM_WARTUNG"; 
+      ON    "I_KM_DRUCK0_M7_ENABLE"; 
+      )     ; 
+      O     ; 
+      U     "DB_PLC_MD_DB20".UDHex._25_Bit7_DUF_80Bar_PUM; 
+      U(    ; 
+      O     "I_KM_WARTUNG"; 
+      O     ; 
+      UN    "DB_PLC_MD_DB20".UDHex._31_Bit1_SOLUTIONLINE; 
+      UN    "I_KM_DRUCK2_M7_ENABLE"; 
+      O     ; 
+      U     "DB_PLC_MD_DB20".UDHex._31_Bit1_SOLUTIONLINE; 
+      UN    "I_KM_DRUCK1_M7_ENABLE"; 
+      )     ; 
+      )     ; 
+      U     "M_MA_Maschine_Ein"; 
+
+
+      S     "DB_FEHLERMELDUNG".Meldung4._702456_KM_Wartung; 
+      U     "M_Ruecksetze_Fehler"; 
+      R     "DB_FEHLERMELDUNG".Meldung4._702456_KM_Wartung; 
+      NOP   0; 
+NETWORK
+TITLE =510110 "SPVS-HA-HPT, Kühlmittel: Freigabe Druckstufenumschaltung
+
+      U     "DB_PLC_MD_DB20".UDHex._25_Bit1_Filter_Feinb; 
+      U(    ; 
+      U     "DB_PLC_MD_DB20".UDHex._25_Bit6_DUF_40Bar_PUM; 
+      U     "O_KM_M7_Ein"; 
+      UN    "I_KM_DRUCK0_M7_ENABLE"; 
+      O     ; 
+      U     "DB_PLC_MD_DB20".UDHex._25_Bit7_DUF_80Bar_PUM; 
+      U     "O_KM_DRUCK2_M7_EIN"; 
+      U(    ; 
+      UN    "DB_PLC_MD_DB20".UDHex._31_Bit1_SOLUTIONLINE; 
+
+
+      UN    "I_KM_DRUCK2_M7_ENABLE"; 
+      O     ; 
+      U     "DB_PLC_MD_DB20".UDHex._31_Bit1_SOLUTIONLINE; 
+      UN    "I_KM_DRUCK1_M7_ENABLE"; 
+      )     ; 
+      )     ; 
+      U     "M_M7_Act"; 
+      U     "M_MA_Maschine_Ein"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt1._510110_KM_FRG_Druckum; 
+      U     "M_Ruecksetze_Fehler"; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt1._510110_KM_FRG_Druckum; 
+      NOP   0; 
+END_FUNCTION
+

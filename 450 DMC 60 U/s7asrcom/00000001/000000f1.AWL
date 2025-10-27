@@ -1,0 +1,950 @@
+FUNCTION "FC_CO_ERROR" : VOID
+TITLE =
+//$Revision: 1.23 $
+//$Date: 2008/10/08 11:16:54CEST $
+//$Author: hgc $
+//
+//Fehler-Modul
+//
+//erstellt: 12.02.2000 AB
+//geändert: 24.02.2000 AB -> Umstellung auf absulute Adressen
+//                        -> Expertenbit eingeführt
+//
+//Beschreibung 
+//
+//Der FC liest die Anwendermeldungen aus dem DB 62 und setzt Anforderungen für 
+//verschiedene Reaktionen der Meldung
+//
+//
+//Außerdem werden die Meldungen in den  DB 2 kopiert ab DBB 180.
+//Der FC 10 wird aufgerufen.
+//
+//
+//Fehlerreaktionen:
+//
+//Anhalten beim nächsten Satzwechsel        durch Stop_Satzgrenzen
+//Anhalten beim nächsten Wzwechsel          durch Vorschubsperre 
+//                                          wenn nächster Wz.Wechsel ansteht
+//Anhalten beim nächsten Palwechsel         durch Vorschubsperre                  
+//                                          wenn nächster Pal.Wechsel ansteht
+//Anhalten beim nächsten Schwenken          durch Vorschubsperre                  
+//                                          wenn nächstes Schwenken ansteht
+//Anhalten bei nächster Sonderaktion        durch Vorschubsperre                  
+//                                          wenn nächste Sonderaktion ansteht
+//
+//Expertenbit:
+//
+//IM DB102 werden ab Adresse DBW 180 Masken hinterlegt um Fehlermeldungen zu 
+//unterdrücken
+//
+
+VERSION : 0.1
+
+
+VAR_INPUT
+  E_EN : BOOL ;	//Enable / Modul-Freigabe
+  E_Expertenbit : BOOL ;	//Expertenbit Meldungen unterdrücken
+  E_Init : BOOL ;	//Reset DB102 bei Neustart
+  E_Zeit_Spindel : TIMER ;	
+  E_Zeit_Spindel_HptAx : TIMER ;	
+  E_Verz_Spindel_Stop : S5TIME ;	
+  E_Fehler_Quit : BOOL ;	
+  E_NC_Reset : BOOL ;	
+  Te_Quit_verzoegert : TIMER ;	
+  E_WzWechsel : BOOL ;	//RM Werkzeugwechsel startet
+  E_PalWechsel : BOOL ;	//RM Palettenwechsler startet
+  E_Kopf_schwenken : BOOL ;	//RM Kopf will schwenken
+  E_Sonderaktion : BOOL ;	//RM Sonderaktion
+  E_DB_Maske : BLOCK_DB ;	//Masken - DB
+  E_Hpt_ax_stehen : BOOL ;	
+  E_G0_Timer_Fehler : TIMER ;	
+  E_Zeit_bei_G0_Fehler : INT ;	
+END_VAR
+VAR_IN_OUT
+  A_NOT_AUS : BOOL ;	//Anforderung Not-Aus steht an 
+  A_NC_Startsperre : BOOL ;	//Anforderung NC-Startsperre
+  A_Stop_Satzgrenzen : BOOL ;	//Anforderung NC-Stop an Satzgrenzen steht an 
+  A_Vorschub_Halt_Kanal : BOOL ;	//Anforderung Vorschubsperre steht an 
+  A_Spindel_Halt_Kanal : BOOL ;	//Anforderung Spindel Halt steht an 
+  A_VS_Halt_HauptAx : BOOL ;	//Anforderung Vorschubsperre der Geo-Achsen steht an 
+  A_Einlesesperre : BOOL ;	//Anforderung Einlesesperre steht an 
+  A_Stop_Async_Prozess1 : BOOL ;	//Vorschub Halt Asynchroner Prozess 1
+  A_Stop_Async_Prozess2 : BOOL ;	//Vorschub Halt Asynchroner Prozess 2
+  A_Stop_Async_Prozess3 : BOOL ;	//Vorschub Halt Asynchroner Prozess 3
+  A_Stop_Async_Prozess4 : BOOL ;	//Vorschub Halt Asynchroner Prozess 4
+  A_Warnung : BOOL ;	//Sammel-Warnung steht an
+  A_Meldung : BOOL ;	//Sammel-Meldung steht an
+END_VAR
+VAR_TEMP
+  T_ret_val_SFC20 : INT ;	
+  TX_NOT_AUS : BOOL ;	
+  TX_Spi_VS_Halt : BOOL ;	
+  TX_VS_SpiVerz_Halt : BOOL ;	
+  TX_VS_Halt : BOOL ;	
+  TX_Einlesesperre : BOOL ;	
+  TX_Spi_VS_Halt_Haupt : BOOL ;	
+  TX_VS_Halt_Haupt : BOOL ;	
+  TX_VSP_Halt_Satzwechsel : BOOL ;	
+  TX_MELDUNG_2 : BOOL ;	
+  TX_WARNUNG_2 : BOOL ;	
+  TX_SAFE_WARN : BOOL ;	
+  TX_SAFE_MELD : BOOL ;	
+  TX_VS_Halt_Async1 : BOOL ;	
+  TX_VS_Halt_Async2 : BOOL ;	
+  TX_VS_Halt_Async3 : BOOL ;	
+  TX_VS_Halt_Async4 : BOOL ;	
+  TX_WARNUNG : BOOL ;	
+  TX_MELDUNG : BOOL ;	
+  T_wdummy : WORD ;	
+  T_Quit : BOOL ;	
+  T_stop_sammel : BOOL ;	
+  TX_NC_Startsperre : BOOL ;	
+  TX_WARNUNG_1 : BOOL ;	
+  TX_MELDUNG_3 : BOOL ;	
+  TX_WARN_SAFE : BOOL ;	
+  TX_WARNUNG_3 : BOOL ;	
+  TX_MELDUNG_4 : BOOL ;	
+  TX_WARNUNG_4 : BOOL ;	
+  TX_MELDEFENSTER2 : BOOL ;	
+  TX_VS_Halt_Kanal2 : BOOL ;	
+  TX_SPI_VS_HALT_G0 : BOOL ;	//Spi_VS_HLT HPT bei G0
+  TX_G0_Fehler_wirksam : BOOL ;	//Zeit abgelaufen oder G0 aktiv und SPI-VS-HLT-G0 Fehler
+  TT_Zeitwert : S5TIME ;	
+  TX_MELDEFENSTER : BOOL ;	//Meldefenster für Bedienerführung Bereich
+  TX_MELDUNG_6 : BOOL ;	
+  TX_WARNUNG_5 : BOOL ;	
+  TX_MELDUNG_5 : BOOL ;	
+  TX_MELDEFENSTER3 : BOOL ;	
+  TX_MELDEFENSTER4 : BOOL ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =Baustein-Freigabe
+
+      UN    #E_EN; 
+      BEB   ; 
+NETWORK
+TITLE =Initialisieren bei Neustart
+
+      U     #E_Init; 
+      SPBN  N3; 
+      AUF   "DB_FEHLERMELDUNG"; 
+      L     0; 
+      T     DBD    0; 
+      T     DBD    4; 
+      T     DBD    8; 
+      T     DBD   12; 
+      T     DBD   16; 
+      T     DBD   20; 
+      T     DBD   24; 
+      T     DBD   28; 
+      T     DBD   32; 
+      T     DBD   36; 
+      T     DBD   40; 
+      T     DBD   44; 
+      T     DBD   48; 
+      T     DBD   52; 
+      T     DBD   56; 
+      T     DBD   60; 
+      T     DBD   64; 
+      T     DBD   68; 
+      T     DBD   72; 
+      T     DBD   76; 
+      T     DBD   80; 
+      T     DBD   84; 
+      T     DBD   88; 
+      T     DBD   92; 
+      T     DBD   96; 
+      T     DBD  100; 
+      T     DBD  104; 
+      T     DBD  108; 
+      T     DBD  112; 
+      T     DBD  116; 
+      T     DBD  120; 
+      T     DBD  124; 
+      T     DBD  128; 
+      T     DBD  132; 
+      T     DBD  136; 
+      T     DBD  140; 
+      T     DBD  144; 
+      T     DBD  148; 
+      T     DBD  152; 
+      T     DBD  156; 
+      T     DBD  160; 
+      T     DBD  164; 
+      T     DBD  168; 
+      T     DBD  172; 
+      T     DBD  176; 
+      T     DBD  180; 
+      T     DBD  184; 
+      T     DBD  188; 
+      T     DBD  192; 
+      T     DBD  196; 
+      T     DBD  200; 
+      T     DBD  204; 
+      T     DBD  208; 
+      T     DBD  212; 
+      T     DBD  216; 
+      T     DBD  220; 
+      T     DBD  224; 
+      T     DBD  228; 
+      T     DBD  232; 
+      T     DBD  236; 
+      T     DBD  240; 
+      T     DBD  244; 
+      T     DBD  248; 
+      T     DBD  252; 
+      T     DBD  256; 
+      T     DBD  260; 
+      T     DBD  264; 
+      T     DBD  268; 
+      T     DBD  272; 
+      T     DBD  276; 
+      T     DBW  280; 
+
+
+
+
+      AUF   "DB_SLAVE_DIAGNOSE"; 
+      L     0; 
+      T     DBW   20; //Diagnose ASI
+      T     DBW   22; //Diagnose ASI
+
+
+NETWORK
+TITLE =DB-Fehlermeldung öffnen -> Sammelreaktionen generieren
+//
+//   
+N3:   AUF   "DB_FEHLERMELDUNG"; 
+
+NETWORK
+TITLE =NOT-AUS Achsen und Spindel + NC-Startsperre
+
+      O(    ; 
+      L     DBD    0; 
+      L     0; 
+      <>D   ; 
+      )     ; 
+      O(    ; 
+      L     DBD    4; 
+      L     0; 
+      <>D   ; 
+      )     ; 
+      =     #TX_NOT_AUS; 
+NETWORK
+TITLE =NC-Startsperre
+
+      L     DBW    8; 
+      L     0; 
+      <>I   ; 
+      =     #TX_NC_Startsperre; 
+NETWORK
+TITLE =Spindel Halt und Vorschub Halt im Kanal
+
+      O(    ; 
+      L     DBD   10; 
+      L     0; 
+      <>D   ; 
+      )     ; 
+      O(    ; 
+      L     DBD   14; 
+      L     0; 
+      <>D   ; 
+      )     ; 
+      O(    ; 
+      L     DBD   18; 
+      L     0; 
+      <>D   ; 
+      )     ; 
+      O(    ; 
+      L     DBD   22; 
+      L     0; 
+      <>D   ; 
+      )     ; 
+      O(    ; 
+      L     DBD   92; 
+      L     0; 
+      <>I   ; 
+      )     ; 
+      O(    ; 
+      L     DBD  200; 
+      L     0; 
+      <>D   ; 
+      )     ; 
+      O(    ; 
+      L     DBD  204; 
+      L     0; 
+      <>D   ; 
+      )     ; 
+      O(    ; 
+      L     DBD  216; 
+      L     0; 
+      <>D   ; 
+      )     ; 
+      O(    ; 
+      L     DBD  220; 
+      L     0; 
+      <>D   ; 
+      )     ; 
+      =     #TX_Spi_VS_Halt; 
+NETWORK
+TITLE =Spindelhalt verzögert und Vorschubhalt Kanal
+
+      L     DBW   26; 
+      L     0; 
+      <>I   ; 
+      =     #TX_VS_SpiVerz_Halt; 
+NETWORK
+TITLE =Warnung 3
+
+      O(    ; 
+      L     DBD   28; 
+      L     0; 
+      <>D   ; 
+      )     ; 
+      O(    ; 
+      L     DBD   32; 
+      L     0; 
+      <>D   ; 
+      )     ; 
+      =     #TX_WARNUNG_3; 
+NETWORK
+TITLE =Vorschub Halt Kanal
+
+      L     DBW   36; 
+      L     0; 
+      <>I   ; 
+      =     #TX_VS_Halt; 
+NETWORK
+TITLE =Meldung 3
+
+      O(    ; 
+      L     DBD   38; 
+      L     0; 
+      <>D   ; 
+      )     ; 
+      O(    ; 
+      L     DBW   42; 
+      L     0; 
+      <>I   ; 
+      )     ; 
+      =     #TX_MELDUNG_3; 
+NETWORK
+TITLE =Warnung SAFE
+
+      L     DBW   44; 
+      L     0; 
+      <>I   ; 
+      =     #TX_WARN_SAFE; 
+NETWORK
+TITLE =Einlesesperre
+
+      O(    ; 
+      L     DBD   46; 
+      L     0; 
+      <>D   ; 
+      )     ; 
+      O(    ; 
+      L     DBW   50; 
+      L     0; 
+      <>I   ; 
+      )     ; 
+      =     #TX_Einlesesperre; 
+NETWORK
+TITLE = Spindelhalt und Vorschubhalt Hauptachsen
+
+      O(    ; 
+      L     DBD   52; 
+      L     0; 
+      <>D   ; 
+      )     ; 
+      O(    ; 
+      L     DBD   56; 
+      L     0; 
+      <>D   ; 
+      )     ; 
+      O(    ; 
+      L     DBD   60; 
+      L     0; 
+      <>D   ; 
+      )     ; 
+      O(    ; 
+      L     DBD   64; 
+      L     0; 
+      <>D   ; 
+      )     ; 
+      O(    ; 
+      L     DBD   68; 
+      L     0; 
+      <>D   ; 
+      )     ; 
+      O(    ; 
+      L     DBD   72; 
+      L     0; 
+      <>D   ; 
+      )     ; 
+      O(    ; 
+      L     DBD   76; 
+      L     0; 
+      <>D   ; 
+      )     ; 
+      O(    ; 
+      L     DBD   80; 
+      L     0; 
+      <>D   ; 
+      )     ; 
+      O(    ; 
+      L     DBW   84; 
+      L     0; 
+      <>I   ; 
+      )     ; 
+      O(    ; 
+      L     DBD  224; 
+      L     0; 
+      <>D   ; 
+      )     ; 
+      =     #TX_Spi_VS_Halt_Haupt; 
+NETWORK
+TITLE =Vorschubhalt Hauptachsen
+
+      O(    ; 
+      L     DBD   86; 
+      L     0; 
+      <>D   ; 
+      )     ; 
+      O(    ; 
+      L     DBW   90; 
+      L     0; 
+      <>D   ; 
+      )     ; 
+      =     #TX_VS_Halt_Haupt; 
+NETWORK
+TITLE =NC-Stop bei nächsten Satzwechsel 
+
+      O(    ; 
+      L     DBD   96; 
+      L     0; 
+      <>D   ; 
+      )     ; 
+      O(    ; 
+      L     DBW  100; 
+      L     0; 
+      <>I   ; 
+      )     ; 
+      =     #TX_VSP_Halt_Satzwechsel; 
+NETWORK
+TITLE = Meldung 2
+
+      O(    ; 
+      L     DBD  102; 
+      L     0; 
+      <>D   ; 
+      )     ; 
+      O(    ; 
+      L     DBW  106; 
+      L     0; 
+      <>I   ; 
+      )     ; 
+      =     #TX_MELDUNG_2; 
+NETWORK
+TITLE = Warnung 2
+
+      O(    ; 
+      L     DBD  108; 
+      L     0; 
+      <>D   ; 
+      )     ; 
+      O(    ; 
+      L     DBW  112; 
+      L     0; 
+      <>I   ; 
+      )     ; 
+      =     #TX_WARNUNG_2; 
+NETWORK
+TITLE =Safety Warnung
+
+      O(    ; 
+      L     DBD  114; 
+      L     0; 
+      <>D   ; 
+      )     ; 
+      O(    ; 
+      L     DBW  118; 
+      L     0; 
+      <>I   ; 
+      )     ; 
+      =     #TX_SAFE_WARN; 
+NETWORK
+TITLE =Safety Meldung
+
+      L     DBD  120; 
+      L     0; 
+      <>D   ; 
+      =     #TX_SAFE_MELD; 
+NETWORK
+TITLE =Warnung 1
+
+      L     DBW  124; 
+      L     0; 
+      <>I   ; 
+      =     #TX_WARNUNG_1; 
+NETWORK
+TITLE = Vorschub Halt  Asynchroner Prozess 1 
+
+      O(    ; 
+      L     DBD  126; 
+      L     0; 
+      <>D   ; 
+      )     ; 
+      O(    ; 
+      L     DBW  130; 
+      L     0; 
+      <>I   ; 
+      )     ; 
+      O(    ; 
+      L     DBW  182; 
+      L     0; 
+      <>I   ; 
+      )     ; 
+      O(    ; 
+      L     DBD  228; 
+      L     0; 
+      <>D   ; 
+      )     ; 
+      =     #TX_VS_Halt_Async1; 
+NETWORK
+TITLE =Vorschub Halt  Asynchroner Prozess 2
+
+      O(    ; 
+      L     DBD  132; 
+      L     0; 
+      <>D   ; 
+      )     ; 
+      O(    ; 
+      L     DBW  136; 
+      L     0; 
+      <>I   ; 
+      )     ; 
+      =     #TX_VS_Halt_Async2; 
+NETWORK
+TITLE =Vorschub Halt  Asynchroner Prozess 3
+
+      O(    ; 
+      L     DBD  138; 
+      L     0; 
+      <>D   ; 
+      )     ; 
+      O(    ; 
+      L     DBW  142; 
+      L     0; 
+      <>I   ; 
+      )     ; 
+      O(    ; 
+      L     DBD  232; 
+      L     0; 
+      <>D   ; 
+      )     ; 
+      =     #TX_VS_Halt_Async3; 
+NETWORK
+TITLE =Vorschub Halt  Asynchroner Prozess 4
+
+      O(    ; 
+      L     DBD  144; 
+      L     0; 
+      <>D   ; 
+      )     ; 
+      O(    ; 
+      L     DBW  148; 
+      L     0; 
+      <>I   ; 
+      )     ; 
+      O(    ; 
+      L     DBD  236; 
+      L     0; 
+      <>D   ; 
+      )     ; 
+      =     #TX_VS_Halt_Async4; 
+NETWORK
+TITLE =Warnung
+
+      O(    ; 
+      L     DBD  150; 
+      L     0; 
+      <>D   ; 
+      )     ; 
+      O(    ; 
+      L     DBD  154; 
+      L     0; 
+      <>D   ; 
+      )     ; 
+      O(    ; 
+      L     DBW  158; 
+      L     0; 
+      <>I   ; 
+      )     ; 
+      =     #TX_WARNUNG; 
+NETWORK
+TITLE =Meldung
+
+      O(    ; 
+      L     DBD  160; 
+      L     0; 
+      <>D   ; 
+      )     ; 
+      O(    ; 
+      L     DBD  164; 
+      L     0; 
+      <>D   ; 
+      )     ; 
+      O(    ; 
+      L     DBD  168; 
+      L     0; 
+      <>D   ; 
+      )     ; 
+      O(    ; 
+      L     DBD  172; 
+      L     0; 
+      <>D   ; 
+      )     ; 
+      O(    ; 
+      L     DBD  176; 
+      L     0; 
+      <>D   ; 
+      )     ; 
+      O(    ; 
+      L     DBW  178; 
+      L     0; 
+      <>I   ; 
+      )     ; 
+      =     #TX_MELDUNG; 
+NETWORK
+TITLE =SPI-VS-HLT bei G0
+////  sja 30.12.04 
+      L     DBW  180; 
+      L     0; 
+      <>I   ; 
+      =     #TX_SPI_VS_HALT_G0; 
+NETWORK
+TITLE =Warnung 4
+
+      O(    ; 
+      L     DBD  184; 
+      L     0; 
+      <>D   ; 
+      )     ; 
+      O(    ; 
+      L     DBD  188; 
+      L     0; 
+      <>D   ; 
+      )     ; 
+      =     #TX_WARNUNG_4; 
+NETWORK
+TITLE =Meldung 4
+
+      O(    ; 
+      L     DBD  192; 
+      L     0; 
+      <>D   ; 
+      )     ; 
+      O(    ; 
+      L     DBD  196; 
+      L     0; 
+      <>D   ; 
+      )     ; 
+      =     #TX_MELDUNG_4; 
+NETWORK
+TITLE =Meldung 5
+
+      L     DBD  208; 
+      L     0; 
+      <>D   ; 
+      =     #TX_MELDUNG_5; 
+NETWORK
+TITLE =Meldefenster2 (Bedienerführung)
+
+      L     DBD  212; 
+      L     0; 
+      <>D   ; 
+      =     #TX_MELDEFENSTER2; 
+NETWORK
+TITLE =Warnungen 5
+
+      L     DBD  240; 
+      L     0; 
+      <>D   ; 
+      =     #TX_WARNUNG_5; 
+NETWORK
+TITLE =Meldungen 6
+
+      L     DBD  244; 
+      L     0; 
+      <>D   ; 
+      =     #TX_MELDUNG_6; 
+NETWORK
+TITLE =Meldefenster (Bedienerführung)
+
+      O(    ; 
+      L     DBD  248; 
+      L     0; 
+      <>D   ; 
+      )     ; 
+      O(    ; 
+      L     DBD  252; 
+      L     0; 
+      <>D   ; 
+      )     ; 
+      O(    ; 
+      L     DBD  256; 
+      L     0; 
+      <>D   ; 
+      )     ; 
+      O(    ; 
+      L     DBD  260; 
+      L     0; 
+      <>D   ; 
+      )     ; 
+      O(    ; 
+      L     DBD  264; 
+      L     0; 
+      <>D   ; 
+      )     ; 
+      O(    ; 
+      L     DBD  268; 
+      L     0; 
+      <>D   ; 
+      )     ; 
+      =     #TX_MELDEFENSTER; 
+NETWORK
+TITLE =Meldefenster 3 (Bedienerführung)
+
+      L     DBW  272; 
+      L     0; 
+      <>D   ; 
+      =     #TX_MELDEFENSTER3; 
+NETWORK
+TITLE =Meldefenster 4 (Bedienerführung)
+
+      O(    ; 
+      L     DBD  274; 
+      L     0; 
+      <>D   ; 
+      )     ; 
+      O(    ; 
+      L     DBD  278; 
+      L     0; 
+      <>D   ; 
+      )     ; 
+      =     #TX_MELDEFENSTER4; 
+NETWORK
+TITLE =Zeitwert bilden für G0 Fehler ausgeben
+
+      L     #E_Zeit_bei_G0_Fehler; 
+      ITB   ; 
+      T     #T_wdummy; 
+      NOP   0; 
+NETWORK
+TITLE =Zeitwert bilden für G0 Fehler ausgeben
+
+      L     W#16#2000; 
+      L     #T_wdummy; 
+      OW    ; 
+      T     #TT_Zeitwert; 
+      NOP   0; 
+NETWORK
+TITLE =Zeit G0 Fehler ausgeben, da innerhalb param. Zeit kein G0 kam
+
+      U     #TX_SPI_VS_HALT_G0; 
+      UN    "M_G00_aktiv"; 
+      L     #TT_Zeitwert; 
+      SE    #E_G0_Timer_Fehler; 
+
+
+      U     #E_G0_Timer_Fehler; 
+      O     "M_G00_aktiv"; 
+      U     #TX_SPI_VS_HALT_G0; 
+      =     #TX_G0_Fehler_wirksam; 
+
+NETWORK
+TITLE =Verzögerungszeit Spindel
+
+      U     #TX_VS_SpiVerz_Halt; 
+      L     #E_Verz_Spindel_Stop; 
+      SE    #E_Zeit_Spindel; 
+NETWORK
+TITLE =Ausgangsbits  setzen
+//-----NOT-AUS--------------------------------------------
+      U     #TX_NOT_AUS; 
+      =     #A_NOT_AUS; // NOT-AUS
+
+//-----NC-Startsperre-------------------------------------
+      U     #TX_NC_Startsperre; // NC-Startsperre
+      =     #A_NC_Startsperre; 
+
+//-----Vorschub Halt Kanal--------------------------------
+
+      O     #TX_Spi_VS_Halt; 
+      O     #TX_VS_SpiVerz_Halt; 
+      O     #TX_VS_Halt; 
+      =     #A_Vorschub_Halt_Kanal; //Kanal Vorschub Halt
+
+//----Spindel Halt Kanal-----------------------------------
+
+      O     #TX_Spi_VS_Halt; 
+      O     #E_Zeit_Spindel; 
+      O(    ; 
+      U     #TX_Spi_VS_Halt_Haupt; 
+      O     #TX_G0_Fehler_wirksam; 
+      U     #E_Hpt_ax_stehen; 
+      )     ; 
+      =     #A_Spindel_Halt_Kanal; //Kanal Spindel Halt
+
+//----Vorschub Halt Hauptachsen------------------------------
+
+      O     #TX_Spi_VS_Halt_Haupt; 
+      O     #TX_VS_Halt_Haupt; 
+      O     #TX_G0_Fehler_wirksam; 
+      =     #A_VS_Halt_HauptAx; //Vorschub Halt HauptAx
+
+//----Einlesesperre------------------------------------------
+
+      U     #TX_Einlesesperre; 
+      =     #A_Einlesesperre; //Einlesesperre
+
+//----Stop an Satzgrenzen------------------------------------
+
+      U     #TX_VSP_Halt_Satzwechsel; 
+      =     #A_Stop_Satzgrenzen; 
+
+//----Asynchroner Prozess------------------------------------
+
+      U     #TX_VS_Halt_Async1; 
+      =     #A_Stop_Async_Prozess1; 
+
+      U     #TX_VS_Halt_Async2; 
+      =     #A_Stop_Async_Prozess2; 
+
+      U     #TX_VS_Halt_Async3; 
+      =     #A_Stop_Async_Prozess3; 
+
+      U     #TX_VS_Halt_Async4; 
+      =     #A_Stop_Async_Prozess4; 
+
+//----Warnungen----------------------------------------------
+
+      U     #TX_WARNUNG; 
+      O     #TX_WARNUNG_1; 
+      O     #TX_WARNUNG_2; 
+      O     #TX_WARNUNG_3; 
+      O     #TX_WARNUNG_4; 
+      O     #TX_WARNUNG_5; 
+      O     #TX_SAFE_WARN; 
+      O     #TX_WARN_SAFE; 
+      =     #A_Warnung; 
+
+//----Meldungen----------------------------------------------
+
+      U     #TX_MELDUNG; 
+      O     #TX_MELDUNG_2; 
+      O     #TX_MELDUNG_3; 
+      O     #TX_MELDUNG_4; 
+      O     #TX_MELDUNG_5; 
+      O     #TX_MELDUNG_6; 
+      O     #TX_MELDEFENSTER; 
+      O     #TX_MELDEFENSTER2; 
+      O     #TX_MELDEFENSTER3; 
+      O     #TX_MELDEFENSTER4; 
+      O     #TX_SAFE_MELD; 
+      =     #A_Meldung; 
+
+NETWORK
+TITLE =Kopieren von DB 102 nach DB 2
+// -- Umkopieren 1 auf den Standardbereich Kanal 1 --
+      CALL "BLKMOVE" (
+           SRCBLK                   := P#DB102.DBX200.0 BYTE 16,
+           RET_VAL                  := #T_ret_val_SFC20,
+           DSTBLK                   := P#DB2.DBX0.0 BYTE 16);
+
+// -- Umkopieren 2 auf den Standardbereich Kanal 1 --
+      CALL "BLKMOVE" (
+           SRCBLK                   := "DB_FEHLERMELDUNG".MELDEFENSTER3,
+           RET_VAL                  := #T_ret_val_SFC20,
+           DSTBLK                   := "DB_PLC_MESSAGE".C1.FdStop_3_5113xx);
+
+// -- Umkopieren auf den Standardbereich Achse 1/2/3 --
+      CALL "BLKMOVE" (
+           SRCBLK                   := P#DB102.DBX274.0 BYTE 6,
+           RET_VAL                  := #T_ret_val_SFC20,
+           DSTBLK                   := P#DB2.DBX144.0 BYTE 6);
+
+// -- Umkopieren auf den Standardbereich Achse 6 --
+      CALL "BLKMOVE" (
+           SRCBLK                   := P#DB102.DBX280.0 BYTE 2,
+           RET_VAL                  := #T_ret_val_SFC20,
+           DSTBLK                   := "DB_PLC_MESSAGE"._6FdStop6006xx);
+
+// -- 25 Userbereiche umkopieren --
+      CALL "BLKMOVE" (
+           SRCBLK                   := P#DB102.DBX0.0 BYTE 200,
+           RET_VAL                  := #T_ret_val_SFC20,
+           DSTBLK                   := P#DB2.DBX180.0 BYTE 200);
+
+// Abfrage 7 zusätzliche Userbereiche vorhanden
+      L     B#16#FF; // Bei B#16#FF SW-Stand>7 -> entspricht 32 Userbereiche
+      L     "DB_ALARM_KENNUNG".feld[49]; 
+      <>I   ; 
+      SPB   UA25; 
+
+// -- 7 zusätzliche Userbereiche umkopieren (ab SW-Stand>7 bzw. SL)  --
+      CALL "BLKMOVE" (
+           SRCBLK                   := P#DB102.DBX216.0 BYTE 56,
+           RET_VAL                  := #T_ret_val_SFC20,
+           DSTBLK                   := P#DB2.DBX380.0 BYTE 56);
+
+// -- 25 Userbereiche --
+UA25: NOP   0; 
+
+NETWORK
+TITLE =G0 Fehler Kopieren von DB 102 nach DB 2
+
+      U     #TX_G0_Fehler_wirksam; 
+      SPBN  nw9a; 
+
+      CALL "BLKMOVE" (
+           SRCBLK                   := "DB_FEHLERMELDUNG".SPI_VS_HALT_G0,
+           RET_VAL                  := #T_ret_val_SFC20,
+           DSTBLK                   := P#DB2.DBX360.0 BYTE 2);
+
+      SPA   nw9b; 
+
+nw9a: L     0; 
+      T     DB2.DBW  360; 
+
+nw9b: NOP   0; 
+
+NETWORK
+TITLE =FC 10 quittieren verlängerter Impuls
+
+      O     #E_Fehler_Quit; 
+      O     #E_NC_Reset; 
+      L     S5T#700MS; 
+      SV    #Te_Quit_verzoegert; 
+NETWORK
+TITLE =FC 10 quittieren
+
+      U     #Te_Quit_verzoegert; 
+      =     #T_Quit; 
+NETWORK
+TITLE =Aufruf FC10 
+
+      U     "m_null"; 
+      =     L     13.0; 
+      BLD   103; 
+      U     #T_Quit; 
+      =     L     13.1; 
+      BLD   103; 
+      CALL "FC_SIEM_AL_MSG" (
+           ToUserIF                 := L     13.0,
+           Quit                     := L     13.1);
+      NOP   0; 
+END_FUNCTION
+

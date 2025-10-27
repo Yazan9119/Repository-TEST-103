@@ -1,0 +1,1109 @@
+FUNCTION "FC_CO_OEM_Anwahl" : VOID
+TITLE =
+//$Revision: 1.86 $
+//$Date: 2008/07/14 07:45:56CEST $
+//$Author: hgc $
+//
+VERSION : 0.1
+
+
+VAR_TEMP
+  t_VSK_Ausblenden_Zeile : ARRAY  [1 .. 8 ] OF BOOL ;	
+  t_ARTIS_angewaehlt : BOOL ;	
+  t_MCU_angewaehlt : BOOL ;	
+  t_Wechsler_V_Kette_m_TPU : BOOL ;	
+  t_Wechsler_V_Kette_o_TPU : BOOL ;	
+  t_Wechsler_Rad : BOOL ;	
+  t_Wechsler_H_Magazin : BOOL ;	
+  t_Kegelreinigung : BOOL ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =Anwahl WZW_MASKE_1: WZW-Grundfunktionen
+// Netzwerk-Übersicht
+// ==================
+// NW 1: Anwahl WZW_MASKE_1: WZW-Grundfunktionen
+// NW 2: Anwahl WZW_MASKE_2: WZW-Achsen und Quittierungen
+// NW 3: Option Kegelreinigung
+// NW 4: Anwahl WZW_MASKE_3: WZW-Reinigung und Verriegelung
+// NW 5: Anwahl WZW_MASKE_4: WZW-Regalrettung
+// NW 6: Anwahl WZW_MASKE_5: WZW-Winkelkopf Wechselpositionen
+// NW 7: Anwahl WZW_MASKE_6: Vertikale Kette
+// NW 8: Anwahl WZW_MASKE_7: WZW-Einstellungen Radmagazin
+// NW 9: Anwahl Option1
+// NW 10: Anwahl Option: WFK1 (Winkelfräskopf)
+// NW 11: Anwahl Option: WFK2 (Winkelfräskopf)
+// NW 12: Anwahl Option: Haupt-Ebene
+// NW 13: Anwahl Blum_Maske_1: WZ-Vermessung Einstiegsmaske
+// NW 14: Anwahl Blum_Maske_2: WZ-Vermessung
+// NW 15: Anwahl Blum_Maske_3: Kalibrierring
+// NW 16: Adressregister fuer Zeilen ausblenden
+// NW 17: Abwahl Zeilen für Blum-Maske 1
+// NW 18: Anwahl PW_MASKE_1: PW1
+// NW 19: Anwahl PW_MASKE_2: PW2
+// NW 20: Anwahl PW_MASKE_3: PW3
+// NW 21: Anwahl Speicher_Ebene:
+// NW 22: Anwahl Speicher_Maske_1:
+// NW 23: Anwahl Speicher_Maske_2:
+// NW 24: Anwahl Speicher_Maske_3:
+// NW 25: Abwahl Zeilen im Bild Speicher 1
+// NW 26: Abwahl Zeilen im Bild Speicher 2
+// NW 27: Abwahl Zeilen im Bild Speicher 3
+// NW 28: Anwahl Speicher_Maske_4: Wiegenfräskopf
+// NW 29: Anwahl Speicher_Maske_5: Wiegenfräskopf 2
+// NW 30: #t_Wechsler_VKette_m_TPU (mit TPU)
+// NW 31: #t_Wechsler_VKette_o_TPU (ohne TPU)
+// NW 32: #t_Wechsler_Rad
+// NW 33: #t_Wechsler_H_Magazin
+// NW 34: Abwahl Zeilen für WZW_Maske_1: WZW1
+// NW 35: Abwahl Zeilen für WZW_Maske_2: WZW2
+// NW 36: Abwahl Zeilen für WZW_Maske_3: WZW3
+// NW 37: Abwahl Zeilen für WZW_Maske_4: WZW4
+// NW 38: Abwahl Zeilen für WZW_Maske_6: WZW6
+// NW 39: Abwahl Zeilen für WZW_Maske_7: WZW7
+// NW 40: Abwahl Zeilen für Palettenwechsler PW1-Maske
+// NW 41: Abwahl Zeilen für Palettenwechsler PW2-Maske
+// NW 42: Abwahl Zeilen für Palettenwechsler PW3-Maske
+// NW 43: Anwahl SpannHydraulik auf Haupt-Ebene
+// NW 44: FG-Softkey: SpannHydraulik-Rüstplatz Bild:36
+// NW 45: HMI-Bild-Nr 36 aktiv: Spannhydraulik Rüstplatz
+// NW 46: Abwahl Zeilen Spannhydraulik Maske 1: Rüstplatz
+// NW 47: FG-Softkey: SpannHydraulik-Maschinenraum Bild:37
+// NW 48: Abwahl Zeilen Spannhydraulik Maske 2: Arbeitsraum
+// NW 49: FG-Softkey: SpannHydraulik-Konfiguration ohne RS Bild:63
+// NW 50: HMI-Bild-Nr 63 aktiv: SpannHydraulik Konfiguration
+// NW 51: FG-Softkey: SpannHydraulik-Konfiguration mit RS Bild:64
+// NW 52: FG-Softkey: SpannHydraulik-Teachen Bild:65
+// NW 53: Abwahl Zeilen Spannhydraulik Maske 5: "Teachen"
+// NW 54: Anwahl Anwender Maske 3: Anwender-Funktionen
+// NW 55: Abwahl Zeilen Anwender Maske 3: Anwender-Funktionen
+// NW 56: Anwahl Anwender Maske 4: WZVS-System
+// NW 57: Abwahl Zeilen Anwender Maske 4: WZVS-System
+// NW 58: Anwahl Anwender Maske 5: Spaenerechen
+// NW 59: Abwahl Zeilen Anwender Maske 5: Spaenerechen
+// NW 60: Abwahl Zeilen Anwender Maske 6: Anwender-Funktion-2
+// NW 61: Anwahl Anwender Maske 6: Anwender-Funktion-2 (Softkey EIN/AUS)
+//
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.WZW_ANGEWAEHLT; 
+      O(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._009_ANWAHL_WZSPANNER; 
+      L     0; 
+      >I    ; 
+      )     ; 
+      =     "DB_OEM".Anwahl.WZW.Maske1; 
+NETWORK
+TITLE =Anwahl WZW_MASKE_2: WZW-Achsen und Quittierungen
+
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.WZW_ANGEWAEHLT; 
+      =     "DB_OEM".Anwahl.WZW.Maske2; 
+NETWORK
+TITLE =Option Kegelreinigung
+
+      O(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._012_ANWAHL_WKZ_WASCHEN; 
+      L     0; 
+      >I    ; 
+      )     ; 
+      O     ; // Anwahl Kegelreinigung beim RAD über Anzahl der HSK-Plätze (14510[121]>0)    
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.MAG_RAD; 
+      U     "DB_WZV".AB_HSK; 
+      =     #t_Kegelreinigung; 
+
+NETWORK
+TITLE =Anwahl WZW_MASKE_3: WZW-Reinigung und Verriegelung
+
+      UN    "M_WZM_Regal_angewaehlt"; 
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.WZW_HORIZONTALE_KETTE; 
+      O     ; 
+      U(    ; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.WZW_VKETTE_MIT_TPU; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.WZW_VKETTE_OHNE_TPU; 
+      )     ; 
+      U     "DB_PLC_MD_DB20".UDHex._04_BIT4_EINRICHT_BETR; 
+      O     #t_Kegelreinigung; 
+      =     "DB_OEM".Anwahl.WZW.Maske3; 
+NETWORK
+TITLE =Anwahl WZW_MASKE_4: WZW-Regalrettung
+
+      U     "M_WZM_Regal_angewaehlt"; 
+      =     "DB_OEM".Anwahl.WZW.Maske4; 
+NETWORK
+TITLE =Anwahl WZW_MASKE_5: WZW-Winkelkopf Wechselpositionen
+//      O     "DB_PLC_MD_DB20".UDHex._05_BIT5_Gr2_Entriegel
+//      O     "DB_PLC_MD_DB20".UDHex._28_Bit3_WFK_Anwahl
+//      =     "DB_OEM".Anwahl.WZW.Maske5
+NETWORK
+TITLE =Anwahl WZW_MASKE_6: Vertikale Kette
+
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.WZW_VKETTE_MIT_TPU; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.WZW_VKETTE_OHNE_TPU; 
+      =     "DB_OEM".Anwahl.WZW.Maske6; 
+NETWORK
+TITLE =Anwahl WZW_MASKE_7: WZW-Einstellungen Radmagazin
+
+      U(    ; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.WZW_RAD_MIT_ZYLINDER; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.WZW_RAD_MIT_ACHSE; 
+      )     ; 
+      U     "DB_PLC_MD_DB20".UDHex._04_BIT4_EINRICHT_BETR; 
+      =     "DB_OEM".Anwahl.WZW.Maske7; 
+NETWORK
+TITLE =Anwahl Option1
+// Option 1
+//  - Hydraulischer Schwenkkopf
+//  - Handlingsystem SYSTEM3R mit Beladetür (Anwahl: 1=ohne RPC, 2=mit RPC)
+//  - Handlingsystem EROWA, PROMOT mit Beladetür (Anwahl: 5=ohne RPC, 2=mit RPC)
+//
+// Alle Zeilen Ausblenden und je nach Anwahl wieder einblenden
+      L     B#16#3F; 
+      T     "DB_OEM".RowInaktiv.Schwenkkopf.Maske1; 
+      L     B#16#3F; 
+      T     "DB_OEM".RowInaktiv.Schwenkkopf.Maske6; 
+      L     B#16#3F; 
+      T     "DB_OEM".RowInaktiv.Schwenkkopf.Maske7; 
+
+      CLR   ; 
+      =     "DB_OEM".Anwahl.Option.SK; 
+      =     "DB_OEM".Anwahl.Option.System3R; 
+
+      L     "DB_PLC_MD_DB20".UDInt._007_ANWAHL_FRAESKOPF; 
+      L     1; 
+      ==I   ; 
+      S     "DB_OEM".Anwahl.Option.SK; 
+      R     DB101.DBX   58.0; 
+      R     DB101.DBX   58.1; 
+
+
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.HASYS_3R_OHNE_RPC; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.HASYS_EROWA_OHNE_RPC; 
+      S     "DB_OEM".Anwahl.Option.System3R; 
+      R     DB101.DBX   63.0; 
+      R     DB101.DBX   63.4; 
+      R     DB101.DBX   63.5; 
+      R     DB101.DBX   64.0; 
+      R     DB101.DBX   64.1; 
+
+
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.HASYS_3R_MIT_RPC; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.HASYS_EROWA_MIT_RPC; 
+      S     "DB_OEM".Anwahl.Option.System3R; 
+      R     DB101.DBX   63.0; 
+      R     DB101.DBX   63.1; 
+      R     DB101.DBX   63.2; 
+      R     DB101.DBX   63.3; 
+      R     DB101.DBX   63.4; 
+      R     DB101.DBX   63.5; 
+      R     DB101.DBX   64.0; 
+      R     DB101.DBX   64.1; 
+
+
+NETWORK
+TITLE =Anwahl Option: WFK1 (Winkelfräskopf)
+//      U     "DB_PLC_MD_DB20".UDHex._28_Bit3_WFK_Anwahl
+//      =     "DB_OEM".Anwahl.Option.WFK1
+NETWORK
+TITLE =Anwahl Option: WFK2 (Winkelfräskopf)
+//      U     "DB_PLC_MD_DB20".UDHex._28_Bit3_WFK_Anwahl
+//      =     "DB_OEM".Anwahl.Option.WFK2
+NETWORK
+TITLE =Anwahl Option: Haupt-Ebene
+
+      O     "DB_OEM".Anwahl.Option.SK; 
+//      O     "DB_OEM".Anwahl.Option.WFK1
+//      O     "DB_OEM".Anwahl.Option.WFK2
+      O     "DB_OEM".Anwahl.Option.System3R; 
+      =     "DB_OEM".Anwahl.Option.Ebene; 
+NETWORK
+TITLE =Anwahl Blum_Maske_1: WZ-Vermessung Einstiegsmaske
+
+      O(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._032_ANWAHL_WZVERMESSUNG; 
+      L     0; 
+      <>I   ; 
+      )     ; 
+      O(    ; 
+      L     "DB_PLC_MD_DB20".UDReal._16_ANWAHL_KALIBRIERRING; 
+      L     1.000000e+000; 
+      ==R   ; 
+      )     ; 
+      =     "DB_OEM".Anwahl.Blum.Maske1; 
+NETWORK
+TITLE =Anwahl Blum_Maske_2: WZ-Vermessung
+
+      U(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._032_ANWAHL_WZVERMESSUNG; 
+      L     1; 
+      ==I   ; 
+      TAK   ; 
+      O(    ; 
+      L     2; 
+      ==I   ; 
+      )     ; 
+      TAK   ; 
+      O(    ; 
+      L     3; 
+      ==I   ; 
+      )     ; 
+      TAK   ; 
+      O(    ; 
+      L     4; 
+      ==I   ; 
+      )     ; 
+      TAK   ; 
+      O(    ; 
+      L     5; 
+      ==I   ; 
+      )     ; 
+      TAK   ; 
+      O(    ; 
+      L     7; 
+      ==I   ; 
+      )     ; 
+      )     ; 
+      =     "DB_OEM".Anwahl.Blum.Maske2; 
+NETWORK
+TITLE =Anwahl Blum_Maske_3: Kalibrierring
+
+      L     "DB_PLC_MD_DB20".UDReal._16_ANWAHL_KALIBRIERRING; 
+      L     1.000000e+000; 
+      ==R   ; 
+      =     "DB_OEM".Anwahl.Blum.Maske3; 
+NETWORK
+TITLE =Adressregister fuer Zeilen ausblenden
+
+      LAR1  P##t_VSK_Ausblenden_Zeile; 
+
+NETWORK
+TITLE =Abwahl Zeilen für Blum-Maske 1
+
+      UN    "DB_OEM".Anwahl.Blum.Maske1; 
+      =     #t_VSK_Ausblenden_Zeile[1]; 
+
+      UN    "DB_OEM".Anwahl.Blum.Maske1; 
+      =     #t_VSK_Ausblenden_Zeile[2]; 
+
+      UN    "DB_OEM".Anwahl.Blum.Maske1; 
+      =     #t_VSK_Ausblenden_Zeile[3]; 
+
+      UN    "DB_OEM".Anwahl.Blum.Maske1; 
+      =     #t_VSK_Ausblenden_Zeile[4]; 
+
+      UN    "DB_OEM".Anwahl.Blum.Maske1; 
+      =     #t_VSK_Ausblenden_Zeile[5]; 
+
+      UN    "DB_OEM".Anwahl.Blum.Maske1; 
+      =     #t_VSK_Ausblenden_Zeile[6]; 
+
+// Zeile 7+8 müssen immer mit CLR angesteuert werden
+      CLR   ; 
+      =     #t_VSK_Ausblenden_Zeile[7]; 
+      =     #t_VSK_Ausblenden_Zeile[8]; 
+
+//Übergabe in DB
+      L     B [AR1,P#0.0]; 
+      T     "DB_OEM".RowInaktiv.BLUM.Maske1; 
+NETWORK
+TITLE =Anwahl PW_MASKE_1: PW1
+// Palettenwechsler Maske 1 und 2 und 3
+      L     "DB_PLC_MD_DB20".UDInt._015_ANWAHL_PALWECHLSER; 
+      L     0; 
+      <>I   ; 
+      =     "DB_OEM".Anwahl.PW.Maske1; 
+NETWORK
+TITLE =Anwahl PW_MASKE_2: PW2
+// Palettenwechsler Maske 1 und 2 und 3
+      L     "DB_PLC_MD_DB20".UDInt._015_ANWAHL_PALWECHLSER; 
+      L     0; 
+      <>I   ; 
+      =     "DB_OEM".Anwahl.PW.Maske2; 
+NETWORK
+TITLE =Anwahl PW_MASKE_3: PW3
+// Palettenwechsler Maske 1 und 2 und 3
+      U(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._015_ANWAHL_PALWECHLSER; 
+      L     0; 
+      <>I   ; 
+      )     ; 
+      U(    ; 
+      O     "DB_HR".ABST.SP_MPL_Kuppeln; 
+      O     "DB_PW_DATA".Option.bRP_Hydr_Klemmung; 
+      O     "DB_HR".ABST.SpannHydraulik; 
+      O     "DB_PW_DATA".Option2.bMaschineTypFD_70_80; 
+      )     ; 
+      =     "DB_OEM".Anwahl.PW.Maske3; 
+NETWORK
+TITLE =Anwahl Speicher_Ebene:
+
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.RS4_AKTIV; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.RS5_AKTIV; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.RS10_AKTIV; 
+      O(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._134_PS_SONDERFUNKTION; 
+      L     1; 
+      ==I   ; 
+      )     ; 
+      =     "DB_OEM".Anwahl.Speicher.Ebene; 
+NETWORK
+TITLE =Anwahl Speicher_Maske_1:
+
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.RS4_AKTIV; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.RS5_AKTIV; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.RS10_AKTIV; 
+      =     "DB_OEM".Anwahl.Speicher.Maske1; 
+NETWORK
+TITLE =Anwahl Speicher_Maske_2:
+
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.RS4_AKTIV; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.RS5_AKTIV; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.RS10_AKTIV; 
+      =     "DB_OEM".Anwahl.Speicher.Maske2; 
+NETWORK
+TITLE =Anwahl Speicher_Maske_3:
+
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.RS10_AKTIV; 
+      =     "DB_OEM".Anwahl.Speicher.Maske3; 
+NETWORK
+TITLE =Abwahl Zeilen im Bild Speicher 1
+
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.RS4_AKTIV; 
+      =     #t_VSK_Ausblenden_Zeile[1]; 
+
+      CLR   ; 
+      =     #t_VSK_Ausblenden_Zeile[2]; 
+
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.RS5_AKTIV; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.RS10_AKTIV; 
+      =     #t_VSK_Ausblenden_Zeile[3]; 
+      =     #t_VSK_Ausblenden_Zeile[4]; 
+
+      CLR   ; 
+      =     #t_VSK_Ausblenden_Zeile[5]; 
+
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.RS10_AKTIV; 
+      =     #t_VSK_Ausblenden_Zeile[6]; 
+
+// Zeile 7+8 müssen immer mit CLR angesteuert werden
+      CLR   ; 
+      =     #t_VSK_Ausblenden_Zeile[7]; 
+      =     #t_VSK_Ausblenden_Zeile[8]; 
+
+//Übergabe in DB
+      L     B [AR1,P#0.0]; 
+      T     "DB_OEM".RowInaktiv.Speicher.Maske1; 
+NETWORK
+TITLE =Abwahl Zeilen im Bild Speicher 2
+
+      CLR   ; 
+      =     #t_VSK_Ausblenden_Zeile[1]; 
+
+      CLR   ; 
+      =     #t_VSK_Ausblenden_Zeile[2]; 
+
+      UN    "DB_PLC_MD_DB20".UDHex._17_BIT7_RP_HYD_KLEMMEN; 
+      =     #t_VSK_Ausblenden_Zeile[3]; 
+
+      UN    "DB_PLC_MD_DB20".UDHex._27_Bit3_RPLmitKupplung; 
+      =     #t_VSK_Ausblenden_Zeile[4]; 
+
+      CLR   ; 
+      =     #t_VSK_Ausblenden_Zeile[5]; 
+
+      CLR   ; 
+      =     #t_VSK_Ausblenden_Zeile[6]; 
+
+// Zeile 7+8 müssen immer mit CLR angesteuert werden
+      CLR   ; 
+      =     #t_VSK_Ausblenden_Zeile[7]; 
+      =     #t_VSK_Ausblenden_Zeile[8]; 
+
+//Übergabe in DB
+      L     B [AR1,P#0.0]; 
+      T     "DB_OEM".RowInaktiv.Speicher.Maske2; 
+NETWORK
+TITLE =Abwahl Zeilen im Bild Speicher 3
+
+      CLR   ; 
+      =     #t_VSK_Ausblenden_Zeile[1]; 
+
+      CLR   ; 
+      =     #t_VSK_Ausblenden_Zeile[2]; 
+
+      CLR   ; 
+      =     #t_VSK_Ausblenden_Zeile[3]; 
+
+      CLR   ; 
+      =     #t_VSK_Ausblenden_Zeile[4]; 
+
+      CLR   ; 
+      =     #t_VSK_Ausblenden_Zeile[5]; 
+
+      CLR   ; 
+      =     #t_VSK_Ausblenden_Zeile[6]; 
+
+// Zeile 7+8 müssen immer mit CLR angesteuert werden
+      CLR   ; 
+      =     #t_VSK_Ausblenden_Zeile[7]; 
+      =     #t_VSK_Ausblenden_Zeile[8]; 
+
+//Übergabe in DB
+      L     B [AR1,P#0.0]; 
+      T     "DB_OEM".RowInaktiv.Speicher.Maske3; 
+NETWORK
+TITLE =Anwahl Speicher_Maske_4: Wiegenfräskopf
+
+      L     "DB_PLC_MD_DB20".UDInt._134_PS_SONDERFUNKTION; 
+      L     1; 
+      ==I   ; 
+      =     "DB_OEM".Anwahl.Speicher.Maske4; 
+NETWORK
+TITLE =Anwahl Speicher_Maske_5: Wiegenfräskopf 2
+
+      L     "DB_PLC_MD_DB20".UDInt._134_PS_SONDERFUNKTION; 
+      L     1; 
+      ==I   ; 
+      =     "DB_OEM".Anwahl.Speicher.Maske5; 
+NETWORK
+TITLE =#t_Wechsler_VKette_m_TPU (mit TPU)
+
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.WZW_VKETTE_MIT_TPU; 
+      =     #t_Wechsler_V_Kette_m_TPU; 
+
+NETWORK
+TITLE =#t_Wechsler_VKette_o_TPU (ohne TPU)
+
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.WZW_VKETTE_OHNE_TPU; 
+      =     #t_Wechsler_V_Kette_o_TPU; 
+
+NETWORK
+TITLE =#t_Wechsler_Rad
+
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.WZW_RAD_MIT_ZYLINDER; 
+      =     #t_Wechsler_Rad; 
+
+NETWORK
+TITLE =#t_Wechsler_H_Magazin
+
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.WZW_HORIZONTALE_KETTE; 
+      =     #t_Wechsler_H_Magazin; 
+
+NETWORK
+TITLE =Abwahl Zeilen für WZW_Maske_1: WZW1
+
+      ON    #t_Wechsler_Rad; 
+      O     "DB_PLC_MD_DB20".UDHex._31_Bit1_SOLUTIONLINE; 
+      =     #t_VSK_Ausblenden_Zeile[1]; 
+
+      U     #t_Wechsler_V_Kette_m_TPU; 
+      =     #t_VSK_Ausblenden_Zeile[2]; 
+
+      UN    #t_Wechsler_V_Kette_o_TPU; 
+      =     #t_VSK_Ausblenden_Zeile[3]; 
+
+      CLR   ; 
+      =     #t_VSK_Ausblenden_Zeile[4]; 
+
+      CLR   ; 
+      =     #t_VSK_Ausblenden_Zeile[5]; 
+
+      O     #t_Wechsler_Rad; 
+      =     #t_VSK_Ausblenden_Zeile[6]; 
+
+// Zeile 7+8 müssen immer mit CLR angesteuert werden
+      CLR   ; 
+      =     #t_VSK_Ausblenden_Zeile[7]; 
+      =     #t_VSK_Ausblenden_Zeile[8]; 
+
+//Übergabe in DB
+      L     B [AR1,P#0.0]; 
+      T     "DB_OEM".RowInaktiv.WZW.Maske1; 
+NETWORK
+TITLE =Abwahl Zeilen für WZW_Maske_2: WZW2
+
+      CLR   ; 
+      =     #t_VSK_Ausblenden_Zeile[1]; 
+
+      CLR   ; 
+      =     #t_VSK_Ausblenden_Zeile[2]; 
+
+      CLR   ; 
+      =     #t_VSK_Ausblenden_Zeile[3]; 
+
+      CLR   ; 
+      =     #t_VSK_Ausblenden_Zeile[4]; 
+
+      U     #t_Wechsler_Rad; 
+      =     #t_VSK_Ausblenden_Zeile[5]; 
+
+      U     #t_Wechsler_Rad; 
+      =     #t_VSK_Ausblenden_Zeile[6]; 
+
+// Zeile 7+8 müssen immer mit CLR angesteuert werden
+      CLR   ; 
+      =     #t_VSK_Ausblenden_Zeile[7]; 
+      =     #t_VSK_Ausblenden_Zeile[8]; 
+
+//Übergabe in DB
+      L     B [AR1,P#0.0]; 
+      T     "DB_OEM".RowInaktiv.WZW.Maske2; 
+NETWORK
+TITLE =Abwahl Zeilen für WZW_Maske_3: WZW3
+
+      UN    #t_Wechsler_V_Kette_m_TPU; 
+      UN    #t_Wechsler_V_Kette_o_TPU; 
+      ON    #t_Kegelreinigung; 
+      =     #t_VSK_Ausblenden_Zeile[1]; 
+
+      O     #t_Wechsler_V_Kette_m_TPU; 
+      O     #t_Wechsler_V_Kette_o_TPU; 
+      ON    #t_Kegelreinigung; 
+      =     #t_VSK_Ausblenden_Zeile[2]; 
+
+      ON    #t_Wechsler_H_Magazin; 
+      O     "M_WZM_Regal_angewaehlt"; 
+      =     #t_VSK_Ausblenden_Zeile[3]; 
+
+      UN    #t_Wechsler_V_Kette_m_TPU; 
+      UN    #t_Wechsler_V_Kette_o_TPU; 
+      ON    "DB_PLC_MD_DB20".UDHex._04_BIT4_EINRICHT_BETR; 
+      =     #t_VSK_Ausblenden_Zeile[4]; 
+
+      UN    #t_Wechsler_V_Kette_m_TPU; 
+      UN    #t_Wechsler_V_Kette_o_TPU; 
+      ON    "DB_PLC_MD_DB20".UDHex._04_BIT4_EINRICHT_BETR; 
+      =     #t_VSK_Ausblenden_Zeile[5]; 
+
+      UN    "DB_CONFIG".ANWAHL_DURCH_USER_DATA.MAG_mit_Wiko; 
+      =     #t_VSK_Ausblenden_Zeile[6]; 
+
+// Zeile 7+8 müssen immer mit CLR angesteuert werden
+      CLR   ; 
+      =     #t_VSK_Ausblenden_Zeile[7]; 
+      =     #t_VSK_Ausblenden_Zeile[8]; 
+
+//Übergabe in DB
+      L     B [AR1,P#0.0]; 
+      T     "DB_OEM".RowInaktiv.WZW.Maske3; 
+NETWORK
+TITLE =Abwahl Zeilen für WZW_Maske_4: WZW4
+
+      CLR   ; 
+      =     #t_VSK_Ausblenden_Zeile[1]; 
+
+      UN    "M_WZM_Regal_angewaehlt"; 
+      =     #t_VSK_Ausblenden_Zeile[2]; 
+
+      UN    "M_WZM_Regal_angewaehlt"; 
+      =     #t_VSK_Ausblenden_Zeile[3]; 
+
+      CLR   ; 
+      =     #t_VSK_Ausblenden_Zeile[4]; 
+
+      CLR   ; 
+      =     #t_VSK_Ausblenden_Zeile[5]; 
+
+      CLR   ; 
+      =     #t_VSK_Ausblenden_Zeile[6]; 
+
+// Zeile 7+8 müssen immer mit CLR angesteuert werden
+      CLR   ; 
+      =     #t_VSK_Ausblenden_Zeile[7]; 
+      =     #t_VSK_Ausblenden_Zeile[8]; 
+
+//Übergabe in DB
+      L     B [AR1,P#0.0]; 
+      T     "DB_OEM".RowInaktiv.WZW.Maske4; 
+NETWORK
+TITLE =Abwahl Zeilen für WZW_Maske_6: WZW6
+
+      UN    "DB_PLC_MD_DB20".UDHex._20_Bit6_MAG_MIT_PUMPE; 
+      =     #t_VSK_Ausblenden_Zeile[1]; 
+
+      UN    #t_Wechsler_V_Kette_m_TPU; 
+      =     #t_VSK_Ausblenden_Zeile[2]; 
+
+      UN    #t_Wechsler_V_Kette_m_TPU; 
+      =     #t_VSK_Ausblenden_Zeile[3]; 
+
+      UN    #t_Wechsler_V_Kette_m_TPU; 
+      UN    #t_Wechsler_V_Kette_o_TPU; 
+      =     #t_VSK_Ausblenden_Zeile[4]; 
+
+      UN    #t_Wechsler_V_Kette_m_TPU; 
+      =     #t_VSK_Ausblenden_Zeile[5]; 
+
+      UN    #t_Wechsler_V_Kette_m_TPU; 
+      UN    #t_Wechsler_V_Kette_o_TPU; 
+      =     #t_VSK_Ausblenden_Zeile[6]; 
+
+// Zeile 7+8 müssen immer mit CLR angesteuert werden
+      CLR   ; 
+      =     #t_VSK_Ausblenden_Zeile[7]; 
+      =     #t_VSK_Ausblenden_Zeile[8]; 
+
+//Übergabe in DB
+      L     B [AR1,P#0.0]; 
+      T     "DB_OEM".RowInaktiv.WZW.Maske6; 
+NETWORK
+TITLE =Abwahl Zeilen für WZW_Maske_7: WZW7
+
+      CLR   ; 
+      =     #t_VSK_Ausblenden_Zeile[1]; 
+
+      CLR   ; 
+      =     #t_VSK_Ausblenden_Zeile[2]; 
+
+      CLR   ; 
+      =     #t_VSK_Ausblenden_Zeile[3]; 
+
+      CLR   ; 
+      =     #t_VSK_Ausblenden_Zeile[4]; 
+
+      CLR   ; 
+      =     #t_VSK_Ausblenden_Zeile[5]; 
+
+      CLR   ; 
+      =     #t_VSK_Ausblenden_Zeile[6]; 
+
+// Zeile 7+8 müssen immer mit CLR angesteuert werden
+      CLR   ; 
+      =     #t_VSK_Ausblenden_Zeile[7]; 
+      =     #t_VSK_Ausblenden_Zeile[8]; 
+
+//Übergabe in DB
+      L     B [AR1,P#0.0]; 
+      T     "DB_OEM".RowInaktiv.WZW.Maske7; 
+NETWORK
+TITLE =Abwahl Zeilen für Palettenwechsler PW1-Maske
+
+      SET   ; 
+// Einzelschritt/Autorettung
+      =     #t_VSK_Ausblenden_Zeile[1]; 
+
+      CLR   ; 
+      =     #t_VSK_Ausblenden_Zeile[2]; 
+
+      CLR   ; 
+      =     #t_VSK_Ausblenden_Zeile[3]; 
+
+      CLR   ; 
+      =     #t_VSK_Ausblenden_Zeile[4]; 
+
+      U     "DB_PW_DATA".Option.bPW_NCAchse; 
+      =     #t_VSK_Ausblenden_Zeile[5]; 
+
+      CLR   ; 
+      =     #t_VSK_Ausblenden_Zeile[6]; 
+
+// Zeile 7+8 müssen immer mit CLR angesteuert werden
+      CLR   ; 
+      =     #t_VSK_Ausblenden_Zeile[7]; 
+      =     #t_VSK_Ausblenden_Zeile[8]; 
+
+//Übergabe in DB
+      L     B [AR1,P#0.0]; 
+      T     "DB_OEM".RowInaktiv.PW.Maske1; 
+NETWORK
+TITLE =Abwahl Zeilen für Palettenwechsler PW2-Maske
+
+      CLR   ; 
+      =     #t_VSK_Ausblenden_Zeile[1]; 
+
+      CLR   ; 
+      =     #t_VSK_Ausblenden_Zeile[2]; 
+
+      CLR   ; 
+      =     #t_VSK_Ausblenden_Zeile[3]; 
+
+      UN    "DB_PW_DATA".Option.bKopfAchse; 
+      =     #t_VSK_Ausblenden_Zeile[4]; 
+
+      UN    "DB_PW_DATA".Option.bPW_NCAchse; 
+      =     #t_VSK_Ausblenden_Zeile[5]; 
+
+      UN    "DB_PW_DATA".Option.bSchwenkrundtisch; 
+      =     #t_VSK_Ausblenden_Zeile[6]; 
+
+// Zeile 7+8 müssen immer mit CLR angesteuert werden
+      CLR   ; 
+      =     #t_VSK_Ausblenden_Zeile[7]; 
+      =     #t_VSK_Ausblenden_Zeile[8]; 
+
+//Übergabe in DB
+      L     B [AR1,P#0.0]; 
+      T     "DB_OEM".RowInaktiv.PW.Maske2; 
+NETWORK
+TITLE =Abwahl Zeilen für Palettenwechsler PW3-Maske
+// PW1-Maske
+      UN    "DB_PLC_MD_DB20".UDHex._27_Bit4_MPLmitKupplung; 
+      =     #t_VSK_Ausblenden_Zeile[1]; 
+
+      UN    "DB_PLC_MD_DB20".UDHex._17_BIT7_RP_HYD_KLEMMEN; 
+      O     "MX_ABST_Rundspeicher"; 
+      =     #t_VSK_Ausblenden_Zeile[2]; 
+
+      UN    "DB_PLC_MD_DB20".UDHex._27_Bit3_RPLmitKupplung; 
+      O     "MX_ABST_Rundspeicher"; 
+      =     #t_VSK_Ausblenden_Zeile[3]; 
+
+      UN    "DB_PW_DATA".Option2.bMaschineTypFD_70_80; 
+      =     #t_VSK_Ausblenden_Zeile[4]; 
+
+      CLR   ; 
+      =     #t_VSK_Ausblenden_Zeile[5]; 
+
+      CLR   ; 
+      =     #t_VSK_Ausblenden_Zeile[6]; 
+
+// Zeile 7+8 müssen immer mit CLR angesteuert werden
+      CLR   ; 
+      =     #t_VSK_Ausblenden_Zeile[7]; 
+      =     #t_VSK_Ausblenden_Zeile[8]; 
+
+//Übergabe in DB
+      L     B [AR1,P#0.0]; 
+      T     "DB_OEM".RowInaktiv.PW.Maske3; 
+NETWORK
+TITLE =Anwahl SpannHydraulik auf Haupt-Ebene
+
+      U     "DB_HR".ABST.SpannHydraulik; 
+      =     "DB_OEM".Spannhydraulik.Ebene; 
+NETWORK
+TITLE =FG-Softkey: SpannHydraulik-Rüstplatz Bild:36
+// Spannhydraulik
+      U     "DB_HR".ABST.SpannHydraulik; 
+      UN    "DB_HR".FASTEMS.ABST_FASTEMS; 
+      =     "DB_OEM".Spannhydraulik.Maske1; 
+NETWORK
+TITLE =HMI-Bild-Nr 36 aktiv: Spannhydraulik Rüstplatz
+
+      U     "DB_OEM".OEM_SpH_Ruestplatz; 
+      =     "DB_HR".SpH.HMI_SpH_Ruestplatz; 
+NETWORK
+TITLE =Abwahl Zeilen Spannhydraulik Maske 1: Rüstplatz
+//RowInaktiv.Spannhydraulik.Maske1
+//Zeilen ausblenden: "Spannhydr. Rüstpl" Bild: 5
+      ON    "DB_PLC_MD_DB20".UDHex._17_BIT7_RP_HYD_KLEMMEN; 
+      O     "DB_HR".ABST.SP_ohnePW_OFFEN_Tuer; 
+      O     "DB_HR".ABST.SP_ohnePW_ZU_Tuer; 
+      O     "DB_HR".ABST.SP_FD; 
+      =     #t_VSK_Ausblenden_Zeile[1]; 
+
+      ON    "DB_PLC_MD_DB20".UDHex._27_Bit3_RPLmitKupplung; 
+      O     "DB_HR".ABST.SP_ohnePW_OFFEN_Tuer; 
+      O     "DB_HR".ABST.SP_ohnePW_ZU_Tuer; 
+      O     "DB_HR".ABST.SP_FD; 
+      =     #t_VSK_Ausblenden_Zeile[2]; 
+
+      U     "DB_PLC_MD_DB20".UDHex._29_Bit0_SpH_St1_NICHT1; 
+      =     #t_VSK_Ausblenden_Zeile[3]; 
+
+      U     "DB_PLC_MD_DB20".UDHex._29_Bit1_SpH_St2_NICHT1; 
+      =     #t_VSK_Ausblenden_Zeile[4]; 
+
+      U     "DB_PLC_MD_DB20".UDHex._29_Bit2_SpH_St3_NICHT1; 
+      =     #t_VSK_Ausblenden_Zeile[5]; 
+
+      U     "DB_PLC_MD_DB20".UDHex._29_Bit3_SpH_St4_NICHT1; 
+      =     #t_VSK_Ausblenden_Zeile[6]; 
+
+// Zeile 7+8 müssen immer mit CLR angesteuert werden
+      CLR   ; 
+      =     #t_VSK_Ausblenden_Zeile[7]; 
+      =     #t_VSK_Ausblenden_Zeile[8]; 
+
+//Übergabe in DB
+      L     B [AR1,P#0.0]; 
+      T     "DB_OEM".RowInaktiv.Spannhydraulik.Maske1; 
+NETWORK
+TITLE =FG-Softkey: SpannHydraulik-Maschinenraum Bild:37
+
+      U     "DB_HR".ABST.SpannHydraulik; 
+      UN    "DB_HR".ABST.SP_nur_RPL; 
+      UN    "DB_HR".ABST.SP_ohnePW_OFFEN_Tuer; 
+      UN    "DB_HR".ABST.SP_ohnePW_ZU_Tuer; 
+      UN    "DB_HR".ABST.SP_FD; 
+      =     "DB_OEM".Spannhydraulik.Maske2; 
+NETWORK
+TITLE =Abwahl Zeilen Spannhydraulik Maske 2: Arbeitsraum
+//RowInaktiv.Spannhydraulik.Maske2
+//Zeilen ausblenden: "Spannhydr. Arbeitsr." Bild: 37
+      CLR   ; 
+      =     #t_VSK_Ausblenden_Zeile[1]; 
+
+      UN    "DB_PLC_MD_DB20".UDHex._27_Bit4_MPLmitKupplung; 
+      =     #t_VSK_Ausblenden_Zeile[2]; 
+
+      U     "DB_PLC_MD_DB20".UDHex._29_Bit0_SpH_St1_NICHT1; 
+      =     #t_VSK_Ausblenden_Zeile[3]; 
+
+      U     "DB_PLC_MD_DB20".UDHex._29_Bit1_SpH_St2_NICHT1; 
+      =     #t_VSK_Ausblenden_Zeile[4]; 
+
+      U     "DB_PLC_MD_DB20".UDHex._29_Bit2_SpH_St3_NICHT1; 
+      =     #t_VSK_Ausblenden_Zeile[5]; 
+
+      U     "DB_PLC_MD_DB20".UDHex._29_Bit3_SpH_St4_NICHT1; 
+      =     #t_VSK_Ausblenden_Zeile[6]; 
+
+// Zeile 7+8 müssen immer mit CLR angesteuert werden
+      CLR   ; 
+      =     #t_VSK_Ausblenden_Zeile[7]; 
+      =     #t_VSK_Ausblenden_Zeile[8]; 
+
+//Übergabe in DB
+      L     B [AR1,P#0.0]; 
+      T     "DB_OEM".RowInaktiv.Spannhydraulik.Maske2; 
+NETWORK
+TITLE =FG-Softkey: SpannHydraulik-Konfiguration ohne RS Bild:63
+
+      U     "DB_HR".ABST.SpannHydraulik; 
+      UN    "MX_ABST_Rundspeicher"; 
+      =     "DB_OEM".Spannhydraulik.Maske3; 
+NETWORK
+TITLE =HMI-Bild-Nr 63 aktiv: SpannHydraulik Konfiguration
+//      L     "DB_OEM".OEM_Bildnummer
+//      L     63
+//      ==I   
+//      =     "DB_OEM".OEM_SpH_Konfig
+NETWORK
+TITLE =FG-Softkey: SpannHydraulik-Konfiguration mit RS Bild:64
+
+      U     "DB_HR".ABST.SpannHydraulik; 
+      U     "MX_ABST_Rundspeicher"; 
+      =     "DB_OEM".Spannhydraulik.Maske4; 
+NETWORK
+TITLE =FG-Softkey: SpannHydraulik-Teachen Bild:65
+
+      U     "DB_HR".ABST.SpannHydraulik; 
+      U     "DB_PLC_MD_DB20".UDHex._04_BIT4_EINRICHT_BETR; 
+      =     "DB_OEM".Spannhydraulik.Maske5; 
+NETWORK
+TITLE =Abwahl Zeilen Spannhydraulik Maske 5: "Teachen"
+
+      CLR   ; 
+      =     #t_VSK_Ausblenden_Zeile[1]; 
+
+      UN    "DB_PV_SpH".SpH[1].Stelle[1].KONF_mitSPH; 
+      UN    "DB_PV_SpH".SpH[1].Stelle[2].KONF_mitSPH; 
+      UN    "DB_PV_SpH".SpH[1].Stelle[3].KONF_mitSPH; 
+      UN    "DB_PV_SpH".SpH[1].Stelle[4].KONF_mitSPH; 
+      UN    "MX_ABST_Rundspeicher"; 
+      O     ; 
+      UN    "DB_PV_SpH".SpH[4].Stelle[1].KONF_mitSPH; 
+      UN    "DB_PV_SpH".SpH[4].Stelle[2].KONF_mitSPH; 
+      UN    "DB_PV_SpH".SpH[4].Stelle[3].KONF_mitSPH; 
+      UN    "DB_PV_SpH".SpH[4].Stelle[4].KONF_mitSPH; 
+      U     "MX_ABST_Rundspeicher"; 
+      O     ; 
+      UN    "DB_HR".ABST.SpannHydraulik; 
+      O     ; 
+      U     "DB_HR".FASTEMS.ABST_FASTEMS; 
+      =     #t_VSK_Ausblenden_Zeile[2]; 
+
+      UN    "DB_PV_SpH".SpH[0].Stelle[1].KONF_mitSPH; 
+      UN    "DB_PV_SpH".SpH[0].Stelle[2].KONF_mitSPH; 
+      UN    "DB_PV_SpH".SpH[0].Stelle[3].KONF_mitSPH; 
+      UN    "DB_PV_SpH".SpH[0].Stelle[4].KONF_mitSPH; 
+      O     ; 
+      UN    "DB_HR".ABST.SpannHydraulik; 
+      O     ; 
+      O     "DB_HR".ABST.SP_nur_RPL; 
+      O     "DB_HR".ABST.SP_ohnePW_OFFEN_Tuer; 
+      O     "DB_HR".ABST.SP_ohnePW_ZU_Tuer; 
+      =     #t_VSK_Ausblenden_Zeile[3]; 
+
+      CLR   ; 
+      =     #t_VSK_Ausblenden_Zeile[4]; 
+
+      CLR   ; 
+      =     #t_VSK_Ausblenden_Zeile[5]; 
+
+      CLR   ; 
+      =     #t_VSK_Ausblenden_Zeile[6]; 
+
+// Zeile 7+8 müssen immer mit CLR angesteuert werden
+      CLR   ; 
+      =     #t_VSK_Ausblenden_Zeile[7]; 
+      =     #t_VSK_Ausblenden_Zeile[8]; 
+
+//Übergabe in DB
+      L     B [AR1,P#0.0]; 
+      T     "DB_OEM".RowInaktiv.Spannhydraulik.Maske5; 
+
+NETWORK
+TITLE =Anwahl Anwender Maske 3: Anwender-Funktionen
+
+      L     "DB_PLC_MD_DB20".UDInt._032_ANWAHL_WZVERMESSUNG; 
+      L     0; 
+      <>I   ; 
+      O     "DB_HR".ABST.SP_SA_MTU; 
+      O     "DB_PLC_MD_DB20".UDHex._17_BIT7_RP_HYD_KLEMMEN; 
+      O     "DB_PLC_MD_DB20".UDHex._07_BIT1_FEIERABENDABEND; 
+      O     "DB_PLC_MD_DB20".UDHex._33_Bit6_VollAuto_RPL; 
+      O     "DB_PLC_MD_DB20".UDHex._27_Bit3_RPLmitKupplung; 
+      =     "DB_OEM".Anwender.Maske3; 
+NETWORK
+TITLE =Abwahl Zeilen Anwender Maske 3: Anwender-Funktionen
+
+      UN    "DB_HR".ABST.SP_SA_MTU; 
+      UN    "DB_PLC_MD_DB20".UDHex._17_BIT7_RP_HYD_KLEMMEN; 
+      =     #t_VSK_Ausblenden_Zeile[1]; 
+
+      UN    "DB_PLC_MD_DB20".UDHex._27_Bit3_RPLmitKupplung; 
+      =     #t_VSK_Ausblenden_Zeile[2]; 
+
+      UN    "DB_PLC_MD_DB20".UDHex._33_Bit6_VollAuto_RPL; 
+      =     #t_VSK_Ausblenden_Zeile[3]; 
+
+      UN    "DB_PLC_MD_DB20".UDHex._33_Bit6_VollAuto_RPL; 
+      =     #t_VSK_Ausblenden_Zeile[4]; 
+
+      L     "DB_PLC_MD_DB20".UDInt._032_ANWAHL_WZVERMESSUNG; 
+      L     0; 
+      <>I   ; 
+      =     #t_VSK_Ausblenden_Zeile[5]; 
+
+      UN    "DB_PLC_MD_DB20".UDHex._07_BIT1_FEIERABENDABEND; 
+      SET   ; 
+      =     #t_VSK_Ausblenden_Zeile[6]; 
+
+// Zeile 7+8 müssen immer mit CLR angesteuert werden
+      CLR   ; 
+      =     #t_VSK_Ausblenden_Zeile[7]; 
+      =     #t_VSK_Ausblenden_Zeile[8]; 
+
+//Übergabe in DB
+      L     B [AR1,P#0.0]; 
+      T     "DB_OEM".RowInaktiv.Anwender.Maske3; 
+NETWORK
+TITLE =Anwahl Anwender Maske 4: WZVS-System
+
+      L     "DB_PLC_MD_DB20".UDInt._039_ANWAHL_DREHMOMENT; 
+      L     2; 
+      ==I   ; 
+      =     #t_ARTIS_angewaehlt; 
+
+      L     "DB_PLC_MD_DB20".UDInt._039_ANWAHL_DREHMOMENT; 
+      L     3; 
+      ==I   ; 
+      =     #t_MCU_angewaehlt; 
+
+      O     #t_ARTIS_angewaehlt; 
+      O     #t_MCU_angewaehlt; 
+      =     "DB_OEM".Anwender.Maske4; 
+NETWORK
+TITLE =Abwahl Zeilen Anwender Maske 4: WZVS-System
+
+      SET   ; 
+      =     #t_VSK_Ausblenden_Zeile[1]; 
+
+      UN    #t_MCU_angewaehlt; 
+      =     #t_VSK_Ausblenden_Zeile[2]; 
+
+      UN    #t_ARTIS_angewaehlt; 
+      UN    #t_MCU_angewaehlt; 
+      =     #t_VSK_Ausblenden_Zeile[3]; 
+
+      UN    #t_ARTIS_angewaehlt; 
+      UN    #t_MCU_angewaehlt; 
+      =     #t_VSK_Ausblenden_Zeile[4]; 
+
+      SET   ; 
+      =     #t_VSK_Ausblenden_Zeile[5]; 
+
+      SET   ; 
+      =     #t_VSK_Ausblenden_Zeile[6]; 
+
+// Zeile 7+8 müssen immer mit CLR angesteuert werden
+      CLR   ; 
+      =     #t_VSK_Ausblenden_Zeile[7]; 
+      =     #t_VSK_Ausblenden_Zeile[8]; 
+
+//Übergabe in DB
+      L     B [AR1,P#0.0]; 
+      T     "DB_OEM".RowInaktiv.Anwender.Maske4; 
+NETWORK
+TITLE =Anwahl Anwender Maske 5: Spaenerechen
+
+      L     "DB_PLC_MD_DB20".UDInt._022_ANWAHL_SPAENEFOERD; 
+      L     3; 
+      ==I   ; 
+      =     "DB_OEM".Anwender.Maske5; 
+NETWORK
+TITLE =Abwahl Zeilen Anwender Maske 5: Spaenerechen
+
+      UN    "DB_OEM".Anwender.Maske5; 
+      =     #t_VSK_Ausblenden_Zeile[1]; 
+      =     #t_VSK_Ausblenden_Zeile[2]; 
+      =     #t_VSK_Ausblenden_Zeile[3]; 
+
+      SET   ; 
+      =     #t_VSK_Ausblenden_Zeile[4]; 
+
+      SET   ; 
+      =     #t_VSK_Ausblenden_Zeile[5]; 
+
+      SET   ; 
+      =     #t_VSK_Ausblenden_Zeile[6]; 
+
+// Zeile 7+8 müssen immer mit CLR angesteuert werden
+      CLR   ; 
+      =     #t_VSK_Ausblenden_Zeile[7]; 
+      =     #t_VSK_Ausblenden_Zeile[8]; 
+
+//Übergabe in DB
+
+      L     B [AR1,P#0.0]; 
+      T     "DB_OEM".RowInaktiv.Anwender.Maske5; 
+
+
+NETWORK
+TITLE =Abwahl Zeilen Anwender Maske 6: Anwender-Funktion-2
+//Funktions-     Zeile 1Spannfutter am Rüstplatz
+//Gruppe 2       Zeile 2--
+//(Bild: 31)     Zeile 3--
+//               Zeile 4--
+//               Zeile 5--
+//               Zeile 6--
+      UN    "DB_PLC_MD_DB20".UDHex._51_Bit1_FD_3BF_SCHM1; 
+      =     #t_VSK_Ausblenden_Zeile[1]; 
+
+      SET   ; 
+      =     #t_VSK_Ausblenden_Zeile[2]; 
+
+      SET   ; 
+      =     #t_VSK_Ausblenden_Zeile[3]; 
+
+      SET   ; 
+      =     #t_VSK_Ausblenden_Zeile[4]; 
+
+      SET   ; 
+      =     #t_VSK_Ausblenden_Zeile[5]; 
+
+      SET   ; 
+      =     #t_VSK_Ausblenden_Zeile[6]; 
+
+// Zeile 7+8 müssen immer mit CLR angesteuert werden
+      CLR   ; 
+      =     #t_VSK_Ausblenden_Zeile[7]; 
+      =     #t_VSK_Ausblenden_Zeile[8]; 
+
+//Übergabe in DB
+
+      L     B [AR1,P#0.0]; 
+      T     "DB_OEM".RowInaktiv.Anwender.Maske6; 
+
+
+NETWORK
+TITLE =Anwahl Anwender Maske 6: Anwender-Funktion-2 (Softkey EIN/AUS)
+//wenn alle Zeilen ausgeblendet sind, wird auch der das Bild aufrufende Softkey 
+//ausgeblendet.
+      ON    #t_VSK_Ausblenden_Zeile[1]; 
+      ON    #t_VSK_Ausblenden_Zeile[2]; 
+      ON    #t_VSK_Ausblenden_Zeile[3]; 
+      ON    #t_VSK_Ausblenden_Zeile[4]; 
+      ON    #t_VSK_Ausblenden_Zeile[5]; 
+      ON    #t_VSK_Ausblenden_Zeile[6]; 
+      =     "DB_OEM".Anwender.Maske6; 
+END_FUNCTION
+

@@ -1,0 +1,819 @@
+FUNCTION "FC_SONDER_MAIN" : VOID
+TITLE =
+//$Revision: 1.41 $
+//$Date: 2008/09/02 06:21:59CEST $
+//$Author: hgc $
+//
+//Beschreibung: 
+//SOKO-Schnittstelle
+{ S7_language := '7(1) Deutsch (Deutschland)  05.03.2008  08:45:04' }
+AUTHOR : PET
+VERSION : 0.1
+
+
+VAR_TEMP
+  svAR1 : DWORD ;	
+  tw_Poti : INT ;	
+  loopctr : INT ;	
+  tb_Poti_Vorschub : BYTE ;	
+  tb_Poti_Eilgang : BYTE ;	
+  tb_Spi_Override : BYTE ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =Anstoss Datensicherung Werkzeugdaten
+// Netzwerk-Übersicht
+// ==================
+// NW 1: Anstoss Datensicherung Werkzeugdaten
+// NW 2: M-Ausgang: Anstoss zur Datensicherung der Werkzeugdaten
+// NW 3: Spindel läuft
+// NW 4: SOKO-FEHLERAUSGABE
+// NW 5: an SOKO:neuer Fehlereintrag erfolgt
+// NW 6: SPB bei INT_053_IO_SONDER
+// NW 7: DB_IN: Daten an SOKO-Slave(8) über Peripherie schreiben [DB171]
+// NW 8: DB_OUT: Daten von SOKO-Slave(8) über Peripherie lesen [DB172]
+// NW 9: Sprung-Ende bei INT_053_IO_SONDER
+      U(    ; 
+      O     "DB_DM_M_FUNKTION".MX_IM[2]; 
+      O     "DB_DM_M_FUNKTION".MX_IM[30]; 
+      )     ; 
+      U     "M_Automatik_Betrieb"; 
+      O(    ; 
+      U     "MX_BeEntladen_Aktiv"; 
+      FN    "M_FN_Be_Entladen"; 
+      )     ; 
+      L     S5T#1S; 
+      SV    "Tv_WZ_Datensicherung"; 
+NETWORK
+TITLE =M-Ausgang: Anstoss zur Datensicherung der Werkzeugdaten
+
+      U     "Tv_WZ_Datensicherung"; 
+      =     "O_WZ_DATENSICHERUNG"; 
+NETWORK
+TITLE =Abfrage SOKO-Schnittstelle vorhanden
+
+      U(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._053_IO_SONDER; 
+      L     0; 
+      ==I   ; 
+      )     ; 
+      SPBN  _STR; 
+
+      U     "m_eins"; 
+      R     "DB_OUT".AMX_FEED_STOP; 
+      R     "DB_OUT".AMX_FEED_HOLD_CYCL; 
+      R     "DB_OUT".AMX_SPINDLE_FEED_STOP; 
+      R     "DB_OUT".AMX_SPINDLE_FEED_STOP_P; 
+      R     "DB_OUT".AMX_PC_RELEASE; 
+      R     "DB_OUT".AMX_ERROR_KSS; 
+      R     "DB_FEHLERMELDUNG".NotAus._700029_SOKO; 
+      R     "DB_FEHLERMELDUNG".Meldung._702227_Sonder_3; 
+
+      L     0; 
+      T     "DB_OUT".AMW_MESSAGENUMBER; 
+
+      BEB   ; 
+
+_STR: NOP   0; 
+NETWORK
+TITLE =Rücksetzen
+
+      U     "M_Ruecksetze_Fehler"; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700926_SOKO_Spi_VS_Halt; 
+      R     "DB_FEHLERMELDUNG".NotAus._700029_SOKO; 
+      R     "DB_FEHLERMELDUNG".Meldung._702227_Sonder_3; 
+      R     "DB_H_FUNKTION".HX_M[20]; 
+      R     "DB_IN".EMX_STROBE_FUNCTION1; 
+NETWORK
+TITLE =*** Schreiben der Signale für die intelligente IM-151  ***
+
+
+
+NETWORK
+TITLE =Spindel läuft
+
+      UN    "DB_ACHSE6_SPINDEL".E_Stat; 
+      U     "DB_ACHSE6_SPINDEL".E_SpNA; 
+      =     "DB_IN".EMX_SPINDLE_RUN; 
+NETWORK
+TITLE =WZW Aktiv
+
+      U     "M_WZW_Aktiv"; 
+      =     "DB_IN".EMX_TOOL_CHANGE; 
+NETWORK
+TITLE =Programm läuft
+
+      U     "DB_SIEM_KANAL_1".E_ChanActive; 
+      L     S5T#1S500MS; 
+      SE    "T_SOKO"; 
+      NOP   0; 
+      NOP   0; 
+      NOP   0; 
+      U     "T_SOKO"; 
+      =     "DB_IN".EMX_PROGRAM_RUN; 
+NETWORK
+TITLE =Vorschub halt
+
+      U(    ; 
+      L     "MSST_Vorschub_OVR"; 
+      L     1; 
+      ==I   ; 
+      )     ; 
+      UN    "M_G00_aktiv"; 
+      O     ; 
+      U(    ; 
+      L     "MSST_Eilgang_OVR"; 
+      L     1; 
+      ==I   ; 
+      )     ; 
+      U     "M_G00_aktiv"; 
+      O     "DB_SIEM_KANAL_1".E_ProgInterrupt; 
+      O     "M_Vorschub_Halt_Haupt"; 
+      =     "DB_IN".EMX_FEED_HOLD; 
+NETWORK
+TITLE =Warnmeldungen
+
+      U     "DB_FAMILIEN_MODUL".E_Fehler.Sammel_Warnungen; 
+      =     "DB_IN".EMX_WARNING; 
+NETWORK
+TITLE =Fehlermeldungen
+
+      O     "DB_FAMILIEN_MODUL".E_Fehler.Not_Aus; 
+      O     "DB_FAMILIEN_MODUL".E_Fehler.NC_Start_Sperre; 
+      O     "DB_FAMILIEN_MODUL".E_Fehler.NC_Start_Sperre; 
+      O     "DB_FAMILIEN_MODUL".E_Fehler.Vorschub_Halt_Kanal; 
+      O     "DB_FAMILIEN_MODUL".E_Fehler.Spindel_Halt_Kanal; 
+      O     "DB_FAMILIEN_MODUL".E_Fehler.Vorschub_Halt_Haupt_Achs; 
+      O     "DB_FAMILIEN_MODUL".E_Fehler.Einlesesperre; 
+      O     "DB_FAMILIEN_MODUL".E_Fehler.Stop_Werkzeugwechsel; 
+      O     "DB_FAMILIEN_MODUL".E_Fehler.Stop_Palettenwechsel; 
+      O     "DB_FAMILIEN_MODUL".E_Fehler.Stop_Kopf_schwenken; 
+      O     "DB_FAMILIEN_MODUL".E_Fehler.Stop_Sonderaktion; 
+      O     "DB_FAMILIEN_MODUL".E_Fehler.Stop_Asychron_Prozess1; 
+      O     "DB_FAMILIEN_MODUL".E_Fehler.Stop_Asychron_Prozess2; 
+      O     "DB_FAMILIEN_MODUL".E_Fehler.Stop_Asychron_Prozess3; 
+      O     "DB_FAMILIEN_MODUL".E_Fehler.Stop_Asychron_Prozess4; 
+      =     "DB_IN".EMX_ERROR; 
+NETWORK
+TITLE =Funktion M20
+
+      U     "O_Funktion_M20"; 
+      =     "DB_IN".EMX_FUNCTION_M20; 
+NETWORK
+TITLE =Programm Halt M0 
+
+      U     "MX_M0_1_Aktiv"; 
+      =     "DB_IN".EMX_PROGRAM_HALT; 
+NETWORK
+TITLE =Hauptachse in Bewegung
+
+      UN    "M_Hauptachsen_stehen"; 
+      =     "DB_IN".EMX_AXIS_MOVE; 
+NETWORK
+TITLE = Betriebsart manuell
+
+      U     "M_Handbetrieb"; 
+      =     "DB_IN".EMX_MANUAL_MODE; 
+NETWORK
+TITLE = Betriebsart Teach
+
+      O     "MX_MDA"; 
+      O     "DB_SIEM_BAG".E_MDA; 
+      =     "DB_IN".EMX_TEACH_MODE; 
+NETWORK
+TITLE =Betriebsart Einzelsatz
+
+      U     "M_Einzelsatz"; 
+      =     "DB_IN".EMX_SINGLE_MODE; 
+NETWORK
+TITLE =Betriebsart Automatik
+
+      O     "DB_SIEM_BAG".E_AUTO; 
+      O     "DB_CMM_PLC".CMM_OUT.base_sig.main_mode_mill.automatic; 
+      =     "DB_IN".EMX_AUTO_MODE; 
+NETWORK
+TITLE =Maschine Ein
+
+      U     "I_AL_NEG_Not_Aus"; 
+      =     "DB_IN".EMX_MACHINE_ON; 
+NETWORK
+TITLE =NC-Betriebsbereit
+
+      U     "DB_SIEM_NCK".E_NCKready; 
+      U     "DB_SIEM_NCK".E_NCready; 
+      U     "DB_SIEM_NCK".E_DrivesInCylOp; 
+      U     "DB_SIEM_NCK".E_MMCBTSSready; 
+      U     "M_Leistung_Steht_an"; 
+      =     "DB_IN".EMX_NC_READY2RUN; 
+NETWORK
+TITLE =Nummer der Palette im Arbeitsraum (Wert wird als Byte übergeben)
+
+      L     "DB_NC_PLC".PW_Pal_Nummer; //(Palettenwechsler 0° Stellung)= PalNummer 1
+      T     "DB_IN".EMB_PALLET_NUMBER; //(Palettenwechsler 180° Stellung)= PalNummer 2
+      NOP   0; 
+NETWORK
+TITLE =Kühlmittel 1 (M8)
+
+      U     "O_KM_M8_Ein"; 
+      =     "DB_IN".EMX_COOLANT_M8; 
+NETWORK
+TITLE = Kühlmittel 2 (M7)
+
+      U     "O_KM_M7_Ein"; 
+      U(    ; 
+      L     0; 
+      L     "DB_PLC_MD_DB20".UDInt._045_ANWAHL_DRUCKSTUFEN; // Analog (noch nicht realisiert)
+      ==I   ; // keine Druckstufen  
+      O(    ; 
+      L     1000; 
+      >I    ; // variabler Druck 
+      )     ; 
+      O     "MX_DS1_AKtiv"; 
+      O     "MX_DS2_Aktiv"; 
+      )     ; 
+      U     "M_M7_Act"; 
+      UN    "O_PW_Ventil_Tischspuel"; 
+      =     "DB_IN".EMX_COOLANT_M7; 
+NETWORK
+TITLE =Freigabe für Palettenwechsel ist aktiv
+
+      U     "DB_PW_DATA".bFreigabeAnforderung; 
+      L     S5T#2S; 
+      SV    "Tv_Soko1"; 
+      NOP   0; 
+      NOP   0; 
+      NOP   0; 
+      U     "Tv_Soko1"; 
+      =     "DB_IN".EMX_PC_RELEASED; 
+NETWORK
+TITLE =PW aktiv 
+
+      U     "M_PW_Aktiv"; 
+      =     "DB_IN".EMX_PC_ACTIVE; 
+NETWORK
+TITLE =RP Tuere verriegelt
+
+      U     "O_PW_TUER_ENTRIEGELN"; 
+      U     "I_PW_Tueren_zu"; 
+      =     "DB_IN".EMX_SUS_DOOR_LOCKED; 
+NETWORK
+TITLE =RP Türe geschlossen
+
+      U     "I_PW_Tueren_zu"; 
+      UN    "DB_PW_DATA".Option2.bRundspeicher; 
+      O     ; 
+      U     "I_PS_RPL_TUER_VORNE_ZU"; 
+      U     "DB_PW_DATA".Option2.bRundspeicher; 
+      =     "DB_IN".EMX_SUS_DOOR_CLOSED; 
+NETWORK
+TITLE =Tischspülung PW 
+
+      U     "O_KM_M7_Ein"; 
+      U     "O_PW_Ventil_Tischspuel"; 
+      =     "DB_IN".EMX_FLUSH_PALLET; 
+NETWORK
+TITLE =Vorschuboverride
+
+      CALL "FC_UT_GRAY_TO_BIN" (
+           Greycode                 := "MSST_Vorschub_OVR",
+           Binaerwert               := #tb_Poti_Vorschub);
+
+
+NETWORK
+TITLE =Vorschuboverride >x%
+
+      L     #tb_Poti_Vorschub; 
+      L     "DB_PLC_MD_DB20".UDInt._077_VORSCHUBOVERRIDE_X; 
+      >I    ; 
+      =     "DB_IN".EMX_FEEDRATE_X; 
+NETWORK
+TITLE =Eilgangoverride
+
+
+      CALL "FC_UT_GRAY_TO_BIN" (
+           Greycode                 := "MSST_Eilgang_OVR",
+           Binaerwert               := #tb_Poti_Eilgang);
+
+NETWORK
+TITLE =Spindeloverride
+
+      CALL "FC_UT_GRAY_TO_BIN" (
+           Greycode                 := "DB_ACHSE6_SPINDEL".A_SpOR,
+           Binaerwert               := #tb_Spi_Override);
+
+NETWORK
+TITLE =Prozentausgabe Vorschub und Eilgang Override
+
+      CALL "FC_OVR_PROZENT" (
+           EB_Vorschub_Poti         := #tb_Poti_Vorschub,
+           EB_Eilgang_Poti          := #tb_Poti_Eilgang,
+           EB_Spindel_Override      := #tb_Spi_Override,
+           AB_Vorschub_Prozent      := "DB_IN".EMB_FEEDRATE,
+           AB_Eilgang_Prozent       := "DB_IN".EMB_RAPID_VELOCITY,
+           AB_SpindelOver_Prozent   := "DB_IN".ImbSpindleOverride);
+
+NETWORK
+TITLE =Standzeit abgelaufen
+
+      U     "DB_SIEM_KANAL_1".E_T_Limit; 
+      S     "DB_IN".EMX_TOOL_LIFE; 
+      U     "M_Ruecksetze_Fehler"; 
+      R     "DB_IN".EMX_TOOL_LIFE; 
+      NOP   0; 
+NETWORK
+TITLE =Werkzeug-Vorwarngrenze erreicht
+
+      U     "DB_SIEM_KANAL_1".E_T_PrewarnLimit; 
+      S     "DB_IN".EMX_TOOL_LIFE_PREWARN; 
+      U     "M_Ruecksetze_Fehler"; 
+      R     "DB_IN".EMX_TOOL_LIFE_PREWARN; 
+      NOP   0; 
+NETWORK
+TITLE = Kühlmittel- Schmierstoffmangel
+
+      O     "DB_FEHLERMELDUNG".Warnung._701848_OELSTAND; // "I_SPI_SCH_FUELLSTAND_OK"
+      O     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700640_Oelstand_SpiSchm; // "I_SPI_SCH_FUELLSTAND_OK"
+      O     "DB_FEHLERMELDUNG".WARNUNG2._701338_Vorw_Min_Kmtl; // "I_KM_MIN_VOR_NIVEAU"
+      O     "DB_FEHLERMELDUNG".MELDUNG3._700512_KSA3_Vorwar; // "I_KM_MIN_VOR_NIVEAU"
+      O     "DB_FEHLERMELDUNG".Warnung._701961_KM_Papierband_En; //"I_KM_TPF_PAPIER_WARN"
+      =     "DB_IN".EMX_COOLANT_LACK; 
+NETWORK
+TITLE =Kühlschmierstoffanlage Füllstand Minimum
+
+      O     "DB_FEHLERMELDUNG".MELDUNG3._700511_KSA3_MIN; // "I_KM_MIN_NIVEAU"
+      O     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700715_Grob_Kmtl_Mangel; // "I_KM_MIN_NIVEAU"
+      O     "DB_FEHLERMELDUNG".WARNUNG3._700346_Grob_Kmtl_min; // "I_KM_MIN_NIVEAU"
+      O     "DB_FEHLERMELDUNG".WARNUNG2._701338_Vorw_Min_Kmtl; // "I_KM_MIN_NIVEAU"
+      =     "DB_IN".EMX_COOLANT_MINLEVEL; 
+NETWORK
+TITLE =Zentralschmierung Füllstand Minimum
+
+      O     "DB_FEHLERMELDUNG".Spi_VS_Halt._700145_Oelstand_Schm_0S; // "I_AL_SCH_Fuellstand"
+      O     "DB_FEHLERMELDUNG".VSP_Halt_Satzwechsel._701204_DD_Fuellstand; // "I_AL_SCH_M26_Fuellstand"
+      =     "DB_IN".EMX_LUBRICAT_MINLEVEL; 
+NETWORK
+TITLE =Minimalmengenschmierung Füllstand Minimum
+
+      U     "DB_FEHLERMELDUNG".VS_Halt_Haupt._701052_MinSchm_Fuell_0S; // "I_WZ_MIN_SCH_Fuell_OK"
+      =     "DB_IN".EMX_MQL_MINLEVEL; 
+NETWORK
+TITLE =Hydraulikaggregat Werkzeugmaschine Füllstand Minimum
+
+      U     "DB_FEHLERMELDUNG".Spi_VS_Halt._700214_Hyd_Fuellst_Min0; // "I_AL_HYD_FUELL_MIN_OK"
+      =     "DB_IN".EMX_HYDR_MINLEVEL; 
+NETWORK
+TITLE =Hydraulikaggregat Spannhydraulik Füllstand Minimum
+
+      U     "DB_FEHLERMELDUNG".WARNUNG3._700427_SpH; 
+      =     "DB_IN".EMX_HYDRCHUCK_MINLEVEL; 
+NETWORK
+TITLE =Wartungsaufruf von Service Agent
+
+      O     "M_out_mess_spindel"; //out_mess_spindel
+      O     "M_out_mess_spindel_2000"; //out_mess_spindel_2000
+      =     "DB_IN".EMX_MAINTENANCE_REMINDER; 
+NETWORK
+TITLE =Quitt und Reset Taste
+
+      U     "M_Ruecksetze_Fehler"; 
+      =     "DB_IN".EMX_ALARM_RESET; 
+NETWORK
+TITLE =Programm_Ende
+
+      U     "M_Hauptprogramm_Ende"; //"O_Programm_Ende"           // hoier muss für ARI rein M67 damit DM_PW nicht M30 meldet
+      UN    "MX_Jobbetrieb"; 
+      O     ; 
+      U     "MX_Jobbetrieb"; 
+      U     "DB_DM_M_FUNKTION".MX_M[67]; 
+      =     "DB_IN".EMX_PROGRAM_END; 
+NETWORK
+TITLE =Palette am Rüstplatz
+
+      U     "I_PW_UPL_PAL_VORH"; 
+      =     "DB_IN".EMX_PALLET_ON_SUS; 
+NETWORK
+TITLE =Pumpe Späneförderer EIN
+
+      U     "O_SF_PUMPE_EIN"; 
+      =     "DB_IN".EMX_COOLANT_BACKFLOW; 
+NETWORK
+TITLE =Pumpe Zentralschmierung EIN
+
+      U     "O_AL_SCH_Pumpe_ein"; 
+      =     "DB_IN".EMX_LUBRICAT_ACTIV; 
+NETWORK
+TITLE =Werkzeugbruch 
+
+      O     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700862_WZB_2MW_GR_1MW; 
+      O     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700863_WZB_TOL_UEBER; 
+      O     "MX_WZ_BRUCH_LASER"; 
+      =     "DB_IN".ImxToolBreakage; 
+NETWORK
+TITLE =Kabine  verriegelt
+
+      U     "I_AL_Kabine_Verriegelt"; 
+      =     "DB_IN".EMX_WORKROOM_DOOR; 
+NETWORK
+TITLE =Betriebsart 2 aktiv
+
+      U     "M_Einrichtbetrieb"; 
+      U     "I_AL_Zustimmtaste"; 
+      U     "M_Handbetrieb"; 
+      =     "DB_IN".EMX_OPERATING_MODE2; 
+NETWORK
+TITLE =Betriebsart 3 aktiv
+
+      U     "M_3Te_Betriebsart"; 
+      U     "I_AL_Zustimmtaste"; 
+      =     "DB_IN".EMX_OPERATING_MODE3; 
+NETWORK
+TITLE =Betriebsart 4 aktiv
+
+      U     "M_4Te_Betriebsart"; 
+      =     "DB_IN".EMX_OPERATING_MODE4; 
+NETWORK
+TITLE =Alle Achsen stehen
+
+      U     "M_Hauptachsen_stehen"; 
+      U     "M_Hauptspindel_steht"; 
+      =     "DB_IN".EMX_AXIS_STANDSTILL; 
+NETWORK
+TITLE =Tischachse läuft
+
+      UN    "DB_ACHSE4".E_Stat; 
+      U     "DB_ACHSE4".E_SpNA; 
+      =     "DB_IN".EMX_TURNTABLE_RUN; 
+NETWORK
+TITLE =Rüstplatztüre offen
+
+      U     "I_PS_RPL_TUER_HINTEN_ZU"; 
+      =     "DB_IN".EMX_SUS_DOOR_OPENED; 
+NETWORK
+TITLE =Anforderung Drehbewegung NC-Tisch
+
+      O     "DB_ACHSE4".E_TCMinus; 
+      O     "DB_ACHSE4".E_TCPlus; 
+      =     "DB_IN".ImxRequestRotationTable; 
+NETWORK
+TITLE =Fastems Nullpunktspannsystem loesen
+
+      U     "I_FMS_FIXTURE_RELEASE"; 
+      =     "DB_IN".EMX_ZPS_RELEASE_EXT; 
+NETWORK
+TITLE =Kein Job oder Rohteil gefunden
+
+      U     "DB_FEHLERMELDUNG".Meldung._702059_Jobli_nicht_akti; 
+      =     "DB_IN".IMXNOUNFINISHEDPARTS; 
+NETWORK
+TITLE =Maschinenparmeter UDT_INT_[53]
+
+      L     "DB_PLC_MD_DB20".UDInt._053_IO_SONDER; 
+      T     "DB_IN".EMW_PARAMETER_1; 
+      NOP   0; 
+NETWORK
+TITLE =Maschinenparmeter UDT_INT_[54]
+
+      L     "DB_PLC_MD_DB20".UDInt._054_SONDER_1; 
+      T     "DB_IN".EMW_PARAMETER_2; 
+      NOP   0; 
+NETWORK
+TITLE = Maschinenparmeter UDT_INT_[56]
+
+      L     "DB_PLC_MD_DB20".UDInt._056_SONDER_3; 
+      T     "DB_IN".EMW_PARAMETER_3; 
+      NOP   0; 
+NETWORK
+TITLE =Maschinenparmeter UDT_INT_[57]
+
+      L     "DB_PLC_MD_DB20".UDInt._057_SONDER_4; 
+      T     "DB_IN".EMW_PARAMETER_4; 
+      NOP   0; 
+NETWORK
+TITLE =Funktionsaufruf aus Teileprogramm
+
+      SET   ; 
+      =     "DB_H_FUNKTION".HX_QuitPflicht[20]; 
+      =     "DB_DM_M_FUNKTION".MX_QuitPflicht[399]; 
+      CLR   ; 
+      =     "DB_H_FUNKTION".HX_Quitt[20]; 
+      =     "DB_DM_M_FUNKTION".MX_Quitt[399]; 
+
+      U     "DB_H_FUNKTION".HX_M[20]; 
+      SPBN  NOBS; 
+      L     "DB_H_FUNKTION".HX_Real_Wert[20]; 
+      RND   ; 
+      T     DB171.DBW   22; 
+      S     "DB_IN".EMX_STROBE_FUNCTION1; 
+
+NOBS: U     "DB_OUT".AMX_QUIT_FUNKTION1; 
+      O     "M_Reset_Taste"; 
+      FP    "M_FP_H20_Quit"; 
+      =     "M_IMP_H20_Quit"; 
+
+      U     "M_IMP_H20_Quit"; 
+      SPBN  a10; 
+      SET   ; 
+      R     "DB_IN".EMX_STROBE_FUNCTION1; 
+      R     "M_IMP_H20_Quit"; 
+      =     "DB_H_FUNKTION".HX_Quitt[20]; 
+      =     "DB_DM_M_FUNKTION".MX_Quitt[399]; 
+      L     0; 
+      T     DB171.DBW   22; 
+a10:  NOP   0; 
+NETWORK
+TITLE =*** Lesen der Signale vom intelligenten IM-151 ***
+
+
+
+NETWORK
+TITLE =Vorschub Halt von SOKO steht an
+
+      U     "DB_OUT".AMX_FEED_HOLD_CYCL; 
+      =     "Mx_Vorschub_HALT_SOKO"; 
+      =     "DB_FEHLERMELDUNG".MELDUNG5._510220_VSH_VON_SOKO; 
+NETWORK
+TITLE =Werkzeugwechsel gesperrt durch SOKO
+
+      U     "DB_OUT".AmxLockToolChanger; 
+      =     "DB_FEHLERMELDUNG".MELDEFENSTER2._511215_WZW_SPERRE_SOKO; 
+NETWORK
+TITLE =Spindel Vorschub Halt von SOKO steht an
+
+      O     "DB_OUT".AMX_ERROR_KSS; 
+      O     "DB_OUT".AMX_FEED_STOP; 
+      O     ; 
+      U     "DB_OUT".AMX_SPINDLE_FEED_STOP; 
+      UN    "DB_IN".EMX_TOOL_CHANGE; 
+      O     ; 
+      U     "DB_OUT".AMX_SPINDLE_FEED_STOP_P; 
+      U(    ; 
+      ON    "DB_SIEM_KANAL_1".E_ChanActive; 
+      O     "M_Hauptachsen_stehen"; 
+      )     ; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700926_SOKO_Spi_VS_Halt; 
+NETWORK
+TITLE =NOT-AUS durch SOKO
+
+      U     "DB_OUT".AMX_EMERGENCY_STOP_P; 
+      U(    ; 
+      ON    "DB_SIEM_KANAL_1".E_ChanActive; 
+      O     "M_Hauptachsen_stehen"; 
+      )     ; 
+      O     "DB_OUT".AMX_EMERGENCY_STOP; 
+      S     "DB_FEHLERMELDUNG".NotAus._700029_SOKO; 
+NETWORK
+TITLE =Füllstandsüberwachung Schmieraggregat
+
+      U     "DB_OUT".AMX_LUBRICATION_LEVEL; 
+      S     "DB_FEHLERMELDUNG".Meldung._702227_Sonder_3; 
+NETWORK
+TITLE =NC-Startsperre durch SOKO
+
+      U     "DB_OUT".AMX_LOCK_NC_START; 
+      =     "M_SOKO_NC_STARTSPERRE"; 
+NETWORK
+TITLE =Ready M-Fkt
+
+      U     "DB_OUT".AMX_QUITT_MTH; 
+      =     "M_MTH_READY_SOKO"; 
+NETWORK
+TITLE =Fastems Nullpunktspannsystem geklemmt
+
+      U     "I_PC_FIXTURE_EXIST"; 
+      =     "MX_FIXTURE_ON_APC"; 
+NETWORK
+TITLE =Fastems Nullpunktspannsystem gelöst
+
+      U     "DB_OUT".AMX_ZPS_RELEASED; 
+      =     "MX_FIXTURE_RELEASED"; 
+NETWORK
+TITLE =Fastems Nullpunktspannsystem gespannt
+
+      U     "DB_OUT".AMX_ZPS_CLAMPED; 
+      =     "MX_Fixture_Locked"; 
+NETWORK
+TITLE =SOKO Meldung steht an
+
+      L     "DB_OUT".AMW_MESSAGENUMBER; // Meldungen von 513 bis 1024 anzeigen damit Bediener SONDERMELDUNG registriert
+      L     0; 
+      >I    ; 
+      =     "DB_FEHLERMELDUNG".MELDUNG3._700522_SOKO_MELDUNG; 
+NETWORK
+TITLE =SOKO Error steht an
+
+      L     "DB_OUT".AMW_MESSAGENUMBER; //Mit Hardkey sollte das Wizardfenster aufgeblendet werden sobald Fehlernummer kommt 
+      L     0; //Funktionierte aber nicht, nur im Testrack 
+      <>I   ; 
+      =     "M_SOKO_ERROR"; 
+NETWORK
+TITLE =SOKO-FEHLERAUSGABE
+
+      U     "M_SOKO_ERROR"; 
+      UN    "M_KNOLL_ERROR"; 
+      FP    "M_FP_SOKO_ERROR1"; 
+      SPBN  M003; 
+      L     "DB_OUT".AMW_MESSAGENUMBER; 
+      T     "DB_REMANENT".Soko_Error; 
+
+M003: U(    ; 
+      L     "DB_REMANENT".Soko_Error; 
+      L     0; 
+      >I    ; 
+      )     ; 
+      FP    "M_FP_SOKO_ERROR2"; 
+      SPBN  M002; 
+      L     60; 
+      T     "DB_SIEM_MMC".A_Hardkey; 
+      L     0; 
+      T     "DB_REMANENT".Soko_Error; 
+M002: NOP   0; 
+
+NETWORK
+TITLE =an SOKO:neuer Fehlereintrag erfolgt
+
+      AUF   "DB_FEHLERMELDUNG"; 
+      AUF   DI   240; 
+//---(1)--- Erfassung Änderungen ------------------------
+      TAR1  #svAR1; 
+      LAR1  P#0.0; 
+      L     46; 
+s001: T     #loopctr; 
+      L     DBD [AR1,P#0.0]; //Neuwert
+      L     DID [AR1,P#256.0]; //Altwert
+      XOD   ; 
+      L     DBD [AR1,P#0.0]; 
+      T     DID [AR1,P#256.0]; 
+      UD    ; 
+      T     DID [AR1,P#0.0]; //Flanken
+      +AR1  P#4.0; 
+      L     #loopctr; 
+      LOOP  s001; 
+      LAR1  #svAR1; 
+//---(1)-------------------------------------------------
+//---(2)--- Abfrage der Alarme, die zum Ansteuern der Hupe führen ---------
+      L     DID    0; 
+      L     DID    4; 
+      OD    ; 
+      L     DID    8; 
+      OD    ; 
+      L     DID   12; 
+      OD    ; 
+      L     DID   16; 
+      OD    ; 
+      L     DID   20; 
+      OD    ; 
+      L     DID   24; 
+      OD    ; 
+      L     DIW   36; 
+      OD    ; 
+      L     DIW   46; 
+      OD    ; 
+      L     DID   48; 
+      OD    ; 
+      L     DID   52; 
+      OD    ; 
+      L     DID   56; 
+      OD    ; 
+      L     DID   60; 
+      OD    ; 
+      L     DID   64; 
+      OD    ; 
+      L     DID   68; 
+      OD    ; 
+      L     DID   72; 
+      OD    ; 
+      L     DID   76; 
+      OD    ; 
+      L     DID   80; 
+      OD    ; 
+      L     DID   84; 
+      OD    ; 
+      L     DID   88; 
+      OD    ; 
+      L     DID   92; 
+      OD    ; 
+      L     DIW   96; 
+      OD    ; 
+      L     DID  126; 
+      OD    ; 
+      L     DID  130; 
+      OD    ; 
+      L     DID  134; 
+      OD    ; 
+      L     DID  138; 
+      OD    ; 
+      L     DID  142; 
+      OD    ; 
+      L     DID  146; 
+      OD    ; 
+      L     DID  180; 
+      OD    ; 
+      L     0; 
+      <>D   ; 
+//---(2)-------------------------------------------------
+      L     S5T#1S; 
+      SV    "Tv_nEintr"; //fester Impuls für Übertragung über Profibus
+      U     "Tv_nEintr"; 
+      =     "DB_IN".EMX_ERROR_PULSE; 
+NETWORK
+TITLE =SPB bei INT_053_IO_SONDER
+
+      L     "DB_PLC_MD_DB20".UDInt._053_IO_SONDER; 
+      L     0; 
+      ==I   ; 
+      SPB   weit; 
+NETWORK
+TITLE =DB_IN: Daten an SOKO-Slave(8) über Peripherie schreiben [DB171]
+//SOKO-Eingänge (Daten PLC==>SOKO):
+//Daten von DB171 auf Peripherie-Ausgänge PAW210...PAW241 schreiben.
+//
+//Bei allen SOKO-Informationen, die als BYTE oder BIT interpretiert werden,
+//müssen HIGH-Byte und LOW-Byte mit TAW getauscht werden.
+//
+//SOKO-Slave(8)-Liste:
+//swic\Pfronten\Steuerungsunabhängige Dokumente\Spezifikationen\SOKO
+      L     DB171.DBW    0; 
+      TAW   ; 
+      T     "OW_Tuning_CPU_0"; 
+
+      L     DB171.DBW    2; 
+      TAW   ; 
+      T     "OW_Tuning_CPU_1"; 
+
+      L     DB171.DBW    4; 
+      TAW   ; 
+      T     "OW_Tuning_CPU_2"; 
+
+      L     DB171.DBW    6; 
+      TAW   ; 
+      T     "OW_Tuning_CPU_3"; 
+
+      L     DB171.DBW    8; 
+      TAW   ; 
+      T     "OW_Tuning_CPU_4"; 
+
+      L     "DB_IN".EMW_PARAMETER_1; 
+      T     "OW_Tuning_CPU_C0"; 
+
+      L     "DB_IN".EMW_PARAMETER_2; 
+      T     "OW_Tuning_CPU_C1"; 
+
+      L     "DB_IN".EMW_PARAMETER_3; 
+      T     "OW_Tuning_CPU_C2"; 
+
+      L     "DB_IN".EMW_PARAMETER_4; 
+      T     "OW_Tuning_CPU_C3"; 
+
+      L     DB171.DBW   18; 
+      TAW   ; 
+      T     "OW_Tuning_CPU_5"; 
+
+      L     "DB_IN".EMW_FUNCTION1; 
+      T     "OW_Tuning_CPU_6"; 
+
+      L     DB171.DBW   22; 
+      TAW   ; 
+      T     "OW_TUNING_CPU_7"; 
+
+      L     DB171.DBW   24; 
+      TAW   ; 
+      T     "OW_TUNING_CPU_8"; 
+NETWORK
+TITLE =DB_OUT: Daten von SOKO-Slave(8) über Peripherie lesen [DB172]
+//SOKO-Ausgänge (Daten SOKO==>PLC):
+//SOKO-Ausgänge über Peripherie-Eingänge PEW210...PEW241 auf DB172 kopieren.
+//
+//Bei allen SOKO-Informationen, die als BYTE oder BIT interpretiert werden,
+//müssen HIGH-Byte und LOW-Byte mit TAW getauscht werden.
+//
+//SOKO-Slave(8)-Liste:
+//swic\Pfronten\Steuerungsunabhängige Dokumente\Spezifikationen\SOKO
+      L     "IW_Tuning_CPU_0"; 
+      TAW   ; 
+      T     DB172.DBW    0; 
+
+      L     "IW_Tuning_CPU_1"; 
+      TAW   ; 
+      T     DB172.DBW    2; 
+
+      L     "IW_Tuning_CPU_2"; 
+      TAW   ; 
+      T     DB172.DBW    4; 
+
+      L     "IW_Tuning_CPU_3"; 
+      TAW   ; 
+      T     DB172.DBW    6; 
+
+      L     "IW_Tuning_CPU_4"; 
+      T     "DB_OUT".AMW_MESSAGENUMBER; 
+
+      L     "IW_TUNING_CPU_5"; 
+      TAW   ; 
+      T     DB172.DBW   10; 
+NETWORK
+TITLE =Sprung-Ende bei INT_053_IO_SONDER
+
+weit: NOP   0; 
+
+END_FUNCTION
+

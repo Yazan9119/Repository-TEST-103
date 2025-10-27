@@ -1,0 +1,322 @@
+FUNCTION "FC_HMI_VERSORG" : VOID
+TITLE =
+//$Revision: 1.30 $
+//$Date: 2008/05/09 12:44:52CEST $
+//$Author: riedlh $
+//
+VERSION : 0.1
+
+
+VAR_TEMP
+  bDekodierergebnis : BOOL ;	
+  TEMP0 : WORD ;	
+  HMI_PRO_manual_screen : BOOL ;	//HMI-PRO: Einrichtbild angewählt
+  HMI_PRO_run_up_screen : BOOL ;	//HMI-PRO: Einschaltbedingungen angewählt
+  HMI_PRO_modes_screen : BOOL ;	//HMI-PRO: Taktarten angewählt
+  dummy : BOOL ;	
+  wert_null : BYTE ;	//Wert 0
+  fehler_sfc21 : INT ;	//Fehlerkennung SFC21
+END_VAR
+BEGIN
+NETWORK
+TITLE =OEM aktiv
+// 
+      UN    "DB_PLC_MD_DB20".UDHex._31_Bit0_TL2000_Projekt; 
+      =     "DB_OEM".OEM_Aktiv; 
+NETWORK
+TITLE =Datenbaustein OEM bei Ausfall der PCU ablöschen
+
+      U(    ; 
+      UN    "DB_SIEM_NCK".E_MMCBTSSready; 
+      SPBNB _001; 
+      L     0; 
+      T     #wert_null; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+_001: U     BIE; 
+      )     ; 
+      SPBNB _002; 
+      CALL "FILL" (
+           BVAL                     := #wert_null,
+           RET_VAL                  := #fehler_sfc21,
+           BLK                      := P#DB101.DBX0.0 BYTE 96);
+_002: NOP   0; 
+NETWORK
+TITLE =OEM Wert für Bildnummer Rettung (Einrichten) erzeugen
+//Bildnr. aus f:\oem\CS.ini
+      UN    "M_Handbetrieb"; // "DB_SIEM_BAG".E_JOG
+      SPB   nw25; 
+//---(1)--- Bilder mit BetrArt Jog als Voraussetzung ---
+      U     "DB_OEM".OEM_WZW_REttbildaktiv; 
+      SPBN  nw2a; 
+      L     1; 
+      SPA   nw2t; 
+nw2a: U     "DB_OEM".OEM_PW_Rettbildaktiv; 
+      U     "M_MA_Maschine_Ein"; 
+      SPBN  nw2b; 
+      L     2; 
+      SPA   nw2t; 
+nw2b: U     "DB_OEM".OEM_WZW2_Rettbildaktiv; 
+      SPBN  nw2c; 
+      L     3; 
+      SPA   nw2t; 
+nw2c: U     "DB_OEM".OEM_SpeRettbildaktiv; 
+      SPBN  nw2d; 
+      L     7; 
+      SPA   nw2t; 
+nw2d: U     "DB_OEM".OEM_SpeEinrbildaktiv; 
+      SPBN  nw2e; 
+      L     6; 
+      SPA   nw2t; 
+nw2e: U     "DB_OEM".OEM_BlumRettaktiv; 
+      SPBN  nw26; 
+      L     9; 
+      SPA   nw2t; 
+nw26: U     "DB_OEM".OEM_MT_KAL_Rettbildaktiv; 
+      U     "DB_SIEM_BAG".E_JOG; 
+      SPBN  nw2f; 
+      L     26; 
+      SPA   nw2t; 
+nw2f: U     "DB_OEM".OEM_WZW3_Rettbildaktiv; 
+      SPBN  nw2g; 
+      L     10; 
+      SPA   nw2t; 
+nw2g: U     "DB_OEM".OEM_Regalrettaktiv; 
+      SPBN  nw2h; 
+      L     11; 
+      SPA   nw2t; 
+nw2h: U     "DB_OEM".OEM_PW2_Rettbildaktiv; 
+      U     "M_MA_Maschine_Ein"; 
+      SPBN  nw45; 
+      L     5; 
+      SPA   nw2t; 
+nw45: U     "DB_OEM".OEM_SKRettaktiv; 
+      SPBN  nw2j; 
+      L     4; 
+      SPA   nw2t; 
+nw2j: U     "DB_OEM".OEM_PW3_Rettbildaktiv; 
+      U     "M_MA_Maschine_Ein"; 
+      SPBN  nw2k; 
+      L     13; 
+      SPA   nw2t; 
+nw2k: U     "DB_OEM".OEM_SpH_Ruestplatz; 
+      U     "M_MA_Maschine_Ein"; 
+      SPBN  nw2l; 
+      L     36; 
+      SPA   nw2t; 
+nw2l: U     "DB_OEM".OEM_SpH_Arbeitsraum; 
+      U     "M_MA_Maschine_Ein"; 
+      SPBN  nw22; 
+      L     37; 
+      SPA   nw2t; 
+nw22: U     "DB_OEM".OEM_SpH_TeachenAktiv; 
+      U     "M_MA_Maschine_Ein"; 
+      SPBN  nw2m; 
+      L     41; 
+      SPA   nw2t; 
+nw2m: U     "DB_OEM".OEM_WZW_MagEinstellung; 
+      U     "M_MA_Maschine_Ein"; 
+      U     "DB_PLC_MD_DB20".UDHex._04_BIT4_EINRICHT_BETR; 
+      SPBN  nw23; 
+      L     35; 
+      SPA   nw2t; 
+nw23: U     "DB_OEM".OEM_PS4_Rettbildaktiv; 
+      U     "M_MA_Maschine_Ein"; 
+      SPBN  nw24; 
+      L     8; 
+      SPA   nw2t; 
+nw24: U     "DB_OEM".OEM_PS5_Rettbildaktiv; 
+      U     "M_MA_Maschine_Ein"; 
+      SPBN  nw2n; 
+      L     14; 
+      SPA   nw2t; 
+nw2n: U     "DB_OEM".OEM_WZW6_Rettbildaktiv; 
+      SPBN  nw2o; 
+      L     16; 
+      SPA   nw2t; 
+nw2o: U     "DB_OEM".OEM_SpeRettbildaktiv3; 
+      SPBN  nw2p; 
+      L     17; 
+      SPA   nw2t; 
+nw2p: U     "DB_OEM".Handlingsystem_Aktiv; 
+      SPBN  nw2q; 
+      L     18; 
+      SPA   nw2t; 
+nw2q: U     "DB_OEM".Handlingsystem_2_Aktiv; 
+      SPBN  nw25; 
+      L     19; 
+      SPA   nw2t; 
+
+
+//---(1)------------------------------------------------
+nw25: U     "DB_OEM".OEM_ANWENDER; 
+      SPBN  nw27; 
+      L     24; 
+      SPA   nw2t; 
+
+nw27: U     "DB_OEM".OEM_WZVS_aktiv; 
+      SPBN  nw30; 
+      L     25; 
+      SPA   nw2t; 
+
+nw30: U     "DB_OEM".OEM_Rett_Spaenerechen; 
+      SPBN  nw31; 
+      L     30; 
+      SPA   nw2t; 
+
+nw31: U     "DB_OEM".OEM_Anw_Funkt_2; 
+      SPBN  nw2x; 
+      L     31; 
+      SPA   nw2t; 
+
+nw2x: L     0; 
+nw2t: T     "DB_OEM".Bildnummer; 
+      NOP   0; 
+
+NETWORK
+TITLE =OEM Einrichten aktiv
+
+      O     "DB_OEM".OEM_WZW_REttbildaktiv; 
+      O     "DB_OEM".OEM_WZW2_Rettbildaktiv; 
+      O     "DB_OEM".OEM_WZW3_Rettbildaktiv; 
+      O     "DB_OEM".OEM_WZW6_Rettbildaktiv; 
+      O     "DB_OEM".OEM_PW_Rettbildaktiv; 
+      O     "DB_OEM".OEM_PW2_Rettbildaktiv; 
+      O     "DB_OEM".OEM_PW3_Rettbildaktiv; 
+      O     "DB_OEM".OEM_SpeRettbildaktiv; 
+      O     "DB_OEM".OEM_SpeEinrbildaktiv; 
+      O     "DB_OEM".OEM_PS4_Rettbildaktiv; 
+      O     "DB_OEM".OEM_PS5_Rettbildaktiv; 
+      O     "DB_OEM".OEM_BlumRettaktiv; 
+      O     "DB_OEM".OEM_MT_KAL_Rettbildaktiv; 
+      O     "DB_OEM".OEM_Regalrettaktiv; 
+      O     "DB_OEM".OEM_Winkelkopfrettaktiv; 
+      O     "DB_OEM".OEM_Winkelkopfrettaktiv2; 
+      O     "DB_OEM".OEM_SKRettaktiv; 
+      O     "DB_OEM".OEM_SpH_Ruestplatz; 
+      O     "DB_OEM".OEM_SpH_Arbeitsraum; 
+      O     "DB_OEM".OEM_SpH_TeachenAktiv; 
+      O     "DB_OEM".OEM_WZW_MagEinstellung; 
+      O     "DB_OEM".OEM_ANWENDER; 
+      O     "DB_OEM".OEM_SpeRettbildaktiv3; 
+      =     "DB_OEM".Einrichten_Aktiv; 
+NETWORK
+TITLE =700101 "NC-STSP, Softkey-Rettung aktiv"
+
+      L     "DB_OEM".Bildnummer; 
+      L     0; 
+      <>I   ; 
+      =     "DB_FEHLERMELDUNG".NC_Startsperre._700101_SoftkeyRettung; 
+NETWORK
+TITLE =OEM: Freigabe OEM Bewegungsnummer (Taste Blau/Gelb aktiv)
+
+      U(    ; 
+      O     "I_DM_Ta_SKR_gelb"; 
+      O     "I_DM_Ta_SKR_blau"; 
+      )     ; 
+      S     "m_oem_freigabe_bew_nr"; 
+      UN    "DB_HMI".P_minus; 
+      UN    "DB_HMI".P_plus; 
+      FP    "m_oem_reset_frg_bew_nr"; 
+      R     "m_oem_freigabe_bew_nr"; 
+      NOP   0; 
+NETWORK
+TITLE =Daten von OEM DB101 an Transline DB59
+
+      U     DB101.DBX   16.1; 
+      U     "m_oem_freigabe_bew_nr"; 
+
+      =     L      8.0; 
+      BLD   103; 
+      U     DB101.DBX   16.2; 
+      U     "m_oem_freigabe_bew_nr"; 
+      =     L      8.1; 
+      BLD   103; 
+      U     DB101.DBX   16.3; 
+      U     "m_oem_freigabe_bew_nr"; 
+      =     L      8.2; 
+      BLD   103; 
+      U     DB101.DBX   16.4; 
+      U     "m_oem_freigabe_bew_nr"; 
+      =     L      8.3; 
+      BLD   103; 
+      U     DB101.DBX   16.5; 
+      U     "m_oem_freigabe_bew_nr"; 
+      =     L      8.4; 
+      BLD   103; 
+      U     DB101.DBX   16.6; 
+      U     "m_oem_freigabe_bew_nr"; 
+      =     L      8.5; 
+      BLD   103; 
+      U     "I_DM_Ta_SKR_gelb"; 
+      =     L      8.6; 
+      BLD   103; 
+      U     "I_DM_Ta_SKR_blau"; 
+      =     L      8.7; 
+      BLD   103; 
+      U     "DB_OEM".OEM_Aktiv; 
+      SPBNB _003; 
+      CALL "FC_HMI_OEM_TO_TLINE" (
+           ew_bildkennung           := W#16#40,
+           ei_bildnummer            := "DB_OEM".Bildnummer,
+           ex_beweg_zeile1          := L      8.0,
+           ex_beweg_zeile2          := L      8.1,
+           ex_beweg_zeile3          := L      8.2,
+           ex_beweg_zeile4          := L      8.3,
+           ex_beweg_zeile5          := L      8.4,
+           ex_beweg_zeile6          := L      8.5,
+           ex_taste_minus           := L      8.6,
+           ex_taste_plus            := L      8.7,
+           aw_bildkennung           := "DB_HMI".Bildnummer,
+           ai_fkt_nummer            := "DB_OEM".Bewegungsnummer,
+           ab_fkt_nummer_Low        := "DB_HMI".funktions_nr_low,
+           ab_fkt_nummer_High       := "DB_HMI".funktions_nr_high,
+           ax_taste_minus           := "DB_HMI".P_minus,
+           ax_taste_plus            := "DB_HMI".P_plus);
+_003: NOP   0; 
+NETWORK
+TITLE =Daten von Transline DB59 an Transline DB62
+//Auskodierung der OEM Signale mit eigenen Baustein als Ersatz zum FC62 von 
+//Transline
+      U     "m_eins"; 
+      =     L      8.0; 
+      BLD   103; 
+      CALL "FC_HMI_DEC_TLINE" (
+           FREIGABE                 := L      8.0,
+           BILDMASKE                := W#16#40,
+           S_E0_BILDMASKE           := "DB_HMI".Bildnummer,
+           FIRST_NUM                := 1,
+           LAST_NUM                 := 255,
+           FIRST_BYTE               := 6,
+           FUNKTION                 := "DB_OEM".Bewegungsnummer,
+           SAMMEL                   := #bDekodierergebnis);
+      NOP   0; 
+NETWORK
+TITLE =Bewegungsdaten von Transline DB62 an Einrichtfunktion DB105
+//Zuweisung der Bewegungsdaten von Transline DB62 an Einrichtfunktion DB105
+      U     "DB_HMI".P_minus; 
+      =     L      8.0; 
+      BLD   103; 
+      U     "DB_HMI".P_plus; 
+      =     L      8.1; 
+      BLD   103; 
+      U     #bDekodierergebnis; 
+      SPBNB _004; 
+      CALL "FC_HMI_TLINE_TO_FUNK" (
+           ei_first_num             := 1,
+           ei_last_num              := 255,
+           ex_taste_minus           := L      8.0,
+           ex_taste_plus            := L      8.1);
+_004: NOP   0; 
+NETWORK
+TITLE =Softkey Anwender Funktionen
+
+      U     "m_eins"; 
+      =     L      8.0; 
+      BLD   103; 
+      CALL "FC_UT_ANWENDER_SK" (
+           E_Enabled                := L      8.0);
+      NOP   0; 
+END_FUNCTION
+

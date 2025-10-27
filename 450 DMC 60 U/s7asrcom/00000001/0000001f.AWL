@@ -1,0 +1,797 @@
+FUNCTION "FC_WZW_GREIFER_AUSF" : VOID
+TITLE =
+//$Revision: 1.13 $
+//$Date: 2008/08/22 17:36:32CEST $
+//$Author: schmoelp $
+AUTHOR : FUH
+VERSION : 0.1
+
+
+VAR_INPUT
+  EX_Enable : BOOL ;	
+  EX_Greifer_ausfahren : BOOL ;	
+  EX_Greifer_einfahren : BOOL ;	
+  EX_WZGR1_Pos_Mag : BOOL ;	
+  EX_WZGR2_Pos_Mag : BOOL ;	
+  EX_Rettungsmaske_aktiv : BOOL ;	
+  ER_WZGR_Istposition : REAL ;	
+  ER_Hub_Greifer : REAL ;	
+END_VAR
+VAR_IN_OUT
+  EAX_Greifer_in_Bewegung : BOOL ;	
+  EAX_Greifer_ausgefahren : BOOL ;	
+  EAX_Greifer_eingefahren : BOOL ;	
+  EAX_WZGR_InPos : BOOL ;	
+  EAX_WZGR_Anf_Positionier : BOOL ;	
+  EAX_WZGR_Pos_lesen : BOOL ;	
+  EAR_WZGR_Sollposition : REAL ;	
+  EAR_WZGR_Geschwindigkeit : REAL ;	
+  EAB_SKZ : INT ;	
+END_VAR
+VAR_TEMP
+  tx_wzgr1_pos_ausgefahren : BOOL ;	
+  tx_wzgr2_pos_ausgefahren : BOOL ;	
+  tx_req_ausfahren : BOOL ;	
+  tx_req_einfahren : BOOL ;	
+  tx_Greifer_1_Magazin : BOOL ;	
+  tx_Greifer_2_Magazin : BOOL ;	
+  tx_Hand_Aktiv : BOOL ;	
+  tx_Automatik_aktiv : BOOL ;	
+  tx_Frg_Hand : BOOL ;	
+  tx_Auto_AST : BOOL ;	
+  tx_Auto_GST : BOOL ;	
+  tx_Sollwert_einfahren : BOOL ;	
+  tr_wzgr_istposition : REAL ;	
+  tr_wzgr1_aus_Fenster_min : REAL ;	
+  tr_wzgr1_aus_Fenster_plu : REAL ;	
+  tr_wzgr2_aus_Fenster_min : REAL ;	
+  tr_wzgr2_aus_Fenster_plu : REAL ;	
+  tr_WZGR2_Pos_ausgefahren : REAL ;	
+  tr_Velo : REAL ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =Anforderung Greiferposition lesen
+// Netzwerk-Übersicht
+// ==================
+// NW 1: Anforderung Greiferposition lesen
+// NW 2: WZW: Reset auslösen bei Abbruch Asup durch loslassen der Rettung
+// NW 3: Rücksetzen eingefahren
+// NW 4: Position Greifer 2 ausgefahren
+// NW 5: SOLL-Positionsfenster für Greifer 1+2 ausgefahren
+// NW 6: Aktuelle IST-Position (wenn größer 360-Grad)
+// NW 7: Aktuelle IST-Position (wenn kleiner 360-Grad)
+// NW 8: Positionsauswertung Greifer 1 ausgefahren
+// NW 9: Positionsauswertung Greifer 2 ausgefahren
+// NW 10: Bereich Greifer 1 zum Magazin
+// NW 11: Bereich Greifer 2 zum Magazin
+// NW 12: Handbetrieb
+// NW 13: Automatik-Betrieb aktiv
+// NW 14: Freigabe Handfunktion
+// NW 15: Anforderung Greifer ausfahren
+// NW 16: Anforderung Greifer einfahren
+// NW 17: __SK=00: Abfrage Schrittnummer 0
+// NW 18: SK=00: Ablöschen Temps und Ausgänge
+// NW 19: Rücksetzen Greifer ausgefahren, wenn eingefahren ansteht
+// NW 20: Weiter in Schritt 1 mit request ausfahren
+// NW 21: Weiter in Schritt 11 mit request einfahren
+// NW 22: __SK=01: Istposition lesen
+// NW 23: Position lesen, wenn nicht eingefahren
+// NW 24: __SK=02: Istposition ist gelesen
+// NW 25: Position ist gelesen
+// NW 26: Schritt incrementieren
+// NW 27: Start Greifer 1 ausfahren
+// NW 28: Start Greifer 2 ausfahren
+// NW 29: __SK=03: Warten auf "Greifer in Position"
+// NW 30: Greifer in Position
+// NW 31: __SK=04: Warten auf ausgefahren
+// NW 32: Ausfahren beendet Schritt_00
+// NW 33: __SK=11: Istposition lesen
+// NW 34: Position lesen, wenn nicht eingefahren
+// NW 35: __SK=12: Istposition ist gelesen
+// NW 36: Position ist gelesen
+// NW 37: Schritt incrementieren
+// NW 38: Start Greifer 1 einfahren
+// NW 39: Start Greifer 2 einfahren
+// NW 40: __SK=13: Warten auf "Greifer in Position"
+// NW 41: Greifer in Position
+// NW 42: __SK=14: Warten auf eingefahren
+// NW 43: Einfahren beendet Schritt_00
+// NW 44: HMI-Bild Rettung Greifer ein- ausfahren
+// NW 45: Reset 700355/700356 "Werkzeugmagazin nicht aus-/eingefahren"
+// NW 46: Sollwert Einfahren aktiv
+// NW 47: Set 700355/700356 "Werkzeugmagazin nicht aus-/eingefahren"
+//
+      UN    "DB_ACHSE14".E_TCMinus; 
+      UN    "DB_ACHSE14".E_TCPlus; 
+      FP    "M_FP_Achse14_steht"; 
+      O     "M_IMP_Leistung_steht_an"; 
+//      O     "M_Takt_04s"
+      =     #EAX_WZGR_Pos_lesen; 
+NETWORK
+TITLE =WZW: Reset auslösen bei Abbruch Asup durch loslassen der Rettung
+
+      UN    "DB_EINRICHTFUNKTION".Bewegung_3_Plus; 
+      UN    "DB_EINRICHTFUNKTION".Bewegung_3_Minus; 
+      U(    ; 
+      L     "DB_OEM".Bewegungsnummer; 
+      L     3; 
+      ==I   ; 
+      )     ; 
+      O     "M_Reset_WZW"; 
+      =     L     30.0; 
+
+
+      U     L     30.0; 
+      BLD   102; 
+      S     "DB_Achs11_VMAG_Greifer".MX_Abbruch_Positionieren; 
+
+      U     L     30.0; 
+      BLD   102; 
+      R     "DB_ACHSE14".A_PLCAxis; 
+      U     L     30.0; 
+      BLD   102; 
+      R     #EAX_WZGR_Anf_Positionier; 
+      U     L     30.0; 
+      BLD   102; 
+      R     #EAX_Greifer_in_Bewegung; 
+      U     L     30.0; 
+      SPBNB _001; 
+      L     0; 
+      T     #EAB_SKZ; 
+_001: NOP   0; 
+NETWORK
+TITLE =Rücksetzen eingefahren
+
+      UN    #EX_WZGR1_Pos_Mag; 
+      UN    #EX_WZGR2_Pos_Mag; 
+      R     #EAX_Greifer_eingefahren; 
+
+NETWORK
+TITLE =Position Greifer 2 ausgefahren
+
+      L     #ER_Hub_Greifer; 
+      L     1.800000e+002; 
+      +R    ; 
+      T     #tr_WZGR2_Pos_ausgefahren; 
+      NOP   0; 
+NETWORK
+TITLE =Bestimmung der Geschwindigkeit
+
+      U(    ; 
+      U     "M_WZW_Ausw"; 
+      SPBNB _002; 
+      L     "DI_TM_MAGDAT".GrWz_Velo; 
+      L     3.600000e+002; 
+      /R    ; 
+      T     #tr_Velo; 
+      UN    OV; 
+      SAVE  ; 
+      CLR   ; 
+_002: U     BIE; 
+      )     ; 
+      NOT   ; 
+      SPBNB _003; 
+      L     "DI_TM_T_BEFEHL".T_NewTool_Velo; 
+      L     3.600000e+002; 
+      /R    ; 
+      T     #tr_Velo; 
+_003: NOP   0; 
+NETWORK
+TITLE =SOLL-Positionsfenster für Greifer 1+2 ausgefahren
+
+      U(    ; 
+      U(    ; 
+      U(    ; 
+      L     #ER_Hub_Greifer; 
+      L     5.000000e-001; 
+      -R    ; 
+      T     #tr_wzgr1_aus_Fenster_min; 
+      UN    OV; 
+      SAVE  ; 
+      CLR   ; 
+      U     BIE; 
+      )     ; 
+      SPBNB _004; 
+      L     #ER_Hub_Greifer; 
+      L     5.000000e-001; 
+      +R    ; 
+      T     #tr_wzgr1_aus_Fenster_plu; 
+      UN    OV; 
+      SAVE  ; 
+      CLR   ; 
+_004: U     BIE; 
+      )     ; 
+      SPBNB _005; 
+      L     #tr_WZGR2_Pos_ausgefahren; 
+      L     5.000000e-001; 
+      -R    ; 
+      T     #tr_wzgr2_aus_Fenster_min; 
+      UN    OV; 
+      SAVE  ; 
+      CLR   ; 
+_005: U     BIE; 
+      )     ; 
+      SPBNB _006; 
+      L     #tr_WZGR2_Pos_ausgefahren; 
+      L     5.000000e-001; 
+      +R    ; 
+      T     #tr_wzgr2_aus_Fenster_plu; 
+_006: NOP   0; 
+NETWORK
+TITLE =Aktuelle IST-Position (wenn größer 360-Grad)
+
+      U(    ; 
+      L     #ER_WZGR_Istposition; 
+      L     3.600000e+002; 
+      >=R   ; 
+      )     ; 
+      SPBNB _007; 
+      L     #ER_WZGR_Istposition; 
+      L     3.600000e+002; 
+      -R    ; 
+      T     #tr_wzgr_istposition; 
+      UN    OV; 
+      SAVE  ; 
+      CLR   ; 
+_007: U     BIE; 
+      SPB   m001; 
+NETWORK
+TITLE =Aktuelle IST-Position (wenn kleiner 360-Grad)
+
+      L     #ER_WZGR_Istposition; 
+      T     #tr_wzgr_istposition; 
+      NOP   0; 
+NETWORK
+TITLE =Positionsauswertung Greifer 1 ausgefahren
+
+m001: U(    ; 
+      L     #tr_wzgr_istposition; 
+      L     #tr_wzgr1_aus_Fenster_min; 
+      >=R   ; 
+      )     ; 
+      U(    ; 
+      L     #tr_wzgr_istposition; 
+      L     #tr_wzgr1_aus_Fenster_plu; 
+      <=R   ; 
+      )     ; 
+      UN    #EX_WZGR1_Pos_Mag; 
+      UN    #EX_WZGR2_Pos_Mag; 
+      =     #tx_wzgr1_pos_ausgefahren; 
+NETWORK
+TITLE =Positionsauswertung Greifer 2 ausgefahren
+
+      U(    ; 
+      L     #tr_wzgr_istposition; 
+      L     #tr_wzgr2_aus_Fenster_min; 
+      >=R   ; 
+      )     ; 
+      U(    ; 
+      L     #tr_wzgr_istposition; 
+      L     #tr_wzgr2_aus_Fenster_plu; 
+      <=R   ; 
+      )     ; 
+      UN    #EX_WZGR1_Pos_Mag; 
+      UN    #EX_WZGR2_Pos_Mag; 
+      =     #tx_wzgr2_pos_ausgefahren; 
+NETWORK
+TITLE =Bereich Greifer 1 zum Magazin
+
+      U(    ; 
+      U(    ; 
+      L     #tr_wzgr_istposition; 
+      L     -1.000000e+000; 
+      >=R   ; 
+      )     ; 
+      U(    ; 
+      L     #tr_wzgr_istposition; 
+      L     #tr_wzgr1_aus_Fenster_plu; 
+      <=R   ; 
+      )     ; 
+      O     #EX_WZGR1_Pos_Mag; 
+      )     ; 
+      UN    #EX_WZGR2_Pos_Mag; 
+      =     #tx_Greifer_1_Magazin; 
+NETWORK
+TITLE =Bereich Greifer 2 zum Magazin
+
+      U(    ; 
+      U(    ; 
+      L     #tr_wzgr_istposition; 
+      L     1.790000e+002; 
+      >=R   ; 
+      )     ; 
+      U(    ; 
+      L     #tr_wzgr_istposition; 
+      L     #tr_wzgr2_aus_Fenster_plu; 
+      <=R   ; 
+      )     ; 
+      O     #EX_WZGR2_Pos_Mag; 
+      )     ; 
+      UN    #EX_WZGR1_Pos_Mag; 
+      =     #tx_Greifer_2_Magazin; 
+NETWORK
+TITLE =Handbetrieb
+
+      U     "M_Leistung_Steht_an"; 
+      U     "DB_OEM".Einrichten_Aktiv; 
+      U     "M_Handbetrieb"; 
+      U     "DB_OEM".OEM_WZW_REttbildaktiv; 
+      =     #tx_Hand_Aktiv; 
+
+NETWORK
+TITLE =Automatik-Betrieb aktiv
+
+      U     "M_Leistung_Steht_an"; 
+      UN    #tx_Hand_Aktiv; 
+      UN    "M_3Te_Betriebsart"; 
+      UN    "M_4Te_Betriebsart"; 
+      UN    "M_Einrichtbetrieb"; 
+      =     #tx_Automatik_aktiv; 
+NETWORK
+TITLE =Freigabe Handfunktion
+
+      U     #tx_Hand_Aktiv; 
+      UN    "DB_NC_PLC".WZW_NC_Aktiv; 
+      U     "M_WW_X_imArbeitsraum"; 
+      U(    ; 
+      U     "M_TM_MAG_TOOL_UNLOCK"; 
+      U     "M_WZW_Hub_Magazin"; 
+      O     "M_WZW_Hub_GrdSt"; 
+      )     ; 
+      =     #tx_Frg_Hand; 
+NETWORK
+TITLE =Anforderung Greifer ausfahren
+
+      U(    ; 
+      U     "DB_EINRICHTFUNKTION".Bewegung_3_Minus; 
+      U     #tx_Frg_Hand; 
+      O     ; 
+      U     #EX_Greifer_ausfahren; 
+      U     #tx_Automatik_aktiv; 
+      )     ; 
+      UN    #EAX_Greifer_ausgefahren; 
+      =     #tx_req_ausfahren; 
+NETWORK
+TITLE =Anforderung Greifer einfahren
+
+      U(    ; 
+      U     "DB_EINRICHTFUNKTION".Bewegung_3_Plus; 
+      U     #tx_Frg_Hand; 
+      O     ; 
+      U     #EX_Greifer_einfahren; 
+      U     #tx_Automatik_aktiv; 
+      )     ; 
+      UN    #EAX_Greifer_eingefahren; 
+      =     #tx_req_einfahren; 
+NETWORK
+TITLE =__SK=00: Abfrage Schrittnummer 0
+
+      L     #EAB_SKZ; 
+      L     0; 
+      ==I   ; 
+      SPBN  SK01; 
+NETWORK
+TITLE =SK=00: Ablöschen Temps und Ausgänge
+
+      U     "m_eins"; 
+      R     #tx_Auto_AST; 
+      R     #tx_Auto_GST; 
+NETWORK
+TITLE =Rücksetzen Greifer ausgefahren, wenn eingefahren ansteht
+
+      O     #EX_WZGR1_Pos_Mag; 
+      O     #EX_WZGR2_Pos_Mag; 
+      R     #EAX_Greifer_ausgefahren; 
+NETWORK
+TITLE =Weiter in Schritt 1 mit request ausfahren
+
+      U     #tx_req_ausfahren; 
+      UN    #EAX_WZGR_Anf_Positionier; 
+      SPBNB _008; 
+      L     1; 
+      T     #EAB_SKZ; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+_008: U     BIE; 
+      SPB   SK01; 
+NETWORK
+TITLE =Weiter in Schritt 11 mit request einfahren
+
+      U     #tx_req_einfahren; 
+      UN    #EAX_WZGR_Anf_Positionier; 
+      SPBNB _009; 
+      L     11; 
+      T     #EAB_SKZ; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+_009: U     BIE; 
+      SPB   SK11; 
+NETWORK
+TITLE =__SK=01: Istposition lesen
+
+SK01: L     #EAB_SKZ; 
+      L     1; 
+      ==I   ; 
+      SPBN  SK02; 
+NETWORK
+TITLE =Position lesen, wenn nicht eingefahren
+
+      U     "m_eins"; 
+      =     L     30.0; 
+      U     L     30.0; 
+      SPBNB _00a; 
+      L     #EAB_SKZ; 
+      L     1; 
+      +I    ; 
+      T     #EAB_SKZ; 
+_00a: NOP   0; 
+      U     L     30.0; 
+      UN    #EX_WZGR1_Pos_Mag; 
+      UN    #EX_WZGR2_Pos_Mag; 
+      S     #EAX_WZGR_Pos_lesen; 
+NETWORK
+TITLE =__SK=02: Istposition ist gelesen
+
+SK02: L     #EAB_SKZ; 
+      L     2; 
+      ==I   ; 
+      SPBN  SK03; 
+NETWORK
+TITLE =Position ist gelesen
+
+      UN    #EAX_WZGR_Pos_lesen; 
+      U(    ; 
+      O     #tx_Greifer_1_Magazin; 
+      O     #tx_Greifer_2_Magazin; 
+      )     ; 
+      SPBN  SEND; 
+NETWORK
+TITLE =Schritt incrementieren
+
+      U     "m_eins"; 
+      SPBNB _00b; 
+      L     #EAB_SKZ; 
+      L     1; 
+      +I    ; 
+      T     #EAB_SKZ; 
+_00b: NOP   0; 
+NETWORK
+TITLE =Start Greifer 1 ausfahren
+
+      U     #tx_Greifer_1_Magazin; 
+      SPBNB _00c; 
+      L     #ER_Hub_Greifer; 
+      T     #EAR_WZGR_Sollposition; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+_00c: U     BIE; 
+      =     L     30.0; 
+      U     L     30.0; 
+      BLD   102; 
+      S     #EAX_WZGR_Anf_Positionier; 
+      U     L     30.0; 
+      BLD   102; 
+      S     #EAX_Greifer_in_Bewegung; 
+      U     L     30.0; 
+      BLD   102; 
+      R     #EAX_WZGR_InPos; 
+      U     L     30.0; 
+      BLD   102; 
+      R     #EAX_Greifer_eingefahren; 
+      U     L     30.0; 
+      BLD   102; 
+      R     #EAX_Greifer_ausgefahren; 
+      U     L     30.0; 
+      BLD   102; 
+      S     #EAX_Greifer_in_Bewegung; 
+      U     L     30.0; 
+      SPBNB _00d; 
+      L     #tr_Velo; 
+      T     #EAR_WZGR_Geschwindigkeit; 
+_00d: NOP   0; 
+NETWORK
+TITLE =Start Greifer 2 ausfahren
+
+      U     #tx_Greifer_2_Magazin; 
+      SPBNB _00e; 
+      L     #tr_WZGR2_Pos_ausgefahren; 
+      T     #EAR_WZGR_Sollposition; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+_00e: U     BIE; 
+      =     L     30.0; 
+      U     L     30.0; 
+      BLD   102; 
+      S     #EAX_WZGR_Anf_Positionier; 
+      U     L     30.0; 
+      BLD   102; 
+      S     #EAX_Greifer_in_Bewegung; 
+      U     L     30.0; 
+      BLD   102; 
+      R     #EAX_WZGR_InPos; 
+      U     L     30.0; 
+      BLD   102; 
+      R     #EAX_Greifer_eingefahren; 
+      U     L     30.0; 
+      BLD   102; 
+      R     #EAX_Greifer_ausgefahren; 
+      U     L     30.0; 
+      SPBNB _00f; 
+      L     #tr_Velo; 
+      T     #EAR_WZGR_Geschwindigkeit; 
+_00f: NOP   0; 
+NETWORK
+TITLE =__SK=03: Warten auf "Greifer in Position"
+
+SK03: L     #EAB_SKZ; 
+      L     3; 
+      ==I   ; 
+      SPBN  SK04; 
+NETWORK
+TITLE =Greifer in Position
+
+      U     #EAX_WZGR_InPos; 
+      SPBNB _010; 
+      L     #EAB_SKZ; 
+      L     1; 
+      +I    ; 
+      T     #EAB_SKZ; 
+_010: NOP   0; 
+NETWORK
+TITLE =__SK=04: Warten auf ausgefahren
+
+SK04: L     #EAB_SKZ; 
+      L     4; 
+      ==I   ; 
+      SPBN  SK11; 
+NETWORK
+TITLE =Ausfahren beendet Schritt_00
+
+      U(    ; 
+      O     #tx_wzgr1_pos_ausgefahren; 
+      O     #tx_wzgr2_pos_ausgefahren; 
+      )     ; 
+      SPBNB _011; 
+      L     0; 
+      T     #EAB_SKZ; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+_011: U     BIE; 
+      R     #EAX_Greifer_in_Bewegung; 
+      S     #EAX_Greifer_ausgefahren; 
+NETWORK
+TITLE =__SK=11: Istposition lesen
+
+SK11: L     #EAB_SKZ; 
+      L     11; 
+      ==I   ; 
+      SPBN  SK12; 
+NETWORK
+TITLE =Position lesen, wenn nicht eingefahren
+
+      U     "m_eins"; 
+      =     L     30.0; 
+      U     L     30.0; 
+      SPBNB _012; 
+      L     #EAB_SKZ; 
+      L     1; 
+      +I    ; 
+      T     #EAB_SKZ; 
+_012: NOP   0; 
+      U     L     30.0; 
+      UN    #EX_WZGR1_Pos_Mag; 
+      UN    #EX_WZGR2_Pos_Mag; 
+      S     #EAX_WZGR_Pos_lesen; 
+NETWORK
+TITLE =__SK=12: Istposition ist gelesen
+
+SK12: L     #EAB_SKZ; 
+      L     12; 
+      ==I   ; 
+      SPBN  SK13; 
+NETWORK
+TITLE =Position ist gelesen
+
+      UN    #EAX_WZGR_Pos_lesen; 
+      U(    ; 
+      O     #tx_Greifer_1_Magazin; 
+      O     #tx_Greifer_2_Magazin; 
+      )     ; 
+      SPBN  SEND; 
+NETWORK
+TITLE =Schritt incrementieren
+
+      U     "m_eins"; 
+      SPBNB _013; 
+      L     #EAB_SKZ; 
+      L     1; 
+      +I    ; 
+      T     #EAB_SKZ; 
+_013: NOP   0; 
+NETWORK
+TITLE =Start Greifer 1 einfahren
+
+      U     #tx_Greifer_1_Magazin; 
+      SPBNB _014; 
+      L     0.000000e+000; 
+      T     #EAR_WZGR_Sollposition; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+_014: U     BIE; 
+      =     L     30.0; 
+      U     L     30.0; 
+      BLD   102; 
+      S     #EAX_WZGR_Anf_Positionier; 
+      U     L     30.0; 
+      BLD   102; 
+      S     #EAX_Greifer_in_Bewegung; 
+      U     L     30.0; 
+      BLD   102; 
+      R     #EAX_WZGR_InPos; 
+      U     L     30.0; 
+      BLD   102; 
+      R     #EAX_Greifer_eingefahren; 
+      U     L     30.0; 
+      BLD   102; 
+      R     #EAX_Greifer_ausgefahren; 
+      U     L     30.0; 
+      SPBNB _015; 
+      L     #tr_Velo; 
+      T     #EAR_WZGR_Geschwindigkeit; 
+_015: NOP   0; 
+NETWORK
+TITLE =Start Greifer 2 einfahren
+
+      U     #tx_Greifer_2_Magazin; 
+      SPBNB _016; 
+      L     1.800000e+002; 
+      T     #EAR_WZGR_Sollposition; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+_016: U     BIE; 
+      =     L     30.0; 
+      U     L     30.0; 
+      BLD   102; 
+      S     #EAX_WZGR_Anf_Positionier; 
+      U     L     30.0; 
+      BLD   102; 
+      S     #EAX_Greifer_in_Bewegung; 
+      U     L     30.0; 
+      BLD   102; 
+      R     #EAX_WZGR_InPos; 
+      U     L     30.0; 
+      BLD   102; 
+      R     #EAX_Greifer_eingefahren; 
+      U     L     30.0; 
+      BLD   102; 
+      R     #EAX_Greifer_ausgefahren; 
+      U     L     30.0; 
+      BLD   102; 
+      S     #EAX_Greifer_in_Bewegung; 
+      U     L     30.0; 
+      SPBNB _017; 
+      L     #tr_Velo; 
+      T     #EAR_WZGR_Geschwindigkeit; 
+_017: NOP   0; 
+NETWORK
+TITLE =__SK=13: Warten auf "Greifer in Position"
+
+SK13: L     #EAB_SKZ; 
+      L     13; 
+      ==I   ; 
+      SPBN  SK14; 
+NETWORK
+TITLE =Greifer in Position
+
+      U     #EAX_WZGR_InPos; 
+      SPBNB _018; 
+      L     #EAB_SKZ; 
+      L     1; 
+      +I    ; 
+      T     #EAB_SKZ; 
+_018: NOP   0; 
+NETWORK
+TITLE =__SK=14: Warten auf eingefahren
+
+SK14: L     #EAB_SKZ; 
+      L     14; 
+      ==I   ; 
+      SPBN  SEND; 
+NETWORK
+TITLE =Einfahren beendet Schritt_00
+
+      U(    ; 
+      O     #EX_WZGR1_Pos_Mag; 
+      O     #EX_WZGR2_Pos_Mag; 
+      )     ; 
+      SPBNB _019; 
+      L     0; 
+      T     #EAB_SKZ; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+_019: U     BIE; 
+      R     #EAX_Greifer_in_Bewegung; 
+      S     #EAX_Greifer_eingefahren; 
+NETWORK
+TITLE =HMI-Bild Rettung Greifer ein- ausfahren
+
+SEND: U     #tx_Frg_Hand; 
+      =     L     30.0; 
+      BLD   103; 
+      U     #tx_Frg_Hand; 
+      =     L     30.1; 
+      BLD   103; 
+      U     #EAX_Greifer_ausgefahren; 
+      =     L     30.2; 
+      BLD   103; 
+      U(    ; 
+      O     #EAX_Greifer_eingefahren; 
+      O     #EX_WZGR1_Pos_Mag; 
+      O     #EX_WZGR2_Pos_Mag; 
+      )     ; 
+      =     L     30.3; 
+      BLD   103; 
+      U     #tx_req_ausfahren; 
+      =     L     30.4; 
+      BLD   103; 
+      U     #tx_req_einfahren; 
+      =     L     30.5; 
+      BLD   103; 
+      U     "m_eins"; 
+      SPBNB _01a; 
+      CALL "FC_HMI_IO_TO_TLINE" (
+           Freigabe_AST_Hand        := L     30.0,
+           Freigabe_GST_Hand        := L     30.1,
+           Endlage_AST              := L     30.2,
+           Endlage_GST              := L     30.3,
+           Ventil_AST               := L     30.4,
+           Ventil_GST               := L     30.5,
+           Bewegungsnummer          := 3);
+_01a: NOP   0; 
+NETWORK
+TITLE =Reset 700355/700356 "Werkzeugmagazin nicht aus-/eingefahren"
+
+      U     "M_Ruecksetze_Fehler"; 
+      R     "DB_FEHLERMELDUNG".WARNUNG3._700355; 
+      R     "DB_FEHLERMELDUNG".WARNUNG3._700356; 
+NETWORK
+TITLE =Sollwert Einfahren aktiv
+
+      L     #EAR_WZGR_Sollposition; 
+      L     0.000000e+000; 
+      ==R   ; 
+      =     #tx_Sollwert_einfahren; 
+NETWORK
+TITLE =Set 700355/700356 "Werkzeugmagazin nicht aus-/eingefahren"
+
+      U(    ; 
+      U     #EAX_Greifer_in_Bewegung; 
+      L     S5T#2S; 
+      SS    "Te_Greifer_in_Bewegung"; 
+      UN    #EAX_Greifer_in_Bewegung; 
+      R     "Te_Greifer_in_Bewegung"; 
+      NOP   0; 
+      NOP   0; 
+      U     "Te_Greifer_in_Bewegung"; 
+      )     ; 
+      UN    "DB_PLC_MD_DB20".UDHex._04_BIT4_EINRICHT_BETR; 
+      =     L     30.0; 
+      UN    #tx_Sollwert_einfahren; 
+      UN    #EAX_Greifer_ausgefahren; 
+      U     L     30.0; 
+      S     "DB_FEHLERMELDUNG".WARNUNG3._700355; 
+      U     L     30.0; 
+      UN    #EAX_Greifer_eingefahren; 
+      U     #tx_Sollwert_einfahren; 
+      S     "DB_FEHLERMELDUNG".WARNUNG3._700356; 
+END_FUNCTION
+

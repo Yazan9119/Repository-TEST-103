@@ -1,0 +1,109 @@
+FUNCTION "FC_IKZ_DRUCKSTUFEN" : VOID
+TITLE =
+//$Revision: 1.4 $
+//$Date: 2008/06/05 06:31:24CEST $
+//$Author: hgc $
+//
+VERSION : 0.1
+
+
+VAR_INPUT
+  EX_Anwahl_MD_RueckMeld : BOOL ;	//Anwahl Rückmeldung Funktion
+  EX_Anwahl_Ueberwachung : BOOL ;	//Anwahl Überwachung/Freigabe
+  EI_Druckstufe : INT ;	//Druckstufe 
+  EX_Eingang_Freigabe : BOOL ;	//Eingang Überwachung/Freigabe Druckstufe
+  EX_Eingang_Rueckmeldung : BOOL ;	//Eingang Rückmeldung Druckstufe
+END_VAR
+VAR_IN_OUT
+  EAX_Anforderung : BOOL ;	//Anforderung DS
+  EAX_Druckstufe_Aktiv : BOOL ;	//Druckstufe aktiv
+  EAX_Fehler_Freigabe : BOOL ;	//Fehler: Freigabe Druckstufe 0-Signal
+  EAX_Fehler_Rueckm_0 : BOOL ;	//Fehler: Rückmeldung Druckstufe 0-Signal
+  EAB_Zaehler_Ueberw : BYTE ;	//Zaehler Ueberwachung
+END_VAR
+BEGIN
+NETWORK
+TITLE =KMTL: Freigabe Vorschub
+
+      U     "M_Ruecksetze_Fehler"; 
+      SPBN  DSS; 
+      R     #EAX_Fehler_Freigabe; 
+      R     #EAX_Fehler_Rueckm_0; 
+      L     0; 
+      T     #EAB_Zaehler_Ueberw; 
+
+DSS:  U     #EAX_Anforderung; 
+      SPBN  DS1; 
+
+      L     #EI_Druckstufe; 
+      ITD   ; 
+      DTR   ; 
+      L     "DB_H_FUNKTION".HX_Real_Wert[7]; 
+      ==R   ; 
+      SPBN  DS1; 
+
+      SET   ; 
+      R     "MX_IKZ_Freigabe_Vorschub"; 
+
+      U     "Mx_Freigabe_DS"; 
+      SPBN  DS1; 
+
+      SET   ; 
+      S     #EAX_Druckstufe_Aktiv; 
+//      L     0
+//      T     #EAB_Zaehler_Ueberw
+
+      UN    #EX_Anwahl_MD_RueckMeld; 
+      U(    ; 
+      U     #EX_Eingang_Freigabe; 
+      ON    #EX_Anwahl_Ueberwachung; 
+      )     ; 
+      S     "MX_IKZ_Freigabe_Vorschub"; 
+      R     #EAX_Anforderung; 
+
+// Überwachung/Freigabe 
+DS1:  U     #EX_Anwahl_Ueberwachung; 
+      U     #EAX_Druckstufe_Aktiv; 
+      UN    #EX_Eingang_Freigabe; 
+      U     "MX_IKZ_Pumpen_Ein"; 
+      S     #EAX_Fehler_Freigabe; 
+
+// Freigabe Vorschub
+      U     #EAX_Druckstufe_Aktiv; 
+      U     "MX_IKZ_Pumpen_Ein"; 
+      U     #EX_Anwahl_MD_RueckMeld; 
+      SPBN  MEND; 
+
+      U     #EX_Eingang_Rueckmeldung; 
+      S     "MX_IKZ_Freigabe_Vorschub"; 
+
+      U     #EX_Eingang_Rueckmeldung; 
+      U     "Mx_Freigabe_DS"; 
+      SPBN  DS2; 
+      SET   ; 
+      S     "MX_IKZ_Freigabe_Vorschub"; 
+      R     #EAX_Anforderung; 
+      L     0; 
+      T     #EAB_Zaehler_Ueberw; 
+      SPA   MEND; 
+
+DS2:  U     "M_Takt_1s"; 
+      UN    #EAX_Fehler_Rueckm_0; 
+      UN    "M_PW_Aktiv"; 
+      SPBN  DS3; 
+      L     #EAB_Zaehler_Ueberw; 
+      INC   1; 
+      T     #EAB_Zaehler_Ueberw; 
+
+DS3:  L     #EAB_Zaehler_Ueberw; 
+      L     10; 
+      >I    ; 
+      S     #EAX_Fehler_Rueckm_0; 
+
+      SET   ; 
+      R     "MX_IKZ_Freigabe_Vorschub"; 
+
+MEND: NOP   0; 
+
+END_FUNCTION
+

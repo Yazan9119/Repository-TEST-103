@@ -1,0 +1,466 @@
+FUNCTION "FC_ACHS_15" : VOID
+TITLE =
+//$Revision: 1.30 $
+//$Date: 2008/10/11 09:26:17CEST $
+//$Author: hgc $
+VERSION : 0.1
+
+
+VAR_TEMP
+  VsKorr : BYTE ;	//Voschubkorrektur, graycodiert
+  Tx_Override_aktiv : BOOL ;	
+  TX_DUMMY : BOOL ;	
+  TX_Vorschub_Halt_RPL : BOOL ;	
+  TX_OVR_RPL : BOOL ;	
+  PI_I_RPL_Ta_Zweihand : BOOL ;	
+  T_Pos_Read : BOOL ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =15-Achse: Aktivierung Softwarenocken / Rüstplatz NC-Achse
+// Netzwerk-Übersicht
+// ==================
+// NW 1: 15-Achse: Aktivierung Softwarenocken / Rüstplatz NC-Achse
+// NW 2: 701644 "VS-HA-AS2, Rüstplatz Fehler Zweihandbedienung"
+// NW 3: Achse 15 Leistung aktiv
+// NW 4: Achse 15 Restweg löschen
+// NW 5: Achse 15 Sollposition erreicht verlängerter Impuls
+// NW 6: Achse 15 Reset Taste links/rechts
+// NW 7: Aufruf FC_ACHSE_RPL 
+// NW 8: 15-Achse RPL: Vorschub Halt
+// NW 9: VsKorr wirksam für RpAchse
+// NW 10: 701526 "MEL, Rüstplatz Override 0%"
+// NW 11: RpAchse VsKorr von MSST oder optionellem VsKorrPoti
+// NW 12: 15-Achse RPL: Aufruf FC_ACHSE_HILF
+// NW 13: Achse 15 Reset
+// NW 14: Ausgang: Rüstplatz Freigabe links / Rechts drehen
+      SET   ; 
+      =     "DB_ACHSE15".A_SWCam; 
+      =     "DB_PW_DATA".Option.bRP_NCAchse; 
+
+NETWORK
+TITLE =701644 "VS-HA-AS2, Rüstplatz Fehler Zweihandbedienung"
+
+      U     "I_PW_Tueren_zu"; 
+      UN    "DB_PLC_MD_DB20".UDHex._32_Bit0_RPL_Endlos; 
+      UN    "M_RS4_80er"; 
+      O     ; 
+      U     "I_PS_RPL_TUER_VORNE_ZU"; 
+      U     "DB_PLC_MD_DB20".UDHex._32_Bit0_RPL_Endlos; 
+      U(    ; 
+      O     "M_RS4_80er"; 
+      O     "M_RS4_100_125er_Solution"; 
+      )     ; 
+      SPB   ZH01; 
+      U     "I_PW_RPL_ZUSTIMMTASTE"; 
+      L     4096; 
+      L     "DB_PLC_MD_DB20".UDInt._125_MAG_ZH_UEB_ZEIT; 
+      ITB   ; 
+      OW    ; 
+      SE    "TE_RPL_ZH"; 
+
+
+      U     "I_PW_RPL_rechts_drehen"; 
+      O     "I_PW_RPL_links_drehen"; 
+      UN    "TE_RPL_ZH"; 
+      R     "TE_RPL_ZH"; 
+
+      U     "I_PW_RPL_ZUSTIMMTASTE"; 
+      FP    "DB_ACHSE_RPL".MX_FP_I_PW_RPL_ZUSTIMMT; 
+      =     #PI_I_RPL_Ta_Zweihand; 
+
+      O     #PI_I_RPL_Ta_Zweihand; 
+      O     "TE_RPL_ZH"; 
+      U(    ; 
+      U     "I_PW_RPL_rechts_drehen"; 
+      O     "I_PW_RPL_links_drehen"; 
+      )     ; 
+      SPBN  ZH01; 
+      SET   ; 
+      S     "DB_FEHLERMELDUNG".VS_Halt_Async2._701644_RPL_Fehler_ZH; 
+ZH01: U     "M_Ruecksetze_Fehler"; 
+      R     "DB_FEHLERMELDUNG".VS_Halt_Async2._701644_RPL_Fehler_ZH; 
+
+NETWORK
+TITLE =Ruestplatztueren sind nicht goeffnet > große Aufspannvorrichtung
+
+      U(    ; 
+      U(    ; 
+      O     "I_PW_RPL_links_drehen"; 
+      O     "I_PW_RPL_rechts_drehen"; 
+      )     ; 
+      U     "I_PW_RPL_ZUSTIMMTASTE"; 
+      U     "I_PW_Tueren_zu"; 
+      O(    ; 
+      U(    ; 
+      O     "I_PW_RPL_links_drehen"; 
+      O     "I_PW_RPL_rechts_drehen"; 
+      )     ; 
+      UN    "I_PW_RPL_FREIGABE"; 
+      U     "I_PW_RPL_ZUSTIMMTASTE"; 
+      L     S5T#2S; 
+      SE    "Te_RPL_Feh_Tuer"; 
+      U     "M_Ruecksetze_Fehler"; 
+      R     "Te_RPL_Feh_Tuer"; 
+      NOP   0; 
+      NOP   0; 
+      U     "Te_RPL_Feh_Tuer"; 
+      )     ; 
+      )     ; 
+      U     "DB_PLC_MD_DB20".UDHex._51_Bit0_RPL_GR_SPV; 
+      S     "DB_FEHLERMELDUNG".WARNUNG2._701361_RPL_Tu_Ni_geoe; 
+      U     "M_Ruecksetze_Fehler"; 
+      R     "DB_FEHLERMELDUNG".WARNUNG2._701361_RPL_Tu_Ni_geoe; 
+      NOP   0; 
+NETWORK
+TITLE =Achse 15 Leistung aktiv
+//Bei Solutionline ist RP-Achse Safetyachse, somit bleibt Leistung immer aktiv 
+//und 
+//Achse wird in den SBH versetzt.
+      UN    "DB_PLC_MD_DB20".UDHex._31_Bit1_SOLUTIONLINE; 
+      U     "M_Leistung_Steht_an"; 
+      U(    ; 
+      O     "I_PW_RPL_FREIGABE"; 
+      O     ; 
+      UN    "I_PW_RPL_ZUSTIMMTASTE"; 
+      U     "O_PW_RPL_FREIGABE_RE_LI"; 
+      )     ; 
+      U(    ; 
+      U     "I_PW_Tueren_zu"; 
+      U     "O_PW_TUER_ENTRIEGELN"; 
+      O     "O_PW_RPL_FREIGABE_RE_LI"; 
+      )     ; 
+      O     ; 
+      U     "DB_PLC_MD_DB20".UDHex._31_Bit1_SOLUTIONLINE; 
+      U     "O_INFEED_ENABLE_NCU"; 
+      =     "DB_ACHSE_RPL".MX_Ax_Leistung_Aktiv; 
+NETWORK
+TITLE =RPL-Achse Jog +/- aktivieren
+
+      U(    ; 
+      O     "DB_PLC_MD_DB20".UDHex._04_BIT4_EINRICHT_BETR; 
+      O     "DB_PLC_MD_DB20".UDHex._05_BIT2_SAFTY_ABNAHME; 
+      )     ; 
+      U     "DB_SIEM_BAG".E_JOG; 
+      =     "m_vke_uebertrag_1"; 
+      U     "m_vke_uebertrag_1"; 
+      =     L      2.0; 
+      U     L      2.0; 
+      U     "I_PW_RPL_rechts_drehen"; 
+      =     "DB_ACHSE_RPL".MX_FahrAnf_Plus; 
+      U     L      2.0; 
+      U     "I_PW_RPL_links_drehen"; 
+      =     "DB_ACHSE_RPL".MX_FahrAnf_Minus; 
+NETWORK
+TITLE =Achse 15 Restweg löschen
+
+      U(    ; 
+      UN    "I_PW_RPL_rechts_drehen"; 
+      UN    "I_PW_RPL_links_drehen"; 
+      FP    "DB_ACHSE_RPL".MX_FP_1_RESTWEG_LOESCHEN; 
+      O(    ; 
+      UN    "I_PW_RPL_ZUSTIMMTASTE"; 
+      FP    "DB_ACHSE_RPL".MX_FP_2_RESTWEG_LOESCHEN; 
+      U(    ; 
+      ON    "I_PW_Tueren_zu"; 
+      ON    "I_PS_RPL_TUER_VORNE_ZU"; 
+      )     ; 
+      )     ; 
+
+      )     ; 
+      UN    "m_vke_uebertrag_1"; 
+      =     "DB_ACHSE_RPL".MX_Abbruch_Positionieren; 
+NETWORK
+TITLE =Achse 15 Sollposition erreicht verlängerter Impuls
+
+      U     "DB_ACHSE15".E_Stat; 
+      U(    ; 
+      L     "DB_ACHSE_RPL".MR_SollPosition; 
+      L     "DB_ACHSE_RPL".MR_IstPosition; 
+      ==R   ; 
+      )     ; 
+      L     S5T#500MS; 
+      SV    "TV_RPL_AX_IN_POS"; 
+      NOP   0; 
+      NOP   0; 
+      NOP   0; 
+      NOP   0; 
+NETWORK
+TITLE =Achse 15 Reset Taste links/rechts
+
+      O     "m_vke_uebertrag_1"; 
+      ON    "DB_ACHSE15".E_Stat; 
+      O     "TV_RPL_AX_IN_POS"; 
+      O     "M_PW_Aktiv"; 
+      O     ; 
+      UN    "I_PW_Hub_unten"; 
+      UN    "DB_PLC_MD_DB20".UDHex._23_Bit7_PW_HUB_ABFR_NEU; 
+      O     ; 
+      UN    "I_PW_HUB_POS1"; 
+      U     "DB_PLC_MD_DB20".UDHex._23_Bit7_PW_HUB_ABFR_NEU; 
+      ON    "M_Leistung_Steht_an"; 
+      ON    "I_PW_RPL_FREIGABE"; 
+      O     "DB_FEHLERMELDUNG".VS_Halt_Async2._701644_RPL_Fehler_ZH; 
+      O     ; 
+      U(    ; 
+      ON    "I_PW_Tueren_zu"; 
+      ON    "O_PW_TUER_ENTRIEGELN"; 
+      )     ; 
+      UN    "I_PW_RPL_ZUSTIMMTASTE"; 
+      R     "I_PW_RPL_rechts_drehen"; 
+      R     "I_PW_RPL_links_drehen"; 
+NETWORK
+TITLE =Bei RPT vorne zu RPL in GST fahren
+
+      U     "I_PS_RPL_TUER_VORNE_ZU"; 
+      FP    "M_FP_TUER_VORNE_ZU"; 
+      U     "DB_PLC_MD_DB20".UDHex._32_Bit0_RPL_Endlos; 
+      U(    ; 
+      O     "M_RS4_80er"; 
+      O     "M_RS4_100_125er_Solution"; 
+      )     ; 
+      U(    ; 
+      O     "I_PW_RPL_PAL_GEKLEMMT"; 
+      ON    "DB_PLC_MD_DB20".UDHex._17_BIT7_RP_HYD_KLEMMEN; 
+      )     ; 
+      UN    "I_PS_RPL_GST"; 
+      S     "M_PS_RPL_Tuer_zu_GST_fah"; 
+      U     "I_PS_RPL_GST"; 
+      R     "M_PS_RPL_Tuer_zu_GST_fah"; 
+      NOP   0; 
+NETWORK
+TITLE =RPL in GST fahren
+
+      O     "DB_PW_DATA".Automatik.bRP_NCAchse; 
+      O     "M_PS_RPL_Tuer_zu_GST_fah"; 
+      =     "M_RPL_in_GST_fahren"; 
+NETWORK
+TITLE =Aufruf FC_ACHSE_RPL 
+
+      CALL "FC_ACHSE_RPL" (
+           EX_Init                  := "M_Reset_Taste",
+           EX_RPL_Grdst_Req         := "M_RPL_in_GST_fahren",//"DB_PW_DATA".Automatik.bRP_NCAchse
+           EX_RPL_Plus_Req          := "I_PW_RPL_rechts_drehen",
+           EX_RPL_Minus_Req         := "I_PW_RPL_links_drehen",
+           EX_RPL_Pos_Req           := "DB_HR".RP_Achse.positionieren,
+           ER_RPL_Sollposition_Req  := "DB_ROB_IF".STAT.Ruestplatz.Sollpos_Realwert,
+           ER_RPL_Istposition       := "DB_ACHSE_RPL".MR_IstPosition,
+           EW_Teilung               := 4,
+           ER_Pos_Fenster           := 2.000000e-001,
+           ER_Pos_Limit_Minus       := -1.000000e+005,
+           ER_Pos_Limit_Plus        := 1.000000e+005,
+           EAX_RPL_Bereich          := "MW_RPL_Bereich",
+           EAX_RPL_Position         := "MW_RPL_Position",
+           EAX_RPL_Pos_Req          := "DB_ACHSE_RPL".MX_Anf_Positionieren,
+           EAX_RPL_In_Pos           := "DB_HR".RPT.RPAX_auf_Pos,
+           EAB_RPL_Positionierung   := "DB_ACHSE_RPL".MB_Positionierung,
+           EAR_RPL_Sollposition     := "DB_ACHSE_RPL".MR_SollPosition);
+
+
+NETWORK
+TITLE =15-Achse RPL: Vorschub Halt
+
+      U     "DB_FAMILIEN_MODUL".Gesamt.A_Vorschub_Halt_15_Achse; 
+      U(    ; 
+      O     "DB_ACHSE_RPL".MX_Anf_Positionieren; 
+      O     "DB_ACHSE15".A_Minus; 
+      O     "DB_ACHSE15".A_Plus; 
+      )     ; 
+      =     #TX_Vorschub_Halt_RPL; 
+NETWORK
+TITLE =VsKorr wirksam für RpAchse
+
+      O     "DB_PLC_MD_DB20".UDHex._32_Bit2_RPL_Velo_Adjust; 
+      O     ; 
+      U     "DB_PLC_MD_DB20".UDHex._04_BIT4_EINRICHT_BETR; 
+      U     "M_Handbetrieb"; 
+      =     #TX_OVR_RPL; 
+NETWORK
+TITLE =701526 "MEL, Rüstplatz Override 0%"
+
+      U     "DB_PLC_MD_DB20".UDHex._32_Bit2_RPL_Velo_Adjust; 
+      UN    "I_PS_RPL_DREHZAHL_BIT_1"; 
+      UN    "I_PS_RPL_DREHZAHL_BIT_2"; 
+      UN    "I_PS_RPL_DREHZAHL_BIT_3"; 
+      UN    "I_PS_RPL_DREHZAHL_BIT_4"; 
+      =     "DB_FEHLERMELDUNG".SAFE_MELD._701526_RPL_Over_0Prz; 
+NETWORK
+TITLE =RpAchse VsKorr von MSST oder optionellem VsKorrPoti
+
+      U     "DB_PLC_MD_DB20".UDHex._32_Bit2_RPL_Velo_Adjust; 
+      =     L      2.0; 
+      BLD   103; 
+      U     "I_PS_RPL_DREHZAHL_BIT_1"; 
+      =     L      2.1; 
+      BLD   103; 
+      U     "I_PS_RPL_DREHZAHL_BIT_2"; 
+      =     L      2.2; 
+      BLD   103; 
+      U     "I_PS_RPL_DREHZAHL_BIT_3"; 
+      =     L      2.3; 
+      BLD   103; 
+      U     "I_PS_RPL_DREHZAHL_BIT_4"; 
+      =     L      2.4; 
+      BLD   103; 
+      CALL "FC_RP_VSKORR" (
+           iRpVKorr                 := L      2.0,
+           iRpKor2e0                := L      2.1,
+           iRpKor2e1                := L      2.2,
+           iRpKor2e2                := L      2.3,
+           iRpKor2e3                := L      2.4,
+           iMsstKorr                := "MSST_Vorschub_OVR",
+           oVsKorr                  := #VsKorr);
+      NOP   0; 
+NETWORK
+TITLE =15-Achse RPL: Aufruf FC_ACHSE_HILF
+
+      CALL "FC_ACHSE_HILF" (
+           EX_EN                    := TRUE,
+           EX_UDHex_00_IB_Bit_Achse := "DB_PLC_MD_DB20".UDHex._40_BIT0_ACHSE15_AUSBLEN,
+           EX_UDHex_01_Ax_Messystem := "DB_PLC_MD_DB20".UDHex._42_BIT0_ACHSE15_MESSYST,
+           EX_UDHex_RPF_Richtung    := FALSE,
+           EX_Option_Safety         := "O_INFEED_ENABLE_NCU",// Bei Solutionline bleibt RF und ImpFrg für 3 Sek. nach Not-Aus anstehen
+           EX_Safe_Bremsentest      := FALSE,//"DB_SAFE_ZD".GR3_ZD.Reglerfreigabe
+           EX_Safe_StopC_aktiv      := FALSE,//"DB_ACHSE9".E_StopC
+           EX_Safe_StopA_aktiv      := "DB_ACHSE15".E_StopAB,
+           EX_Safe_Teststop_laeuft  := "DB_SPL".IPLC_ZD_GR1_RUN,
+           EX_Maschine_Ein          := "M_MA_Maschine_Ein",
+           EX_Antrieb_Sperre        := "DB_FAMILIEN_MODUL".Achssperre_extern.E_Ax_15,
+           EX_Freigabe_Regler       := "DB_ACHSE_RPL".MX_Ax_Leistung_Aktiv,
+           EX_Leistung_steht_an     := "DB_ACHSE_RPL".MX_Ax_Leistung_Aktiv,
+           EX_VSHalt_EinzelAchse    := #TX_Vorschub_Halt_RPL,
+           EX_VSHalt_Gruppe         := FALSE,
+           EX_VSHalt_Kanal          := "DB_FAMILIEN_MODUL".Gesamt.A_Vorschub_Halt_Kanal,
+           EX_RefPkt_Achse          := FALSE,
+           EX_Abbruch_Positionieren := "DB_ACHSE_RPL".MX_Abbruch_Positionieren,
+           EX_Ax_KorrWirksam_1x7    := #TX_OVR_RPL,
+           EX_Ax_E_RefSyn1_60x4     := "DB_ACHSE15".E_RefSyn1,
+           EX_Ax_E_FahrAF_61x0      := "DB_ACHSE15".E_TravRequ,
+           EX_Ax_E_Steht_61x4       := "DB_ACHSE15".E_Stat,
+           EX_Ax_E_LageRegler_61x5  := "DB_ACHSE15".E_PositContr,
+           EX_Ax_E_DrehzRegler_61x6 := "DB_ACHSE15".E_SpeedContr,
+           EX_Ax_E_StromRegler_61x7 := "DB_ACHSE15".E_CurrentContr,
+           EX_Ax_E_PLC_Achse_63x1   := "DB_ACHSE15".E_PLCCtrlAx,
+           EX_Ax_E_FBMinus_64x6     := "DB_ACHSE15".E_TCMinus,
+           EX_Ax_E_FBPlus_64x7      := "DB_ACHSE15".E_TCPlus,
+           EX_Ax_E_ChPoss_68x5      := "DB_ACHSE15".E_ChPoss,
+           EX_Ax_E_NeutrASp_68x6    := "DB_ACHSE15".E_NeutrASp,
+           EX_Ax_E_MotOK_93x5       := "DB_ACHSE15".E_MotOK,
+           EX_Ax_E_IntSperr_93x6    := "DB_ACHSE15".E_IntegratDisable,
+           EX_Ax_E_ImpFrei_93x7     := "DB_ACHSE15".E_PulseEnable,
+           EX_Ax_E_MTempWarn_94x0   := "DB_ACHSE15".E_MTempWarn,
+           EX_Ax_E_KTempWarn_94x1   := "DB_ACHSE15".E_HTempWarn,
+           EX_FahrAnf_Positiv       := "DB_ACHSE_RPL".MX_FahrAnf_Plus,
+           EX_FahrAnf_Negativ       := "DB_ACHSE_RPL".MX_FahrAnf_Minus,
+           EX_Inch_Umrechnen        := "DB_SIEM_NCK".E_SystemInchDim,
+           EB_Achs_Typ              := B#16#2,
+           EB_MSST_Vorschub_OVR     := #VsKorr,
+           EB_Positierung           := B#16#2,
+           EI_Teilung               := 0,
+           EI_Achs_Nr               := 15,
+           ER_SollPosition          := "DB_ACHSE_RPL".MR_SollPosition,
+           ER_Istposition           := "DB_ACHSE_RPL".MR_IstPosition,
+           ER_Geschwindigkeit       := 0.000000e+000,// #TR_Geschwindigkeit
+           ET_Timer_Ax_Freigabe     := "Te_Achs15",
+           EAX_Ax_Anforderung_Pos   := "DB_ACHSE_RPL".MX_Anf_Positionieren,
+           EAX_Ax_Rueckmeldung_Pos  := "DB_ACHSE_RPL".MX_Rueck_Positionieren,
+           EAX_Ax_Fehler_Pos        := "DB_ACHSE_RPL".MX_Fehler_Positionieren,
+           EAX_Ax_Anf_Referenzieren := "DB_ACHSE_RPL".MX_Anf_Referieren,
+           EAX_Ax_A_ASpSperre_1x3   := "DB_ACHSE15".A_ASpDisable,
+           EAX_Ax_A_NachfBetr_1x4   := "DB_ACHSE15".A_Follow_upMode,
+           EAX_Ax_A_LageMess1_1x5   := "DB_ACHSE15".A_PosMeas1,
+           EAX_Ax_A_LageMess2_1x6   := "DB_ACHSE15".A_PosMeas2,
+           EAX_Ax_A_KorrW_1x7       := "DB_ACHSE15".A_ORactive,
+           EAX_Ax_A_ReglerFrei_2x1  := "DB_ACHSE15".A_ContrEnable,
+           EAX_Ax_A_RestWegRe_2x2   := "DB_ACHSE15".A_DelDTGSpReset,
+           EAX_Ax_A_VSSpHalt_4x3    := "DB_ACHSE15".A_FDSpStop,
+           EAX_Ax_A_Minus_4x6       := "DB_ACHSE15".A_Minus,
+           EAX_Ax_A_Plus_4x7        := "DB_ACHSE15".A_Plus,
+           EAX_Ax_A_NCASpChA_8x0    := "DB_ACHSE15".A_NCASpChanA,
+           EAX_Ax_A_NCASpStrobe_8x4 := "DB_ACHSE15".A_NCASpStrobe,
+           EAX_Ax_A_PLCASp_8x7      := "DB_ACHSE15".A_PLCASp,
+           EAX_Ax_A_RefVerzoeg_12x7 := "DB_ACHSE15".A_DelayRef,
+           EAX_Ax_A_ImpFrei_21x7    := "DB_ACHSE15".A_PulseEnable,
+           EAX_Ax_A_PLC_Achse_28x7  := "DB_ACHSE15".A_PLCAxis,
+           EAX_AX_RefSync1          := "DB_ACHSE_RPL".MX_Achs_Referiert,
+           EAX_Alarm_Regler         := "DB_FEHLERMELDUNG".Spi_VS_Halt._700142_15_IMP_REGFRG_0S,
+           EAX_Alarm_VSSP_Mot_Temp  := "DB_FEHLERMELDUNG".Spi_VS_Halt._700140_15_TEMP_ZU_HOCH,
+           EAX_Alarm_VSSP_KK_Temp   := "DB_FEHLERMELDUNG".Spi_VS_Halt1._510205_15_KK_TEMP_ZH,
+           EAX_Alarm_NA_MotOK       := "DB_FEHLERMELDUNG".Spi_VS_Halt3._701146_15_DR_READY_0,
+           EAX_Alarm_FehlerPos      := "DB_FEHLERMELDUNG".Warnung._701917_Rueckm_Achs_15un,
+           EAX_M_Bremse_oeffnen     := "O_PW_RPL_BREMSE_AUF",//#Tx_Bremse_15Achse
+           EAX_Anf_Lesen_AxPos      := #T_Pos_Read,//"DB_ACHSE_RPL".MX_Ax_Position_Lesen
+           EAX_Rdy_Lesen_AxPos      := "DB_ACHSE_RPL".M_Ax_Pos_Lesen_Fertig,
+           EAX_Achse_Fahranf        := "DB_ACHSE_RPL".MX_Ax_FahrAnf,
+           EAX_Achse_InPosition     := "DB_ACHSE_RPL".MX_Ax_InPosition,
+           EAX_Achse_Fehler_Pos     := "DB_ACHSE_RPL".MX_Ax_Fehler_Pos,
+           EAX_Achse_Positioniert   := "DB_ACHSE_RPL".MX_Ax_Positioniert,
+           EAX_InPos_Merker         := "DB_ACHSE_RPL".MX_Ax_Inpos_Merker,
+           EAB_Ax_VS_Korrektur_DBB0 := "DB_ACHSE15".A_FD_OR,
+           EAB_SKZ_Achse            := "DB_ACHSE_RPL".MB_SKZ_Achse);
+
+NETWORK
+TITLE =Achsposition lesen
+
+      U     "I_PW_RPL_links_drehen"; 
+      FN    "M_FN_Links_drehen"; 
+      O(    ; 
+      U     "I_PW_RPL_rechts_drehen"; 
+      FN    "M_FN_Rechts_drehen"; 
+      )     ; 
+      O     #T_Pos_Read; 
+      =     "DB_ACHSE_RPL".MX_Ax_Position_Lesen; 
+NETWORK
+TITLE =Achse 15 Reset
+
+      U     "DB_ACHSE_RPL".MX_Abbruch_Positionieren; 
+      =     "DB_ACHSE15".A_AxReset; 
+NETWORK
+TITLE =Rüstplatz Freigabe links / Rechts drehen
+
+      U     "I_PW_RPL_ZUSTIMMTASTE"; 
+      UN    "DB_FEHLERMELDUNG".VS_Halt_Async2._701644_RPL_Fehler_ZH; 
+      UN    "I_PS_RPL_TUER_VORNE_ZU"; 
+      O     ; 
+
+      U     "M_PS_RPL_Tuer_zu_GST_fah"; 
+      U     "I_PS_RPL_TUER_VORNE_ZU"; 
+      =     "m_vke_uebertrag_1"; 
+NETWORK
+TITLE =Rüstplatz Freigabe links / Rechts drehen Abfallverzögerung
+
+      U     "m_vke_uebertrag_1"; 
+      L     S5T#500MS; 
+      SA    "TA_RPL_AX_FRG_BREMSRAMPE"; 
+      NOP   0; 
+      NOP   0; 
+      NOP   0; 
+      NOP   0; 
+NETWORK
+TITLE =Ausgang: Rüstplatz Freigabe links / Rechts drehen
+//Bei Solutionline erfolgt Abfallverzögerung bis zum SBH über SPL
+//
+//FC86
+//// SBH-Abwahl Rüstplatzachse abfallverzögert wegen Zweihandbedienung
+//      U     "DB_SPL".ISX_SST_DRIVES_EN_CNC
+//      L     S5T#1S
+//      SA    "T_SAFECO_SST_DRIV_EN_CNC"
+//      U     "T_SAFECO_SST_DRIV_EN_CNC"
+//      =     "DB_SPL".OI_SBH_ABW_SST
+//
+//SAFE.SPF
+//; SBH-Abwahl Rüstplatzachse abfallverzögert wegen Zweihandbedienung --> wenn 
+//SBH überschritten wird wird intern Stop C / Stop A ausgelöst
+//N1036 IDS=94 EVERY ISX_SST_DRIVES_EN_CNC == 0 DO T_IX_SST_DRIV_EN_CNC=0  
+//N1037 IDS=95 EVERY ISX_SST_DRIVES_EN_CNC == 1 DO OI_SBH_ABW_SST =1 
+//T_IX_SST_DRIV_EN_CNC=0 T_IX_SST_DRIV_EN_CNC=-1
+//N1038 IDS=96 EVERY ((T_IX_SST_DRIV_EN_CNC>1.0) AND (ISX_SST_DRIVES_EN_CNC==0)) 
+//DO OI_SBH_ABW_SST=0 T_IX_SST_DRIV_EN_CNC=0 T_IX_SST_DRIV_EN_CNC=-1 
+      UN    "DB_PLC_MD_DB20".UDHex._31_Bit1_SOLUTIONLINE; 
+      U     "TA_RPL_AX_FRG_BREMSRAMPE"; 
+      O     ; 
+      U     "DB_PLC_MD_DB20".UDHex._31_Bit1_SOLUTIONLINE; 
+      U     "m_vke_uebertrag_1"; 
+      =     "O_PW_RPL_FREIGABE_RE_LI"; 
+END_FUNCTION
+

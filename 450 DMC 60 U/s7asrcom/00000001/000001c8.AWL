@@ -1,0 +1,146 @@
+TYPE "UDT_NC_PLC_Zusatz"
+//$Revision: 1.24 $
+//$Date: 2008/12/10 11:16:03CET $
+//$Author: riedlh $
+VERSION : 0.1
+
+
+  STRUCT 	
+   NC_an_PLC : STRUCT 	//000...049: Adressbereich NC an PLC
+    WS_Nummer : BYTE ;	
+    PROG_EVENT_ENDE : BOOL ;	
+    Reserve_2_1 : BOOL ;	
+    Reserve_2_2 : BOOL ;	
+    Reserve_2_3 : BOOL ;	
+    Reserve_2_4 : BOOL ;	
+    Reserve_2_5 : BOOL ;	
+    Reserve_2_6 : BOOL ;	
+    Reserve_2_7 : BOOL ;	
+    Zeit_Roboter : WORD ;	//Handlingssystem 3R: Überwachung der Be-/Ent-Ladezeit
+    MESSTASTER_nOK : BYTE ;	//Messtaster-Info "Teil_nOK" "Postion_nOK" für Teil/Stelle 1...4
+    Reserve : BYTE ;	
+    A_VMS_MSG_BEA_START : BOOL ;	//Spindelüberwachung: Start des Spindel-Referenzlaufs --> OX_VMS_MSG_BEA_START
+    Reserve_6_1 : BOOL ;	
+    Reserve_6_2 : BOOL ;	
+    Reserve_6_3 : BOOL ;	
+    Reserve_6_4 : BOOL ;	
+    Reserve_6_5 : BOOL ;	
+    Reserve_6_6 : BOOL ;	
+    Start_write_Temp_Guds : BOOL ;	//Startsignal für Gudvariablen aktuelle Temperatur schreiben (GUD4)   
+    Reservewort : WORD ;	
+    Offset_Kegelreinigung_VM : REAL ;	
+    ASUP_CHAN_2 : STRUCT 	
+     Magazin_1 : STRUCT 	
+      WZ_entriegeln : BOOL ;	
+      WZ_verriegeln : BOOL ;	
+      Umsetzen_MAG_GREIFER : BOOL ;	
+      Umsetzen_Greifer_MAG : BOOL ;	
+      Vorbereiten_beendet : BOOL ;	
+      Ablegen_beendet : BOOL ;	
+     END_STRUCT ;	
+     Magazin_2 : STRUCT 	
+      WZ_entriegeln : BOOL ;	
+      WZ_verriegeln : BOOL ;	
+      Umsetzen_MAG_GREIFER : BOOL ;	
+      Umsetzen_Greifer_MAG : BOOL ;	
+      Vorbereiten_beendet : BOOL ;	
+      Ablegen_beendet : BOOL ;	
+     END_STRUCT ;	
+    END_STRUCT ;	
+    PalVerw_MPL_Status : STRUCT 	//zusätzliche Statusinformationen für Teil 1-4
+     Teil_1_bearbeitet : BOOL ;	//NC>>>PLC: Teil 1 ist bearbeitet
+     Teil_1_niO : BOOL ;	//NC>>>PLC: Teil 1 nicht in Ordnung
+     Teil_2_bearbeitet : BOOL ;	//NC>>>PLC: Teil 2 ist bearbeitet
+     Teil_2_niO : BOOL ;	//NC>>>PLC: Teil 2 nicht in Ordnung
+     Teil_3_bearbeitet : BOOL ;	//NC>>>PLC: Teil 3 ist bearbeitet
+     Teil_3_niO : BOOL ;	//NC>>>PLC: Teil 3 nicht in Ordnung
+     Teil_4_bearbeitet : BOOL ;	//NC>>>PLC: Teil 4 ist bearbeitet
+     Teil_4_niO : BOOL ;	//NC>>>PLC: Teil 4 nicht in Ordnung
+     StatusTeile_Reserve : BYTE ;	//NC>>>PLC: Reserve
+    END_STRUCT ;	
+    Res : ARRAY  [20 .. 49 ] OF BYTE ;	
+   END_STRUCT ;	
+   PLC_an_NC : STRUCT 	//050...099: Adressbereich PLC an NC
+    Einrichtbit : BOOL ;	//DB20.DBX404.4 Einrichtbit an NC
+    Sonder_BA_aktiv : BOOL ;	//Sonder BA aktiv, BA2 BA3 oder BA4 aktiviert
+    VM_Kegelreinigung_aktiv : BOOL ;	//Vertikalmagazin: Kegelreinigung aktiv
+    VM_Req_Kegelreinigung : BOOL ;	//Vertikalmagazin: Anforderung Kegelreinigung an Makro
+    VM_End_Kegelreinigung : BOOL ;	//Vertikalmagazin: Ende Kegelreinigung an Makro
+    res14 : BOOL ;	
+    res15 : BOOL ;	
+    res16 : BOOL ;	
+    CHAN1_BA_MDA : BOOL ;	//Kanal 1 in Betriebsart MDA
+    res18 : BOOL ;	
+    res19 : BOOL ;	
+    res110 : BOOL ;	
+    res111 : BOOL ;	
+    res112 : BOOL ;	
+    res113 : BOOL ;	
+    res114 : BOOL ;	
+    resreal : REAL ;	
+    E_VMS_VIBRATION_FAULT_D : BOOL ;	//Spindelüberwachung: Fehler beim Spindel-Referenzlauf --> IX_VMS_VIBRATION_FAULT
+    E_VMS_MEASURING_BEA_RDY : BOOL ;	//Spindelüberwachung: Spindel-Referenzlauf fertig --> IX_VMS_MEASURING_BEA_RDY
+    Reserve_6_2 : BOOL ;	
+    Reserve_6_3 : BOOL ;	
+    Reserve_6_4 : BOOL ;	
+    Reserve_6_5 : BOOL ;	
+    Reserve_6_6 : BOOL ;	
+    Reserve_6_7 : BOOL ;	
+    WZVS_OVR : WORD ;	//Tool_Inspect: Wertübergabe an NC für Adaptive Regelung
+    ASUP_CHAN_2 : STRUCT 	
+     Fkt_Nr : BYTE ;	
+     Magazin_1 : STRUCT 	
+      MAG_Platz_leer : BOOL ;	
+      UE_Platz_leer : BOOL ;	
+      Wzg_entriegelt : BOOL ;	
+      Wzg_verriegelt : BOOL ;	
+     END_STRUCT ;	
+     Magazin_2 : STRUCT 	
+      MAG_Platz_leer : BOOL ;	
+      UE_Platz_leer : BOOL ;	
+      Wzg_entriegelt : BOOL ;	
+      Wzg_verriegelt : BOOL ;	
+     END_STRUCT ;	
+     MagNr_ablegen : BYTE ;	
+     LocNr_ablegen : BYTE ;	
+     MagNr_vorbereiten : BYTE ;	
+     LocNr_vorbereiten : BYTE ;	
+    END_STRUCT ;	
+    PalVerw_MPL_Status : STRUCT 	//zusätzliche Statusinformationen für Teil 1-4
+     Teil_1_belegt : BOOL ;	//NC<<<PLC: Teil 1 belegt
+     Teil_2_belegt : BOOL ;	//NC<<<PLC: Teil 2 belegt
+     Teil_3_belegt : BOOL ;	//NC<<<PLC: Teil 3 belegt
+     Teil_4_belegt : BOOL ;	//NC<<<PLC: Teil 4 belegt
+     Teil_res1 : BOOL ;	//NC<<<PLC:
+     Teil_res2 : BOOL ;	//NC<<<PLC:
+     Teil_res3 : BOOL ;	//NC<<<PLC:
+     Teil_res4 : BOOL ;	//NC<<<PLC:
+     StatusTeile_Reserve : BYTE ;	//NC<<<PLC:
+    END_STRUCT ;	
+    Res : ARRAY  [72 .. 99 ] OF BYTE ;	
+   END_STRUCT ;	
+   WZVS_DPR : STRUCT 	//100..114 WZVS_DPR
+    Monitoring_Parameter : BYTE ;	
+    Reserve : BYTE ;	
+    PLC_an_WZVS : STRUCT 	
+     Daten_1 : INT ;	
+     Daten_2 : INT ;	
+     Daten_3 : INT ;	
+     Daten_4 : INT ;	
+     Daten_5 : INT ;	
+     Daten_6 : INT ;	
+    END_STRUCT ;	
+    WZVS_an_PLC : STRUCT 	//114..130 WZVS_an_PLC
+     Daten_1 : INT ;	
+     Daten_2 : INT ;	
+     Daten_3 : INT ;	
+     Daten_4 : INT ;	
+     Daten_5 : INT ;	
+     Daten_6 : INT ;	
+     Daten_7 : INT ;	
+     Daten_8 : INT ;	
+    END_STRUCT ;	
+   END_STRUCT ;	
+  END_STRUCT ;	
+END_TYPE
+

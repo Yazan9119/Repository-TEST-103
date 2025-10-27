@@ -1,0 +1,41 @@
+FUNCTION "FC_PS_Pal_Auftr" : VOID
+TITLE =
+//$Revision: 1.6 $
+//$Date: 2007/07/16 13:14:39CEST $
+//$Author: riedlh $
+//
+AUTHOR : FUH
+VERSION : 0.1
+
+
+VAR_INPUT
+  Auftr_Platz : BYTE ;	
+END_VAR
+VAR_OUTPUT
+  Ma_Ueb_Auftr : BOOL ;	
+  RPL_Auftr : BOOL ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =
+// 0:Maschine,1:Überpl1,2:Überpl2,3:Transportw,4:Ruepl,5-xx:Speicherpl 1 -- xx 
+      L     #Auftr_Platz; //Abfrage Rüstplatzauftrag
+      L     4; 
+      ==I   ; 
+      =     #RPL_Auftr; 
+
+      U(    ; 
+      L     #Auftr_Platz; //Abfrage Ma.-Übergabeauftrag
+      L     1; 
+      >=I   ; 
+      )     ; 
+      U(    ; 
+      TAK   ; 
+      L     2; 
+      <=I   ; 
+      )     ; 
+      =     #Ma_Ueb_Auftr; 
+
+
+END_FUNCTION
+

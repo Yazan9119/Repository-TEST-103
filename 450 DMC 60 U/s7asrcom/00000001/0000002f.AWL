@@ -1,0 +1,564 @@
+FUNCTION "FC_WW_SCHRITT_GEN" : VOID
+TITLE =
+//$Revision: 1.8 $
+//$Date: 2008/09/10 13:33:27CEST $
+//$Author: schmoelp $
+VERSION : 0.1
+
+
+VAR_INPUT
+  E_MSST_Reset : BOOL ;	//Reset Maschinensteuertafel
+  E_Reset_Prgende : BOOL ;	//Reset Programmende von Kanal
+  E_HalterSp_auf : BOOL ;	//Werkzeuzange Spindelseite geöffnet
+  E_entspannt : BOOL ;	//Werkzeug in Spindel entspannt
+  X_nicht_im_WW : BOOL ;	//X-Achse nicht im Werkzeugwechsler
+  X_WW_Pos : BOOL ;	//X-Achse auf Werkzeugwechselposition
+  Wz_ausgefahren : BOOL ;	//Werkzeug ausgefahren
+  gespannt : BOOL ;	// gespannt mit oder ohne Werkzeug
+  Not_Aus : BOOL ;	//Not-Aus steht an
+END_VAR
+VAR_TEMP
+  PI_X_im_WW : BOOL ;	
+  PI_X_WW_Pos : BOOL ;	
+  PI_loesen : BOOL ;	
+  PI_spannen : BOOL ;	
+  NI_Hub_ausgefahren : BOOL ;	
+  Vorbedingung_AF1 : BOOL ;	
+  Vorbedingung_AF2 : BOOL ;	
+  Vorbedingung_AF3 : BOOL ;	
+  S7_Auftrag_2 : BOOL ;	
+  S7_Auftrag_4 : BOOL ;	
+  Abbruch : BOOL ;	
+  Reset_Prgende : BOOL ;	
+  PI_Hub_ausgefahren : BOOL ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =Reset Programmende
+// Netzwerk-Übersicht
+// ==================
+// NW 1: Reset Programmende
+// NW 2: Rücksetzen H-Funktionen bei Not-Aus oder Reset
+// NW 3: Flanke X-Achse im Werkzeugwechsler
+// NW 4: Flanke X-Achse auf Wechselposition
+// NW 5: Abfallende Flanke Werkzeug ausgefahren
+// NW 6: Ansteigende Flanke Werkzeug ausgefahren
+// NW 7: Flanke Spanner lösen
+// NW 8: Flanke Spanner spannen
+// NW 9: Vorbedingung Auftragsfolge 1 Spindel leer Tx
+// NW 10: Vorbedingung Auftragsfolge 2 Spindel belegt Tx
+// NW 11: Vorbedingung Auftragsfolge 3 Spindel belegt T0
+// NW 12: Schritt 0
+// NW 13: Schritt 1
+// NW 14: Schritt 2
+// NW 15: Schritt 3
+// NW 16: Schritt 4
+// NW 17: Schritt 5
+// NW 18: Schritt 6
+// NW 19: Schritt 7 Auftrag 2
+// NW 20: Schritt 7 Auftrag 4
+// NW 21: Schritt 7
+// NW 22: Schritt 8
+// NW 23: Schritt 9
+// NW 24: Schritt 10
+// NW 25: Schritt 11
+// NW 26: Schritt 12
+//
+      O     #E_Reset_Prgende; // RESET KANAL 1
+      O     #E_MSST_Reset; // RESET Taste    
+      =     #Reset_Prgende; // RESET KANAL 1
+
+NETWORK
+TITLE =Rücksetzen H-Funktionen bei Not-Aus oder Reset
+
+      O     #Reset_Prgende; //Reset
+      O     #Not_Aus; //510300  *** NOT-AUS ***
+      =     #Abbruch; 
+      R     "M_H5000_H5004_WW_Start"; 
+      R     "M_H5001_WW_Ende"; 
+      R     "M_H5003_Wz_spannen"; 
+      R     "M_H5002_Wz_loesen"; 
+
+NETWORK
+TITLE =Flanke X-Achse im Werkzeugwechsler
+
+      U     "M_H5000_H5004_WW_Start"; 
+      UN    #X_nicht_im_WW; // X-Achse nicht im Werkzeugwechsler
+      FP    "DB_WW".PF_X_im_WW; 
+      =     #PI_X_im_WW; 
+
+NETWORK
+TITLE =Flanke X-Achse auf Wechselposition
+
+      U     "M_H5000_H5004_WW_Start"; 
+      U     #X_WW_Pos; // X-ACHSE IST AUF MAGAZINPOSITION
+      FP    "DB_WW".PF_X_WW_Pos; 
+      =     #PI_X_WW_Pos; 
+
+NETWORK
+TITLE =Abfallende Flanke Werkzeug ausgefahren
+
+      U     #Wz_ausgefahren; // Z-HUB IST AUSGEFAHREN
+      FN    "DB_WW".NF_Wz_ausgefahren; 
+      =     #NI_Hub_ausgefahren; 
+
+NETWORK
+TITLE =Ansteigende Flanke Werkzeug ausgefahren
+
+      U     #Wz_ausgefahren; // Z-HUB IST AUSGEFAHREN
+      FP    "DB_WW".FP_Hub_ausgefahren; 
+      =     #PI_Hub_ausgefahren; 
+
+NETWORK
+TITLE =Flanke Spanner lösen
+
+      U     "M_H5002_Wz_loesen"; 
+      FP    "DB_WW".PF_loesen; 
+      =     #PI_loesen; 
+
+NETWORK
+TITLE =Flanke Spanner spannen
+
+      U     "M_H5003_Wz_spannen"; 
+      FP    "DB_WW".PF_spannen; 
+      =     #PI_spannen; 
+
+NETWORK
+TITLE =Vorbedingung Auftragsfolge 1 Spindel leer Tx
+
+      L     "TMSpindleIF".IF[1].SMag; // NEUES WERKZEUG
+      L     0; 
+      <>I   ; 
+      U(    ; 
+      L     "TMSpindleIF".IF[1].TMag; // ALTES WERKZEUG
+      ==I   ; 
+      )     ; 
+      =     #Vorbedingung_AF1; 
+
+NETWORK
+TITLE =Vorbedingung Auftragsfolge 2 Spindel belegt Tx
+
+      L     "TMSpindleIF".IF[1].SMag; // NEUES WERKZEUG
+      L     0; 
+      <>I   ; 
+      U(    ; 
+      L     "TMSpindleIF".IF[1].TMag; // ALTES WERKZEUG
+      <>I   ; 
+      )     ; 
+      =     #Vorbedingung_AF2; 
+
+NETWORK
+TITLE =Vorbedingung Auftragsfolge 3 Spindel belegt T0
+
+      L     "TMSpindleIF".IF[1].SMag; // NEUES WERKZEUG
+      L     0; 
+      ==I   ; 
+      U(    ; 
+      L     "TMSpindleIF".IF[1].TMag; // ALTES WERKZEUG
+      <>I   ; 
+      )     ; 
+      =     #Vorbedingung_AF3; 
+
+NETWORK
+TITLE =Schritt 0
+
+      U(    ; 
+      U     "M_H5001_WW_Ende"; 
+      O     #Abbruch; 
+      )     ; 
+      U     #X_nicht_im_WW; // X-Achse nicht im Werkzeugwechsler
+      R     "M_H5001_WW_Ende"; 
+
+      R     "DB_WW".WW_T_Auftrag_1; 
+      R     "DB_WW".WW_T_Auftrag_2; 
+      R     "DB_WW".WW_T_Auftrag_3; 
+      R     "DB_WW".WW_T_Auftrag_4; 
+      R     "DB_WW".WW_Frg_ins_Mag; 
+      R     "DB_WW".WW_SEMA_Folgen; // SEMA ABLAUFFOLGEN
+      R     "DB_WW".WW_T_Folge_1; 
+      R     "DB_WW".WW_T_Folge_2; 
+      R     "DB_WW".WW_T_Folge_3; 
+      R     "DB_WW".WW_gestartet; // Werkzeugwechsler gestartet
+      R     "DB_WW".MFkt_06; // M6 WERKZEUGWECHSEL
+      R     "DB_WW".L6_aktiv; // L6 aktiv
+
+      R     "M_H5000_H5004_WW_Start"; 
+//     R     "O_WW_1_Klappe_auf"
+//     R     "OX_WW_1_Klappe_auf"        // Klappe öffnen
+      R     "DB_ACHSE1_X".A_SWLimit2Plus; // 2.SOFTWAREENDSCHALTER X PLUS AKTIV
+      R     "DB_WW".WW_Zange_auf; // BEFEHL WZ-ZANGE AUF ->MAGAZIN ENTSICHERN
+//    S     "O_WW_1_Klappe_zu"
+//    S     "OX_WW_1_Klappe_zu"         // Klappe schliessen
+      SPBN  E_S0; 
+
+      S     "DB_WW".Schritt_T[0]; 
+      R     "DB_WW".Schritt_T[1]; 
+      R     "DB_WW".Schritt_T[2]; 
+      R     "DB_WW".Schritt_T[3]; 
+      R     "DB_WW".Schritt_T[4]; 
+      R     "DB_WW".Schritt_T[5]; 
+      R     "DB_WW".Schritt_T[6]; 
+      R     "DB_WW".Schritt_T[7]; 
+      R     "DB_WW".Schritt_T[8]; 
+      R     "DB_WW".Schritt_T[9]; 
+      R     "DB_WW".Schritt_T[10]; 
+      R     "DB_WW".Schritt_T[11]; 
+      R     "DB_WW".Schritt_T[12]; 
+
+E_S0: NOP   0; 
+
+NETWORK
+TITLE =Schritt 1
+//AUFTRAG 1: Z-HUB AUSFAHREN, WZ-ENTSPANNEN,
+//AUFTRAG 3: X-ACHSE AUF WARTEPOS, WZ-ZANGE OEFFNEN
+//
+      U     "DB_WW".Schritt_T[0]; 
+      U     "DB_WW".WW_T_Auftrag_3; // AUFTRAG3 ABLEGEN II ->Z-HUB EINGEFAHREN
+      U     "O_WW_1_Klappe_auf"; 
+      S     "DB_WW".WW_SEMA_Folgen; // SEMA ABLAUFFOLGEN
+      SPBN  E_S2; 
+
+      R     "DB_WW".Schritt_T[0]; 
+      S     "DB_WW".Schritt_T[1]; 
+      R     "DB_WW".Schritt_T[2]; 
+      R     "DB_WW".Schritt_T[3]; 
+      R     "DB_WW".Schritt_T[4]; 
+      R     "DB_WW".Schritt_T[5]; 
+      R     "DB_WW".Schritt_T[6]; 
+      R     "DB_WW".Schritt_T[7]; 
+      R     "DB_WW".Schritt_T[8]; 
+      R     "DB_WW".Schritt_T[9]; 
+      R     "DB_WW".Schritt_T[10]; 
+      R     "DB_WW".Schritt_T[11]; 
+      R     "DB_WW".Schritt_T[12]; 
+
+E_S2: NOP   0; 
+
+
+NETWORK
+TITLE =Schritt 2
+//Auftrag 1,3: X-ACHSE MAGPOS ANFAHREN
+      U     "M_H5000_H5004_WW_Start"; 
+      U     #PI_X_im_WW; 
+      S     "DB_WW".WW_SEMA_Folgen; // SEMA ABLAUFFOLGEN
+      SPBN  E_S1; 
+
+      R     "DB_WW".Schritt_T[0]; 
+      R     "DB_WW".Schritt_T[1]; 
+      S     "DB_WW".Schritt_T[2]; 
+      R     "DB_WW".Schritt_T[3]; 
+      R     "DB_WW".Schritt_T[4]; 
+      R     "DB_WW".Schritt_T[5]; 
+      R     "DB_WW".Schritt_T[6]; 
+      R     "DB_WW".Schritt_T[7]; 
+      R     "DB_WW".Schritt_T[8]; 
+      R     "DB_WW".Schritt_T[9]; 
+      R     "DB_WW".Schritt_T[10]; 
+      R     "DB_WW".Schritt_T[11]; 
+      R     "DB_WW".Schritt_T[12]; 
+
+      U     #Vorbedingung_AF1; 
+      S     "DB_WW".WW_T_Folge_1; 
+
+      U     #Vorbedingung_AF2; 
+      S     "DB_WW".WW_T_Folge_2; 
+
+      U     #Vorbedingung_AF3; 
+      S     "DB_WW".WW_T_Folge_3; 
+
+      U     "DB_WW".WW_T_Folge_1; 
+      S     "DB_WW".WW_T_Auftrag_1; 
+
+      U     "DB_WW".WW_T_Folge_2; 
+      O     "DB_WW".WW_T_Folge_3; 
+      S     "DB_WW".WW_T_Auftrag_3; 
+
+E_S1: NOP   0; 
+
+
+NETWORK
+TITLE =Schritt 3
+//AUFTRAG 1: QUITTIEREN
+//Auftrag 3: WZ-SPANNER OEFFNEN, WZ-ZANGE SCHLIESSEN
+      U     "DB_WW".WW_T_Auftrag_3; 
+      U     #PI_loesen; 
+      SPBN  E_S3; 
+
+      R     "DB_WW".Schritt_T[0]; 
+      R     "DB_WW".Schritt_T[1]; 
+      R     "DB_WW".Schritt_T[2]; 
+      S     "DB_WW".Schritt_T[3]; 
+      R     "DB_WW".Schritt_T[4]; 
+      R     "DB_WW".Schritt_T[5]; 
+      R     "DB_WW".Schritt_T[6]; 
+      R     "DB_WW".Schritt_T[7]; 
+      R     "DB_WW".Schritt_T[8]; 
+      R     "DB_WW".Schritt_T[9]; 
+      R     "DB_WW".Schritt_T[10]; 
+      R     "DB_WW".Schritt_T[11]; 
+      R     "DB_WW".Schritt_T[12]; 
+
+E_S3: NOP   0; 
+
+
+NETWORK
+TITLE =Schritt 4
+//AUFTRAG 1: QUITTIEREN
+//AUFTRAG 3: WZ-DATENTAUSCH NC-STOP
+      CLR   ; 
+      SPBN  E_S4; 
+
+      R     "DB_WW".Schritt_T[0]; 
+      R     "DB_WW".Schritt_T[1]; 
+      R     "DB_WW".Schritt_T[2]; 
+      R     "DB_WW".Schritt_T[3]; 
+      S     "DB_WW".Schritt_T[4]; 
+      R     "DB_WW".Schritt_T[5]; 
+      R     "DB_WW".Schritt_T[6]; 
+      R     "DB_WW".Schritt_T[7]; 
+      R     "DB_WW".Schritt_T[8]; 
+      R     "DB_WW".Schritt_T[9]; 
+      R     "DB_WW".Schritt_T[10]; 
+      R     "DB_WW".Schritt_T[11]; 
+      R     "DB_WW".Schritt_T[12]; 
+
+E_S4: NOP   0; 
+
+
+NETWORK
+TITLE =Schritt 5
+//AUFTRAG 1,3: QUITTIEREN
+      CLR   ; 
+      SPBN  E_S5; 
+
+      R     "DB_WW".Schritt_T[0]; 
+      R     "DB_WW".Schritt_T[1]; 
+      R     "DB_WW".Schritt_T[2]; 
+      R     "DB_WW".Schritt_T[3]; 
+      R     "DB_WW".Schritt_T[4]; 
+      S     "DB_WW".Schritt_T[5]; 
+      R     "DB_WW".Schritt_T[6]; 
+      R     "DB_WW".Schritt_T[7]; 
+      R     "DB_WW".Schritt_T[8]; 
+      R     "DB_WW".Schritt_T[9]; 
+      R     "DB_WW".Schritt_T[10]; 
+      R     "DB_WW".Schritt_T[11]; 
+      R     "DB_WW".Schritt_T[12]; 
+
+E_S5: NOP   0; 
+
+
+NETWORK
+TITLE =Schritt 6
+//AUFTRAG 1: QUITTIEREN
+//AUFTRAG 3: Z-HUB AUSFAHREN
+      U     "M_H5008_DT_Sp_Mag"; 
+      R     "M_H5008_DT_Sp_Mag"; 
+      SPBN  E_S6; 
+
+      R     "DB_WW".Schritt_T[0]; 
+      R     "DB_WW".Schritt_T[1]; 
+      R     "DB_WW".Schritt_T[2]; 
+      R     "DB_WW".Schritt_T[3]; 
+      R     "DB_WW".Schritt_T[4]; 
+      R     "DB_WW".Schritt_T[5]; 
+      S     "DB_WW".Schritt_T[6]; 
+      R     "DB_WW".Schritt_T[7]; 
+      R     "DB_WW".Schritt_T[8]; 
+      R     "DB_WW".Schritt_T[9]; 
+      R     "DB_WW".Schritt_T[10]; 
+      R     "DB_WW".Schritt_T[11]; 
+      R     "DB_WW".Schritt_T[12]; 
+
+E_S6: NOP   0; 
+
+
+NETWORK
+TITLE =Schritt 7 Auftrag 2
+//Auftrag 2: Werkzeug einwechseln
+      U     "M_H5000_H5004_WW_Start"; 
+      U     #X_WW_Pos; 
+      U(    ; 
+      U     "DB_WW".WW_T_Folge_1; 
+      U     "DB_WW".WW_T_Auftrag_1; // X-ACHSE IST AUF MAGAZINPOSITION
+      U     #E_entspannt; //C2-02.2  Werkzeug gelöst
+      O     ; 
+      U     "DB_WW".WW_T_Folge_2; 
+      U     "DB_WW".WW_T_Auftrag_3; 
+      U     #Wz_ausgefahren; // Z-HUB IST AUSGEFAHREN
+      )     ; 
+      =     #S7_Auftrag_2; 
+      R     "DB_WW".WW_T_Auftrag_1; 
+      R     "DB_WW".WW_T_Auftrag_3; 
+      S     "DB_WW".WW_T_Auftrag_2; 
+
+
+NETWORK
+TITLE =Schritt 7 Auftrag 4
+//Auftrag 4: Wz spannen, X-Achse auf Warteposition
+      U     "DB_WW".WW_T_Folge_3; 
+      U     "DB_WW".WW_T_Auftrag_3; 
+      U     #PI_Hub_ausgefahren; 
+      =     #S7_Auftrag_4; 
+      R     "DB_WW".WW_T_Auftrag_3; 
+      S     "DB_WW".WW_T_Auftrag_4; 
+
+NETWORK
+TITLE =Schritt 7
+
+      U     #S7_Auftrag_2; 
+      O     #S7_Auftrag_4; 
+      SPBN  E_S7; 
+
+      R     "DB_WW".Schritt_T[0]; 
+      R     "DB_WW".Schritt_T[1]; 
+      R     "DB_WW".Schritt_T[2]; 
+      R     "DB_WW".Schritt_T[3]; 
+      R     "DB_WW".Schritt_T[4]; 
+      R     "DB_WW".Schritt_T[5]; 
+      R     "DB_WW".Schritt_T[6]; 
+      S     "DB_WW".Schritt_T[7]; 
+      R     "DB_WW".Schritt_T[8]; 
+      R     "DB_WW".Schritt_T[9]; 
+      R     "DB_WW".Schritt_T[10]; 
+      R     "DB_WW".Schritt_T[11]; 
+      R     "DB_WW".Schritt_T[12]; 
+
+E_S7: NOP   0; 
+
+
+NETWORK
+TITLE =Schritt 8
+//AUFTRAG 2: Z-HUB EINFAHREN
+//AUFTRAG 4: QUITTIEREN
+      U     "DB_WW".WW_T_Auftrag_2; 
+      U     #NI_Hub_ausgefahren; 
+      SPBN  E_S8; 
+
+      R     "DB_WW".Schritt_T[0]; 
+      R     "DB_WW".Schritt_T[1]; 
+      R     "DB_WW".Schritt_T[2]; 
+      R     "DB_WW".Schritt_T[3]; 
+      R     "DB_WW".Schritt_T[4]; 
+      R     "DB_WW".Schritt_T[5]; 
+      R     "DB_WW".Schritt_T[6]; 
+      R     "DB_WW".Schritt_T[7]; 
+      S     "DB_WW".Schritt_T[8]; 
+      R     "DB_WW".Schritt_T[9]; 
+      R     "DB_WW".Schritt_T[10]; 
+      R     "DB_WW".Schritt_T[11]; 
+      R     "DB_WW".Schritt_T[12]; 
+
+E_S8: NOP   0; 
+
+
+NETWORK
+TITLE =Schritt 9
+//AUFTRAG 2: WZ-DATENTAUSCH
+//AUFTRAG 4: QUITTIEREN
+      CLR   ; 
+      SPBN  E_S9; 
+
+      R     "DB_WW".Schritt_T[0]; 
+      R     "DB_WW".Schritt_T[1]; 
+      R     "DB_WW".Schritt_T[2]; 
+      R     "DB_WW".Schritt_T[3]; 
+      R     "DB_WW".Schritt_T[4]; 
+      R     "DB_WW".Schritt_T[5]; 
+      R     "DB_WW".Schritt_T[6]; 
+      R     "DB_WW".Schritt_T[7]; 
+      R     "DB_WW".Schritt_T[8]; 
+      S     "DB_WW".Schritt_T[9]; 
+      R     "DB_WW".Schritt_T[10]; 
+      R     "DB_WW".Schritt_T[11]; 
+      R     "DB_WW".Schritt_T[12]; 
+
+E_S9: NOP   0; 
+
+
+NETWORK
+TITLE =Schritt 10
+//AUFTRAG 2: WZ-SPANNEN, WZ-ZANGE OEFFNEN
+//Auftrag 4: WZ-SPANNEN
+      U     "M_H5003_Wz_spannen"; 
+      O     "M_H5007_H5009_DT_Mag_Sp"; 
+      SPBN  ES10; 
+
+      U     "M_H5007_H5009_DT_Mag_Sp"; 
+      R     "M_H5007_H5009_DT_Mag_Sp"; 
+
+      R     "DB_WW".Schritt_T[0]; 
+      R     "DB_WW".Schritt_T[1]; 
+      R     "DB_WW".Schritt_T[2]; 
+      R     "DB_WW".Schritt_T[3]; 
+      R     "DB_WW".Schritt_T[4]; 
+      R     "DB_WW".Schritt_T[5]; 
+      R     "DB_WW".Schritt_T[6]; 
+      R     "DB_WW".Schritt_T[7]; 
+      R     "DB_WW".Schritt_T[8]; 
+      R     "DB_WW".Schritt_T[9]; 
+      S     "DB_WW".Schritt_T[10]; 
+      R     "DB_WW".Schritt_T[11]; 
+      R     "DB_WW".Schritt_T[12]; 
+
+ES10: NOP   0; 
+
+
+NETWORK
+TITLE =Schritt 11
+//AUFTRAG 2: X-ACHSE AUF WARTEPOSITION, WZ-ZANGE OEFFNEN
+//AUFTRAG 4: X-ACHSE AUF WARTEPOSITION
+      U     "M_H5003_Wz_spannen"; 
+      U(    ; 
+      U     "DB_WW".WW_T_Auftrag_2; 
+      U     #gespannt; 
+      O     ; 
+      U     "DB_WW".WW_T_Auftrag_4; 
+      U     #gespannt; 
+      )     ; 
+      R     "M_H5003_Wz_spannen"; 
+      SPBN  ES11; 
+
+      R     "DB_WW".Schritt_T[0]; 
+      R     "DB_WW".Schritt_T[1]; 
+      R     "DB_WW".Schritt_T[2]; 
+      R     "DB_WW".Schritt_T[3]; 
+      R     "DB_WW".Schritt_T[4]; 
+      R     "DB_WW".Schritt_T[5]; 
+      R     "DB_WW".Schritt_T[6]; 
+      R     "DB_WW".Schritt_T[7]; 
+      R     "DB_WW".Schritt_T[8]; 
+      R     "DB_WW".Schritt_T[9]; 
+      R     "DB_WW".Schritt_T[10]; 
+      S     "DB_WW".Schritt_T[11]; 
+      R     "DB_WW".Schritt_T[12]; 
+
+ES11: NOP   0; 
+
+
+
+NETWORK
+TITLE =Schritt 12
+//AUFTRAG 2,4: WZ-ZANGE UND MAGAZINKLAPPE SCHLIESSEN
+      CLR   ; 
+      SPBN  ES12; 
+
+      R     "DB_WW".Schritt_T[0]; 
+      R     "DB_WW".Schritt_T[1]; 
+      R     "DB_WW".Schritt_T[2]; 
+      R     "DB_WW".Schritt_T[3]; 
+      R     "DB_WW".Schritt_T[4]; 
+      R     "DB_WW".Schritt_T[5]; 
+      R     "DB_WW".Schritt_T[6]; 
+      R     "DB_WW".Schritt_T[7]; 
+      R     "DB_WW".Schritt_T[8]; 
+      R     "DB_WW".Schritt_T[9]; 
+      R     "DB_WW".Schritt_T[10]; 
+      R     "DB_WW".Schritt_T[11]; 
+      S     "DB_WW".Schritt_T[12]; 
+
+ES12: NOP   0; 
+
+
+END_FUNCTION
+

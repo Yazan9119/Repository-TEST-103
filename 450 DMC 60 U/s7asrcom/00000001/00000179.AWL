@@ -1,0 +1,49 @@
+DATA_BLOCK "DB_STERN_DREIECK"
+TITLE =
+//$Revision: 1.5 $
+//$Date: 2008/04/25 10:46:20CEST $
+//$Author: schmoelp $
+//
+//
+VERSION : 0.1
+
+
+  STRUCT 	
+   MW_Ref : WORD ;	//Referenz für FC17
+   MX_Anforderung_Stern : BOOL ;	//Anforderung Stern gespeichert
+   MX_Anforderung_Dreieck : BOOL ;	//Anforderung Dreieck gespeichert
+   MX_Freigabe_Schalten : BOOL ;	//Freigabe Schalten Stern-Dreieck
+   MX_Start_Schalten : BOOL ;	//Start schalten Stern-Dreieck
+   MX_Anforderung_StDr : BOOL ;	//Anforderung Stern-Dreieck
+   MX_Freigabe_Impulse_Spdl : BOOL ;	//Freigabe Impulse von Stern-Dreieck
+   Mx_Req_Getr1 : BOOL ;	//Anforderung Getriebestufe1
+   Mx_REq_Getr2 : BOOL ;	//Anforderung Getriebestufe2
+   Mx_Anford_Stufe1 : BOOL ;	
+   Mx_Anford_Stufe2 : BOOL ;	
+   Mx_Anford_Stufe3 : BOOL ;	
+   Mx_Anford_Stufe4 : BOOL ;	
+   E_GearChange : BOOL ;	
+   E_SetpGearA : BOOL ;	
+   E_SetpGearB : BOOL ;	
+   E_SetpGearC : BOOL ;	
+  END_STRUCT ;	
+BEGIN
+   MW_Ref := W#16#0; 
+   MX_Anforderung_Stern := FALSE; 
+   MX_Anforderung_Dreieck := FALSE; 
+   MX_Freigabe_Schalten := FALSE; 
+   MX_Start_Schalten := FALSE; 
+   MX_Anforderung_StDr := FALSE; 
+   MX_Freigabe_Impulse_Spdl := FALSE; 
+   Mx_Req_Getr1 := FALSE; 
+   Mx_REq_Getr2 := FALSE; 
+   Mx_Anford_Stufe1 := FALSE; 
+   Mx_Anford_Stufe2 := FALSE; 
+   Mx_Anford_Stufe3 := FALSE; 
+   Mx_Anford_Stufe4 := FALSE; 
+   E_GearChange := FALSE; 
+   E_SetpGearA := FALSE; 
+   E_SetpGearB := FALSE; 
+   E_SetpGearC := FALSE; 
+END_DATA_BLOCK
+

@@ -1,0 +1,215 @@
+DATA_BLOCK "DB_WZV"
+TITLE =
+//$Revision: 1.11 $
+//$Date: 2008/09/08 13:19:42CEST $
+//$Author: schmoelp $
+VERSION : 0.1
+
+
+  STRUCT 	
+   FC8_TaskIdent : BYTE ;	//1=Ladestelle, 2=Wechselstelle, 4=PLC-Auftrag
+   FC8_TaskIdentNo : BYTE ;	//Schnittstellen-Nr
+   FC8_NewToolMag : INT ;	//Magazin neu
+   FC8_NewToolLoc : INT ;	//Platz neu
+   FC8_OldToolMag : INT ;	//Magazin alt
+   FC8_OldToolLoc : INT ;	//Platz alt
+   FC8_Status : INT ;	//Status
+   FC8_Ready : BOOL ;	
+   FC8_Start : BOOL ;	
+   FC8_beendet : BOOL ;	
+   FC8_Error : INT ;	
+   Pos_M1_WST_HUBaus : BOOL ;	//Positioniere Magazin 1 zur Wechselstelle Magazinhub ausfahren
+   Pos_M1_KR : BOOL ;	//Positioniere Magazin 1 zur Kegelreinigung
+   Mag1_inPos_LST : BOOL ;	//Magazin 1 in Position Ladestation
+   Mag2_inPos_LST : BOOL ;	//Magazin 2 in Position Ladestation
+   Mag1_inPos_WST : BOOL ;	//Magazin 1 in Position Wechselstelle
+   Mag2_inPos_WST : BOOL ;	//Magazin 2 in Position Wechselstelle
+   Mag1_Laden_aktiv : BOOL ;	//Magazin 1 Laden aktiv
+   Mag2_Laden_aktiv : BOOL ;	//Magazin 2 Laden aktiv
+   AB_HSK : BOOL ;	//Ausbaustufe HSK
+   del_letzte_Pos : BOOL ;	//Löschen letzte angefahrene Position
+   Mag1_inPos_KR : BOOL ;	//Magazin in Position für Kegelreinigung
+   Umsetzen : BOOL ;	
+   WzGr_Altplatz_Gr : BOOL ;	//Greiferwerkzeug auf Altplatz Greifer
+   Pos_M1_WST_HUBein : BOOL ;	//Positioniere Magazin 1 zur Wechselstelle Magazinhub einfahren
+   Pos_M1_LST : BOOL ;	//Positioniere Magazin 1 zur Ladestation
+   Pos_M2_WST : BOOL ;	//Positioniere Magazin 2 zur Wechselstelle
+   Pos_M2_LST : BOOL ;	//Positioniere Magazin 2 zur Ladestation
+   Bruchdaten_gelesen : BOOL ;	
+   DBW18_frei : INT ;	
+   Sp_Altplatz : WORD ;	//Spindel Altplatz
+   Gr_Zielplatz : WORD ;	//Greifer Zielplatz
+   Gr1_Belegung : WORD ;	//Greifer 1 Belegung
+   Gr2_Belegung : WORD ;	//Greifer 2 Belegung
+   Gr1_Groesse : DWORD ;	//Greifer 1 Werkzeuggrösse
+   Gr2_Groesse : DWORD ;	//Greifer 2 Werkzeuggrösse
+   Sp_Groesse : DWORD ;	//Spindel Werkzeuggrösse
+   SP_int_TNr : INT ;	//Spindel interne T-Nummer
+   Gr_int_TNr : INT ;	//Greifer interne T-Nummer
+   Gr_Festplatz : BOOL ;	//Greiferwerkzeug festplatzcodiert
+   Sp_Festplatz : BOOL ;	//Spindelwerkzeug festplatzcodiert
+   Gr1_belegt : BOOL ;	//Greifer 1 belegt
+   Gr2_belegt : BOOL ;	//Greifer 2 belegt
+   Sp_letzte_MagNr : INT ;	//zuletzt für Spindel angefahrenes Magazin
+   Sp_letzte_PlNr : INT ;	//zuletzt für Spindel angefahrener Platz
+   SchreibenFPS : BOOL ;	//Schreiben Festplatz Spindel
+   SchreibenFPM1 : BOOL ;	//Schreiben Festplatz Magazin 1
+   SchreibenFPM2 : BOOL ;	//Schreiben Festplatz Magazin 2
+   StartSchreibenFP : BOOL ;	//Start Schreiben Festplatz
+   StartSchreibenFPS : BOOL ;	//Start Schreiben Festplatz Spindel
+   StartSchreibenFPM1 : BOOL ;	//Start Schreiben Festplatz Magazin 1
+   StartSchreibenFPM2 : BOOL ;	//Start Schreiben Festplatz Magazin 2
+   frei_50_7 : BOOL ;	
+   Sp_AltPl_lesen : BOOL ;	//Altplatz Spindelwerkzeug lesen
+   Sp_AltPl_gelesen : BOOL ;	//Altplatz Spindelwerkzeug ist gelesen
+   Sp_AltPl_leer : BOOL ;	//Altplatz Spindelwerkzeug ist leer
+   Gr_AltPl_lesen : BOOL ;	//Altplatz Greiferwerkzeug lesen
+   Gr_AltPl_gelesen : BOOL ;	//Altplatz Greiferwerkzeug ist gelesen
+   Gr_AltPl_leer : BOOL ;	//Altplatz Greiferwerkzeug ist leer
+   LeerPl_an_BS1 : BOOL ;	//Leeren Platz an Beladestation 1 fahren
+   LeerPl_an_BS2 : BOOL ;	//Leeren Platz an Beladestation 2 fahren
+   Mag1_Pos_Loc : INT ;	//Sollposition Magazin 1 Platznummer
+   Mag2_Pos_Loc : INT ;	//Sollposition Magazin 2 Platznummer
+   Mag1_Pos : REAL ;	//Sollposition Magazin 1 in Grad
+   Mag2_Pos : REAL ;	//Sollposition Magazin 2 in Grad
+   PF_Ladetuer1_zu : BOOL ;	//PF: Beladestation Tür Magazin 1 geschlossen
+   PF_Ladetuer2_zu : BOOL ;	//PF: Beladestation Tür Magazin 2 geschlossen
+   MAG_positionieren : BOOL ;	//Befehl Magazin positionieren
+   PF_MAG_ausgefahren : BOOL ;	//PF: Magazinhub ausgefahren
+   PF_MAG_eingefahren : BOOL ;	//PF: Magazinhub eingefahren
+   PF_Anf_Pos_M1_LST : BOOL ;	//PF: Anforderung Positionieren zur Beladestation Magazin 1
+   PF_Anf_Pos_M1_WST_KR : BOOL ;	//PF: Anforderung Positionieren zur Wechselstelle oder Kegelreinigung Magazin 1
+   T_MAG_drehen : BOOL ;	//Taste Magazin drehen gespeichert
+   PF_MAG_positioniert : BOOL ;	//PF: Magazin positioniert
+   PF_inPos_Taste : BOOL ;	//PF: in Teilungsposition nach drehen über Taste
+   MAG_Hub_ausfahren : BOOL ;	//Befehl Magazinhub ausfahren
+   MAG_Hub_einfahren : BOOL ;	//Befehl Magazinhub einfahren
+   WW_Hand_einwechseln : BOOL ;	//Befehl Handwerkzeug einwechseln
+   WW_Hand_auswechseln : BOOL ;	//Befehl Handwerkzeug auswechseln
+   Hub_in_Grundstellung : BOOL ;	//Befehl Magazinhub in Grundstellung
+   PF_WZW : BOOL ;	//PF: Werkzeugwechsel von Werkzeugverwaltung
+   M1_letzte_Pos_KR : INT ;	//zuletzt angefahrene Position Magazin 1 zur Kegelreinigung
+   M1_letzte_Pos_LST : INT ;	//zuletzt angefahrene Position Magazin 1 zur Ladestation
+   M2_letzte_Pos_LST : INT ;	//zuletzt angefahrene Position Magazin 2 zur Ladestation
+   M1_letzte_Pos_WST : INT ;	//zuletzt angefahrene Position Magazin 1 Wechselstelle
+   M2_letzte_Pos_WST : INT ;	//zuletzt angefahrene Position Magazin 2 Wechselstelle
+   PF_MAG_positionieren : BOOL ;	//PF: Request Magazin positionieren
+   PF_Hub_ausfahren : BOOL ;	//PF: Request Hub ausfahren
+   PF_Hub_einfahren : BOOL ;	//PF: Request Hub einfahren
+   M1_Rueckmeldung_Pos : BOOL ;	//Rückmeldung: Achse hat positioniert
+   M1_Istposition : INT ;	//Aktuelle Taschennummer an der Wechselstelle
+   WZB : STRUCT 	
+    Req_read : BOOL ;	//Lesen neues Werkzeug Request
+    Done : BOOL ;	//Lesen neues Werkzeug ausgefuehrt
+    Error : BOOL ;	//Lesen neues Werkzeug Fehler
+    WZB_aktiviert : BOOL ;	//Neues Werkzeug mit Bruchkontrolle
+    WZ_messen : BOOL ;	//Werkzeug nach dem Ablegen messen (2te Messung)
+    WZB_Daten_gelesen : BOOL ;	//Werkzeugbruchdaten wurden gelesen
+    FP_Vorschubsperre : BOOL ;	
+    MagNo : INT ;	//Magazin-Nr zuletzt abgelegtes Werkzeug
+    LocNo : INT ;	//Platz-Nr zuletzt abgelegtes Werkzeug
+   END_STRUCT ;	
+  END_STRUCT ;	
+BEGIN
+   FC8_TaskIdent := B#16#0; 
+   FC8_TaskIdentNo := B#16#0; 
+   FC8_NewToolMag := 0; 
+   FC8_NewToolLoc := 0; 
+   FC8_OldToolMag := 0; 
+   FC8_OldToolLoc := 0; 
+   FC8_Status := 0; 
+   FC8_Ready := FALSE; 
+   FC8_Start := FALSE; 
+   FC8_beendet := FALSE; 
+   FC8_Error := 0; 
+   Pos_M1_WST_HUBaus := FALSE; 
+   Pos_M1_KR := FALSE; 
+   Mag1_inPos_LST := FALSE; 
+   Mag2_inPos_LST := FALSE; 
+   Mag1_inPos_WST := FALSE; 
+   Mag2_inPos_WST := FALSE; 
+   Mag1_Laden_aktiv := FALSE; 
+   Mag2_Laden_aktiv := FALSE; 
+   AB_HSK := FALSE; 
+   del_letzte_Pos := FALSE; 
+   Mag1_inPos_KR := FALSE; 
+   Umsetzen := FALSE; 
+   WzGr_Altplatz_Gr := FALSE; 
+   Pos_M1_WST_HUBein := FALSE; 
+   Pos_M1_LST := FALSE; 
+   Pos_M2_WST := FALSE; 
+   Pos_M2_LST := FALSE; 
+   Bruchdaten_gelesen := FALSE; 
+   DBW18_frei := 0; 
+   Sp_Altplatz := W#16#0; 
+   Gr_Zielplatz := W#16#0; 
+   Gr1_Belegung := W#16#0; 
+   Gr2_Belegung := W#16#0; 
+   Gr1_Groesse := DW#16#0; 
+   Gr2_Groesse := DW#16#0; 
+   Sp_Groesse := DW#16#0; 
+   SP_int_TNr := 0; 
+   Gr_int_TNr := 0; 
+   Gr_Festplatz := FALSE; 
+   Sp_Festplatz := FALSE; 
+   Gr1_belegt := FALSE; 
+   Gr2_belegt := FALSE; 
+   Sp_letzte_MagNr := 0; 
+   Sp_letzte_PlNr := 0; 
+   SchreibenFPS := FALSE; 
+   SchreibenFPM1 := FALSE; 
+   SchreibenFPM2 := FALSE; 
+   StartSchreibenFP := FALSE; 
+   StartSchreibenFPS := FALSE; 
+   StartSchreibenFPM1 := FALSE; 
+   StartSchreibenFPM2 := FALSE; 
+   frei_50_7 := FALSE; 
+   Sp_AltPl_lesen := FALSE; 
+   Sp_AltPl_gelesen := FALSE; 
+   Sp_AltPl_leer := FALSE; 
+   Gr_AltPl_lesen := FALSE; 
+   Gr_AltPl_gelesen := FALSE; 
+   Gr_AltPl_leer := FALSE; 
+   LeerPl_an_BS1 := FALSE; 
+   LeerPl_an_BS2 := FALSE; 
+   Mag1_Pos_Loc := 0; 
+   Mag2_Pos_Loc := 0; 
+   Mag1_Pos := 0.000000e+000; 
+   Mag2_Pos := 0.000000e+000; 
+   PF_Ladetuer1_zu := FALSE; 
+   PF_Ladetuer2_zu := FALSE; 
+   MAG_positionieren := FALSE; 
+   PF_MAG_ausgefahren := FALSE; 
+   PF_MAG_eingefahren := FALSE; 
+   PF_Anf_Pos_M1_LST := FALSE; 
+   PF_Anf_Pos_M1_WST_KR := FALSE; 
+   T_MAG_drehen := FALSE; 
+   PF_MAG_positioniert := FALSE; 
+   PF_inPos_Taste := FALSE; 
+   MAG_Hub_ausfahren := FALSE; 
+   MAG_Hub_einfahren := FALSE; 
+   WW_Hand_einwechseln := FALSE; 
+   WW_Hand_auswechseln := FALSE; 
+   Hub_in_Grundstellung := FALSE; 
+   PF_WZW := FALSE; 
+   M1_letzte_Pos_KR := 0; 
+   M1_letzte_Pos_LST := 0; 
+   M2_letzte_Pos_LST := 0; 
+   M1_letzte_Pos_WST := 0; 
+   M2_letzte_Pos_WST := 0; 
+   PF_MAG_positionieren := FALSE; 
+   PF_Hub_ausfahren := FALSE; 
+   PF_Hub_einfahren := FALSE; 
+   M1_Rueckmeldung_Pos := FALSE; 
+   M1_Istposition := 0; 
+   WZB.Req_read := FALSE; 
+   WZB.Done := FALSE; 
+   WZB.Error := FALSE; 
+   WZB.WZB_aktiviert := FALSE; 
+   WZB.WZ_messen := FALSE; 
+   WZB.WZB_Daten_gelesen := FALSE; 
+   WZB.FP_Vorschubsperre := FALSE; 
+   WZB.MagNo := 0; 
+   WZB.LocNo := 0; 
+END_DATA_BLOCK
+

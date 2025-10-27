@@ -1,0 +1,197 @@
+FUNCTION "FC_SK_X-Fahrbereich" : VOID
+TITLE =
+//$Revision: 1.11 $
+//$Date: 2007/07/16 13:14:50CEST $
+//$Author: riedlh $
+//
+//erstellt: 23.2.2000 AB
+//
+//Beschreibung:
+//Fahrbereiche der X-Achse in Abhängigkeit von der Stellung der B-Achse
+//
+//Es gibt 4 Fahrbereiche 
+//
+//                X - Achse                B - Achse
+//1.M56           60..600                   -7..180
+//2.M57           0..600                     0..40
+//3.M58           0..600                    140..180 
+//4.Tür offen     0..430
+//
+//Es werden die Softwareendschalter 1 und 2 benützt
+//X-Achse: SE1- = 0        SE2- = 0
+//         SE1+ = 600      SE2+ = 430
+//
+//
+//B-Achse: SE1- = -7       SE1+ = 180
+//         SE2- = 0        SE2+ = 40
+//
+//  SE2- wird in abhg. von M57/M58 umgeschalten(DB_SIEM_NCK-Makro)
+//       M57: SE2- = -0.01
+//       M58: SE2- = =139.99 (SD 41500[4] - 0.01)
+//
+//
+//
+//Für die B-Achse ist ausserdem ein Nockenschaltsignal Plus und Minus notwendig
+//Dazu wird das Nockenpaar 5 benützt im Fahrbereich 3.
+//Nocke 5 Minus = 140
+//Nocke 5 Plus  = 180
+//
+//dazu setzen: MD10450 SW_CAM_ASSIGN_TAB[4] = 5 --> B-Achse
+//             SD41500 Nocke 5 Minus = 140
+//             SD41501 Nocke 5 Plus  = 180
+//
+//Bei geöffneter Tür kann B-Achse nicht verfahren werden, wenn X nicht im 
+//Fahrbereich steht (0..430).(Meldung an MMC)
+{ S7_language := '7(1) Deutsch (Deutschland)  26.03.2008  08:00:15' }
+VERSION : 0.1
+
+
+VAR_TEMP
+  T_neg_Flank_M56_M57_M58 : BOOL ;	
+  T_pos_Flank_M56_M57_M58 : BOOL ;	
+  T_M56_vorwahl : BOOL ;	
+  T_M57_vorwahl : BOOL ;	
+  T_M58_vorwahl : BOOL ;	
+  T_vorschubsperre_B : BOOL ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =X-Achse im Werkzeugwechselraum
+
+      U     "DB_SIEM_NCK".E_SWCamPlus[15]; 
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.MASCHTYP_3071_AKTIV; 
+      O     ; 
+      UN    "DB_SIEM_NCK".E_SWCamPlus[15]; 
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.MASCHTYP_3070_AKTIV; 
+      =     "Mx_XAx_in_WZW_RAUM"; 
+NETWORK
+TITLE =SK: Fahrbereich ohne Einschränkung
+// Nur wenn die B-Achse angewaehlt ist in das Modul
+// -- Signale an NC----------------------------------------
+
+
+// Asup NR.3 nach Hochlauf starten
+
+
+//Fahrbereichmerker bilden aus dem Makro für Icons Anzeige
+
+      U(    ; 
+      L     "DB_NC_PLC".MFunktion; 
+      L     56; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      TAK   ; 
+      L     57; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      TAK   ; 
+      L     58; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      TAK   ; 
+      L     59; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      TAK   ; 
+      L     54; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      TAK   ; 
+      L     53; 
+      ==I   ; 
+      )     ; 
+      SPBN  n1a; 
+
+      TAK   ; 
+      T     "MB_aktiver_Verfahrbereic"; 
+
+
+
+n1a:  U(    ; 
+      L     "MB_aktiver_Verfahrbereic"; 
+      L     59; 
+      ==I   ; 
+      )     ; 
+      =     "DB_FEHLERMELDUNG".MELDUNG2._701262_M_59_aktiv; 
+
+      L     "DB_NC_PLC".FB_Fehler_Ausgeben; 
+      L     0; 
+      ==I   ; 
+      O     "M_Ruecksetze_Fehler"; 
+      SPBN  ss0; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700923_FBGUDS_NOT_EXIST; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700922_X_ACHSE_FB; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700921_Y_ACHSE_FB; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700920_B_ACHSE_FB; 
+      SPA   sse; 
+
+ss0:  L     "DB_NC_PLC".FB_Fehler_Ausgeben; 
+      L     1; 
+      ==I   ; 
+      UN    "M_Handbetrieb"; // "DB_SIEM_BAG".E_JOG
+      UN    "DB_SIEM_KANAL_1".E_ChanInterrupt; 
+      SPBN  ss1; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700920_B_ACHSE_FB; 
+      SPA   sse; 
+
+ss1:  L     "DB_NC_PLC".FB_Fehler_Ausgeben; 
+      L     2; 
+      ==I   ; 
+      SPBN  ss2; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700921_Y_ACHSE_FB; 
+      SPA   sse; 
+
+ss2:  L     "DB_NC_PLC".FB_Fehler_Ausgeben; 
+      L     3; 
+      ==I   ; 
+      UN    "M_Handbetrieb"; // "DB_SIEM_BAG".E_JOG
+      UN    "DB_SIEM_KANAL_1".E_ChanInterrupt; 
+      SPBN  ss3; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700922_X_ACHSE_FB; 
+
+ss3:  L     "DB_NC_PLC".FB_Fehler_Ausgeben; 
+      L     4; 
+      ==I   ; 
+      SPBN  sse; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700923_FBGUDS_NOT_EXIST; 
+sse:  NOP   0; 
+
+
+      U(    ; 
+      L     "MB_aktiver_Verfahrbereic"; 
+      L     54; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     "MB_aktiver_Verfahrbereic"; 
+      L     53; 
+      ==I   ; 
+      )     ; 
+      UN    "DB_NC_PLC".SK_NC_Aktiv; 
+      UN    "M_WZW_Aktiv"; 
+      UN    "M_PW_Aktiv"; // und keine A-Achse
+      UN(   ; 
+      L     "DB_PLC_MD_DB20".UDInt._007_ANWAHL_FRAESKOPF; 
+      L     4; 
+      ==I   ; 
+      )     ; 
+      =     "Mx_Sperre_BAchse"; 
+
+
+      U     "DB_ACHSE5".E_TCMinus; 
+      O     "DB_ACHSE5".E_TCPlus; 
+      U     "Mx_Sperre_BAchse"; 
+      =     "DB_FEHLERMELDUNG".Meldung._702136_VSP_B_Fahrber; 
+      BEA   ; 
+
+
+
+
+
+END_FUNCTION
+

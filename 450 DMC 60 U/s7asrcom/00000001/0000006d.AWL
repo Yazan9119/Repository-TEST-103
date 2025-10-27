@@ -1,0 +1,785 @@
+FUNCTION "FC_SAFE_ZD2_8AX1" : VOID
+TITLE =
+//$Revision: 1.5 $
+//$Date: 2008/10/24 09:45:51CEST $
+//$Author: hgc $
+//
+//Für Solutionline
+//
+//Zwangsdynamisierung der externen Stopps (Safety Integrated)
+//max. 8 Achsen parallel
+//
+//Ersterstellung:    12/01
+//                   Martin Gehringer A&D B14
+//
+//Funktion:
+//--------------------------------------------------------------------------------
+//
+//Es können pro Bausteinaufruf die externen Stopps von Achsen 
+//parallel getestet werden.
+//Die Kommunikation zur NCK ("STOP x aktivieren") erfolgt über
+//   - Systemvariable (DPR, DB10, DB18)  (SI Stufe II)
+//
+//
+//Ablauf:
+//--------------------------------------------------------------------------------
+//
+//STEP 1: req_stopd_plc==1 -> Verknüpfung => STOP D-Abwahl (PLC) von 1->0
+//        
+//STEP 2: Abfrage der Rückmeldung "STOP D aktiv" auf PLC-Nahtstelle
+//        <Achs-DB>.DBX111.6 für alle Achsen = 1
+//        (1) req_stopd_plc==0
+//        (2) req_stopc_plc==1 -> Verknüpfung => STOP C-Abwahl (PLC) von 1->0
+//         
+//        
+//STEP 3: Abfrage der Rückmeldung "STOP C aktiv" auf PLC-Nahtstelle
+//        <Achs-DB>.DBX111.5 für alle Achsen = 1
+//        (1) req_stopc_plc==0 
+//        (2) req_stopa_plc==1 -> Verknüpfung => STOP A-Abwahl (PLC) von 1->0
+//        
+//        
+//STEP 4: Abfrage der Rückmeldung "STOP A aktiv" auf PLC-Nahtstelle
+//        <Achs-DB>.DBX111.4 für alle Achsen = 1
+//        (1) req_stopa_plc==0 
+//
+//STEP 5: Abfrage der Rückmeldung "STOP A nicht aktiv" auf PLC-Nahtstelle
+//        <Achs-DB>.DBX111.4 für alle Achsen = 0
+//        (1) req_stopd_nck==1 -> Verknüpfung => STOP D-Abwahl (NCK) von 1->0
+//
+//STEP 6: Abfrage der Rückmeldung "STOP D aktiv" auf PLC-Nahtstelle
+//        <Achs-DB>.DBX111.6 für alle Achsen = 1
+//        <Achs-DB>.DBX32.4  für alle Achsen = 1
+//        (1) req_stopd_nck==0
+//        (2) req_stopc_nck==1 -> Verknüpfung => STOP C-Abwahl (PLC) von 1->0
+//
+//STEP 7: Abfrage der Rückmeldung "STOP C aktiv" auf PLC-Nahtstelle
+//        <Achs-DB>.DBX111.5 für alle Achsen = 1
+//        <Achs-DB>.DBX32.3  für alle Achsen = 1
+//        (1) req_stopc_nck==0
+//        (2) req_stopa_nck==1 -> Verknüpfung => STOP C-Abwahl (PLC) von 1->0
+//
+//STEP 8: Abfrage der Rückmeldung "STOP A aktiv" auf PLC-Nahtstelle
+//        <Achs-DB>.DBX111.4 für alle Achsen = 1
+//        <Achs-DB>.DBX32.2  für alle Achsen = 1
+//        (1) req_stopa_nck==0
+//
+//STEP 9: Abfrage der Rückmeldung "STOP A nicht aktiv" auf PLC-Nahtstelle
+//        <Achs-DB>.DBX111.4 für alle Achsen = 0
+//        'ready'-Signal ausgeben
+//
+//Parametrierung:
+//--------------------------------------------------------------------------------
+//
+//Eingangssignale 'start' und 'clear' werden intern als Flanke ausgewertet.
+//Sie können daher statisch oder dynamisch anstehen, wenn sichergestellt ist, daß 
+//es keinen weiteren Flankenwechsel vor der 'ready' Meldung des Bausteines gibt.
+//
+//Es erfolgt eine Überprüfung des Eingangsparameters 'num_axis' auf 
+//   Anzahl > Anzahl im System definierter Achsen
+//   0 < Anzahl <= 8
+//Im Fehlerfall wird das 'error' Bit gesetzt.
+//
+//Im STEP 0 werden die Startbedingungen für die Ausführung der Testroutine
+//geprüft und im Fehlerfall wird das 'serror' Bit gesetzt
+//
+//Nicht überprüft wird der Fall:  num_axis > test_axis_n >< 0.
+//Es dürfen nur die Achsen mit der Achsnummer 0 parametriert werden, die 
+//nicht im Bereich num_axis liegen (sonst PLC Stop !!!).
+//
+//Belegung des aux_dwort:
+//
+//     Bit 0.0 :   Schrittmerker S T E P   0
+//     Bit 0.1 :   Schrittmerker S T E P   1
+//     Bit 0.2 :   Schrittmerker S T E P   2
+//     Bit 0.3 :   Schrittmerker S T E P   3
+//     Bit 0.4 :   Schrittmerker S T E P   4
+//     Bit 0.5 :   Schrittmerker S T E P   5
+//     Bit 0.6 :   Schrittmerker S T E P   6
+//     Bit 0.7 :   Schrittmerker S T E P   7
+//
+//     Bit 1.0 :   Schrittmerker S T E P   8
+//     Bit 1.1 :   Schrittmerker S T E P   9
+//     Bit 1.6 :   Flankenmerker 'clear'
+//     Bit 1.7 :   Flankenmerker 'start'
+//
+//     Byte 2  :   Zwischenmerker "Status PLC"   (Test auf PLC-Seite)
+//     Byte 3  :   Zwischenmerker "Status NCK"   (Test auf NCK-Seite)
+//
+//Hilfsmerker werden in mehreren Schritten verwendet
+AUTHOR : Gehringe
+FAMILY : SPL
+VERSION : 3.0
+CODE_VERSION1
+
+
+VAR_INPUT
+  start : BOOL ;	//Start des Teststop	
+  clear : BOOL ;	//Rücksetzen aller Hilfsmerker (aux_dword)
+  num_axis : INT ;	//Anzahl der parametrierten/zu testenden Achsen	
+  test_axis_1 : INT ;	//Achsnummer der als erstes zu testenden Achse
+  test_axis_2 : INT ;	//Nummer beliebig wenn sie nicht im Bereich num_axis liegen
+  test_axis_3 : INT ;	
+  test_axis_4 : INT ;	
+  test_axis_5 : INT ;	
+  test_axis_6 : INT ;	
+  test_axis_7 : INT ;	
+  test_axis_8 : INT ;	
+END_VAR
+VAR_IN_OUT
+  req_stopd_plc : BOOL ;	//STOP D auf PLC-Seite auslösen
+  req_stopc_plc : BOOL ;	//STOP C auf PLC-Seite auslösen
+  req_stopa_plc : BOOL ;	//STOP A auf PLC-Seite auslösen
+  req_stopd_nck : BOOL ;	//STOP D auf PLC-Seite auslösen
+  req_stopc_nck : BOOL ;	//STOP C auf PLC-Seite auslösen
+  req_stopa_nck : BOOL ;	//STOP A auf PLC-Seite auslösen
+  aux_dword : DWORD ;	//Hilfsdwort (ED,MD,DB.DBDnn,usw.),muß für jeden Aufruf unterschiedlich sein !!!
+  ready : BOOL ;	//Ready Meldung als Flanke 
+  serror : BOOL ;	//Fehler : Startbedingungen nicht gegeben : STOP bereits aktiv
+  error : BOOL ;	//Fehler bei Parametrierung, keine Zeitüberwachung (wenn z.B. Rückmeldesignale fe
+END_VAR
+VAR_TEMP
+  db_axis : INT ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =  Ablaufsteuerung
+
+      L     P##test_axis_1; // Lade Zeiger auf Eingangsvariable 1
+      LAR1  ; // -> Sichern nach AR1
+      L     P##aux_dword; // Lade Zeiger auf Hilfswort
+      LAR2  ; // -> Sichern nach AR2
+
+// Überprüfung der Eingangsparameter
+
+      L     "DB_SIEM_STARTUP".MaxAxis; // Achsanzahl im System
+      L     #num_axis; // >max Achs      
+      <I    ; 
+      SPB   err; // Fehler ausgeben : num_axis > Achsanzahl
+
+      L     #num_axis; 
+      L     8; 
+      >I    ; 
+      SPB   err; // Fehler ausgeben: num_axis > 8
+
+      U     #ready; // Ready-Signal wird als Impuls (nur 1 Zyklus) ausgegeben
+      R     #ready; 
+
+      U     #clear; // Flankenauswertung CLEAR-Eingang
+      FP     [AR2,P#1.6]; // FM AR2: aux_dword -> Bit 1.6
+      SPB   clr; 
+
+      L     #num_axis; 
+      L     0; 
+      ==I   ; 
+      U     #start; 
+      SPB   noAX; //  Ready setzen wenn num_axis nicht > 0
+
+// S T E P   0   e i n l e i t e n
+
+      U     #start; // Flankenauswertung START-Eingang
+      FP     [AR2,P#1.7]; // FM AR2: aux_dword -> Bit 1.7 
+      S      [AR2,P#0.0]; // HM AR2: aux_dword -> Bit 0.0 (S T E P   0) setzen
+
+// Schrittsteuerung
+
+      L     P##test_axis_1; // Lade Zeiger auf Eingangsvariable 1
+      LAR1  ; // -> Sichern nach AR1
+
+      L     #num_axis; // Schleifenzaehler (AKKU1) mit num_axis vorbelegen
+
+      U      [AR2,P#0.0]; // S T E P   0   bearbeiten
+      SPB   db00; 
+      U      [AR2,P#0.1]; // S T E P   1   bearbeiten
+      SPB   db01; 
+      U      [AR2,P#0.2]; // S T E P   2   bearbeiten
+      SPB   db02; 
+      U      [AR2,P#0.3]; // S T E P   3   bearbeiten
+      SPB   db03; 
+      U      [AR2,P#0.4]; // S T E P   4   bearbeiten
+      SPB   db04; 
+      U      [AR2,P#0.5]; // S T E P   5   bearbeiten
+      SPB   db05; 
+      U      [AR2,P#0.6]; // S T E P   6   bearbeiten
+      SPB   db06; 
+      U      [AR2,P#0.7]; // S T E P   7   bearbeiten
+      SPB   db07; 
+      U      [AR2,P#1.0]; // S T E P   8   bearbeiten
+      SPB   db08; 
+      U      [AR2,P#1.1]; // S T E P   9   bearbeiten
+      SPB   db09; 
+
+      BEA   ; // Bausteinende wenn kein Schritt aktiv
+NETWORK
+TITLE =S T E P   0
+// *******************************************************************************
+//****
+// *** S T E P   0  : Prüfung der Startbedingungen -> Im Fehlerfall 'serror' = 1  
+// ***
+// *******************************************************************************
+//****
+db00: L     W [AR1,P#0.0]; // AR1: test_axis_n INT-Wert (Achsnummer) (AKKU1alt -> AKKU2)
+      INC   30; // Offset für Achs-DB aufaddieren
+      T     #db_axis; // Nr. Achs-DB ist in Temporärvar. db_axis hinterlegt
+      TAK   ; // Aktueller Stand des Schleifenzählers wieder -> AKKU1
+
+      AUF   DB [#db_axis]; // Achs-DB der aktuellen Achse öffnen
+      UN    DBX  111.4; // Rückmeldung "STOP A aktiv" abfragen
+      UN    DBX  111.5; // Rückmeldung "STOP C aktiv" abfragen
+      UN    DBX  111.6; // Rückmeldung "STOP D aktiv" abfragen
+      =      [AR2,P#2.0]; // HM AR2: aux_dword Byte 2 "kein STOP aktiv" Bit 0: Achse 1 -> Bit 7: Achse 8 
+      SPBN  serr; // Fehler Starbedingungen
+
+      +AR1  P#2.0; // AR1 [test_axis_n] auf nächstes Wort test_axis(n+1) setzen
+      +AR2  P#0.1; // AR2 [aux_dword]   auf nächstes HM-Bit für nächste Achse setzen 
+      LOOP  db00; // AKKU1-L -> -1 und springe, wenn AKKU1-L <> 0)
+
+      L     P##aux_dword; // Lade Zeiger auf Hilfswort
+      LAR2  ; // -> Sichern nach AR2
+
+      L     #num_axis; // Anzahl der Achsen laden
+      DEC   1; // Anpassung an Sprungverteiler (Beginn bei 0)
+      SPL   ck0x; // Default Sprungziel (Fehlerfall)
+      SPA   ck01; // Sprungziel bei Anzahl der zu testenden Achsen = 1
+      SPA   ck02; // Sprungziel bei Anzahl der zu testenden Achsen = 2
+      SPA   ck03; // Sprungziel bei Anzahl der zu testenden Achsen = 3
+      SPA   ck04; // Sprungziel bei Anzahl der zu testenden Achsen = 4
+      SPA   ck05; // Sprungziel bei Anzahl der zu testenden Achsen = 5
+      SPA   ck06; // Sprungziel bei Anzahl der zu testenden Achsen = 6
+      SPA   ck07; // Sprungziel bei Anzahl der zu testenden Achsen = 7
+      SPA   ck08; // Sprungziel bei Anzahl der zu testenden Achsen = 8
+ck0x: SPA   end; 
+
+// S T E P   1   e i n l e i t e n
+
+ck08: U      [AR2,P#2.7]; // Statusbits "kein STOP aktiv" werden abgefragt Bit7: Achse 8 -> Bit0: Achse 1
+ck07: U      [AR2,P#2.6]; // Statusbits "kein STOP aktiv" werden abgefragt Bit6: Achse 7 -> Bit0: Achse 1
+ck06: U      [AR2,P#2.5]; // Statusbits "kein STOP aktiv" werden abgefragt Bit5: Achse 6 -> Bit0: Achse 1
+ck05: U      [AR2,P#2.4]; // Statusbits "kein STOP aktiv" werden abgefragt Bit4: Achse 5 -> Bit0: Achse 1
+ck04: U      [AR2,P#2.3]; // Statusbits "kein STOP aktiv" werden abgefragt Bit3: Achse 4 -> Bit0: Achse 1
+ck03: U      [AR2,P#2.2]; // Statusbits "kein STOP aktiv" werden abgefragt Bit2: Achse 3 -> Bit0: Achse 1
+ck02: U      [AR2,P#2.1]; // Statusbits "kein STOP aktiv" werden abgefragt Bit1: Achse 2 -> Bit0: Achse 1
+ck01: U      [AR2,P#2.0]; // Statusbits "kein STOP aktiv" werden abgefragt Bit0: Achse 1 -> Bit0: Achse 1
+      U      [AR2,P#0.0]; // HM AR2: aux_dword -> Bit 0.0 (S T E P   0) 
+      R      [AR2,P#0.0]; // HM AR2: aux_dword -> Bit 0.0 (S T E P   0) rücksetzen 
+      S      [AR2,P#0.1]; // HM AR2: aux_dword -> Bit 0.1 (S T E P   1) setzen
+      BEA   ; // Bausteinende
+
+NETWORK
+TITLE =S T E P   1
+// *******************************************************************************
+//***************
+// *** S T E P   1  : Test <ext. STOP D> des Antriebs über Ausgabe von Signal 
+//"req_stopd_plc" ***
+// *******************************************************************************
+//***************
+db01: L     W [AR1,P#0.0]; // AR1: test_axis_n INT-Wert (Achsnummer) (AKKU1alt -> AKKU2)
+      INC   30; // Offset für Achs-DB aufaddieren
+      T     #db_axis; // Nr. Achs-DB ist in Temporärvar. db_axis hinterlegt
+      TAK   ; // Aktueller Stand des Schleifenzählers wieder -> AKKU1
+
+      AUF   DB [#db_axis]; // Achs-DB der aktuellen Achse öffnen
+      U      [AR2,P#0.1]; // HM AR2: aux_dword -> Bit 0.0 (S T E P   1)  
+      S     #req_stopd_plc; // Signal "req_stopd_plc setzen -> Verknüpfung in PLC-SPL
+
+      +AR1  P#2.0; // AR1 auf nächstes Wort test_axis(n+1) setzen
+      LOOP  db01; // AKKU1-L -> -1 und springe, wenn AKKU1-L <> 0)
+
+// S T E P   2   e i n l e i t e n
+
+      U      [AR2,P#0.1]; // HM AR2: aux_dword -> Bit 0.1 (S T E P   1)  
+      R      [AR2,P#0.1]; // HM AR2: aux_dword -> Bit 0.1 (S T E P   1) rücksetzen
+      S      [AR2,P#0.2]; // HM AR2: aux_dword -> Bit 0.2 (S T E P   2) setzen   
+      BEA   ; // Bausteinende
+
+NETWORK
+TITLE =S T E P   2
+// *******************************************************************************
+//*****************
+// *** S T E P   2  : Status "STOP D aktiv" über PLC-Nahtstelle 
+//<Achs-DB>.DBX111.6 abfragen     ***
+// ***                Test <ext. STOP C> des Antriebs über Ausgabe von Signal 
+//"req_stopc_plc"   ***
+// *******************************************************************************
+//*****************
+db02: L     W [AR1,P#0.0]; // AR1: test_axis_n INT-Wert (Achsnummer) (AKKU1alt -> AKKU2)
+      INC   30; // Offset für Achs-DB aufaddieren
+      T     #db_axis; // Nr. Achs-DB ist in Temporärvar. db_axis hinterlegt
+      TAK   ; // Aktueller Stand des Schleifenzählers wieder -> AKKU1
+      AUF   DB [#db_axis]; // Achs-DB der aktuellen Achse öffnen
+
+      U     DBX  111.6; // Rückmeldung "STOP D aktiv" abfragen
+      =      [AR2,P#2.0]; // HM AR2: aux_dword Byte 2 "STOP D aktiv" Bit 0: Achse 1 -> Bit 7: Achse 8 
+
+      +AR1  P#2.0; // AR1 [test_axis_n] auf nächstes Wort test_axis(n+1) setzen
+      +AR2  P#0.1; // AR2 [aux_dword]   auf nächstes HM-Bit für nächste Achse setzen 
+      LOOP  db02; // AKKU1-L -> -1 und springe, wenn AKKU1-L <> 0)
+
+
+      L     P##aux_dword; // Lade Zeiger auf Hilfswort
+      LAR2  ; // -> Sichern nach AR2
+
+      L     #num_axis; // Anzahl der Achsen laden
+      DEC   1; // Anpassung an Sprungverteiler (Beginn bei 0)
+      SPL   ck2x; // Default Sprungziel (Fehlerfall)
+      SPA   ck21; // Sprungziel bei Anzahl der zu testenden Achsen = 1
+      SPA   ck22; // Sprungziel bei Anzahl der zu testenden Achsen = 2
+      SPA   ck23; // Sprungziel bei Anzahl der zu testenden Achsen = 3
+      SPA   ck24; // Sprungziel bei Anzahl der zu testenden Achsen = 4
+      SPA   ck25; // Sprungziel bei Anzahl der zu testenden Achsen = 5
+      SPA   ck26; // Sprungziel bei Anzahl der zu testenden Achsen = 6
+      SPA   ck27; // Sprungziel bei Anzahl der zu testenden Achsen = 7
+      SPA   ck28; // Sprungziel bei Anzahl der zu testenden Achsen = 8
+ck2x: SPA   end; 
+
+// S T E P   3   e i n l e i t e n
+
+ck28: U      [AR2,P#2.7]; // Statusbits "STOP D aktiv" werden abgefragt Bit7: Achse 8 -> Bit0: Achse 1
+ck27: U      [AR2,P#2.6]; // Statusbits "STOP D aktiv" werden abgefragt Bit6: Achse 7 -> Bit0: Achse 1
+ck26: U      [AR2,P#2.5]; // Statusbits "STOP D aktiv" werden abgefragt Bit5: Achse 6 -> Bit0: Achse 1
+ck25: U      [AR2,P#2.4]; // Statusbits "STOP D aktiv" werden abgefragt Bit4: Achse 5 -> Bit0: Achse 1
+ck24: U      [AR2,P#2.3]; // Statusbits "STOP D aktiv" werden abgefragt Bit3: Achse 4 -> Bit0: Achse 1
+ck23: U      [AR2,P#2.2]; // Statusbits "STOP D aktiv" werden abgefragt Bit2: Achse 3 -> Bit0: Achse 1
+ck22: U      [AR2,P#2.1]; // Statusbits "STOP D aktiv" werden abgefragt Bit1: Achse 2 -> Bit0: Achse 1
+ck21: U      [AR2,P#2.0]; // Statusbits "STOP D aktiv" werden abgefragt Bit0: Achse 1 -> Bit0: Achse 1
+      U      [AR2,P#0.2]; // HM AR2: aux_dword -> Bit 0.2 (S T E P   2) 
+      R      [AR2,P#0.2]; // HM AR2: aux_dword -> Bit 0.2 (S T E P   2) rücksetzen 
+      S      [AR2,P#0.3]; // HM AR2: aux_dword -> Bit 0.3 (S T E P   3) setzen
+      R     #req_stopd_plc; // Signal "req_stopd_plc" rücksetzen
+      S     #req_stopc_plc; // Signal "req_stopc_plc" setzen -> Verknüpfung in PLC-SPL
+      BEA   ; // Bausteinende
+
+
+NETWORK
+TITLE =S T E P   3
+// *******************************************************************************
+//*******************
+// *** S T E P   3  : Status "STOP C aktiv" über PLC-Nahtstelle 
+//<Achs-DB>.DBX111.5 abfragen       ***
+// ***                Test <ext. STOP A> des Antriebs über Ausgabe von Signal 
+//"req_stopa_plc" ***
+// *******************************************************************************
+//*******************
+db03: L     W [AR1,P#0.0]; // AR1: test_axis_n INT-Wert (Achsnummer) (AKKU1alt -> AKKU2)
+      INC   30; // Offset für Achs-DB aufaddieren
+      T     #db_axis; // Nr. Achs-DB ist in Temporärvar. db_axis hinterlegt
+      TAK   ; // Aktueller Stand des Schleifenzählers wieder -> AKKU1
+      AUF   DB [#db_axis]; // Achs-DB der aktuellen Achse öffnen
+
+      U     DBX  111.5; // Rückmeldung "STOP C aktiv" abfragen
+      =      [AR2,P#2.0]; // HM AR2: aux_dword Byte 2 "STOP C aktiv" Bit 0: Achse 1 -> Bit 7: Achse 8 
+
+      +AR1  P#2.0; // AR1 [test_axis_n] auf nächstes Wort test_axis(n+1) setzen
+      +AR2  P#0.1; // AR2 [aux_dword]   auf nächstes HM-Bit für nächste Achse setzen 
+      LOOP  db03; // AKKU1-L -> -1 und springe, wenn AKKU1-L <> 0)
+
+
+      L     P##aux_dword; // Lade Zeiger auf Hilfswort
+      LAR2  ; // -> Sichern nach AR2
+
+      L     #num_axis; // Anzahl der Achsen laden
+      DEC   1; // Anpassung an Sprungverteiler (Beginn bei 0)
+      SPL   ck3x; // Default Sprungziel (Fehlerfall)
+      SPA   ck31; // Sprungziel bei Anzahl der zu testenden Achsen = 1
+      SPA   ck32; // Sprungziel bei Anzahl der zu testenden Achsen = 2
+      SPA   ck33; // Sprungziel bei Anzahl der zu testenden Achsen = 3
+      SPA   ck34; // Sprungziel bei Anzahl der zu testenden Achsen = 4
+      SPA   ck35; // Sprungziel bei Anzahl der zu testenden Achsen = 5
+      SPA   ck36; // Sprungziel bei Anzahl der zu testenden Achsen = 6
+      SPA   ck37; // Sprungziel bei Anzahl der zu testenden Achsen = 7
+      SPA   ck38; // Sprungziel bei Anzahl der zu testenden Achsen = 8
+ck3x: SPA   end; 
+
+// S T E P   4   e i n l e i t e n
+
+ck38: U      [AR2,P#2.7]; // Statusbits "STOP C aktiv" werden abgefragt Bit7: Achse 8 -> Bit0: Achse 1
+ck37: U      [AR2,P#2.6]; // Statusbits "STOP C aktiv" werden abgefragt Bit6: Achse 7 -> Bit0: Achse 1
+ck36: U      [AR2,P#2.5]; // Statusbits "STOP C aktiv" werden abgefragt Bit5: Achse 6 -> Bit0: Achse 1
+ck35: U      [AR2,P#2.4]; // Statusbits "STOP C aktiv" werden abgefragt Bit4: Achse 5 -> Bit0: Achse 1
+ck34: U      [AR2,P#2.3]; // Statusbits "STOP C aktiv" werden abgefragt Bit3: Achse 4 -> Bit0: Achse 1
+ck33: U      [AR2,P#2.2]; // Statusbits "STOP C aktiv" werden abgefragt Bit2: Achse 3 -> Bit0: Achse 1
+ck32: U      [AR2,P#2.1]; // Statusbits "STOP C aktiv" werden abgefragt Bit1: Achse 2 -> Bit0: Achse 1
+ck31: U      [AR2,P#2.0]; // Statusbits "STOP C aktiv" werden abgefragt Bit0: Achse 1 -> Bit0: Achse 1
+      U      [AR2,P#0.3]; // HM AR2: aux_dword -> Bit 0.3 (S T E P   3)  
+      R      [AR2,P#0.3]; // HM AR2: aux_dword -> Bit 0.3 (S T E P   3) rücksetzen
+      S      [AR2,P#0.4]; // HM AR2: aux_dword -> Bit 0.4 (S T E P   4) setzen   
+      R     #req_stopc_plc; // Signal "req_stopc_plc rücksetzen
+      S     #req_stopa_plc; // Signal "req_stopa_plc setzen -> Verknüpfung in PLC-SPL
+      BEA   ; // Bausteinende
+
+
+NETWORK
+TITLE =S T E P   4
+// *******************************************************************************
+//*************
+// *** S T E P   4  : Status "STOP A aktiv" über PLC-Nahtstelle 
+//<Achs-DB>.DBX111.4 abfragen ***
+// ***                STOP A - Anforderung <Antrieb> rücksetzen                   
+//          ***
+// *******************************************************************************
+//*************
+db04: L     W [AR1,P#0.0]; // AR1: test_axis_n INT-Wert (Achsnummer) (AKKU1alt -> AKKU2)
+      INC   30; // Offset für Achs-DB aufaddieren
+      T     #db_axis; // Nr. Achs-DB ist in Temporärvar. db_axis hinterlegt
+      TAK   ; // Aktueller Stand des Schleifenzählers wieder -> AKKU1
+      AUF   DB [#db_axis]; // Achs-DB der aktuellen Achse öffnen
+
+      U     DBX  111.4; // Rückmeldung "STOP A aktiv" abfragen
+      =      [AR2,P#2.0]; // HM AR2: aux_dword Byte 2 "STOP A aktiv" Bit 0: Achse 1 -> Bit 7: Achse 8 
+
+      +AR1  P#2.0; // AR1 [test_axis_n] auf nächstes Wort test_axis(n+1) setzen
+      +AR2  P#0.1; // AR2 [aux_dword]   auf nächstes HM-Bit für nächste Achse setzen 
+      LOOP  db04; // AKKU1-L -> -1 und springe, wenn AKKU1-L <> 0)
+
+
+      L     P##aux_dword; // Lade Zeiger auf Hilfswort
+      LAR2  ; // -> Sichern nach AR2
+
+      L     #num_axis; // Anzahl der Achsen laden
+      DEC   1; // Anpassung an Sprungverteiler (Beginn bei 0)
+      SPL   ck4x; // Default Sprungziel (Fehlerfall)
+      SPA   ck41; // Sprungziel bei Anzahl der zu testenden Achsen = 1
+      SPA   ck42; // Sprungziel bei Anzahl der zu testenden Achsen = 2
+      SPA   ck43; // Sprungziel bei Anzahl der zu testenden Achsen = 3
+      SPA   ck44; // Sprungziel bei Anzahl der zu testenden Achsen = 4
+      SPA   ck45; // Sprungziel bei Anzahl der zu testenden Achsen = 5
+      SPA   ck46; // Sprungziel bei Anzahl der zu testenden Achsen = 6
+      SPA   ck47; // Sprungziel bei Anzahl der zu testenden Achsen = 7
+      SPA   ck48; // Sprungziel bei Anzahl der zu testenden Achsen = 8
+ck4x: SPA   end; 
+
+// S T E P   5   e i n l e i t e n
+
+ck48: U      [AR2,P#2.7]; // Statusbits "STOP A aktiv" werden abgefragt Bit7: Achse 8 -> Bit0: Achse 1
+ck47: U      [AR2,P#2.6]; // Statusbits "STOP A aktiv" werden abgefragt Bit6: Achse 7 -> Bit0: Achse 1
+ck46: U      [AR2,P#2.5]; // Statusbits "STOP A aktiv" werden abgefragt Bit5: Achse 6 -> Bit0: Achse 1
+ck45: U      [AR2,P#2.4]; // Statusbits "STOP A aktiv" werden abgefragt Bit4: Achse 5 -> Bit0: Achse 1
+ck44: U      [AR2,P#2.3]; // Statusbits "STOP A aktiv" werden abgefragt Bit3: Achse 4 -> Bit0: Achse 1
+ck43: U      [AR2,P#2.2]; // Statusbits "STOP A aktiv" werden abgefragt Bit2: Achse 3 -> Bit0: Achse 1
+ck42: U      [AR2,P#2.1]; // Statusbits "STOP A aktiv" werden abgefragt Bit1: Achse 2 -> Bit0: Achse 1
+ck41: U      [AR2,P#2.0]; // Statusbits "STOP A aktiv" werden abgefragt Bit0: Achse 1 -> Bit0: Achse 1
+      U      [AR2,P#0.4]; // HM AR2: aux_dword -> Bit 0.4 (S T E P   4) 
+      R      [AR2,P#0.4]; // HM AR2: aux_dword -> Bit 0.4 (S T E P   4) rücksetzen 
+      S      [AR2,P#0.5]; // HM AR2: aux_dword -> Bit 0.5 (S T E P   5) setzen
+      R     #req_stopa_plc; // Signal "req_stopa_plc rücksetzen
+      BEA   ; // Bausteinende
+
+NETWORK
+TITLE =S T E P   5
+// *******************************************************************************
+//*******************
+// *** S T E P   5  : Status "STOP A nicht aktiv" über PLC-Nahtstelle 
+//<Achs-DB>.DBX111.4 abfragen ***
+// ***                Test <ext. STOP D> der NCK über Ausgabe von Signal "req_stop
+//d_nck"          ***
+// *******************************************************************************
+//*******************
+db05: L     W [AR1,P#0.0]; // AR1: test_axis_n INT-Wert (Achsnummer) (AKKU1alt -> AKKU2)
+      INC   30; // Offset für Achs-DB aufaddieren
+      T     #db_axis; // Nr. Achs-DB ist in Temporärvar. db_axis hinterlegt
+      TAK   ; // Aktueller Stand des Schleifenzählers wieder -> AKKU1
+      AUF   DB [#db_axis]; // Achs-DB der aktuellen Achse öffnen
+
+      UN    DBX  111.4; // Rückmeldung "STOP A nicht aktiv" abfragen
+      =      [AR2,P#2.0]; // HM AR2: aux_dword Byte 2 "STOP A nicht aktiv" Bit 0: Achse 1 -> Bit 7: Achse 8 
+
+      +AR1  P#2.0; // AR1 [test_axis_n] auf nächstes Wort test_axis(n+1) setzen
+      +AR2  P#0.1; // AR2 [aux_dword]   auf nächstes HM-Bit für nächste Achse setzen 
+      LOOP  db05; // AKKU1-L -> -1 und springe, wenn AKKU1-L <> 0)
+
+
+      L     P##aux_dword; // Lade Zeiger auf Hilfswort
+      LAR2  ; // -> Sichern nach AR2
+
+      L     #num_axis; // Anzahl der Achsen laden
+      DEC   1; // Anpassung an Sprungverteiler (Beginn bei 0)
+      SPL   ck5x; // Default Sprungziel (Fehlerfall)
+      SPA   ck51; // Sprungziel bei Anzahl der zu testenden Achsen = 1
+      SPA   ck52; // Sprungziel bei Anzahl der zu testenden Achsen = 2
+      SPA   ck53; // Sprungziel bei Anzahl der zu testenden Achsen = 3
+      SPA   ck54; // Sprungziel bei Anzahl der zu testenden Achsen = 4
+      SPA   ck55; // Sprungziel bei Anzahl der zu testenden Achsen = 5
+      SPA   ck56; // Sprungziel bei Anzahl der zu testenden Achsen = 6
+      SPA   ck57; // Sprungziel bei Anzahl der zu testenden Achsen = 7
+      SPA   ck58; // Sprungziel bei Anzahl der zu testenden Achsen = 8
+ck5x: SPA   end; 
+
+// S T E P   6   e i n l e i t e n
+
+ck58: U      [AR2,P#2.7]; // Statusbits "STOP A nicht aktiv" werden abgefragt Bit7: Achse 8 -> Bit0: Achse 1
+ck57: U      [AR2,P#2.6]; // Statusbits "STOP A nicht aktiv" werden abgefragt Bit6: Achse 7 -> Bit0: Achse 1
+ck56: U      [AR2,P#2.5]; // Statusbits "STOP A nicht aktiv" werden abgefragt Bit5: Achse 6 -> Bit0: Achse 1
+ck55: U      [AR2,P#2.4]; // Statusbits "STOP A nicht aktiv" werden abgefragt Bit4: Achse 5 -> Bit0: Achse 1
+ck54: U      [AR2,P#2.3]; // Statusbits "STOP A nicht aktiv" werden abgefragt Bit3: Achse 4 -> Bit0: Achse 1
+ck53: U      [AR2,P#2.2]; // Statusbits "STOP A nicht aktiv" werden abgefragt Bit2: Achse 3 -> Bit0: Achse 1
+ck52: U      [AR2,P#2.1]; // Statusbits "STOP A nicht aktiv" werden abgefragt Bit1: Achse 2 -> Bit0: Achse 1
+ck51: U      [AR2,P#2.0]; // Statusbits "STOP A nicht aktiv" werden abgefragt Bit0: Achse 1 -> Bit0: Achse 1
+      U      [AR2,P#0.5]; // HM AR2: aux_dword -> Bit 0.5 (S T E P   5) 
+      R      [AR2,P#0.5]; // HM AR2: aux_dword -> Bit 0.5 (S T E P   5) rücksetzen 
+      S      [AR2,P#0.6]; // HM AR2: aux_dword -> Bit 0.6 (S T E P   6) setzen
+      S     #req_stopd_nck; // Signal "req_stopd_nck setzen -> Verknüpfung in NCK-SPL
+      BEA   ; // Bausteinende
+
+
+NETWORK
+TITLE =S T E P   6
+// *******************************************************************************
+//*************
+// *** S T E P   6  : Status "STOP D aktiv" über PLC-Nahtstelle 
+//<Achs-DB>.DBX111.6 abfragen ***
+// ***                Test <ext. STOP C> der NCK über Ausgabe von Signal 
+//"req_stopc_nck"    ***
+// *******************************************************************************
+//*************
+db06: L     W [AR1,P#0.0]; // AR1: test_axis_n INT-Wert (Achsnummer) (AKKU1alt -> AKKU2)
+      INC   30; // Offset für Achs-DB aufaddieren
+      T     #db_axis; // Nr. Achs-DB ist in Temporärvar. db_axis hinterlegt
+      TAK   ; // Aktueller Stand des Schleifenzählers wieder -> AKKU1
+      AUF   DB [#db_axis]; // Achs-DB der aktuellen Achse öffnen
+
+      U     DBX  111.6; // Rückmeldung "STOP D aktiv" abfragen
+      U     DBX   32.4; // STOP D auf PLC-Seite ist abgewählt
+      =      [AR2,P#3.0]; // HM AR2: aux_dword Byte 3 "STOP D aktiv" Bit 0: Achse 1 -> Bit 7: Achse 8 
+
+      +AR1  P#2.0; // AR1 [test_axis_n] auf nächstes Wort test_axis(n+1) setzen
+      +AR2  P#0.1; // AR2 [aux_dword]   auf nächstes HM-Bit für nächste Achse setzen 
+      LOOP  db06; // AKKU1-L -> -1 und springe, wenn AKKU1-L <> 0)
+
+
+      L     P##aux_dword; // Lade Zeiger auf Hilfswort
+      LAR2  ; // -> Sichern nach AR2
+
+      L     #num_axis; // Anzahl der Achsen laden
+      DEC   1; // Anpassung an Sprungverteiler (Beginn bei 0)
+      SPL   ck6x; // Default Sprungziel (Fehlerfall)
+      SPA   ck61; // Sprungziel bei Anzahl der zu testenden Achsen = 1
+      SPA   ck62; // Sprungziel bei Anzahl der zu testenden Achsen = 2
+      SPA   ck63; // Sprungziel bei Anzahl der zu testenden Achsen = 3
+      SPA   ck64; // Sprungziel bei Anzahl der zu testenden Achsen = 4
+      SPA   ck65; // Sprungziel bei Anzahl der zu testenden Achsen = 5
+      SPA   ck66; // Sprungziel bei Anzahl der zu testenden Achsen = 6
+      SPA   ck67; // Sprungziel bei Anzahl der zu testenden Achsen = 7
+      SPA   ck68; // Sprungziel bei Anzahl der zu testenden Achsen = 8
+ck6x: SPA   end; 
+
+// S T E P   7   e i n l e i t e n
+
+ck68: U      [AR2,P#3.7]; // Statusbits "STOP D aktiv" werden abgefragt Bit7: Achse 8 -> Bit0: Achse 1
+ck67: U      [AR2,P#3.6]; // Statusbits "STOP D aktiv" werden abgefragt Bit6: Achse 7 -> Bit0: Achse 1
+ck66: U      [AR2,P#3.5]; // Statusbits "STOP D aktiv" werden abgefragt Bit5: Achse 6 -> Bit0: Achse 1
+ck65: U      [AR2,P#3.4]; // Statusbits "STOP D aktiv" werden abgefragt Bit4: Achse 5 -> Bit0: Achse 1
+ck64: U      [AR2,P#3.3]; // Statusbits "STOP D aktiv" werden abgefragt Bit3: Achse 4 -> Bit0: Achse 1
+ck63: U      [AR2,P#3.2]; // Statusbits "STOP D aktiv" werden abgefragt Bit2: Achse 3 -> Bit0: Achse 1
+ck62: U      [AR2,P#3.1]; // Statusbits "STOP D aktiv" werden abgefragt Bit1: Achse 2 -> Bit0: Achse 1
+ck61: U      [AR2,P#3.0]; // Statusbits "STOP D aktiv" werden abgefragt Bit0: Achse 1 -> Bit0: Achse 1
+      U      [AR2,P#0.6]; // HM AR2: aux_dword -> Bit 0.6 (S T E P   6) 
+      R      [AR2,P#0.6]; // HM AR2: aux_dword -> Bit 0.6 (S T E P   6) rücksetzen 
+      S      [AR2,P#0.7]; // HM AR2: aux_dword -> Bit 0.7 (S T E P   7) setzen
+      R     #req_stopd_nck; // Signal req_stopd_nck rücksetzen
+      S     #req_stopc_nck; // Signal req_stopc_nck setzen -> Verknüpfung in NCK-SPL
+      BEA   ; // Bausteinende
+
+
+NETWORK
+TITLE =S T E P   7
+// *******************************************************************************
+//*************
+// *** S T E P   7  : Status "STOP C aktiv" über PLC-Nahtstelle 
+//<Achs-DB>.DBX111.5 abfragen ***
+// ***                Test <ext. STOP A> der NCK über Ausgabe von Signal 
+//"req_stopa_nck"    ***
+// *******************************************************************************
+//*************
+db07: L     W [AR1,P#0.0]; // AR1: test_axis_n INT-Wert (Achsnummer) (AKKU1alt -> AKKU2)
+      INC   30; // Offset für Achs-DB aufaddieren
+      T     #db_axis; // Nr. Achs-DB ist in Temporärvar. db_axis hinterlegt
+      TAK   ; // Aktueller Stand des Schleifenzählers wieder -> AKKU1
+      AUF   DB [#db_axis]; // Achs-DB der aktuellen Achse öffnen
+
+      U     DBX  111.5; // Rückmeldung "STOP C aktiv" abfragen
+      U     DBX   32.3; // STOP C auf PLC-Seite ist abgewählt
+      =      [AR2,P#3.0]; // HM AR2: aux_dword Byte 3 "STOP C aktiv" Bit 0: Achse 1 -> Bit 7: Achse 8 
+
+      +AR1  P#2.0; // AR1 [test_axis_n] auf nächstes Wort test_axis(n+1) setzen
+      +AR2  P#0.1; // AR2 [aux_dword]   auf nächstes HM-Bit für nächste Achse setzen 
+      LOOP  db07; // AKKU1-L -> -1 und springe, wenn AKKU1-L <> 0)
+
+
+      L     P##aux_dword; // Lade Zeiger auf Hilfswort
+      LAR2  ; // -> Sichern nach AR2
+
+      L     #num_axis; // Anzahl der Achsen laden
+      DEC   1; // Anpassung an Sprungverteiler (Beginn bei 0)
+      SPL   ck7x; // Default Sprungziel (Fehlerfall)
+      SPA   ck71; // Sprungziel bei Anzahl der zu testenden Achsen = 1
+      SPA   ck72; // Sprungziel bei Anzahl der zu testenden Achsen = 2
+      SPA   ck73; // Sprungziel bei Anzahl der zu testenden Achsen = 3
+      SPA   ck74; // Sprungziel bei Anzahl der zu testenden Achsen = 4
+      SPA   ck75; // Sprungziel bei Anzahl der zu testenden Achsen = 5
+      SPA   ck76; // Sprungziel bei Anzahl der zu testenden Achsen = 6
+      SPA   ck77; // Sprungziel bei Anzahl der zu testenden Achsen = 7
+      SPA   ck78; // Sprungziel bei Anzahl der zu testenden Achsen = 8
+ck7x: SPA   end; 
+
+// S T E P   8   e i n l e i t e n
+
+ck78: U      [AR2,P#3.7]; // Statusbits "STOP C aktiv" werden abgefragt Bit7: Achse 8 -> Bit0: Achse 1
+ck77: U      [AR2,P#3.6]; // Statusbits "STOP C aktiv" werden abgefragt Bit6: Achse 7 -> Bit0: Achse 1
+ck76: U      [AR2,P#3.5]; // Statusbits "STOP C aktiv" werden abgefragt Bit5: Achse 6 -> Bit0: Achse 1
+ck75: U      [AR2,P#3.4]; // Statusbits "STOP C aktiv" werden abgefragt Bit4: Achse 5 -> Bit0: Achse 1
+ck74: U      [AR2,P#3.3]; // Statusbits "STOP C aktiv" werden abgefragt Bit3: Achse 4 -> Bit0: Achse 1
+ck73: U      [AR2,P#3.2]; // Statusbits "STOP C aktiv" werden abgefragt Bit2: Achse 3 -> Bit0: Achse 1
+ck72: U      [AR2,P#3.1]; // Statusbits "STOP C aktiv" werden abgefragt Bit1: Achse 2 -> Bit0: Achse 1
+ck71: U      [AR2,P#3.0]; // Statusbits "STOP C aktiv" werden abgefragt Bit0: Achse 1 -> Bit0: Achse 1
+      U      [AR2,P#0.7]; // HM AR2: aux_dword -> Bit 0.7 (S T E P   7) 
+      R      [AR2,P#0.7]; // HM AR2: aux_dword -> Bit 0.7 (S T E P   7) rücksetzen 
+      S      [AR2,P#1.0]; // HM AR2: aux_dword -> Bit 1.0 (S T E P   8) setzen
+      R     #req_stopc_nck; // Signal "req_stopc_nck rücksetzen
+      S     #req_stopa_nck; // Signal "req_stopa_nck setzen -> Verknüpfung in NCK-SPL
+      BEA   ; // Bausteinende
+
+
+NETWORK
+TITLE =S T E P   8
+// *******************************************************************************
+//*************
+// *** S T E P   8  : Status "STOP A aktiv" über PLC-Nahtstelle 
+//<Achs-DB>.DBX111.4 abfragen ***
+// ***                STOP A - Anforderung <NCK> rücksetzen                       
+//          ***
+// *******************************************************************************
+//*************
+db08: L     W [AR1,P#0.0]; // AR1: test_axis_n INT-Wert (Achsnummer) (AKKU1alt -> AKKU2)
+      INC   30; // Offset für Achs-DB aufaddieren
+      T     #db_axis; // Nr. Achs-DB ist in Temporärvar. db_axis hinterlegt
+      TAK   ; // Aktueller Stand des Schleifenzählers wieder -> AKKU1
+      AUF   DB [#db_axis]; // Achs-DB der aktuellen Achse öffnen
+
+      U     DBX  111.4; // Rückmeldung "STOP A aktiv" abfragen
+      U     DBX   32.2; // STOP A auf PLC-Seite ist abgewählt
+      =      [AR2,P#3.0]; // HM AR2: aux_dword Byte 3 "STOP A aktiv" Bit 0: Achse 1 -> Bit 7: Achse 8 
+
+      +AR1  P#2.0; // AR1 [test_axis_n] auf nächstes Wort test_axis(n+1) setzen
+      +AR2  P#0.1; // AR2 [aux_dword]   auf nächstes HM-Bit für nächste Achse setzen 
+      LOOP  db08; // AKKU1-L -> -1 und springe, wenn AKKU1-L <> 0)
+
+
+      L     P##aux_dword; // Lade Zeiger auf Hilfswort
+      LAR2  ; // -> Sichern nach AR2
+
+      L     #num_axis; // Anzahl der Achsen laden
+      DEC   1; // Anpassung an Sprungverteiler (Beginn bei 0)
+      SPL   ck8x; // Default Sprungziel (Fehlerfall)
+      SPA   ck81; // Sprungziel bei Anzahl der zu testenden Achsen = 1
+      SPA   ck82; // Sprungziel bei Anzahl der zu testenden Achsen = 2
+      SPA   ck83; // Sprungziel bei Anzahl der zu testenden Achsen = 3
+      SPA   ck84; // Sprungziel bei Anzahl der zu testenden Achsen = 4
+      SPA   ck85; // Sprungziel bei Anzahl der zu testenden Achsen = 5
+      SPA   ck86; // Sprungziel bei Anzahl der zu testenden Achsen = 6
+      SPA   ck87; // Sprungziel bei Anzahl der zu testenden Achsen = 7
+      SPA   ck88; // Sprungziel bei Anzahl der zu testenden Achsen = 8
+ck8x: SPA   end; 
+
+// S T E P   9   e i n l e i t e n
+
+ck88: U      [AR2,P#3.7]; // Statusbits "STOP A aktiv" werden abgefragt Bit7: Achse 8 -> Bit0: Achse 1
+ck87: U      [AR2,P#3.6]; // Statusbits "STOP A aktiv" werden abgefragt Bit6: Achse 7 -> Bit0: Achse 1
+ck86: U      [AR2,P#3.5]; // Statusbits "STOP A aktiv" werden abgefragt Bit5: Achse 6 -> Bit0: Achse 1
+ck85: U      [AR2,P#3.4]; // Statusbits "STOP A aktiv" werden abgefragt Bit4: Achse 5 -> Bit0: Achse 1
+ck84: U      [AR2,P#3.3]; // Statusbits "STOP A aktiv" werden abgefragt Bit3: Achse 4 -> Bit0: Achse 1
+ck83: U      [AR2,P#3.2]; // Statusbits "STOP A aktiv" werden abgefragt Bit2: Achse 3 -> Bit0: Achse 1
+ck82: U      [AR2,P#3.1]; // Statusbits "STOP A aktiv" werden abgefragt Bit1: Achse 2 -> Bit0: Achse 1
+ck81: U      [AR2,P#3.0]; // Statusbits "STOP A aktiv" werden abgefragt Bit0: Achse 1 -> Bit0: Achse 1
+      U      [AR2,P#1.0]; // HM AR2: aux_dword -> Bit 1.0 (S T E P   8) 
+      R      [AR2,P#1.0]; // HM AR2: aux_dword -> Bit 1.0 (S T E P   8) rücksetzen 
+      S      [AR2,P#1.1]; // HM AR2: aux_dword -> Bit 1.1 (S T E P   9) setzen
+      R     #req_stopa_nck; // Signal "req_stopa_nck rücksetzen
+      BEA   ; // Bausteinende
+
+
+
+NETWORK
+TITLE =S T E P   9
+// *******************************************************************************
+//********************
+// *** S T E P   9  : Status "STOP A nicht  aktiv" über PLC-Nahtstelle 
+//<Achs-DB>.DBX111.4 abfragen ***
+// ***                Ready Signal ausgeben                                       
+//                 ***
+// *******************************************************************************
+//********************
+db09: L     W [AR1,P#0.0]; // AR1: test_axis_n INT-Wert (Achsnummer) (AKKU1alt -> AKKU2)
+      INC   30; // Offset für Achs-DB aufaddieren
+      T     #db_axis; // Nr. Achs-DB ist in Temporärvar. db_axis hinterlegt
+      TAK   ; // Aktueller Stand des Schleifenzählers wieder -> AKKU1
+      AUF   DB [#db_axis]; // Achs-DB der aktuellen Achse öffnen
+
+      UN    DBX  111.4; // Rückmeldung "STOP A nicht aktiv" abfragen
+      =      [AR2,P#3.0]; // HM AR2: aux_dword Byte 3 "STOP A nicht aktiv" Bit 0: Achse 1 -> Bit 7: Achse 8 
+
+      +AR1  P#2.0; // AR1 [test_axis_n] auf nächstes Wort test_axis(n+1) setzen
+      +AR2  P#0.1; // AR2 [aux_dword]   auf nächstes HM-Bit für nächste Achse setzen 
+      LOOP  db09; // AKKU1-L -> -1 und springe, wenn AKKU1-L <> 0)
+
+
+      L     P##aux_dword; // Lade Zeiger auf Hilfswort
+      LAR2  ; // -> Sichern nach AR2
+
+      L     #num_axis; // Anzahl der Achsen laden
+      DEC   1; // Anpassung an Sprungverteiler (Beginn bei 0)
+      SPL   ck9x; // Default Sprungziel (Fehlerfall)
+      SPA   ck91; // Sprungziel bei Anzahl der zu testenden Achsen = 1
+      SPA   ck92; // Sprungziel bei Anzahl der zu testenden Achsen = 2
+      SPA   ck93; // Sprungziel bei Anzahl der zu testenden Achsen = 3
+      SPA   ck94; // Sprungziel bei Anzahl der zu testenden Achsen = 4
+      SPA   ck95; // Sprungziel bei Anzahl der zu testenden Achsen = 5
+      SPA   ck96; // Sprungziel bei Anzahl der zu testenden Achsen = 6
+      SPA   ck97; // Sprungziel bei Anzahl der zu testenden Achsen = 7
+      SPA   ck98; // Sprungziel bei Anzahl der zu testenden Achsen = 8
+ck9x: SPA   end; 
+
+// S T E P   8   e i n l e i t e n
+
+ck98: U      [AR2,P#3.7]; // Statusbits "STOP A nicht aktiv" werden abgefragt Bit7: Achse 8 -> Bit0: Achse 1
+ck97: U      [AR2,P#3.6]; // Statusbits "STOP A nicht aktiv" werden abgefragt Bit6: Achse 7 -> Bit0: Achse 1
+ck96: U      [AR2,P#3.5]; // Statusbits "STOP A nicht aktiv" werden abgefragt Bit5: Achse 6 -> Bit0: Achse 1
+ck95: U      [AR2,P#3.4]; // Statusbits "STOP A nicht aktiv" werden abgefragt Bit4: Achse 5 -> Bit0: Achse 1
+ck94: U      [AR2,P#3.3]; // Statusbits "STOP A nicht aktiv" werden abgefragt Bit3: Achse 4 -> Bit0: Achse 1
+ck93: U      [AR2,P#3.2]; // Statusbits "STOP A nicht aktiv" werden abgefragt Bit2: Achse 3 -> Bit0: Achse 1
+ck92: U      [AR2,P#3.1]; // Statusbits "STOP A nicht aktiv" werden abgefragt Bit1: Achse 2 -> Bit0: Achse 1
+ck91: U      [AR2,P#3.0]; // Statusbits "STOP A nicht aktiv" werden abgefragt Bit0: Achse 1 -> Bit0: Achse 1
+      U      [AR2,P#1.1]; // HM AR2: aux_dword -> Bit 1.1 (S T E P   9) 
+noAX: R      [AR2,P#1.1]; // HM AR2: aux_dword -> Bit 1.1 (S T E P   9) rücksetzen 
+      S     #ready; // Fertig-Signal ausgeben
+      SPB   res; // Bausteinende : interne Zustände ablöschen
+      BEA   ; // Bausteinende
+
+NETWORK
+TITLE =Fehlerbehandlung / Initialisierung
+
+serr: =     #serror; 
+      SPA   res; 
+
+err:  =     #error; 
+      SPA   res; 
+
+clr:  SET   ; 
+      R     #error; // Fehler rücksetzen
+      R     #serror; // Start-Fehler rücksetzen
+
+res:  L     #aux_dword; 
+      L     DW#16#C00000; // AUX-Bits (1.7/1.6) für Flankenerkennung nicht ablöschen
+      UD    ; 
+      T     #aux_dword; 
+
+      SET   ; 
+      R     #req_stopd_plc; // Signal für STOP-Tests rücksetzen
+      R     #req_stopc_plc; // Signal für STOP-Tests rücksetzen
+      R     #req_stopa_plc; // Signal für STOP-Tests rücksetzen
+      R     #req_stopd_nck; // Signal für STOP-Tests rücksetzen
+      R     #req_stopc_nck; // Signal für STOP-Tests rücksetzen
+      R     #req_stopa_nck; // Signal für STOP-Tests rücksetzen
+
+end:  BE    ; 
+
+END_FUNCTION
+

@@ -1,0 +1,78 @@
+FUNCTION "FC_ACHS_2" : VOID
+TITLE =
+//$Revision: 1.9 $
+//$Date: 2008/10/11 09:29:15CEST $
+//$Author: hgc $
+{ S7_language := '7(1) Deutsch (Deutschland)  26.03.2008  08:00:15' }
+VERSION : 0.1
+
+BEGIN
+NETWORK
+TITLE =Y-Achse: Aktivierung Softwarenocken nachdem Achse referiert ist
+
+      UN    "DB_PLC_MD_DB20".UDHex._02_BIT1_ACHSE2_MESSYST; 
+      U     "DB_ACHSE2_Y".E_RefSyn1; 
+      O     ; 
+      U     "DB_PLC_MD_DB20".UDHex._02_BIT1_ACHSE2_MESSYST; 
+      U     "DB_ACHSE2_Y".E_RefSyn2; 
+      =     "DB_ACHSE2_Y".A_SWCam; 
+NETWORK
+TITLE =Achse 2 Y-Achse -> Aufruf FC_ACHSE_HAUPT
+//
+//
+//
+      CALL "FC_ACHSE_HAUPT" (
+           EX_EN                    := TRUE,
+           EX_UDHex_00_IB_Bit_Achse := "DB_PLC_MD_DB20".UDHex._00_BIT1_ACHSE2_AUSBLEND,
+           EX_UDHex_01_Ax_Messystem := "DB_PLC_MD_DB20".UDHex._02_BIT1_ACHSE2_MESSYST,
+           EX_Option_Safety         := "O_INFEED_ENABLE_NCU",// Bei Solutionline bleibt RF und ImpFrg für 3 Sek. nach Not-Aus anstehen
+           EX_Safe_RF_aus           := FALSE,
+           EX_Safe_StopC_aktiv      := FALSE,
+           EX_Safe_StopA_aktiv      := "DB_ACHSE2_Y".E_StopAB,
+           EX_Safe_Teststop_laeuft  := "DB_SPL".IPLC_ZD_GR1_RUN,
+           EX_Maschine_Ein          := "M_MA_Maschine_Ein",
+           EX_Antrieb_Sperre        := "DB_FAMILIEN_MODUL".Achssperre_extern.E_Ax_Y,
+           EX_Freigabe_Regler       := TRUE,
+           EX_Leistung_steht_an     := "M_Leistung_Steht_an",
+           EX_GewSchn_Aktiv         := "M_Gewindeschneid_aktiv",
+           EX_VSHalt_EinzelAchse    := "DB_FAMILIEN_MODUL".Gesamt.A_Vorschub_Halt_2_Achse,
+           EX_VSHalt_Gruppe         := "M_Vorschub_Halt_Haupt",
+           EX_VSHalt_Kanal          := "DB_FAMILIEN_MODUL".Gesamt.A_Vorschub_Halt_Kanal,
+           EX_RefPkt_Achse          := FALSE,
+           EX_Ax_E_MotOK_93x5       := "DB_ACHSE2_Y".E_MotOK,
+           EX_Ax_E_MTempWarn_94x0   := "DB_ACHSE2_Y".E_MTempWarn,
+           EX_Ax_E_Steht_61x4       := "DB_ACHSE2_Y".E_Stat,
+           EX_Ax_E_KTempWarn_94x1   := "DB_ACHSE2_Y".E_HTempWarn,
+           EX_Ax_E_LageRegler_61x5  := "DB_ACHSE2_Y".E_PositContr,
+           EX_Ax_E_IntSperr_93x6    := "DB_ACHSE2_Y".E_IntegratDisable,
+           EX_Ax_E_ImpFrei_93x7     := "DB_ACHSE2_Y".E_PulseEnable,
+           EX_Ax_E_DrehzRegler_61x6 := "DB_ACHSE2_Y".E_SpeedContr,
+           EX_Ax_E_StromRegler_61x7 := "DB_ACHSE2_Y".E_CurrentContr,
+           EX_Ax_E_FahrAF_61x0      := "DB_ACHSE2_Y".E_TravRequ,
+           EX_Ax_E_FBMinus_64x6     := "DB_ACHSE2_Y".E_TCMinus,
+           EX_Ax_E_FBPlus_64x7      := "DB_ACHSE2_Y".E_TCPlus,
+           EX_Eilgang_aktiv         := "M_Anf_Eilgang",
+           EX_Fehler_Quit           := "M_Ruecksetze_Fehler",
+           EX_RefNeu_Sync           := FALSE,
+           EX_AxPark                := FALSE,
+           EB_Achs_Typ              := B#16#2,
+           ET_Timer_Ax_Freigabe     := "Te_AX_Y_Bremse_loesen",
+           EAX_Ax_A_KorrW_1x7       := "DB_ACHSE2_Y".A_ORactive,
+           EAX_Ax_A_ReglerFrei_2x1  := "DB_ACHSE2_Y".A_ContrEnable,
+           EAX_Ax_A_ImpFrei_21x7    := "DB_ACHSE2_Y".A_PulseEnable,
+           EAX_Ax_A_VSSpHalt_4x3    := "DB_ACHSE2_Y".A_FDSpStop,
+           EAX_Ax_A_ASpSperre_1x3   := "DB_ACHSE2_Y".A_ASpDisable,
+           EAX_A_A_NachfBetr_1x4    := "DB_ACHSE2_Y".A_Follow_upMode,
+           EAX_Ax_A_LageMess1_1x5   := "DB_ACHSE2_Y".A_PosMeas1,
+           EAX_Ax_A_LageMess2_1x6   := "DB_ACHSE2_Y".A_PosMeas2,
+           EAX_Ax_A_EGUeberlag_4x5  := "DB_ACHSE2_Y".A_RapidTrOR,
+           EAX_Ax_A_RefVerzoeg_12x7 := "DB_ACHSE2_Y".A_DelayRef,
+           EAX_AX_A_Sp1Syn_16x4     := "DB_ACHSE2_Y".A_Sp1Syn,
+           EAX_Alarm_Regler         := "DB_FEHLERMELDUNG".Spi_VS_Halt._700117_Y_IMP_REGFRG_0S,
+           EAX_Alarm_VSSP_Mot_Temp  := "DB_FEHLERMELDUNG".Spi_VS_Halt._700129_Y_TEMP_ZU_HOCH,
+           EAX_Alarm_VSSP_KK_Temp   := "DB_FEHLERMELDUNG".Spi_VS_Halt1._510124_2_KK_TEMP_ZH,
+           EAX_Alarm_NA_MotOK       := "DB_FEHLERMELDUNG".Spi_VS_Halt3._701133_2_DR_READY_0,
+           EAX_M_Bremse_oeffnen     := "Mx_horz_BRemse_Auf");//"O_AL_YACHS_Bremse_auf"
+
+END_FUNCTION
+

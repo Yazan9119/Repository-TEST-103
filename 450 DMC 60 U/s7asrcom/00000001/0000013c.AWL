@@ -1,0 +1,766 @@
+FUNCTION_BLOCK "FB_TM_MAGAZINDATEN"
+TITLE =
+//$Revision: 1.11 $
+//$Date: 2008/08/08 15:24:59CEST $
+//$Author: schmoelp $
+//
+//GET_LOC
+//
+//Inputs:
+//- Req      Start des FB92
+//- MagNr    Magazinnummer
+//- Platz    Mode 0 aktiv -> Platznummer im Magazin
+//           Mode 1 aktiv -> Anzahl der Plätze (3 oder 4) im Zwischenspeicher  
+//- Mode     Mode 0 -> Es können aus allen Magazinen (Plätzen) Werkzeugdaten 
+//           ausgelesen werden.
+//           Mode 1 -> Auslesen der Zwischenspeicher (MagNr 9998)
+//           Daten Spindel- und Greiferwerkzeug werden ausgelesen und
+//           verglichen.
+//
+//Outputs:
+//- NDR      Fertigmeldung des FB92
+//- WZ_equal Werkzeugdaten (Grösse,variable Plätze) sind gleich
+//- Error    Fehlerbit siehe State
+//- Warning  nur Mode 1 beide Greifer leer oder belegt
+//- State    Fehlercode 1-Fehler bei Lesen Magazindaten
+//           2-Fehler bei Lesen Werkzeugdaten
+//           4-nur Mode 1 Fehler bei Lesen Daten Greiferwerkzeug
+//           8-interner Fehler FB92 
+//
+//Aufrufbeispiel FB92 nur Test:
+//      U     "E___6.2" //Taste
+//      UN    "M___1.1"
+//      S     "M___1.0"
+//
+//      CALL  "FB__92" , "DB__62"
+//       Req     :="M___1.0"
+//       MagNr   :=9998
+//       Platz_Nr:=1
+//       Mode    :=1
+//       NDR     :="M___1.1"
+//       WZ_equal:="M___1.6"
+//       Error   :="M___1.2"
+//       Warning :="M___1.7"
+//       State   :=MW250
+//
+//      O     "M___1.1"
+//      O     "M___1.2"
+//      R     "M___1.0"
+//
+//Hinweis:
+//Aufruf des FB92 erfolgt im zyklischen Teil des PLC-Anwenderprogramms, wobei
+//während des Aufrufs kein Datentausch der Werkzeugverwaltung erfolgen
+//sollte (FC 8).
+//V1.0 Absturz FB6, wenn FB92+FB91 gleichzeitig aufgerufen werden. Ursache unklar
+//V1.1 Variable (NC_VAR) in Instanz-DB62 vereinbart
+//
+//28.02.2008 gs
+//Feste Anzahl der Magazinplatzdaten(7) geäandert.
+//Daten werden mit "M_numMagPlaceParam" berechnet.
+//zZ ist der Wert 8
+AUTHOR : ha
+FAMILY : DMG
+NAME : WZV_GET
+VERSION : 1.1
+
+
+VAR_INPUT
+  Req : BOOL ;	// Start Zustände lesen
+  MagNr : INT ;	// Magazin-Nr. Daten lesen
+  Platz : INT ;	// Platznummern oder Platzanzahl Daten lesen siehe Mode 0,1
+  Mode : INT ;	// Mode 0,1
+  Velo_1 : REAL ;	
+  Velo_2 : REAL ;	
+  Velo_3 : REAL ;	
+  Velo_4 : REAL ;	
+  Velo_5 : REAL ;	
+END_VAR
+VAR_OUTPUT
+  NDR : BOOL ;	// Daten gelesen  
+  WZ_equal : BOOL ;	// Werkzeugdaten Spindel/Greifer gleich
+  Error : BOOL ;	// Fehler
+  Warning : BOOL ;	// Warnung
+  State : WORD ;	// Fehler-Nummer
+  GrWz_Velo : REAL ;	
+END_VAR
+VAR
+  Req_old : BOOL ;	// Flankenhilfsmerker Start
+  Req_PF : BOOL ;	// Flankenmerker Start
+  Req_TNr : BOOL ;	// Eingang Req FB2 T-Nr. lesen
+  Error_TNr : BOOL ;	// Ausgang Error FB2 T-Nr. lesen
+  NDR_TNr : BOOL ;	// Ausgang NDR FB2 T-Nr. lesen
+  Req_WZ : BOOL ;	// Eingang Req FB2 von WZ-Status lesen
+  Error_WZ : BOOL ;	// Ausgang Error FB2 von WZ-Status lesen
+  NDR_WZ : BOOL ;	// Ausgang NDR FB2 WZ-Status lesen
+  Req_GR : BOOL ;	// Eingang Req FB2 von Greifer-Status lesen
+  Error_GR : BOOL ;	// Ausgang Error FB2 von Greifer-Status lesen
+  NDR_GR : BOOL ;	// Ausgang NDR FB2 Greifer-Status lesen
+  FB2_OK : BOOL ;	// Magazindaten lesen ist abgeschlossen
+  FB2a_OK : BOOL ;	// Werkzeugdaten lesen ist abgeschlossen
+  FB2b_OK : BOOL ;	// Werkzeugdaten lesen ist abgeschlossen
+  mod : BOOL ;	//0= Mode 0, 1= Mode 1
+  WZ_equal_save : BOOL ;	//Werkzeugdaten Greifer/Spindel sind gleich
+  T0_Pl1 : BOOL ;	//T0 auf Magazinplatz
+  T0_Pl2 : BOOL ;	
+  T0_Pl3 : BOOL ;	
+  T0_Pl4 : BOOL ;	
+  res : BYTE ;	//Reserve
+  LocNumVar : INT ;	//Anzahl zu lesende Daten
+  Count : INT ;	//Zähler PLC-Zyklen nach Req bis NDR
+  TNr_1 : INT ;	// logische T-Nummer
+  Platzzustand_1 : INT ;	// Platzzustand
+  TNr_2 : INT ;	// logische T-Nummer
+  Platzzustand_2 : INT ;	// Platzzustand
+  TNr_3 : INT ;	// logische T-Nummer
+  Platzzustand_3 : INT ;	// Platzzustand
+  TNr_4 : INT ;	// logische T-Nummer
+  Platzzustand_4 : INT ;	// Platzzustand
+  Groesse_links_1 : INT ;	// Größe nach links in Halbplätzen
+  Groesse_rechts_1 : INT ;	// Größe nach rechts in Halbplätzen
+  Groesse_oben_1 : INT ;	// Größe nach oben in Halbplätzen
+  Groesse_unten_1 : INT ;	// Größe nach unten in Halbplätzen
+  WZTyp_1 : INT ;	// Magazinplatztyp
+  WZStatus_1 : INT ;	// Werkzeugstatus
+  Groesse_links_2 : INT ;	// Größe nach links in Halbplätzen
+  Groesse_rechts_2 : INT ;	// Größe nach rechts in Halbplätzen
+  Groesse_oben_2 : INT ;	// Größe nach oben in Halbplätzen
+  Groesse_unten_2 : INT ;	// Größe nach unten in Halbplätzen
+  WZTyp_2 : INT ;	// Magazinplatztyp
+  WZStatus_2 : INT ;	// Werkzeugstatus
+  WZ_GR_Velo_Typ : REAL ;	
+  WZ_GR_Typ : REAL ;	
+  FB92_State : WORD ;	
+  State_TNr : WORD ;	// Ausgang State FB2 T-Nr. lesen   
+  State_TNr_save : WORD ;	// Ausgang State FB2 T-Nr. lesen gespeichert   
+  State_WZ : WORD ;	// Ausgang State FB2 WZ-Status lesen  
+  State_WZ_save : WORD ;	// Ausgang State FB2 WZ-Status lesen gespeichert  
+  State_GR : WORD ;	// Ausgang State FB2 WZ-Status lesen  
+  State_GR_save : WORD ;	// Ausgang State FB2 WZ-Status lesen gespeichert  
+  LocSpalte : WORD ;	// Spaltenadresse Magazin-Nr.
+  LocLine1 : WORD ;	// Zeilenadresse 1 logische T-Nummer
+  LocLine2 : WORD ;	// Zeilenadresse 1 Platzzustand
+  LocLine3 : WORD ;	// Zeilenadresse 2 logische T-Nummer
+  LocLine4 : WORD ;	// Zeilenadresse 2 Platzzustand
+  LocLine5 : WORD ;	// Zeilenadresse 3 logische T-Nummer
+  LocLine6 : WORD ;	// Zeilenadresse 3 Platzzustand
+  LocLine7 : WORD ;	// Zeilenadresse 4 logische T-Nummer
+  LocLine8 : WORD ;	// Zeilenadresse 4 Platzzustand
+  WZLine : WORD ;	// Zeilenadresse allgemeine Werkzeugdaten
+  WZLine_WZ : WORD ;	// Zeilenadresse allgemeine Werkzeugdaten
+  WZLine_GR : WORD ;	// Zeilenadresse allgemeine Werkzeugdaten
+  WZ_Maske : WORD  := W#16#40;	//Bit 6 festplatzcodiert
+// Magazinplatzdaten (TP) FB92(T-Nummer)
+  ToolOEMDATA : STRUCT 	
+   SYNTAX_ID : BYTE  := B#16#82;	
+   bereich_u_einheit : BYTE  := B#16#81;	
+   spalte : WORD ;	
+   zeile : WORD ;	
+   bausteintyp : BYTE  := B#16#24;	
+   ZEILENANZAHL : BYTE  := B#16#1;	
+   typ : BYTE  := B#16#F;	
+   laenge : BYTE  := B#16#8;	
+  END_STRUCT ;	
+  T1TP1_GET : STRUCT 	
+   SYNTAX_ID : BYTE  := B#16#82;	
+   bereich_u_einheit : BYTE  := B#16#81;	
+   spalte : WORD ;	
+   zeile : WORD ;	
+   bausteintyp : BYTE  := B#16#28;	
+   ZEILENANZAHL : BYTE  := B#16#1;	
+   typ : BYTE  := B#16#4;	
+   laenge : BYTE  := B#16#2;	
+  END_STRUCT ;	// Magazinplatzdaten (TP) FB92(Platzstatus)
+  toolState_1T1TD8GET : STRUCT 	
+   SYNTAX_ID : BYTE  := B#16#82;	
+   bereich_u_einheit : BYTE  := B#16#81;	
+   spalte : WORD ;	
+   zeile : WORD ;	
+   bausteintyp : BYTE  := B#16#21;	
+   ZEILENANZAHL : BYTE  := B#16#1;	
+   typ : BYTE  := B#16#4;	
+   laenge : BYTE  := B#16#2;	
+  END_STRUCT ;	// Allg.Werkzeugdaten (TD) FB92 (WZ-Grösse rechts)
+  GET1_FB2 : "FB_SIEM_GET";	
+  GET2_FB2 : "FB_SIEM_GET";	
+  GET3_FB2 : "FB_SIEM_GET";	
+END_VAR
+VAR_TEMP
+  WZStatus_2_temp : WORD ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =Netzwerk-Übersicht
+// Netzwerk-Übersicht
+// ==================
+// NW 1: Netzwerk-Übersicht
+// NW 2: Start Lesen Magazinplatzdaten (TP)
+// NW 3: Auswertung Mode
+// NW 4:  Start Daten lesen
+// NW 5:  Lesen Werkzeugdaten
+// NW 6:  Werkzeugdaten Greifer auswerten
+// NW 7:  Lesen Werkzeugdaten Greifer mit Werkzeug
+// NW 8:  Vergleich Werkzeugdaten Greifer Spindel
+// NW 9:  Ende Werkzeugdaten lesen
+      NOP   0; 
+
+NETWORK
+TITLE =Start Lesen Magazinplatzdaten (TP)
+
+      U     #Req; 
+      FP    #Req_old; 
+      =     #Req_PF; // Flanke Eingang Start
+      UN    #Req; 
+      R     #NDR; // Ausgangsparameter NDR nur 1 PLC-Zyklus        
+      R     #Error; // Ausgangsparameter Error nur 1 PLC-Zyklus
+      R     #WZ_equal; 
+      R     #Warning; 
+      R     #Req_TNr; 
+      R     #Req_WZ; 
+      R     #Req_GR; 
+      R     #FB2_OK; // Magazindaten lesen ist abgeschlossen 
+      R     #FB2a_OK; // Werkzeugdaten lesen ist abgeschlossen
+      R     #FB2b_OK; // Werkzeugdaten lesen ist abgeschlossen
+//      SPB   end
+NETWORK
+TITLE =Auswertung Mode
+//Mode 0 : Daten Platznummer, Magazin werden gelesen
+//Mode 1:
+// Es werden max. 4 Plätze ab Platz 1 gelesen
+// z.B. Magazin 9998  3 Plätze lesen 
+// 1 = Spindel, 2 = Greifer 1, 3 = Greifer 2 
+// Danach erfolgt die Auswertung der TNr.
+// -T0 in Spindel --> Datensatz löschen
+// -T0 in Greifer 1 oder in Greifer 2 --> Werkzeugdaten werden nur von
+// dem Greifer gelesen, indem sich ein Werkzeug befindet.
+// -T0 in beiden Greifern oder Werkzeug in beiden Greifern -->
+// Werkzeugdaten werden gelöscht Warnung = 1
+// Warnung = 1 dient bei Abbruchsitualionen zur Auswertung      
+// Die Zeilenindizierung ergibt sich nach folgendem Schema:
+// 1: Platzart
+// 2: Platztyp
+// 3: T-Nummer des Werkzeuges auf diesem Platz
+// 4: Nebenplatzbetrachtung ein / aus
+// 5: Platzzustand
+// 6: Referenz physikalisches Magazin
+// 7: Artindex
+// (PlatzNr - 1) * numMagPlaceParams + ParameterNr !! Zeilen/Spaltenaddressierung
+// 8:Adapternummer ab SW 5.1 ($TC_MPP7)
+//
+//07.02.2000 AB
+//
+//Baustein muß für V5.x abgeändert werden. numMagPlaceParams lesen 
+//in V4.x =7
+//in V5.x =8
+//
+//28.02.2008 gs
+//numMagPlaceParams eingefügt
+      UN    #Req_PF; 
+      SPB   anf; 
+      L     0; 
+      T     #State; // Fehler-Nr. = 0
+      T     #Count; 
+      SET   ; 
+      R     #WZ_equal_save; //Werkzeugdaten Greifer/Spindel sind gleich
+      R     #T0_Pl1; 
+      R     #T0_Pl2; 
+      R     #T0_Pl3; 
+      R     #T0_Pl4; 
+      S     #Req_TNr; // TP-Daten Zwischenspeicher lesen
+      L     #MagNr; 
+      T     #LocSpalte; // Spalte Addr1,2 = Magazin-Nummer
+      L     2; 
+      T     #LocNumVar; 
+      L     #Mode; 
+      L     0; 
+      <>I   ; //Mode 0 ?
+      =     #mod; 
+      SPBN  mod; //ja
+
+      L     9998; 
+      T     #LocSpalte; //Mode 1 Magazinnummer Zwischenspeicher
+
+      L     4; 
+      L     #Platz; 
+      ==I   ; //Lesen 4 Plätze ?
+      L     8; //4 Datensätze Platz 1..4
+      SPB   PL4; 
+      L     6; //3 Datensätze Platz 1..3
+PL4:  T     #LocNumVar; 
+// geänert AB 07.02.2000
+// geändert am 28.02.2008
+
+
+// Platz 1
+// -Parameter 3 T-Nummer
+      L     1; // Platznummer 1
+      L     -1; 
+      +I    ; 
+      L     "MW_numMagPlaceParam"; // Berechnung der Zeilennummer:
+      *I    ; // (PlatzNr.-1) * numMagPlaceParams + Parameter-Nr. 
+      L     3; // T-Nummer
+      +I    ; 
+      T     #LocLine1; // Zeile Addr1  = T-Nr. Zeilenindex 3
+// -Parameter 5 Platzzustand
+      L     1; // Platznummer 1
+      L     -1; 
+      +I    ; 
+      L     "MW_numMagPlaceParam"; // Berechnung der Zeilennummer:
+      *I    ; // (PlatzNr.-1) * numMagPlaceParams + Parameter-Nr. 
+      L     5; // Platzzustand
+      +I    ; 
+      T     #LocLine2; // Zeile Addr2 = Platzzustand Zeilenindex 5
+
+// Platz 2
+// -Parameter 3 T-Nummer
+      L     2; // Platznummer 2
+      L     -1; 
+      +I    ; 
+      L     "MW_numMagPlaceParam"; // Berechnung der Zeilennummer:
+      *I    ; // (PlatzNr.-1) * numMagPlaceParams + Parameter-Nr. 
+      L     3; // T-Nummer
+      +I    ; 
+      T     #LocLine3; // Zeile Addr3  = T-Nr. Zeilenindex 3
+// -Parameter 5 Platzzustand
+      L     2; // Platznummer 2
+      L     -1; 
+      +I    ; 
+      L     "MW_numMagPlaceParam"; // Berechnung der Zeilennummer:
+      *I    ; // (PlatzNr.-1) * numMagPlaceParams + Parameter-Nr. 
+      L     5; // Platzzustand
+      +I    ; 
+      T     #LocLine4; // Zeile Addr4 = Platzzustand Zeilenindex 5
+
+// Platz 3
+// -Parameter 3 T-Nummer
+      L     3; // Platznummer 3
+      L     -1; 
+      +I    ; 
+      L     "MW_numMagPlaceParam"; // Berechnung der Zeilennummer:
+      *I    ; // (PlatzNr.-1) * numMagPlaceParams + Parameter-Nr. 
+      L     3; // T-Nummer
+      +I    ; 
+      T     #LocLine5; // Zeile Addr5  = T-Nr. Zeilenindex 3
+// -Parameter 5 Platzzustand
+      L     3; // Platznummer 3
+      L     -1; 
+      +I    ; 
+      L     "MW_numMagPlaceParam"; // Berechnung der Zeilennummer:
+      *I    ; // (PlatzNr.-1) * numMagPlaceParams + Parameter-Nr. 
+      L     5; // Platzzustand
+      +I    ; 
+      T     #LocLine6; // Zeile Addr6 = Platzzustand Zeilenindex 5
+
+// Platz 4
+// -Parameter 3 T-Nummer
+      L     4; // Platznummer 4
+      L     -1; 
+      +I    ; 
+      L     "MW_numMagPlaceParam"; // Berechnung der Zeilennummer:
+      *I    ; // (PlatzNr.-1) * numMagPlaceParams + Parameter-Nr. 
+      L     3; // T-Nummer
+      +I    ; 
+      T     #LocLine7; // Zeile Addr7  = T-Nr. Zeilenindex 3
+// -Parameter 5 Platzzustand
+      L     4; // Platznummer 4
+      L     -1; 
+      +I    ; 
+      L     "MW_numMagPlaceParam"; // Berechnung der Zeilennummer:
+      *I    ; // (PlatzNr.-1) * numMagPlaceParams + Parameter-Nr. 
+      L     5; // Platzzustand
+      +I    ; 
+      T     #LocLine8; // Zeile Addr8 = Platzzustand Zeilenindex 5
+      SPA   anf; 
+
+
+mod:  L     #Platz; // Platz-Nr. Zwischenspeicher 
+      L     1; 
+      -I    ; 
+      L     "MW_numMagPlaceParam"; // Berechnung der Zeilennummer:
+      *I    ; // (PlatzNr.-1) * numMagPlaceParams + Parameter-Nr. 
+      L     3; 
+      +I    ; 
+      T     #LocLine1; // Zeile Addr1 = T-Nr. von Platz 3
+      L     2; 
+      +I    ; 
+      T     #LocLine2; // Zeile Addr2 = Platzzustand
+
+NETWORK
+TITLE = Start Daten lesen
+
+anf:  CALL #GET1_FB2 (// ---- Magazinplatzdaten lesen --------------------------------
+           Req                      := #Req_TNr,// Variable lesen
+           NumVar                   := #LocNumVar,// Anzahl der zu lesenden Variablen
+           Addr1                    := #T1TP1_GET,// Adresse Platzdaten 
+           Column1                  := #LocSpalte,// Magazinnummer
+           Line1                    := #LocLine1,// Platz 1 logische T-Nr.
+           Addr2                    := #T1TP1_GET,// Adresse Platzdaten
+           Column2                  := #LocSpalte,// Magazinnummer
+           Line2                    := #LocLine2,// Platz 1 Platzzustand
+           Addr3                    := #T1TP1_GET,// Adresse Platzdaten 
+           Column3                  := #LocSpalte,// Magazinnummer
+           Line3                    := #LocLine3,// Platz 2 logische T-Nr.
+           Addr4                    := #T1TP1_GET,// Adresse Platzdaten 
+           Column4                  := #LocSpalte,// Magazinnummer
+           Line4                    := #LocLine4,// Platz 2 Platzzustand
+           Addr5                    := #T1TP1_GET,// Adresse Platzdaten
+           Column5                  := #LocSpalte,// Magazinnummer
+           Line5                    := #LocLine5,// Platz 3 logische T-Nr.
+           Addr6                    := #T1TP1_GET,// Adresse Platzdaten 
+           Column6                  := #LocSpalte,// Magazinnummer
+           Line6                    := #LocLine6,// Platz 3 Platzzustand
+           Addr7                    := #T1TP1_GET,// Adresse Platzdaten 
+           Column7                  := #LocSpalte,// Magazinnummer
+           Line7                    := #LocLine7,// Platz 4 logische T-Nr.
+           Addr8                    := #T1TP1_GET,// Adresse Platzdaten 
+           Column8                  := #LocSpalte,// Magazinnummer
+           Line8                    := #LocLine8,// Platz 4 Platzzustand
+           Error                    := #Error_TNr,
+           NDR                      := #NDR_TNr,
+           State                    := #State_TNr,
+           RD1                      := #TNr_1,
+           RD2                      := #Platzzustand_1,// Zeilenadresse für Platzzustand
+           RD3                      := #TNr_2,
+           RD4                      := #Platzzustand_2,
+           RD5                      := #TNr_3,
+           RD6                      := #Platzzustand_3,// Fehler-Nummer bei Error = 1
+           RD7                      := #TNr_4,
+           RD8                      := #Platzzustand_4);// Zielbereich für T-Nummer = TNr
+// Zielbereich für Platzzustand = Loc_Zu
+// Zielbereich für T-Nummer = TNr
+// Zielbereich für Platzzustand = Loc_Zu
+
+      UN    #NDR_TNr; // Lesen beendet 
+      UN    #Error_TNr; // Lesen beendet mit Fehler
+      SPB   FB2a; // Lesen beendet ? Nein ->
+      R     #Req_TNr; // Anstoß lesen löschen
+      UN    #Error_TNr; 
+      S     #FB2_OK; // Magazindaten lesen ist abgeschlossen 
+      SPB   T0; // Lesen beendet mit Fehler ? Nein ->
+      L     #State_TNr; 
+      T     #State_TNr_save; // Fehlernummer speichern
+      L     1; // Fehler-Nummer FB 92 = 1
+      SPA   err; 
+
+T0:   L     #TNr_1; // logische T-Nummer von WZ in Zwischenspeicher 
+      L     0; 
+      ==I   ; 
+      S     #T0_Pl1; 
+
+      UN    #mod; //Mode 0 ?
+      SPB   FB2a; //ja
+      L     #TNr_2; // logische T-Nummer von WZ in Zwischenspeicher 
+      L     0; 
+      ==I   ; 
+      S     #T0_Pl2; 
+
+      L     #TNr_3; // logische T-Nummer von WZ in Zwischenspeicher 
+      L     0; 
+      ==I   ; 
+      S     #T0_Pl3; 
+
+      L     #TNr_4; // logische T-Nummer von WZ in Zwischenspeicher 
+      L     0; 
+      ==I   ; 
+      S     #T0_Pl4; 
+
+      O(    ; 
+      U     #T0_Pl2; 
+      U     #T0_Pl3; //beide Greifer leer
+      )     ; 
+      O(    ; 
+      UN    #T0_Pl2; 
+      UN    #T0_Pl3; //beide Greifer voll
+      )     ; 
+      U     #mod; //Mode 1
+      S     #Warning; 
+
+      UN    #T0_Pl1; //Werkzeug ist in Spindel 
+      SPB   FB2a; //Lesen Werkzeugdaten Spindel
+
+      O     #T0_Pl2; 
+      O     #T0_Pl3; 
+      S     #FB2a_OK; 
+      SPB   FB2b; 
+
+      SPA   T0e; 
+
+NETWORK
+TITLE = Lesen Werkzeugdaten
+//Mode0 : Lesen Werkzeugdaten beliebiges Werkzeug
+//Mode1 : Lesen Werkzeugdaten Spindelwerkzeug
+FB2a: U     #FB2_OK; 
+      S     #Req_WZ; 
+
+      L     #TNr_1; // logische T-Nr. = Zeilenadresse
+      T     #WZLine_WZ; 
+
+      CALL #GET2_FB2 (
+           Req                      := #Req_WZ,// Variable WZ-Daten lesen
+           NumVar                   := 6,
+           Addr1                    := #toolState_1T1TD8GET,// Werkzeugstatus
+           Column1                  := W#16#3,// Größe nach links in Halbplätze
+           Line1                    := #WZLine_WZ,// logische T-Nr.
+           Addr2                    := #toolState_1T1TD8GET,// Werkzeugstatus
+           Column2                  := W#16#4,// Größe nach rechts in Halbplätze
+           Line2                    := #WZLine_WZ,// logische T-Nr.
+           Addr3                    := #toolState_1T1TD8GET,// Werkzeugstatus
+           Column3                  := W#16#5,// Größe nach oben in Halbplätze
+           Line3                    := #WZLine_WZ,// logische T-Nr.
+           Addr4                    := #toolState_1T1TD8GET,// Werkzeugstatus
+           Column4                  := W#16#6,// Größe nach unten in Halbplätze
+           Line4                    := #WZLine_WZ,// logische T-Nr.
+           Addr5                    := #toolState_1T1TD8GET,// Werkzeugstatus
+           Column5                  := W#16#7,// Magazinplatztyp
+           Line5                    := #WZLine_WZ,// logische T-Nr.
+           Addr6                    := #toolState_1T1TD8GET,// Werkzeugstatus 
+           Column6                  := W#16#8,// WZ-Status
+           Line6                    := #WZLine_WZ,// Zeilenadresse
+           Error                    := #Error_WZ,
+           NDR                      := #NDR_WZ,
+           State                    := #State_WZ,
+           RD1                      := #Groesse_links_1,// Größe nach links in Halbplätze
+           RD2                      := #Groesse_rechts_1,// Größe nach rechts in Halbplätze
+           RD3                      := #Groesse_oben_1,// Größe nach oben in Halbplätze
+           RD4                      := #Groesse_unten_1,// Größe nach unten in Halbplätze
+           RD5                      := #WZTyp_1,// Magazinplatztyp
+           RD6                      := #WZStatus_1);// WZ-Status 
+
+      UN    #Error_WZ; 
+      UN    #NDR_WZ; 
+      SPB   FB2b; //  WZ-Daten lesen beendet ? nein ->
+      R     #Req_WZ; 
+      UN    #Error_WZ; 
+      S     #FB2a_OK; 
+      SPB   FB2b; // Lesen mit Fehler beendet ? Nein ->
+      L     #State_WZ; 
+      T     #State_WZ_save; // Fehler-Nr. FB2 speichern 
+      L     2; // Fehler-Nr. FB92 = 2
+      SPA   err; 
+
+NETWORK
+TITLE = Werkzeugdaten Greifer auswerten
+//Mode 0: kein Lesen der Werkzeugdaten
+//Mode 1: Lesen der Werkzeugdaten des belegten Greifers
+FB2b: UN    #mod; //Mode 0 ?
+      SPB   end1; //ja
+
+NETWORK
+TITLE = Lesen Werkzeugdaten Greifer mit Werkzeug
+//nur Mode 1:
+//Es werden die Daten des Werkzeugs gelesen, welches sich im einem der beiden 
+//Greifer befindet.
+      L     #TNr_2; 
+      UN    #T0_Pl2; //T0 in Greifer 1 ?
+      SPB   GR3; 
+      L     #TNr_3; //ja
+GR3:  T     #WZLine_GR; 
+      U     #mod; //Mode 1
+      U     #FB2_OK; 
+      U     #FB2a_OK; 
+      UN    #Warning; 
+      S     #Req_GR; 
+      CALL #GET3_FB2 (
+           Req                      := #Req_GR,// Variable WZ-Daten lesen
+           NumVar                   := 8,
+           Addr1                    := #toolState_1T1TD8GET,// Werkzeugstatus
+           Column1                  := W#16#3,// Größe nach links in Halbplätze
+           Line1                    := #WZLine_GR,// logische T-Nr.
+           Addr2                    := #toolState_1T1TD8GET,// Werkzeugstatus
+           Column2                  := W#16#4,// Größe nach rechts in Halbplätze
+           Line2                    := #WZLine_GR,// logische T-Nr.
+           Addr3                    := #toolState_1T1TD8GET,// Werkzeugstatus
+           Column3                  := W#16#5,// Größe nach oben in Halbplätze
+           Line3                    := #WZLine_GR,// logische T-Nr.
+           Addr4                    := #toolState_1T1TD8GET,// Werkzeugstatus
+           Column4                  := W#16#6,// Größe nach unten in Halbplätze
+           Line4                    := #WZLine_GR,// logische T-Nr.
+           Addr5                    := #toolState_1T1TD8GET,// Werkzeugstatus
+           Column5                  := W#16#7,// Magazinplatztyp
+           Line5                    := #WZLine_GR,// logische T-Nr.
+           Addr6                    := #toolState_1T1TD8GET,// Werkzeugstatus 
+           Column6                  := W#16#8,// WZ-Status
+           Line6                    := #WZLine_GR,// logische T-Nr.
+           Addr7                    := #ToolOEMDATA,// Werkzeug OEM-Daten
+           Column7                  := W#16#5,// Velo-Typ
+           Line7                    := #WZLine_GR,// logische T-Nr.
+           Addr8                    := #ToolOEMDATA,
+           Column8                  := W#16#3,// Wz-Typ
+           Line8                    := #WZLine_GR,// logische T-Nr.
+           Error                    := #Error_GR,
+           NDR                      := #NDR_GR,
+           State                    := #State_GR,
+           RD1                      := #Groesse_links_2,// Größe nach links in Halbplätze
+           RD2                      := #Groesse_rechts_2,// Größe nach rechts in Halbplätze
+           RD3                      := #Groesse_oben_2,// Größe nach oben in Halbplätze
+           RD4                      := #Groesse_unten_2,// Größe nach unten in Halbplätze
+           RD5                      := #WZTyp_2,// Magazinplatztyp
+           RD6                      := #WZStatus_2,// WZ-Status 
+           RD7                      := #WZ_GR_Velo_Typ,// Velo-Typ
+           RD8                      := #WZ_GR_Typ);// Werkzeug-Typ
+
+      UN    #Error_GR; 
+      UN    #NDR_GR; 
+      SPB   end1; //  WZ-Daten lesen beendet ? nein ->
+      R     #Req_GR; 
+      U     #Error_GR; 
+      SPB   ERR; // Lesen mit Fehler beendet ? Ja ->
+      S     #FB2b_OK; 
+
+      L     #WZ_GR_Velo_Typ; 
+      L     0.000000e+000; 
+      ==R   ; 
+      SPBN  ven1; 
+      L     #WZ_GR_Typ; 
+      L     6.000000e+000; 
+      >R    ; 
+      SPB   vsn1; 
+      L     #Velo_4; 
+      T     #GrWz_Velo; 
+      SPA   vele; 
+vsn1: L     #Velo_3; 
+      T     #GrWz_Velo; 
+      SPA   vele; 
+
+ven1: L     #WZ_GR_Velo_Typ; 
+      L     1.000000e+000; 
+      ==R   ; 
+      SPBN  ven2; 
+      L     #Velo_2; 
+      T     #GrWz_Velo; 
+      SPA   vele; 
+
+ven2: L     #WZ_GR_Velo_Typ; 
+      L     2.000000e+000; 
+      ==R   ; 
+      SPBN  ven3; 
+      L     #Velo_2; 
+      T     #GrWz_Velo; 
+      SPA   vele; 
+
+ven3: L     #WZ_GR_Velo_Typ; 
+      L     3.000000e+000; 
+      ==R   ; 
+      SPBN  ven4; 
+      L     #Velo_3; 
+      T     #GrWz_Velo; 
+      SPA   vele; 
+
+ven4: L     #WZ_GR_Velo_Typ; 
+      L     4.000000e+000; 
+      ==R   ; 
+      SPBN  ven5; 
+      L     #Velo_4; 
+      T     #GrWz_Velo; 
+      SPA   vele; 
+
+ven5: L     #WZ_GR_Velo_Typ; 
+      L     5.000000e+000; 
+      ==R   ; 
+      SPBN  vele; 
+      L     #Velo_5; 
+      T     #GrWz_Velo; 
+      SPA   vele; 
+
+vele: NOP   0; 
+
+      SPA   ver; 
+
+ERR:  L     #State_GR; 
+      T     #State_GR_save; // Fehler-Nr. FB2 speichern 
+      L     4; // Fehler-Nr. FB92 = 4
+      SPA   err; 
+
+NETWORK
+TITLE = Vergleich Werkzeugdaten Greifer Spindel
+
+ver:  S     #NDR; //Auftrag erledigt   
+      UN    #mod; //Mode 0 ?
+      SPB   end; //ja
+      U     #FB2a_OK; 
+      U     #FB2b_OK; 
+      UN    #Warning; 
+      SPBN  end; //Aufträge Werkzeugdaten lesen noch nicht OK
+      SET   ; 
+      R     #WZ_equal; 
+      R     #WZ_equal_save; 
+      L     #Groesse_links_1; // Größe nach links in Halbplätze
+      L     #Groesse_links_2; // Größe nach links in Halbplätze
+      <>I   ; 
+      SPB   end; 
+      L     #Groesse_rechts_1; // Größe nach rechts in Halbplätze
+      L     #Groesse_rechts_2; // Größe nach rechts in Halbplätze
+      <>I   ; 
+      SPB   end; 
+      L     #Groesse_oben_1; // Größe nach oben in Halbplätze
+      L     #Groesse_oben_2; // Größe nach oben in Halbplätze
+      <>I   ; 
+      SPB   end; 
+      L     #Groesse_unten_1; // Größe nach unten in Halbplätze
+      L     #Groesse_unten_2; // Größe nach unten in Halbplätze
+      <>I   ; 
+      SPB   end; 
+      L     #WZStatus_1; 
+      L     #WZ_Maske; 
+      UW    ; 
+      SPP   end; //A1=1 ! Spindelwerkzeug festplatz codiert 
+      L     #WZStatus_2; 
+      L     #WZ_Maske; 
+      UW    ; 
+      SPP   end; //A1=1 ! Greiferwerkzeug festplatz codiert
+      SET   ; 
+      S     #WZ_equal; //Werkzeug Spindel/Greifer sind gleich
+      S     #WZ_equal_save; 
+      SPA   end; 
+NETWORK
+TITLE = Ende Werkzeugdaten lesen
+//warn: SET   
+//      S     #Warning
+//      SPA   end1
+T0e:  L     0; //Bei T0 in Spindel Werkzeugdaten löschen 
+      T     #Groesse_links_1; // Größe nach links in Halbplätzen
+      T     #Groesse_rechts_1; // Größe nach rechts in Halbplätzen
+      T     #Groesse_oben_1; // Größe nach oben in Halbplätzen
+      T     #Groesse_unten_1; // Größe nach unten in Halbplätzen
+      T     #WZTyp_1; // Magazinplatztyp
+      T     #WZStatus_1; // Werkzeugstatus
+
+      T     #Groesse_links_2; // Größe nach links in Halbplätzen
+      T     #Groesse_rechts_2; // Größe nach rechts in Halbplätzen
+      T     #Groesse_oben_2; // Größe nach oben in Halbplätzen
+      T     #Groesse_unten_2; // Größe nach unten in Halbplätzen
+      T     #WZTyp_2; // Magazinplatztyp
+      T     #WZStatus_2; // Werkzeugstatus
+      U     #FB2_OK; 
+      SPB   end2; 
+      SPA   end; 
+
+end1: U     #FB2_OK; 
+      U     #FB2a_OK; // Lesen Werkzeugdaten OK
+      U(    ; 
+      ON    #mod; // Mode 0
+      O     #FB2b_OK; // Lesen Greiferdaten OK
+      O     #Warning; 
+      )     ; 
+end2: S     #NDR; 
+
+end:  L     #Count; 
+      L     40; 
+      >I    ; // Abbruch bei mehr als 30 PLC-Zyklen
+      U     #Req; 
+      SPBN  end3; 
+      L     8; // Fehlernr 8
+err:  T     #State; // Fehler-Nummer FB92 ausgeben
+      S     #Error; 
+      S     #NDR; 
+      BEA   ; 
+
+end3: UN    #Req; 
+      BEB   ; 
+
+      L     #Count; 
+      INC   1; 
+      T     #Count; //Schreiben Anzahl PLC-Zyklen 
+
+
+END_FUNCTION_BLOCK
+

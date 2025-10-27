@@ -1,0 +1,1173 @@
+FUNCTION "FC_OP_SPAE_SPUE" : VOID
+TITLE =
+//$Revision: 1.37 $
+//$Date: 2008/06/03 07:07:13CEST $
+//$Author: hgc $
+AUTHOR : SJA
+FAMILY : OP
+NAME : SpaeSpue
+VERSION : 0.1
+
+
+VAR_INPUT
+  E_Enabled : BOOL ;	
+END_VAR
+VAR_TEMP
+  temp_Permanentbetrieb : BOOL ;	
+  temp_Intervallbetrieb : BOOL ;	
+  temp_Nachlaufbetrieb : BOOL ;	
+  temp_Zeit_Schnecke1 : INT ;	
+  temp_Zeit_Schnecke2 : INT ;	
+  temp_Zeit_Schnecken_aus : INT ;	
+  Tx_SF_Stop : BOOL ;	
+  temp_Zeit_Pause : INT ;	
+  t_SSPein_Kabine_auf : BOOL ;	//Spülpistole einschalten mit "Öffnen Maschinenraum-Tür"
+  t_SSPein_mitPW_oRS : BOOL ;	//Spülpistole einschalten Maschine mit PW ohne Rundspeicher
+  t_SSPein_mRS : BOOL ;	//Spülpistole einschalten Maschine mit Rundspeicher
+  t_RESET_Timer_SSP : BOOL ;	//Reset Timer Spülpistolen-Laufzeit
+  t_S5time : S5TIME ;	
+  t_WORD : WORD ;	
+  temp_Zen_Vent : BOOL ;	
+  temp_Frg_Rech : BOOL ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =Baustein enabled
+// Netzwerk-Übersicht
+// ==================
+// NW 1: Baustein enabled
+// NW 2: Spaenfoerderer
+// NW 3: Betriebsarten Schritt 0
+// NW 4: Schritt 1 - Permanent-Betrieb
+// NW 5: Schritt 2 - Intervall Betrieb SPF Ein
+// NW 6: Schritt 3 - Intervallbetrieb SPF Aus
+// NW 7: Nachlaufzeit
+// NW 8: Spaenefoerderer Ende
+// NW 9: Freigabe zum Tür öffnen vom Späneförderer
+// NW 10: Zeiten Schnecke1/2 und Pausenzeit
+// NW 11: Flip / Flop Späneförderer rechts links
+// NW 12: linke Schnecke
+// NW 13: rechte Schnecke
+// NW 14: Anwahl Spaenerechen
+// NW 15: Stop Spaenerechen
+// NW 16: Rechen2-Pause_Rechen1-Pause
+// NW 17: Flip/Flop Späneförderer rechts links Rechen2-Pause_Rechen1-Pause
+// NW 18: Ventil Hauptluft Spaenefoerderer-Rechen
+// NW 19: Spaenerechen Beide Endlagen 1-Signal  
+// NW 20: Spaenefoerderer- Rechen 1 Hubeinheit vor
+// NW 21: Spaenefoerderer- Rechen 2 Hubeinheit vor
+// NW 22: LINKSLAUF
+// NW 23: =====  Spülpistole =====
+// NW 24: Spülpistole einschalten mit "Öffnen Maschinenraum-Tür"
+// NW 25: Spülpistole einschalten Maschine mit PW ohne Rundspeicher
+// NW 26: Spülpistole einschalten Maschine mit Rundspeicher
+// NW 27: Reset Timer Spülpistolen-Laufzeit
+// NW 28: Zeit: Max. Spülpistole-Laufzeit aufbereiten
+// NW 29: SV-Timer: SPP: Spuelpistolenausgang verzoegert abschalten
+// NW 30: Reset "DB_ANWENDER_SOFTKEY".Anwender.SPP._ein
+// NW 31: Pumpe Kühlmittel Spülpistole
+// NW 32: Lampe Kühlmittel Spülpistole am Rüstplatz
+      U     #E_Enabled; 
+      SPBN  ENDE; 
+
+      L     1; // Permanentbetrieb
+      L     "DB_REMANENT".Betriebsart_SPF; 
+      ==I   ; 
+      SPBN  DBIN; 
+
+      S     #temp_Permanentbetrieb; 
+      R     #temp_Intervallbetrieb; 
+      R     #temp_Nachlaufbetrieb; 
+
+DBIN: L     2; // Intervallbetrieb
+      ==I   ; 
+      SPBN  DBNA; 
+
+      R     #temp_Permanentbetrieb; 
+      S     #temp_Intervallbetrieb; 
+      R     #temp_Nachlaufbetrieb; 
+
+DBNA: TAK   ; // Nachlaufbetrieb
+      L     3; 
+      ==I   ; 
+      SPBN  DBEN; 
+
+      R     #temp_Permanentbetrieb; 
+      R     #temp_Intervallbetrieb; 
+      S     #temp_Nachlaufbetrieb; 
+
+DBEN: NOP   0; 
+NETWORK
+TITLE =Spaenfoerderer
+// --- Spaenefoerderer angewaehlt ?
+      L     "DB_PLC_MD_DB20".UDInt._022_ANWAHL_SPAENEFOERD; 
+      L     1; 
+      >=I   ; 
+      SPBN  ENDE; 
+
+// --- Reset Taste setzt Meldungen zurueck
+
+      U     "M_Ruecksetze_Fehler"; 
+      R     "DB_FEHLERMELDUNG".Meldung._702007_SPF_keine_Zeit; 
+
+
+// --- Permanentbetrieb   (keine Zeiten noetig) 
+
+      U     #temp_Permanentbetrieb; 
+      SPB   ABL; 
+
+// --- Intervallbetrieb (Einschaltzeit und Intervallzeit noetig)
+
+      U     #temp_Intervallbetrieb; 
+      U(    ; 
+      L     "DB_REMANENT".SPF_Einschaltzeit; 
+      L     0; 
+      >I    ; // Einschaltzeit > 0
+      )     ; 
+      U(    ; 
+      L     "DB_REMANENT".SPF_Intervallzeit; 
+      L     0; 
+      >I    ; // und Intervallzeit > 0
+      )     ; 
+      SPB   ABL; // dann in Ablauf
+
+// --- Nachlaufbetrieb -> Nachlaufzeit notwendig
+
+      U     #temp_Nachlaufbetrieb; 
+      U(    ; 
+      L     "DB_REMANENT".SPF_Nachlaufzeit; // Nachlaufzeit groesser Null
+      L     0; 
+      >I    ; 
+      )     ; 
+      SPB   ABL; // dann in Ablauf
+
+//--- sonst Ruecksetzen der M-Funktionen und Start
+
+      U     "DB_DM_M_FUNKTION".MX_M[140]; 
+      R     "DB_DM_M_FUNKTION".MX_M[140]; 
+      S     "DB_FEHLERMELDUNG".Meldung._702007_SPF_keine_Zeit; 
+
+      U     "DB_DM_M_FUNKTION".MX_M[141]; 
+      R     "DB_DM_M_FUNKTION".MX_M[141]; 
+      SPA   ENDE; 
+
+// --- Ablauf
+ABL:  U(    ; 
+      U     "DB_DM_M_FUNKTION".MX_M[140]; 
+      O     "DB_ANWENDER_SOFTKEY".Anwender.SpaeSpue.SPF_EIN_gelb; 
+      )     ; 
+      UN    "DB_REMANENT".SPF_eingeschaltet; 
+      S     "DB_REMANENT".SPF_eingeschaltet; 
+      R     "DB_DM_M_FUNKTION".MX_M[141]; 
+      R     "DB_DM_M_FUNKTION".MX_M[140]; 
+      R     "DB_ANWENDER_SOFTKEY".Anwender.SpaeSpue.SPF_EIN_gelb; 
+      SPB   NW3; 
+
+      U     "DB_REMANENT".SPF_eingeschaltet; 
+      U(    ; 
+      U     "DB_DM_M_FUNKTION".MX_M[141]; // oder Tuere auf
+      O     "DB_ANWENDER_SOFTKEY".Anwender.SpaeSpue.SPF_EIN_gelb; 
+      )     ; 
+      R     "DB_REMANENT".SPF_eingeschaltet; 
+      R     "DB_DM_M_FUNKTION".MX_M[141]; 
+      R     "DB_DM_M_FUNKTION".MX_M[140]; 
+      R     "DB_ANWENDER_SOFTKEY".Anwender.SpaeSpue.SPF_EIN_gelb; 
+      SPB   INI; 
+
+      U     "M_MA_Maschine_Ein"; 
+      U     "DB_REMANENT".SPF_eingeschaltet; 
+      SPBN  INI; 
+
+NETWORK
+TITLE =Betriebsarten Schritt 0
+//// ueber Softkeys und den notwendigen Zeitparamentern andere Betriebsarten 
+//einstellbar
+NW3:  L     "M_SPF_SKZ"; 
+      L     0; 
+      ==I   ; 
+      SPBN  SCH1; 
+
+
+      U     #temp_Permanentbetrieb; 
+      SPBN  INTE; 
+//--- Permanentbetrieb in Schritt 1
+      L     1; 
+      T     "M_SPF_SKZ"; 
+      SPA   ENDE; 
+
+INTE: U     #temp_Intervallbetrieb; 
+      SPBN  NACH; 
+//--- Intervallbetrieb in Schritt 2
+      L     2; 
+      T     "M_SPF_SKZ"; 
+      SPA   ENDE; 
+
+NACH: U     #temp_Nachlaufbetrieb; 
+      SPBN  ENDE; 
+//--- Nachlaufbetrieb in Schritt 4
+      L     4; 
+      T     "M_SPF_SKZ"; 
+      SPA   ENDE; 
+
+NETWORK
+TITLE =Schritt 1 - Permanent-Betrieb
+
+SCH1: L     "M_SPF_SKZ"; 
+      L     1; 
+      ==I   ; 
+      SPBN  SCH2; 
+
+// ------------Aktion---------------------
+      SET   ; 
+      =     "O_SF_Rechtslauf"; 
+
+// ------------Ereignis ------------------ 
+
+      UN    #temp_Permanentbetrieb; // bei BA-Wechsel
+      SPB   INI; // ruecksetzen
+      SPA   ENDE; // sonst an Ende
+
+
+NETWORK
+TITLE =Schritt 2 - Intervall Betrieb SPF Ein
+
+SCH2: L     "M_SPF_SKZ"; 
+      L     2; 
+      ==I   ; 
+      SPBN  SCH3; 
+
+// -------------------- Aktion --------------
+
+      SET   ; 
+      =     "O_SF_Rechtslauf"; 
+
+      U     "M_Takt_1s"; 
+      SPBN  s201; 
+
+      L     "MW_SPF_Zeit_Zaehler"; 
+      L     1; 
+      +I    ; 
+      T     "MW_SPF_Zeit_Zaehler"; 
+
+// -------------------Ereignis --------------
+
+s201: UN    #temp_Intervallbetrieb; // bei BA-Wechsel
+      SPB   INI; // neu Initialisieren
+
+//--- pruefen, ob Intervalleinschaltzeit abgelaufen
+
+      L     "MW_SPF_Zeit_Zaehler"; 
+      L     "DB_REMANENT".SPF_Einschaltzeit; 
+      >=I   ; 
+      SPBN  ENDE; 
+
+      L     3; // wenn EinschaltZeit abgelaufen
+      T     "M_SPF_SKZ"; // in Schritt 3
+
+      L     0; // Zeit-Zaehler auf 0
+      T     "MW_SPF_Zeit_Zaehler"; 
+
+      SPA   ENDE; 
+
+
+NETWORK
+TITLE =Schritt 3 - Intervallbetrieb SPF Aus
+
+SCH3: L     "M_SPF_SKZ"; 
+      L     3; 
+      ==I   ; 
+      SPBN  SCH4; 
+
+// ------------------------- Aktion ----------------------
+
+      CLR   ; 
+      =     "O_SF_Rechtslauf"; 
+
+      U     "M_Takt_1s"; 
+      SPBN  s301; 
+
+      L     "MW_SPF_Zeit_Zaehler"; 
+      L     1; 
+      +I    ; 
+      T     "MW_SPF_Zeit_Zaehler"; 
+
+//    -------------------------- Ereignis ----------------------
+
+s301: UN    #temp_Intervallbetrieb; // bei BA-Wechsel
+      SPB   INI; // neu Initialisieren
+
+//--- pruefen, ob Intervalleinschaltzeit abgelaufen
+
+      L     "MW_SPF_Zeit_Zaehler"; 
+      L     "DB_REMANENT".SPF_Intervallzeit; 
+      >=I   ; 
+      SPBN  ENDE; 
+
+      L     2; // wenn Ausschaltzeit aus
+      T     "M_SPF_SKZ"; // in Schritt 2
+      L     0; 
+      T     "MW_SPF_Zeit_Zaehler"; 
+
+      SPA   ENDE; 
+
+NETWORK
+TITLE =Nachlaufzeit
+
+SCH4: L     "M_SPF_SKZ"; 
+      L     4; 
+      ==I   ; 
+      SPBN  ENDE; 
+
+//------------------------------------------------
+
+//--- Spaenefoerdere einschalten
+
+      SET   ; 
+      =     "O_SF_Rechtslauf"; 
+
+//--- alle Sekunde Zeitzaehler erhoehen 
+
+      U     "M_Takt_1s"; 
+      SPBN  s401; 
+
+      L     "MW_SPF_Zeit_Zaehler"; 
+      L     1; 
+      +I    ; 
+      T     "MW_SPF_Zeit_Zaehler"; 
+
+//----------------------------------------------
+
+s401: UN    #temp_Nachlaufbetrieb; // wenn BA-Wechsel
+      O(    ; // oder Nachlaufzeit aus
+      L     "MW_SPF_Zeit_Zaehler"; 
+      L     "DB_REMANENT".SPF_Nachlaufzeit; 
+      >=I   ; 
+      )     ; 
+      SPBN  ENDE; 
+
+      SPA   INI; // dann neu Initialisieren 
+
+NETWORK
+TITLE =Spaenefoerderer Ende
+
+INI:  CLR   ; 
+      =     "O_SF_Rechtslauf"; 
+      =     "DB_DM_M_FUNKTION".MX_M[140]; 
+//      =     "M_SPF_eingeschaltet"
+
+      U     #temp_Nachlaufbetrieb; 
+      R     "DB_REMANENT".SPF_eingeschaltet; 
+
+      L     0; 
+      T     "M_SPF_SKZ"; 
+      T     "MW_SPF_Zeit_Zaehler"; 
+
+
+ENDE: UN    "I_SF_NEG_MSS_Schnecken"; // Ende Spaenefoerderer   
+// ON    "I_KM_NEG_MSS_SSA"
+      SPBN  nw8a; 
+
+      CLR   ; 
+      =     "O_SF_Rechtslauf"; // Spaeneförderer anhalten wenn Eingang nicht da
+
+nw8a: NOP   0; 
+NETWORK
+TITLE =Freigabe zum Tür öffnen vom Späneförderer
+
+      L     "DB_PLC_MD_DB20".UDInt._022_ANWAHL_SPAENEFOERD; 
+      L     2; 
+      <=I   ; 
+      SPBN  RECH; 
+
+      SET   ; 
+      S     "MX_SF_Frg_Tuer_auf"; 
+
+NETWORK
+TITLE =Zeiten Schnecke1/2 und Pausenzeit
+
+      L     "DB_PLC_MD_DB20".UDInt._148_Zeit_SPF_Schecken; 
+      T     #temp_Zeit_Schnecke1; 
+
+      L     "DB_PLC_MD_DB20".UDInt._148_Zeit_SPF_Schecken; 
+      L     "DB_PLC_MD_DB20".UDInt._148_Zeit_SPF_Schecken; 
+      +I    ; 
+      T     #temp_Zeit_Schnecke2; 
+
+      L     "DB_PLC_MD_DB20".UDInt._149_Zeit_Schnecken_aus; 
+      L     #temp_Zeit_Schnecke2; 
+      +I    ; 
+      T     #temp_Zeit_Schnecken_aus; 
+NETWORK
+TITLE =Flip / Flop Späneförderer rechts links
+
+      UN    "O_SF_Rechtslauf"; 
+      SPB   nw9z; 
+
+
+      U     "M_Takt_1s"; 
+      U     "O_SF_Rechtslauf"; 
+      SPBN  nw9b; 
+
+      L     "MB_SPF_links_rechts"; 
+      L     1; 
+      +I    ; 
+      T     "MB_SPF_links_rechts"; 
+
+// zwischen 0 und 15 linke schnecke
+// zwischen 16 und 30 rechte schnecke
+// zwischen 31 und 55 aus --> dann von vorne 
+
+nw9b: NOP   0; 
+
+      L     "MB_SPF_links_rechts"; 
+      L     #temp_Zeit_Schnecken_aus; 
+      >=I   ; 
+      SPBN  nw9z; 
+
+
+      L     0; 
+      T     "MB_SPF_links_rechts"; 
+
+nw9z: NOP   0; 
+NETWORK
+TITLE =linke Schnecke
+
+      U(    ; 
+      L     "MB_SPF_links_rechts"; 
+      L     #temp_Zeit_Schnecke1; //n_aus
+      <=I   ; 
+      )     ; 
+      O     "DB_ANWENDER_SOFTKEY".Beide_Schnecken; 
+      U     "O_SF_Rechtslauf"; 
+      =     "O_SF_Schnecke2_Maschine"; // linke schnecke ein
+
+
+NETWORK
+TITLE =rechte Schnecke
+
+      UN    "O_SF_Schnecke2_Maschine"; 
+      U(    ; 
+      L     "MB_SPF_links_rechts"; 
+      L     #temp_Zeit_Schnecke2; 
+      <=I   ; 
+      )     ; 
+      O     "DB_ANWENDER_SOFTKEY".Beide_Schnecken; 
+      U     "O_SF_Rechtslauf"; 
+      =     "O_SF_Schnecke_Maschine"; // rechte schnecke ein
+
+
+NETWORK
+TITLE =Anwahl Spaenerechen
+
+RECH: L     "DB_PLC_MD_DB20".UDInt._022_ANWAHL_SPAENEFOERD; 
+      L     3; 
+      ==I   ; 
+      SPBN  LL; 
+
+
+NETWORK
+TITLE =Stop Spaenerechen
+
+      U(    ; 
+      UN    "I_LA_eingeschwenkt"; 
+      U(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._032_ANWAHL_WZVERMESSUNG; 
+      L     0; 
+      >I    ; 
+      )     ; 
+      O     "M_WZW_Aktiv"; 
+      O     "M_PW_Aktiv"; 
+      )     ; 
+      U(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._022_ANWAHL_SPAENEFOERD; 
+      L     3; 
+      ==I   ; 
+      )     ; 
+      =     #Tx_SF_Stop; 
+NETWORK
+TITLE =Rechen2-Pause_Rechen1-Pause
+
+      L     "DB_PLC_MD_DB20".UDInt._148_Zeit_SPF_Schecken; 
+      T     #temp_Zeit_Schnecke1; 
+
+      L     "DB_PLC_MD_DB20".UDInt._148_Zeit_SPF_Schecken; 
+      T     #temp_Zeit_Schnecke1; 
+
+      L     "DB_PLC_MD_DB20".UDInt._148_Zeit_SPF_Schecken; 
+      L     "DB_PLC_MD_DB20".UDInt._149_Zeit_Schnecken_aus; 
+      +I    ; 
+      T     #temp_Zeit_Pause; 
+
+
+      L     "DB_PLC_MD_DB20".UDInt._148_Zeit_SPF_Schecken; 
+      L     #temp_Zeit_Pause; 
+      +I    ; 
+      T     #temp_Zeit_Schnecke2; 
+
+
+
+      L     #temp_Zeit_Schnecke2; 
+      L     "DB_PLC_MD_DB20".UDInt._149_Zeit_Schnecken_aus; 
+      +I    ; 
+      T     #temp_Zeit_Schnecken_aus; 
+
+
+NETWORK
+TITLE =Flip/Flop Späneförderer rechts links Rechen2-Pause_Rechen1-Pause
+
+      UN    "O_SF_Rechtslauf"; 
+      SPB   SDFG; 
+
+
+      U     "M_Takt_1s"; 
+      U     "O_SF_Rechtslauf"; 
+      U     "O_SF_RECHEN_Z_VENTIL"; 
+      UN    #Tx_SF_Stop; 
+      UN    "DB_OEM".OEM_Rett_Spaenerechen; 
+      SPBN  TZUI; 
+
+      L     "MB_SPF_links_rechts"; 
+      L     1; 
+      +I    ; 
+      T     "MB_SPF_links_rechts"; 
+
+// zwischen 0  und 15  Rechen links
+// zwischen 16 und 30  Pause
+// zwischen 31 und 45  Rechen rechts 
+// zwischen 46 und 60  Pause
+
+TZUI: NOP   0; 
+
+      L     "MB_SPF_links_rechts"; 
+      L     #temp_Zeit_Schnecken_aus; 
+      >=I   ; 
+      SPBN  SDFG; 
+
+
+      L     0; 
+      T     "MB_SPF_links_rechts"; 
+
+SDFG: NOP   0; 
+
+
+NETWORK
+TITLE =Reset Fehlermeldungen
+
+      U     "M_Ruecksetze_Fehler"; 
+      R     "DB_FEHLERMELDUNG".Meldung4._702435_SFR_Drucklos0; 
+      R     "DB_FEHLERMELDUNG".Meldung4._702433_SFR_Pos_nicht_er; 
+      R     "DB_FEHLERMELDUNG".Meldung4._702436_SFR_DS_defekt; 
+      R     "MX_SF_FE_Rechen1"; 
+      R     "MX_SF_FE_Rechen2"; 
+
+NETWORK
+TITLE = Ventil Hauptluft Spaenefoerderer-Rechen
+// Ansteuerung des Zentral-Ventils
+      U     "I_AL_Kabine_Verriegelt"; 
+      UN    "M_Einrichtbetrieb"; 
+      UN    "M_3Te_Betriebsart"; 
+      UN    "M_4Te_Betriebsart"; 
+      FP    "MX_SF_KAB_VERR"; 
+      S     "O_SF_RECHEN_Z_VENTIL"; 
+
+      ON    "I_AL_Kabine_Verriegelt"; 
+      O     "Mx_RECH_ZUR_TUERAU"; 
+      O     "M_Einrichtbetrieb"; 
+      O     "M_3Te_Betriebsart"; 
+      O     "M_4Te_Betriebsart"; 
+      FP    "Mx_FP_SF_RECH"; 
+      R     "O_SF_RECHEN_Z_VENTIL"; 
+
+
+NETWORK
+TITLE =Ventile zurücksetzen bei Anforderung Tuere auf
+
+      U     "Mx_RECH_ZUR_TUERAU"; 
+      FP    "Mx_FP_SF_RECH_AUS"; 
+      R     "O_SF_RECHEN_1_VOR"; 
+      R     "O_SF_RECHEN_1_ZURUECK"; 
+      R     "O_SF_RECHEN_2_VOR"; 
+      R     "O_SF_RECHEN_2_ZURUECK"; 
+
+NETWORK
+TITLE =Freigabe zum Tür öffnen vom Späneförderer
+// Sobald der Rechen drucklos ist Freigabe zum Tür öffnen
+      U     "I_SF_RECHEN_DRUCKLOS"; 
+      U     "I_SF_RECHEN_DRUCKLOS_D"; 
+      =     "MX_SF_Frg_Tuer_auf"; 
+
+      U(    ; 
+      U     "MX_Anf_Tuer_Auf"; 
+      O     "M_Kab_Tuer_Entr"; 
+      )     ; 
+      UN    "MX_SF_Frg_Tuer_auf"; 
+      =     "DB_FEHLERMELDUNG".Meldung4._702445_Frg_Tuer_auf_O; 
+
+
+NETWORK
+TITLE =702436 "MEL, Späneförderer Rechen: Druckschalter defekt"
+// Überwachung auf Drucklos
+      UN    "I_SF_RECHEN_DRUCKLOS_D"; 
+      S     "DB_FEHLERMELDUNG".Meldung4._702436_SFR_DS_defekt; 
+      UN    "O_SF_RECHEN_Z_VENTIL"; 
+      UN    "I_SF_RECHEN_DRUCKLOS"; 
+      O(    ; 
+      U     "O_SF_RECHEN_Z_VENTIL"; 
+      U(    ; 
+      O     "M_SF_Rechen1_Aktiv"; 
+      O     "M_SF_Rechen2_Aktiv"; 
+      )     ; 
+      U     "I_SF_RECHEN_DRUCKLOS"; 
+      )     ; 
+      ON    "I_SF_RECHEN_DRUCKLOS_D"; 
+      U     "M_MA_Maschine_Ein"; 
+      L     S5T#10S; 
+      SE    "T_Ueberw_Drucklos"; 
+
+      U     "T_Ueberw_Drucklos"; 
+      SPBN  N14A; 
+
+      UN    "O_SF_RECHEN_Z_VENTIL"; 
+      U     "I_SF_RECHEN_DRUCKLOS"; 
+      S     "DB_FEHLERMELDUNG".Meldung4._702435_SFR_Drucklos0; 
+
+
+      UN    "O_SF_RECHEN_Z_VENTIL"; 
+      UN    "I_SF_RECHEN_DRUCKLOS"; 
+      S     "DB_FEHLERMELDUNG".Meldung4._702435_SFR_Drucklos0; 
+
+      SET   ; 
+      S     "MX_SF_FE_Rechen1"; 
+      S     "MX_SF_FE_Rechen2"; 
+
+N14A: NOP   0; 
+
+
+NETWORK
+TITLE =Freigabe Kabinentuere entriegelt
+
+      U     "MX_Anf_Tuer_Auf"; 
+      O     "M_Kab_Tuer_Entr"; 
+      FP    "MX_TUER_ENTR"; 
+      S     "Mx_RECH_ZUR_TUERAU"; 
+
+      ON    "MX_Anf_Tuer_Auf"; 
+      UN    "M_Kab_Tuer_Entr"; 
+      R     "Mx_RECH_ZUR_TUERAU"; 
+
+NETWORK
+TITLE =Spaenerechen Beide Endlagen 1-Signal  
+
+      U     "I_SF_RECHEN_1_VORNE"; 
+      U     "I_SF_RECHEN_1_HINTEN"; 
+      O     ; 
+      U     "I_SF_RECHEN_2_VORNE"; 
+      U     "I_SF_RECHEN_2_HINTEN"; 
+      =     "DB_FEHLERMELDUNG".Meldung4._702434_SFR_Undef_Pos; 
+NETWORK
+TITLE =Anzeige Rettung Rechen1
+
+      U     "DB_OEM".OEM_Rett_Spaenerechen; 
+      SPBN  RETT; 
+
+
+      SET   ; 
+      R     "MX_SF_Rechen1_Ein"; 
+      R     "M_SF_Rechen1_Aktiv"; 
+      R     "MX_SF_Rechen2_Ein"; 
+      R     "M_SF_Rechen2_Aktiv"; 
+
+      U     "O_SF_RECHEN_Z_VENTIL"; 
+      U     "M_Handbetrieb"; 
+      UN    "M_Satzfolge_aktiv"; 
+      =     #temp_Frg_Rech; 
+
+
+      CALL "FC_HMI_IO_TO_TLINE" (
+           Freigabe_AST_Hand        := #temp_Frg_Rech,
+           Freigabe_GST_Hand        := #temp_Frg_Rech,
+           Endlage_AST              := "I_SF_RECHEN_1_VORNE",
+           Endlage_GST              := "I_SF_RECHEN_1_HINTEN",
+           Ventil_AST               := "O_SF_RECHEN_1_VOR",
+           Ventil_GST               := "O_SF_RECHEN_1_ZURUECK",
+           Bewegungsnummer          := 175);
+
+NETWORK
+TITLE =Anzeige Rettung Rechen2
+
+      CALL "FC_HMI_IO_TO_TLINE" (
+           Freigabe_AST_Hand        := #temp_Frg_Rech,
+           Freigabe_GST_Hand        := #temp_Frg_Rech,
+           Endlage_AST              := "I_SF_RECHEN_2_VORNE",
+           Endlage_GST              := "I_SF_RECHEN_2_HINTEN",
+           Ventil_AST               := "O_SF_RECHEN_2_VOR",
+           Ventil_GST               := "O_SF_RECHEN_2_ZURUECK",
+           Bewegungsnummer          := 176);
+
+
+NETWORK
+TITLE =Anzeige Zentral-Ventil
+
+      UN    "O_SF_RECHEN_Z_VENTIL"; 
+      =     #temp_Zen_Vent; 
+
+      CALL "FC_HMI_IO_TO_TLINE" (
+           Freigabe_AST_Hand        := "m_null",
+           Freigabe_GST_Hand        := "m_null",
+           Endlage_AST              := #temp_Zen_Vent,
+           Endlage_GST              := "m_null",
+           Ventil_AST               := "O_SF_RECHEN_Z_VENTIL",
+           Ventil_GST               := "m_null",
+           Bewegungsnummer          := 177);
+
+NETWORK
+TITLE =Bewegungen Rettung
+
+      U     "DB_EINRICHTFUNKTION".Bewegung_175_Minus; 
+      U     "M_Handbetrieb"; 
+      U     "DB_OEM".OEM_Rett_Spaenerechen; 
+      U     "O_SF_RECHEN_Z_VENTIL"; 
+      =     "O_SF_RECHEN_1_VOR"; 
+
+      U     "DB_EINRICHTFUNKTION".Bewegung_175_Plus; 
+      U     "M_Handbetrieb"; 
+      U     "DB_OEM".OEM_Rett_Spaenerechen; 
+      U     "O_SF_RECHEN_Z_VENTIL"; 
+      =     "O_SF_RECHEN_1_ZURUECK"; 
+
+      U     "DB_EINRICHTFUNKTION".Bewegung_176_Minus; 
+      U     "M_Handbetrieb"; 
+      U     "DB_OEM".OEM_Rett_Spaenerechen; 
+      U     "O_SF_RECHEN_Z_VENTIL"; 
+      =     "O_SF_RECHEN_2_VOR"; 
+
+      U     "DB_EINRICHTFUNKTION".Bewegung_176_Plus; 
+      U     "M_Handbetrieb"; 
+      U     "DB_OEM".OEM_Rett_Spaenerechen; 
+      U     "O_SF_RECHEN_Z_VENTIL"; 
+      =     "O_SF_RECHEN_2_ZURUECK"; 
+
+      SPA   END; 
+
+NETWORK
+TITLE =Spaenefoerderer- Rechen 1 Hubeinheit vor
+// Rechen 1 ein
+RETT: L     "MB_SPF_links_rechts"; 
+      L     #temp_Zeit_Schnecke2; 
+      <=I   ; 
+      U(    ; 
+      L     "MB_SPF_links_rechts"; 
+      L     #temp_Zeit_Pause; 
+      >I    ; 
+      )     ; 
+      U     "M_Spritz_Tuer_Zu"; 
+      U     "M_MA_Maschine_Ein"; 
+      U     "O_SF_Rechtslauf"; 
+      UN    #Tx_SF_Stop; 
+      UN    "MX_SF_FE_Rechen1"; 
+      UN    "MX_Anf_Tuer_Auf"; 
+      UN    "DB_OEM".OEM_Rett_Spaenerechen; 
+      =     "MX_SF_Rechen1_Ein"; 
+
+      U     "MX_SF_Rechen1_Ein"; 
+      FP    "M_SF_FP_Rechen1"; 
+      S     "M_SF_Rechen1_Aktiv"; 
+
+// Ausgänge für Bewegung setzen
+
+      U     "M_SF_Rechen1_Aktiv"; 
+      UN    "MX_SF_FB_Rechen1"; 
+      UN    "Mx_RECH_ZUR_TUERAU"; 
+      S     "O_SF_RECHEN_1_VOR"; 
+      R     "O_SF_RECHEN_1_ZURUECK"; 
+
+      U     "M_SF_Rechen1_Aktiv"; 
+      U     "MX_SF_FB_Rechen1"; 
+      O     "Mx_RECH_ZUR_TUERAU"; 
+      R     "O_SF_RECHEN_1_VOR"; 
+      S     "O_SF_RECHEN_1_ZURUECK"; 
+
+
+      ON    "M_Spritz_Tuer_Zu"; 
+      ON    "M_MA_Maschine_Ein"; 
+      O     "MX_SF_FE_Rechen1"; 
+      O     "Mx_RECH_ZUR_TUERAU"; 
+      R     "O_SF_RECHEN_1_VOR"; 
+      R     "O_SF_RECHEN_1_ZURUECK"; 
+      R     "M_SF_Rechen1_Aktiv"; 
+
+      U(    ; 
+      U     "I_SF_RECHEN_1_HINTEN"; 
+      UN    "MX_SF_Rechen1_Ein"; 
+      )     ; 
+      O     #Tx_SF_Stop; 
+      R     "M_SF_Rechen1_Aktiv"; 
+
+
+// Zeit starten
+      U     "O_SF_RECHEN_1_VOR"; 
+      FP    "MX_SF_FP1_Rechen1"; 
+      O(    ; 
+      U     "O_SF_RECHEN_1_ZURUECK"; 
+      FP    "MX_SF_FP2_Rechen1"; 
+      )     ; 
+      L     S5T#8S; 
+      SV    "T_SF_FP2_Zur_R1"; 
+      CLR   ; 
+      SV    "T_SF_FP2_Zur_R1"; 
+      SPB   N134; 
+
+// Zeit abgelaufen -> entgegengesetze Richtung ansteuern
+      U     "T_SF_FP2_Zur_R1"; 
+      FN    "M_SF_FN2_Rechen1"; 
+      U     "M_SF_Rechen1_Aktiv"; 
+      SPBN  N134; 
+
+      U     "MX_SF_FB_Rechen1"; 
+      SPB   N137; 
+      SET   ; 
+      S     "MX_SF_FB_Rechen1"; 
+      L     "MB_SF_Rechen1_Co_Vor"; 
+      INC   1; 
+      T     "MB_SF_Rechen1_Co_Vor"; 
+      SPA   N134; 
+
+N137: SET   ; 
+      R     "MX_SF_FB_Rechen1"; 
+
+      L     "MB_SF_Rechen1_Co_Zurueck"; 
+      INC   1; 
+      T     "MB_SF_Rechen1_Co_Zurueck"; 
+
+N134: L     "MB_SF_Rechen1_Co_Vor"; 
+      L     5; 
+      >=I   ; 
+      SPBN  N139; 
+      SET   ; 
+      S     "MX_SF_FE_Rechen1"; 
+      S     "DB_FEHLERMELDUNG".Meldung4._702433_SFR_Pos_nicht_er; 
+
+      L     0; 
+      T     "MB_SF_Rechen1_Co_Vor"; 
+
+N139: L     "MB_SF_Rechen1_Co_Zurueck"; 
+      L     5; 
+      >=I   ; 
+      SPBN  N133; 
+      SET   ; 
+      S     "MX_SF_FE_Rechen1"; 
+      S     "DB_FEHLERMELDUNG".Meldung4._702433_SFR_Pos_nicht_er; 
+      R     "M_SF_Rechen1_Aktiv"; 
+      L     0; 
+      T     "MB_SF_Rechen1_Co_Zurueck"; 
+
+// Endlage erreicht -> Richtung ändern
+N133: UN    "MX_SF_FB_Rechen1"; 
+      U     "I_SF_RECHEN_1_VORNE"; 
+      U     "M_SF_Rechen1_Aktiv"; 
+      SPBN  N135; 
+      SET   ; 
+      S     "MX_SF_FB_Rechen1"; 
+      L     0; 
+      T     "MB_SF_Rechen1_Co_Vor"; 
+
+N135: U     "MX_SF_FB_Rechen1"; 
+      U     "I_SF_RECHEN_1_HINTEN"; 
+      U     "M_SF_Rechen1_Aktiv"; 
+      SPBN  N132; 
+      SET   ; 
+      R     "MX_SF_FB_Rechen1"; 
+      L     0; 
+      T     "MB_SF_Rechen1_Co_Zurueck"; 
+
+N132: NOP   0; 
+
+
+NETWORK
+TITLE =Spaenefoerderer- Rechen 2 Hubeinheit vor
+//   Rechen 2 ein
+      U(    ; 
+      L     "MB_SPF_links_rechts"; 
+      L     #temp_Zeit_Schnecke1; 
+      <=I   ; 
+      )     ; 
+      U     "M_Spritz_Tuer_Zu"; 
+      U     "M_MA_Maschine_Ein"; 
+      U     "O_SF_Rechtslauf"; 
+      UN    #Tx_SF_Stop; 
+      UN    "MX_SF_FE_Rechen2"; 
+      UN    "MX_Anf_Tuer_Auf"; 
+      UN    "DB_OEM".OEM_Rett_Spaenerechen; 
+      =     "MX_SF_Rechen2_Ein"; 
+
+      U     "MX_SF_Rechen2_Ein"; 
+      FP    "M_SF_FP_Rechen2"; 
+      S     "M_SF_Rechen2_Aktiv"; 
+
+
+// Ausgänge für Bewegung setzen
+
+
+      U     "M_SF_Rechen2_Aktiv"; 
+      UN    "MX_SF_FB_Rechen2"; 
+      UN    "Mx_RECH_ZUR_TUERAU"; 
+      S     "O_SF_RECHEN_2_VOR"; 
+      R     "O_SF_RECHEN_2_ZURUECK"; 
+
+      U     "M_SF_Rechen2_Aktiv"; 
+      U     "MX_SF_FB_Rechen2"; 
+      O     "Mx_RECH_ZUR_TUERAU"; 
+      R     "O_SF_RECHEN_2_VOR"; 
+      S     "O_SF_RECHEN_2_ZURUECK"; 
+
+      ON    "M_Spritz_Tuer_Zu"; 
+      ON    "M_MA_Maschine_Ein"; 
+      O     "MX_SF_FE_Rechen2"; 
+      O     "Mx_RECH_ZUR_TUERAU"; 
+      R     "O_SF_RECHEN_2_VOR"; 
+      R     "O_SF_RECHEN_2_ZURUECK"; 
+      R     "M_SF_Rechen2_Aktiv"; 
+
+      U(    ; 
+      U     "I_SF_RECHEN_2_HINTEN"; 
+      UN    "MX_SF_Rechen2_Ein"; 
+      )     ; 
+      O     #Tx_SF_Stop; 
+      R     "M_SF_Rechen2_Aktiv"; 
+
+// Zeit starten
+      U     "O_SF_RECHEN_2_VOR"; 
+      FP    "MX_SF_FP1_Rechen2"; 
+      O(    ; 
+      U     "O_SF_RECHEN_2_ZURUECK"; 
+      FP    "MX_SF_FP2_Rechen2"; 
+      )     ; 
+      L     S5T#8S; 
+      SV    "T_SF_FP2_Zur_R2"; 
+      CLR   ; 
+      SV    "T_SF_FP2_Zur_R2"; 
+      SPB   N174; 
+
+// Zeit abgelaufen -> entgegengesetze Richtung ansteuern
+      U     "T_SF_FP2_Zur_R2"; 
+      FN    "M_SF_FN2_Rechen2"; 
+      U     "M_SF_Rechen2_Aktiv"; 
+      SPBN  N174; 
+
+      U     "MX_SF_FB_Rechen2"; 
+      SPB   N177; 
+      SET   ; 
+      S     "MX_SF_FB_Rechen2"; 
+      L     "MB_SF_Rechen2_Co_Vor"; 
+      INC   1; 
+      T     "MB_SF_Rechen2_Co_Vor"; 
+      SPA   N174; 
+
+N177: SET   ; 
+      R     "MX_SF_FB_Rechen2"; 
+
+      L     "MB_SF_Rechen2_Co_Zurueck"; 
+      INC   1; 
+      T     "MB_SF_Rechen2_Co_Zurueck"; 
+
+N174: L     "MB_SF_Rechen2_Co_Vor"; 
+      L     5; 
+      >=I   ; 
+      SPBN  N179; 
+      SET   ; 
+      S     "MX_SF_FE_Rechen2"; 
+      S     "DB_FEHLERMELDUNG".Meldung4._702433_SFR_Pos_nicht_er; 
+      L     0; 
+      T     "MB_SF_Rechen2_Co_Vor"; 
+
+N179: L     "MB_SF_Rechen2_Co_Zurueck"; 
+      L     5; 
+      >=I   ; 
+      SPBN  N173; 
+      SET   ; 
+      S     "MX_SF_FE_Rechen2"; 
+      S     "DB_FEHLERMELDUNG".Meldung4._702433_SFR_Pos_nicht_er; 
+      R     "M_SF_Rechen2_Aktiv"; 
+      L     0; 
+      T     "MB_SF_Rechen2_Co_Zurueck"; 
+
+// Endlage erreicht -> Richtung ändern
+N173: UN    "MX_SF_FB_Rechen2"; 
+      U     "I_SF_RECHEN_2_VORNE"; 
+      U     "M_SF_Rechen2_Aktiv"; 
+      SPBN  N175; 
+      SET   ; 
+      S     "MX_SF_FB_Rechen2"; 
+      L     0; 
+      T     "MB_SF_Rechen2_Co_Vor"; 
+
+N175: U     "MX_SF_FB_Rechen2"; 
+      U     "I_SF_RECHEN_2_HINTEN"; 
+      U     "M_SF_Rechen2_Aktiv"; 
+      SPBN  N172; 
+      SET   ; 
+      R     "MX_SF_FB_Rechen2"; 
+      L     0; 
+      T     "MB_SF_Rechen2_Co_Zurueck"; 
+
+N172: NOP   0; 
+
+LL:   NOP   0; 
+
+END:  NOP   0; 
+
+NETWORK
+TITLE =LINKSLAUF / RECHTSLAUF
+
+      U     "I_SF_SCHALTER_LINKS"; 
+      UN    "I_SF_Automatik"; 
+      =     "O_SF_Linkslauf"; 
+      R     "O_SF_Rechtslauf"; 
+
+      U     "I_SF_SCHALTER_RECHTS"; 
+      UN    "O_SF_Rechtslauf"; 
+      UN    "I_SF_Automatik"; 
+      S     "O_SF_Rechtslauf"; 
+      R     "O_SF_Linkslauf"; 
+
+NETWORK
+TITLE ======  Spülpistole =====
+//1) Spülpistole nur einschaltbar, wenn Rüstplatztür oder Maschinenraumtür offen
+//   ist.
+//2) Einschalt-Impulse über:
+//   a) Softkey "DB_ANWENDER_SOFTKEY".Anwender.SPP._ein
+//   b) Taste am Rüstplatz "I_KM_SPRUEHPIST_RPL_EIN"
+//   Mit dem Einschaltimpuls startet die Spülpistolen-Laufzeit
+//   "DB_PLC_MD_DB20".UDInt._163_ZEIT_SPUEHLPISTOLE
+//   Nach Zeitablauf oder RPL-Tür + MPL-Tür zu geht Spülpistole aus.
+//3) Bei aktiver Spülpistole "O_KM_Spruehpistole_ein" leuchtet
+//   Lampe "O_KM_SPRUEHPIST_RPL_EIN"
+      NOP   0; 
+
+NETWORK
+TITLE =Spülpistole einschalten mit "Öffnen Maschinenraum-Tür"
+
+      UN    "I_AL_Kabine_zu"; 
+      U     "DB_PLC_MD_DB20".UDHex._23_Bit1_SpPi_Kabine; 
+      FP    "M_FP_Kabine_auf"; 
+      =     #t_SSPein_Kabine_auf; 
+NETWORK
+TITLE =Spülpistole einschalten Maschine mit PW ohne Rundspeicher
+
+      UN    "I_PW_Tueren_zu"; 
+      U     "DB_NC_PLC".PW_Anwahl; 
+      UN    "DB_CONFIG".ANWAHL_DURCH_USER_DATA.Palettenspeicher_aktiv; 
+      =     #t_SSPein_mitPW_oRS; 
+NETWORK
+TITLE =Spülpistole einschalten Maschine mit Rundspeicher
+
+      UN    "I_PS_RPL_TUER_VORNE_ZU"; 
+      U     "I_PS_RPL_TUER_HINTEN_ZU"; 
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.Palettenspeicher_aktiv; 
+      =     #t_SSPein_mRS; 
+NETWORK
+TITLE =Reset Timer Spülpistolen-Laufzeit
+
+      U(    ; 
+      U     "I_AL_Kabine_zu"; 
+      U     "I_AL_Kabine_Verriegelt"; 
+      UN    "DB_NC_PLC".PW_Anwahl; 
+      O     ; 
+      U     "I_AL_Kabine_zu"; 
+      U(    ; 
+      U     "I_PW_Tueren_zu"; 
+      U     "DB_NC_PLC".PW_Anwahl; 
+      UN    "DB_CONFIG".ANWAHL_DURCH_USER_DATA.Palettenspeicher_aktiv; 
+      O     ; 
+//      U     "I_PS_RPL_TUER_VORNE_ZU"
+      UN    "I_PS_RPL_TUER_HINTEN_ZU"; 
+      U(    ; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.RS4_AKTIV; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.RS5_AKTIV; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.RS10_AKTIV; 
+      )     ; 
+      )     ; 
+      UN    "DB_PLC_MD_DB20".UDHex._47_Bit0_SpPi_GES_Kabine; 
+      )     ; 
+      O(    ; 
+      U     "DB_ANWENDER_SOFTKEY".Anwender.SPP._Reserve; //"DB_ANWENDER_SOFTKEY".Anwender.SPP._ein
+      )     ; 
+      =     #t_RESET_Timer_SSP; 
+      R     "DB_ANWENDER_SOFTKEY".Anwender.SPP._ein; 
+      R     "DB_ANWENDER_SOFTKEY".Anwender.SPP._Reserve; 
+NETWORK
+TITLE =Zeit: Max. Spülpistole-Laufzeit aufbereiten
+
+      U(    ; 
+      U(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._163_ZEIT_SPUEHLPISTOLE; 
+      ITB   ; 
+      T     #t_WORD; 
+      UN    OV; 
+      SAVE  ; 
+      CLR   ; 
+      U     BIE; 
+      )     ; 
+      SPBNB _001; 
+      L     #t_WORD; 
+      L     W#16#2000; 
+      OW    ; 
+      T     #t_WORD; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+_001: U     BIE; 
+      )     ; 
+      SPBNB _002; 
+      L     #t_WORD; 
+      T     #t_S5time; 
+_002: NOP   0; 
+NETWORK
+TITLE =SV-Timer: SPP: Spuelpistolenausgang verzoegert abschalten
+//Timer wird über SOFT-KEY oder TASTEamRPL gestartet
+      U(    ; 
+      O(    ; 
+      U     "DB_ANWENDER_SOFTKEY".Anwender.SPP._ein; 
+      )     ; 
+      O     "I_KM_SPRUEHPIST_RPL_EIN"; 
+      O     #t_SSPein_Kabine_auf; 
+      O(    ; 
+      U(    ; 
+      O     #t_SSPein_mitPW_oRS; 
+      O     #t_SSPein_mRS; 
+      )     ; 
+      U     "DB_PLC_MD_DB20".UDHex._23_Bit3_SpPi_RP; //"M_FP_RPL_Tuere_auf"
+      FP    "M_FP_RPL_Tuere_auf"; 
+      )     ; 
+      )     ; 
+      L     #t_S5time; 
+      SV    "Tv_Ausgang_Spuelpistole"; 
+      U     #t_RESET_Timer_SSP; 
+      R     "Tv_Ausgang_Spuelpistole"; 
+      NOP   0; 
+      NOP   0; 
+      NOP   0; 
+NETWORK
+TITLE =Reset "DB_ANWENDER_SOFTKEY".Anwender.SPP._ein
+
+      U     "Tv_Ausgang_Spuelpistole"; 
+      FN    "M_SPP_ein_neg_Fl"; 
+      R     "DB_ANWENDER_SOFTKEY".Anwender.SPP._ein; 
+NETWORK
+TITLE =Pumpe Kühlmittel Spülpistole
+
+      U(    ; 
+      O     "DB_FEHLERMELDUNG".WARNUNG3._700346_Grob_Kmtl_min; 
+      O     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700716_Fein_Kmlt_Mangel; 
+      O     "DB_FEHLERMELDUNG".MELDUNG3._700511_KSA3_MIN; 
+      )     ; 
+      NOT   ; 
+      U     "Tv_Ausgang_Spuelpistole"; 
+      =     "O_KM_Spruehpistole_ein"; 
+NETWORK
+TITLE =Lampe Kühlmittel Spülpistole am Rüstplatz
+
+      U     "O_KM_Spruehpistole_ein"; 
+      =     "O_KM_SPRUEHPIST_RPL_EIN"; 
+END_FUNCTION
+

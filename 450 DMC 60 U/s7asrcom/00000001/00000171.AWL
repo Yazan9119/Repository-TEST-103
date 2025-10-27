@@ -1,0 +1,106 @@
+DATA_BLOCK "DB_WORKPIECE_IDENT"
+TITLE =$Revision: 1.4 $
+//$Date: 2007/08/29 07:45:20CEST $
+//$Author: riedlh $
+//
+VERSION : 0.0
+
+
+  STRUCT 	
+   Platz : ARRAY  [0 .. 16 ] OF //0:Maschine,1:Überpl1,2:Überpl2,3:Transportw,4:Ruepl,5-xx:Speicherpl 1 -- xx 
+   STRUCT 	
+    Material_Number : STRING  [8 ];	
+    Order_Number : STRING  [8 ];	
+    Identity_Code : STRING  [12 ];	
+    Workpiece_Drawing_Number : STRING  [8 ];	
+    Issue_Number : STRING  [2 ];	
+   END_STRUCT ;	
+  END_STRUCT ;	
+BEGIN
+   Platz[0].Material_Number := ''; 
+   Platz[0].Order_Number := ''; 
+   Platz[0].Identity_Code := ''; 
+   Platz[0].Workpiece_Drawing_Number := ''; 
+   Platz[0].Issue_Number := ''; 
+   Platz[1].Material_Number := ''; 
+   Platz[1].Order_Number := ''; 
+   Platz[1].Identity_Code := ''; 
+   Platz[1].Workpiece_Drawing_Number := ''; 
+   Platz[1].Issue_Number := ''; 
+   Platz[2].Material_Number := ''; 
+   Platz[2].Order_Number := ''; 
+   Platz[2].Identity_Code := ''; 
+   Platz[2].Workpiece_Drawing_Number := ''; 
+   Platz[2].Issue_Number := ''; 
+   Platz[3].Material_Number := ''; 
+   Platz[3].Order_Number := ''; 
+   Platz[3].Identity_Code := ''; 
+   Platz[3].Workpiece_Drawing_Number := ''; 
+   Platz[3].Issue_Number := ''; 
+   Platz[4].Material_Number := ''; 
+   Platz[4].Order_Number := ''; 
+   Platz[4].Identity_Code := ''; 
+   Platz[4].Workpiece_Drawing_Number := ''; 
+   Platz[4].Issue_Number := ''; 
+   Platz[5].Material_Number := ''; 
+   Platz[5].Order_Number := ''; 
+   Platz[5].Identity_Code := ''; 
+   Platz[5].Workpiece_Drawing_Number := ''; 
+   Platz[5].Issue_Number := ''; 
+   Platz[6].Material_Number := ''; 
+   Platz[6].Order_Number := ''; 
+   Platz[6].Identity_Code := ''; 
+   Platz[6].Workpiece_Drawing_Number := ''; 
+   Platz[6].Issue_Number := ''; 
+   Platz[7].Material_Number := ''; 
+   Platz[7].Order_Number := ''; 
+   Platz[7].Identity_Code := ''; 
+   Platz[7].Workpiece_Drawing_Number := ''; 
+   Platz[7].Issue_Number := ''; 
+   Platz[8].Material_Number := ''; 
+   Platz[8].Order_Number := ''; 
+   Platz[8].Identity_Code := ''; 
+   Platz[8].Workpiece_Drawing_Number := ''; 
+   Platz[8].Issue_Number := ''; 
+   Platz[9].Material_Number := ''; 
+   Platz[9].Order_Number := ''; 
+   Platz[9].Identity_Code := ''; 
+   Platz[9].Workpiece_Drawing_Number := ''; 
+   Platz[9].Issue_Number := ''; 
+   Platz[10].Material_Number := ''; 
+   Platz[10].Order_Number := ''; 
+   Platz[10].Identity_Code := ''; 
+   Platz[10].Workpiece_Drawing_Number := ''; 
+   Platz[10].Issue_Number := ''; 
+   Platz[11].Material_Number := ''; 
+   Platz[11].Order_Number := ''; 
+   Platz[11].Identity_Code := ''; 
+   Platz[11].Workpiece_Drawing_Number := ''; 
+   Platz[11].Issue_Number := ''; 
+   Platz[12].Material_Number := ''; 
+   Platz[12].Order_Number := ''; 
+   Platz[12].Identity_Code := ''; 
+   Platz[12].Workpiece_Drawing_Number := ''; 
+   Platz[12].Issue_Number := ''; 
+   Platz[13].Material_Number := ''; 
+   Platz[13].Order_Number := ''; 
+   Platz[13].Identity_Code := ''; 
+   Platz[13].Workpiece_Drawing_Number := ''; 
+   Platz[13].Issue_Number := ''; 
+   Platz[14].Material_Number := ''; 
+   Platz[14].Order_Number := ''; 
+   Platz[14].Identity_Code := ''; 
+   Platz[14].Workpiece_Drawing_Number := ''; 
+   Platz[14].Issue_Number := ''; 
+   Platz[15].Material_Number := ''; 
+   Platz[15].Order_Number := ''; 
+   Platz[15].Identity_Code := ''; 
+   Platz[15].Workpiece_Drawing_Number := ''; 
+   Platz[15].Issue_Number := ''; 
+   Platz[16].Material_Number := ''; 
+   Platz[16].Order_Number := ''; 
+   Platz[16].Identity_Code := ''; 
+   Platz[16].Workpiece_Drawing_Number := ''; 
+   Platz[16].Issue_Number := ''; 
+END_DATA_BLOCK
+

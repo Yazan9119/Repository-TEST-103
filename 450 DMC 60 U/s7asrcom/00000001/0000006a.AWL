@@ -1,0 +1,401 @@
+FUNCTION "FC_SAFE_ZD_BER2_PS" : VOID
+TITLE =
+//$Revision: 1.11 $
+//$Date: 2008/10/10 14:21:47CEST $
+//$Author: hgc $
+//
+//Baustein für Solutionline DMx55-125x2
+//Zwangsdynamisierung Bereich 2 Palettenspeicher
+AUTHOR : AB
+VERSION : 0.0
+
+
+VAR_INPUT
+  I_BT_Anfordern : BOOL ;	//Bremsentest anfordern
+  I_ZD_Anfordern : BOOL ;	//Zwangsdynamisierung anfordern
+  I_HW_Anfordern : BOOL ;	//Hardware testen
+END_VAR
+VAR_IN_OUT
+  O_BT_Laeuft : BOOL ;	
+  O_BT_Error : BOOL ;	//Fehler BT --> Bremse defekt
+  O_ZD_Laeuft : BOOL ;	
+  O_ZD_SError : BOOL ;	//Fehler ZD Startbedingungen
+  O_ZD_Error : BOOL ;	//Fehler Zwangsdynamisierung
+  O_Bremse_defekt : BOOL ;	
+  O_BT_Error_FC18 : BOOL ;	//Fehler beim Bremsentest mit FC18
+  O_HW_laeuft : BOOL ;	
+END_VAR
+VAR_TEMP
+  T_fnum : BYTE ;	
+  T_Bit : BYTE ;	
+  T_Byte : BYTE ;	
+  T_errword : WORD ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =Anzahl der Achsen ermitteln
+//Der Zwangsdynamisierungsbereich 2 Palettenspeicher besteht aus:
+//- den Palettenspeicherachsen
+//- der PW-Achse
+// *** Anzahl der Bereichsachsen (PS / PW)****************
+// *******************************************************
+//
+// RS10 =  DREHST + TRANSP + HUB
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.RS10_AKTIV; 
+      SPBN  RS5; 
+      L     3; 
+      SPA   ANZ; 
+
+// RS4/5 =  DREHST + TRANSP
+RS5:  U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.RS4_AKTIV; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.RS5_AKTIV; 
+      SPBN  ndel; 
+      L     2; 
+ANZ:  T     "DB_SAFE_ZD".ZD_DATA.GR2_ANZAHL_ACHSEN_BER; 
+NETWORK
+TITLE = Test - Anstoss BA 1
+
+      U     #I_HW_Anfordern; 
+      FP    "DB_SAFE_ZD".Seco_Test.BER2_FP_BA1; 
+      =     #O_HW_laeuft; 
+NETWORK
+TITLE =Test der mechanischen Funktion der Bremse HUB-Achse (FB11)
+
+      UN    "DB_CONFIG".ANWAHL_DURCH_USER_DATA.RS10_AKTIV; 
+      SPB   kBT; 
+
+      U     "M_PS_HUB_AX_Bremse_auf"; 
+      UN    "DB_SAFE_ZD".GR2_ZD.Bremse; // Zwangsdynamisierung
+      UN    "DB_SAFE_ZD".GR2_BT.Bremse_schliessen; 
+      NOT   ; 
+      =     "DB_SAFE_ZD".GR2_BT.Bclosed_FB11; 
+
+      U     #I_BT_Anfordern; //  Anstoss fuer den Bremsentest vertikale-Achse
+      FP    "DB_SAFE_ZD".GR2_BT.BT_Start_Taste_FP; 
+      UN    "DB_SAFE_ZD".GR2_BT.BT_error; //Fehler aufgetreten
+      S     "DB_SAFE_ZD".GR2_BT.BT_laeuft; //Bremsentest laeuft
+      S     "DB_SAFE_ZD".GR2_BT.Schritt1; //naechster Schritt
+      S     "DB_ACHSE16".A_NCASpStrobe; //Neutrale Achse anfordern
+      R     "DB_ACHSE16".A_NCASpChanA; //Neutrale Achse anfordern
+      S     #O_BT_Laeuft; //Bremsentest laeuft
+
+      U     "DB_ACHSE16".E_NeutrASp; //Rueckmeldung Achse ist neutral
+      U     "DB_SAFE_ZD".GR2_BT.Schritt1; 
+      FP    "DB_SAFE_ZD".GR2_BT.Schritt1_FP; 
+      S     "DB_SAFE_ZD".GR2_BT.Schritt2; //naechster Schritt
+      R     "DB_SAFE_ZD".GR2_BT.Schritt1; 
+      R     "DB_ACHSE16".A_NCASpStrobe; 
+      S     "DB_ACHSE16".A_PLCAxis; //PLC-kontrollierte Achse anfordern (MD 10008)
+
+      U     "DB_ACHSE16".E_PLCCtrlAx; //Rueckmeldung Achse wird von PLC kontrolliert
+      U     "DB_SAFE_ZD".GR2_BT.Schritt2; 
+      FP    "DB_SAFE_ZD".GR2_BT.Schtitt2_FP; 
+      R     "DB_SAFE_ZD".GR2_BT.Schritt2; 
+      S     "DB_SAFE_ZD".GR2_BT.Start_BT_FB11; //Start Bremsentest fuer FB
+
+      CALL "SI_BrakeTest" , "DB_SAFE_GR2_BT1_INST" (
+           Start                    := "DB_SAFE_ZD".GR2_BT.Start_BT_FB11,
+           Quit                     := "M_Ruecksetze_Fehler",//"MMC_SIGNALS".E_Cancel
+           Bclosed                  := "DB_SAFE_ZD".GR2_BT.Bclosed_FB11,
+           Axis                     := 16,
+           TimerNo                  := "T_SAFECO_Bremsentest_3",
+           TV_BTactiv               := S5T#200MS,//400ms
+           TV_Bclose                := S5T#1S,//500MS
+           TV_FeedCommand           := S5T#1S,//500MS
+           TV_FXSreached            := S5T#1S,//500MS
+           TV_FXShold               := S5T#1S500MS,//500MS
+           CloseBrake               := "DB_SAFE_ZD".GR2_BT.Bremse_schliessen,
+           MoveAxis                 := "DB_SAFE_ZD".GR2_BT.MoveAxis_FB11,
+           Done                     := "DB_SAFE_ZD".GR2_BT.Done_FB11,
+           Error                    := "DB_SAFE_ZD".GR2_BT.BT_error,
+           State                    := "DB_SAFE_ZD".GR2_BT.State_FB11);
+
+// S t a t e
+// -----------
+// 0:Kein Fehler                                                                                                            
+// 1:Startbedingungen nicht gegeben, z.B. Achse nicht in Regelung / Bremse zu / Achsensperre steht an.                      
+// 2:Bei Anwahl Bremsentest erfolgt keine Rückmeldung der NC im Signal "Bremsentest aktiv"                                  
+// 3:Keine Rückmeldung "Bremse eingefallen" durch Eingangssignal BClosed                                                    
+// 4:Keine Fahrbefehlausgabe (z.B. Bewegung der Achse wurde nicht gestartet)                                                
+// 5:Festanschlag wird nicht erreicht -> Achs-RESET wurde ausgelöst                                                         
+// 6:Verfahrsperre/Anfahrt zu langsam -> Festanschlag kann nicht erreicht werden. Überwachungszeit TV_FXSreached abgelaufen.
+// 7:Bremse hält überhaupt nicht (Endposition wird erreicht) / Anfahrgeschwindigkeit zu groß                                
+// 8:Bremse bricht während der Haltezeit auf                                                                                
+// 9:Fehler bei Bremsentest-Abwahl                                                                                          
+//10:Interner Fehler                                                                                                        
+//11:Signal "PLC kontrolliert Achse" nicht eingeschaltet vom Anwenderprogramm (MD 10008)
+
+
+      U     "M_Ruecksetze_Fehler"; 
+      SPBN  er1; 
+      L     0; 
+      T     #T_errword; 
+      R     "DB_SAFE_ZD".GR2_BT.BT_error; 
+      SPA   equt; 
+
+er1:  U     "DB_SAFE_ZD".GR2_BT.BT_error; 
+      SPBN  eend; 
+      L     "DB_SAFE_ZD".GR2_BT.State_FB11; 
+      T     #T_fnum; 
+      L     0; 
+      ==I   ; 
+      SPB   eend; 
+      L     0; 
+      T     #T_errword; 
+      L     #T_fnum; 
+      DEC   1; 
+      L     8; 
+      MOD   ; 
+      T     #T_Bit; 
+      L     #T_fnum; 
+      L     8; 
+      /I    ; 
+      T     #T_Byte; 
+      SLD   3; 
+      L     #T_Bit; 
+      OW    ; 
+      LAR1  ; 
+      L     P##T_errword; 
+      +AR1  ; 
+      S     L [AR1,P#0.0]; 
+equt: L     #T_errword; 
+      AUF   "DB_FEHLERMELDUNG"; 
+      L     P#DBX 114.0; 
+      LAR1  ; 
+      L     #T_errword; 
+      T     DBW [AR1,P#0.0]; 
+eend: NOP   0; 
+
+
+// FC18 Hubachse nur während des Bremsentests aktivieren da sonst im normalen 
+// Ablauf nicht positioniert werden kann
+
+      U     #O_BT_Laeuft; 
+      SPB   y001; 
+      L     0; 
+      T     "DB_SAFE_ZD".ZD_DATA.GR2_INT_AX_NR_BT; 
+      SPA   y002; 
+y001: L     16; 
+      T     "DB_SAFE_ZD".ZD_DATA.GR2_INT_AX_NR_BT; 
+y002: NOP   0; 
+
+// Testmoment wird über MD 36966 definiert / Toleranz im MD 36967
+// Beispiel: Haltemoment für Z-Achse 28% (MD 1728)
+// Testmoment |50%| -> Achsgewicht (28%) ==> Motor (-23%) : MD 1728
+
+      O     "DB_SAFE_ZD".GR2_BT.Done_FB11; //Test erfolgreich beendet
+      O     "DB_SAFE_ZD".GR2_BT.BT_error; //Fehler aufgetreten
+      FP    "DB_SAFE_ZD".GR2_BT.Done_Error_FB11_FP; 
+      R     "DB_ACHSE16".A_PLCAxis; //Anforderung PLC-kontrollierte Achse rücksetzen
+
+      UN    "DB_ACHSE16".E_PLCCtrlAx; //Rueckmeldung Achse wird von PLC kontrolliert
+      U     "DB_SAFE_ZD".GR2_BT.Start_BT_FB11; //Start Bremsentest fuer FB
+      U     "DB_SAFE_ZD".GR2_BT.BT_laeuft; //Bremsentest laeuft
+      FP    "DB_SAFE_ZD".GR2_BT.BT_laeuft_PLCAx_FP; 
+      R     "DB_SAFE_ZD".GR2_BT.Start_BT_FB11; //Start Bremsentest fuer FB
+      R     "DB_SAFE_ZD".GR2_BT.BT_laeuft; //Bremsentest laeuft
+
+
+      CALL "FC_SIEM_SPINCTRL" (//Z-Achse verfahren
+           Start                    := "DB_SAFE_ZD".GR2_BT.MoveAxis_FB11,//Start des Verfahrbewegung
+           Stop                     := FALSE,
+           Funct                    := B#16#5,//Mode: Achsbetrieb
+           Mode                     := B#16#1,//Verfahren: Inkrementell
+           AxisNo                   := "DB_SAFE_ZD".ZD_DATA.GR2_INT_AX_NR_BT,//Achsnummer der zu verfahrenden Achse Z-Achse
+           Pos                      := -3.000000e+000,//Verfahrweg: minus 3mm
+           FRate                    := 2.000000e+003,//Vorschub: 2000 mm/min
+           InPos                    := "DB_SAFE_ZD".GR2_BT.InPos_FC18,//Position erreicht
+           Error                    := "DB_SAFE_ZD".GR2_BT.Error_FC18,
+           State                    := "DB_SAFE_ZD".GR2_BT.State_FC18);
+
+      U     "DB_SAFE_ZD".GR2_BT.Done_FB11; //Test erfolgreich beendet
+      S     "DB_SAFE_ZD".GR2_BT.HM_BTest_ok; // Zwischenmerker Test Z ok
+
+      U     "DB_SAFE_ZD".GR2_BT.HM_BTest_ok; // Zwischenmerker Test Z ok
+      UN    "DB_ACHSE16".E_PLCCtrlAx; // Z-Achse nicht mehr von PLC kontrolliert
+      S     "DB_SAFE_ZD".GR2_BT.BTest_Fertig; 
+      R     "DB_SAFE_ZD".GR2_BT.HM_BTest_ok; // Zwischenmerker Test Z ok
+      R     #O_BT_Laeuft; 
+
+//Fault handling
+
+      U     "M_Ruecksetze_Fehler"; 
+      R     #O_BT_Error; 
+      R     "DB_SAFE_ZD".GR2_BT.BT_error; 
+      R     "DB_SAFE_ZD".GR2_BT.Start_BT_FB11; 
+      R     "DB_SAFE_ZD".GR2_BT.Error_FC18; 
+      R     #O_BT_Laeuft; 
+
+// Fehler erkannt durch FC 18
+
+      U     "DB_SAFE_ZD".GR2_BT.Error_FC18; 
+      =     #O_BT_Error_FC18; 
+
+// Fehler Bremse defekt
+
+      O(    ; 
+      L     #T_fnum; 
+      L     7; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     #T_fnum; 
+      L     8; 
+      ==I   ; 
+      )     ; 
+      U     "DB_SAFE_ZD".GR2_BT.BT_error; 
+      S     #O_Bremse_defekt; 
+
+// Fehler erkannt durch FB 11
+
+      U     "DB_SAFE_ZD".GR2_BT.BT_error; 
+      R     #O_BT_Laeuft; 
+
+// sonstiger Fehler beim Bremsentest
+
+      U     "DB_SAFE_ZD".GR2_BT.BT_error; 
+      UN    #O_Bremse_defekt; 
+      S     #O_BT_Error; //-> Sammelmeldung ausgeben 
+
+// Zustandsmeldung Bremsentest laeuft
+
+      U     #O_BT_Laeuft; 
+      =     "DB_SAFE_ZD".Seco_Test.BER2_Test_Bremse_laeuft; 
+
+kBT:  NOP   0; 
+
+NETWORK
+TITLE =Schrittkette: Abschaltpfade testen / externe Stops testen
+// *** Schritt 1: Bremse(n) einfallen lassen (wenn Startbedingungen gegeben) ***
+      U     #I_ZD_Anfordern; // U E 6.2 Anstoss fuer den Bremsentest Hub-Achse
+      FP    "DB_SAFE_ZD".GR2_ZD.Start_Taste_FP; 
+      S     "DB_SAFE_ZD".GR2_ZD.Schritt1; 
+      S     #O_ZD_Laeuft; 
+
+      U     "DB_SAFE_ZD".GR2_ZD.Schritt1; 
+      S     "DB_SAFE_ZD".GR2_ZD.Bremse; 
+
+// *** Schritt 2: RF für Z wegnehmen (sonst Arbeiten gegen Bremse) ***
+
+      U     "DB_SAFE_ZD".GR2_ZD.Schritt1; 
+      L     S5T#300MS; 
+      SE    "T_SAFECO_GR2ZD_Schritt_2"; 
+
+      U     "T_SAFECO_GR2ZD_Schritt_2"; 
+      S     "DB_SAFE_ZD".GR2_ZD.Schritt2; 
+      R     "DB_SAFE_ZD".GR2_ZD.Schritt1; 
+      S     "DB_SAFE_ZD".GR2_ZD.Reglerfreigabe; 
+
+// *** Schritt 3: PALETTENSPEICHERACHSEN Test der Abschaltpfade (Antrieb/NCK intern) ***
+
+      U     "DB_SAFE_ZD".GR2_ZD.Schritt2; 
+      S     "DB_SAFE_ZD".GR2_ZD.Schritt3; 
+      R     "DB_SAFE_ZD".GR2_ZD.Schritt2; 
+      S     "DB_SAFE_ZD".Seco_Test.BER2_Test_ABSP_laeuft; 
+
+      CALL "FC_SAFE_ZD1_6AX1" (
+           start                    := "DB_SAFE_ZD".GR2_ZD.Schritt3,
+           clear                    := "M_Reset_Taste",
+           num_axis                 := "DB_SAFE_ZD".ZD_DATA.GR2_ANZAHL_ACHSEN_BER,
+           test_axis_1              := 9,//DREHST
+           test_axis_2              := 10,//TRANSP
+           test_axis_3              := 16,//HUB
+           test_axis_4              := 0,
+           test_axis_5              := 0,
+           test_axis_6              := 0,
+           aux_dword                := "DB_SAFE_ZD".GR2_ZD.aux_dword_ZD1_int1,
+           ready                    := "DB_SAFE_ZD".GR2_ZD.Schritt4,
+           serror                   := "DB_SAFE_ZD".GR2_ZD.ZD1_serror_int,// Startbed. nicht gegeben : mind. 1 Achse mit DBX108.2 == 0
+           error                    := "DB_SAFE_ZD".GR2_ZD.ZD1_error_int);// Parametrierfehler Achsanzahl ...
+
+// *** Schritt 4: PALETTENSPEICHERACHSEN Test der externen Stopps (STOP D -> STOP C -> STOP A) : [1] Antrieb / [2] NCK ***
+
+      U     "DB_SAFE_ZD".GR2_ZD.Schritt4; 
+      R     "DB_SAFE_ZD".Seco_Test.BER2_Test_ABSP_laeuft; 
+      S     "DB_SAFE_ZD".Seco_Test.BER2_Test_extStop_laeuft; 
+      R     "DB_SAFE_ZD".GR2_ZD.Schritt3; 
+
+      CALL "FC_SAFE_ZD2_8AX1" (
+           start                    := "DB_SAFE_ZD".GR2_ZD.Schritt4,
+           clear                    := "M_Reset_Taste",//"MMC_SIGNALS".E_Cancel
+           num_axis                 := "DB_SAFE_ZD".ZD_DATA.GR2_ANZAHL_ACHSEN_BER,
+           test_axis_1              := 9,//DREHST
+           test_axis_2              := 10,//TRANSP
+           test_axis_3              := 16,//HUB
+           test_axis_4              := 0,
+           test_axis_5              := 0,
+           test_axis_6              := 0,
+           test_axis_7              := 0,
+           test_axis_8              := 0,
+           req_stopd_plc            := "DB_SAFE_ZD".GR2_ZD.req_stopd_plc,
+           req_stopc_plc            := "DB_SAFE_ZD".GR2_ZD.req_stopc_plc,
+           req_stopa_plc            := "DB_SAFE_ZD".GR2_ZD.req_stopa_plc,
+           req_stopd_nck            := "DB_SPL".IPLC_ZD_Gr2_STOPD,
+           req_stopc_nck            := "DB_SPL".IPLC_ZD_Gr2_STOPC,
+           req_stopa_nck            := "DB_SPL".IPLC_ZD_Gr2_STOPA,
+           aux_dword                := "DB_SAFE_ZD".GR2_ZD.aux_dword_ZD2,
+           ready                    := "DB_SAFE_ZD".GR2_ZD.Schritt5,
+           serror                   := "DB_SAFE_ZD".GR2_ZD.ZD2_serror,
+           error                    := "DB_SAFE_ZD".GR2_ZD.ZD2_error);
+
+// *** Schritt 5: Abschluss --> RF wieder setzen / Bremse wieder freigeben ***
+
+      U     "DB_SAFE_ZD".GR2_ZD.Schritt5; 
+      R     "DB_SAFE_ZD".GR2_ZD.Schritt4; 
+      R     "DB_SAFE_ZD".GR2_ZD.Reglerfreigabe; // RF Hub-Achse wieder geben
+      R     "DB_SAFE_ZD".Seco_Test.BER2_Test_extStop_laeuft; 
+      R     "DB_SAFE_ZD".GR2_ZD.Bremse; // Bremse Hub-Achse schliessen
+
+// *** Schritt 6: Fertigmeldung ***
+
+      U     "DB_SAFE_ZD".GR2_ZD.ZD_Fertig; 
+      R     "DB_SAFE_ZD".GR2_ZD.Schritt6; 
+      R     "DB_SAFE_ZD".GR2_ZD.ZD_Fertig; 
+      R     #O_ZD_Laeuft; 
+
+      U     "DB_SAFE_ZD".GR2_ZD.Schritt6; 
+      S     "DB_SAFE_ZD".GR2_ZD.ZD_Fertig; 
+
+      U     "DB_SAFE_ZD".GR2_ZD.Schritt5; 
+      S     "DB_SAFE_ZD".GR2_ZD.Schritt6; 
+NETWORK
+TITLE =Sammelmeldung ausgeben 
+
+      O     "DB_SAFE_ZD".GR2_ZD.ZD1_serror_int; 
+      O     "DB_SAFE_ZD".GR2_ZD.ZD2_serror; 
+      S     #O_ZD_SError; 
+NETWORK
+TITLE =Fehler löschen / Reset
+
+      UN    "M_Ruecksetze_Fehler"; 
+      SPB   ndel; 
+
+// HW-Test
+      R     "DB_SAFE_ZD".Seco_Test.BER2_Test_HW_laueft; 
+      R     "DB_SAFE_ZD".Seco_Test.BER2_Test_Bremse_laeuft; 
+
+// Bremsentest
+      R     "DB_SAFE_ZD".GR2_BT.BT_laeuft; 
+      R     "DB_SAFE_ZD".GR2_ZD.Bremse; 
+      R     #O_BT_Laeuft; 
+
+// Abschaltpfade / externe Stops
+      R     #O_ZD_Laeuft; 
+      L     0; 
+      T     DB397.DBW    0; 
+      T     "DB_SAFE_ZD".GR2_ZD.aux_dword_ZD1_int1; 
+      T     "DB_SAFE_ZD".GR2_ZD.aux_dword_ZD1_int2; 
+      T     "DB_SAFE_ZD".GR2_ZD.aux_dword_ZD2; 
+      R     "DB_SPL".IPLC_ZD_Gr2_INT; 
+      R     "DB_SAFE_ZD".Seco_Test.BER2_Test_ABSP_laeuft; 
+      R     "DB_SAFE_ZD".Seco_Test.BER2_Test_extStop_laeuft; 
+
+      R     #O_ZD_SError; 
+      R     "DB_SAFE_ZD".GR2_ZD.Reglerfreigabe; 
+      R     "DB_SAFE_ALLG1".M_Bremse_HUB_schliessen; 
+
+ndel: NOP   0; 
+
+
+END_FUNCTION
+

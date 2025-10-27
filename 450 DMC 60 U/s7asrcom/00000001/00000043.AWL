@@ -1,0 +1,682 @@
+FUNCTION "FC_TM_BE_ENTLADEN" : VOID
+TITLE =
+//$Revision: 1.16 $
+//$Date: 2008/05/30 12:57:53CEST $
+//$Author: schmoelp $
+//
+//Magazin Beladen / Entladen
+//erstellt: 27.07.00 AB
+//------------------------------------------------------------------------------
+//geändert: 21.03.01 AB
+//   -->Magazin Positionieren auf Magazinplatz
+//geändert: 22.07.02 FUH
+//   -->Belade".IF[1] auf Belade".IF[2] geändert
+//Änderung: Datum     / Abteilung / Name  / Version x.y
+//Änderung: 14.06.2007 /          / slh   / 
+//        : Wz.umsetzen mit Bewegung
+//Änderung:          /            /      / 
+//        : 
+//
+//------------------------------------------------------------------------------
+//Beschreibung:
+//Netzwerk 1 : Erkennen der Anforderung Be/Entladen
+//Netzwerk 2 : Schrittkette beladen
+//Netzwerk 3 : Schrittkette entladen
+//Netzwerk 4 : Schrittkette positionieren
+//
+//Durch den Eingang E_Quittierpflicht wird festgelegt ob der Beladen und Entladen 
+//vorgang quittiert werden muß.
+//Es wird dann mit E_Fertig der Belade- oder Entladevorgang datentechnisch 
+//übernommen, oder mit E_Abbruch verworfen.
+//
+//Beachte: Damit in ShopMill der Beladevorgang gestartet wird muß mit dem Cursor 
+//aus dem Feld gesprungen werden.
+AUTHOR : AB
+FAMILY : WZW
+NAME : Be_Entla
+VERSION : 0.1
+
+
+VAR_INPUT
+  E_EN : BOOL ;	
+  E_Mag_belegt : BOOL ;	//Magazin frei
+  E_WZW_laeuft : BOOL ;	//werkzeugwechsel laeuft
+  E_TIN : BOOL ;	//Be/entladen fertig
+  E_TOUT : BOOL ;	//Be/entladen Abbruch
+  E_Quittierplicht : BOOL ;	//Optionsbit Quittierung notwendig
+  E_Blinktakt : BOOL ;	//Blinktaktmerker
+  Laenge_Mag : INT ;	//Länge Magazin
+  Offset_Belade : INT ;	//Offset zur Beladestelle
+END_VAR
+VAR_IN_OUT
+  EA_SKZ : BYTE ;	
+  A_Anf_Magazin : BOOL ;	//Anforderung Magazin positionieren 
+  EA_Done_Magazin : BOOL ;	//Done Magazin Fertig
+  A_Lampe_TIN_Quit : BOOL ;	//Anzeigelame -Warten auf Quittierung-
+  A_Lampe_TOUT_Abbruch : BOOL ;	
+  A_Position : WORD ;	//Magazinposition
+END_VAR
+VAR_TEMP
+  T_Position : WORD ;	
+  VMag : BOOL ;	
+  LOp1 : BOOL ;	
+  SkUSort : BOOL ;	//SrKette ist im Bereich Wz.phys.umsortieren
+END_VAR
+BEGIN
+NETWORK
+TITLE =Anforderung erkennen
+
+      UN    #E_EN; 
+      R     "DB_FEHLERMELDUNG".Meldung._702026_Quit_Beladen; 
+      R     #A_Lampe_TIN_Quit; 
+      R     #A_Lampe_TOUT_Abbruch; 
+      BEB   ; 
+
+// Anzeigelampe Warten auf Quittierung
+      U     "DB_FEHLERMELDUNG".Meldung._702026_Quit_Beladen; 
+      U     #E_Blinktakt; 
+      =     #A_Lampe_TIN_Quit; 
+      U     "DB_FEHLERMELDUNG".Meldung._702105_Quit_Entladen; 
+      U     #E_Blinktakt; 
+      =     #A_Lampe_TOUT_Abbruch; 
+
+      U(    ; 
+      L     32; 
+      L     #EA_SKZ; 
+      <=I   ; 
+      )     ; 
+      U(    ; 
+      L     48; 
+      <=I   ; 
+      )     ; 
+      =     #SkUSort; 
+      NOT   ; 
+      R     "m_StrtRld_move"; 
+      R     "m_RsTm_reload"; 
+
+      UN    "TMLoadIF".IF[1].Reloading; //Anforderung umsetzen
+      R     "m_RsReload"; 
+
+//---Reset----------------------------------------------
+      U(    ; 
+      ON    "M_Reset_Taste"; //Reset-Taste soll nicht beim...
+      O     #SkUSort; //... umsortieren wirken...
+      )     ; 
+      UN    "M_Reset_WZW"; //..dafür wird WzwReset verwendet
+      SPB   vv0; 
+      L     B#16#0; 
+      T     #EA_SKZ; 
+      R     "M_WZV_Beladen_ende"; 
+      R     "M_WZV_Entladen_ende"; 
+      R     "M_WZV_Entladen_Abbruch"; 
+      R     "M_WZV_Positionieren"; 
+      R     "DB_FEHLERMELDUNG".Meldung._702026_Quit_Beladen; 
+      R     "DB_FEHLERMELDUNG".Meldung._702105_Quit_Entladen; 
+      R     "MX_TDS_MagSperre"; 
+      R     "m_QuRld_nomove"; 
+      R     "m_StrtRld_move"; 
+      R     "m_RsTm_reload"; 
+
+      U     "TMLoadIF".IF[1].Reloading; //Anforderung umsetzen
+      S     "m_RsReload"; 
+
+      SPA   EndB; 
+
+// Entladen aus Zwischengreifer bei ShopMill
+vv0:  L     0; 
+      L     #EA_SKZ; 
+      ==I   ; 
+      SPBN  vvyx; 
+
+      U     "TMLoadIF".IFNo[2]; // Anforderung Beladen aus NC
+      U     "TMLoadIF".IF[2].Loading; 
+      UN    "DB_CMM_PLC".CMM_OUT.base_sig.nc_cycle_activ; 
+      U(    ; 
+      L     "TMLoadIF".IF[2].TMag; 
+      L     9998; 
+      ==I   ; 
+      )     ; 
+      SPBN  vv1; 
+      S     "M_WZV_Beladen_ende"; 
+      L     240; 
+      T     #EA_SKZ; 
+      SPA   vvmx; 
+
+vv1:  U     "TMLoadIF".IFNo[2]; // Anforderung Entladen
+      U     "TMLoadIF".IF[2].Unloading; 
+      UN    "DB_CMM_PLC".CMM_OUT.base_sig.nc_cycle_activ; 
+      U(    ; 
+      L     "TMLoadIF".IF[2].SMag; 
+      L     9998; 
+      ==I   ; 
+      )     ; 
+      SPBN  vv2; 
+      S     "M_WZV_Entladen_ende"; 
+      L     240; 
+      T     #EA_SKZ; 
+      SPA   vvmx; 
+
+vv2:  U     "TMLoadIF".IFNo[1]; // Anforderung umsetzen mit Bewegung
+      U     "TMLoadIF".IF[1].Reloading; 
+      UN    "DB_CMM_PLC".CMM_OUT.base_sig.nc_cycle_activ; 
+      U     "m_reload_move"; 
+      U(    ; 
+      U(    ; 
+      L     "TMLoadIF".IF[1].SMag; 
+      L     9998; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     "TMLoadIF".IF[1].TMag; 
+      ==I   ; 
+      )     ; 
+      )     ; 
+      U     "m_konstruktion"; 
+      U     "m_null"; 
+      SPBN  vvmx; 
+      S     "m_QuRld_nomove"; 
+      L     240; 
+      T     #EA_SKZ; 
+      SPA   vvmx; 
+
+vvyx: L     240; 
+      L     #EA_SKZ; 
+      <>I   ; 
+      SPB   vvmx; 
+      R     "M_WZV_Entladen_ende"; 
+      R     "M_WZV_Beladen_ende"; 
+      R     "m_QuRld_nomove"; 
+      L     0; 
+      T     #EA_SKZ; 
+      BEA   ; 
+
+vvmx: L     #EA_SKZ; 
+      L     240; 
+      <I    ; 
+      SPB   xx1; 
+      BEA   ; 
+
+//----Kette laeuft------------------------------------
+
+xx1:  L     0; 
+      L     #EA_SKZ; 
+      <>I   ; 
+      SPB   kett; 
+
+      O     "DI_TM_T_BEFEHL".Anf_Leerplatzsuche; //T-Befehl laeuft bei vert.Mag
+      O     "DI_TM_T_BEFEHL".Start_FB191; 
+      O     "DI_TM_T_BEFEHL".Done_FB191; 
+      O     "DI_TM_T_BEFEHL".Aktiv_FB191; 
+      O     "DI_TM_T_BEFEHL".Error_FB191; 
+      O     #E_Mag_belegt; // Mag fertig  M160.3
+      O     #E_WZW_laeuft; // M 170.2
+      O     #A_Anf_Magazin; // Magazinanforderung
+      SPB   kett; 
+
+      U     "TMLoadIF".IFNo[2]; // Anforderung Beladen
+      U     "TMLoadIF".IF[2].Loading; 
+      SPBN  entl; 
+      U     #E_Quittierplicht; 
+      R     "M_WZV_Beladen_ende"; 
+      R     "M_WZV_Entladen_ende"; 
+      R     "M_WZV_Entladen_Abbruch"; 
+      L     1; 
+      T     #EA_SKZ; 
+      SPA   S1; 
+
+entl: U     "TMLoadIF".IFNo[2]; // Anforderung Entladen
+      U     "TMLoadIF".IF[2].Unloading; 
+      SPBN  pos; 
+      U     #E_Quittierplicht; 
+      R     "M_WZV_Beladen_ende"; 
+      R     "M_WZV_Entladen_ende"; 
+      R     "M_WZV_Entladen_Abbruch"; 
+      L     11; 
+      T     #EA_SKZ; 
+      SPA   S11; 
+
+pos:  U     "TMLoadIF".IFNo[2]; 
+      U     "TMLoadIF".IF[2].Positioning; // Anforderung Positionieren
+      SPBN  umsp; 
+      L     21; 
+      T     #EA_SKZ; 
+      SPA   S21; 
+
+//---(1)--- umspeichern -----------------------------------------
+umsp: U     "TMLoadIF".IFNo[1]; 
+      U     "TMLoadIF".IF[1].Reloading; //Anforderung umsetzen
+      SPBN  wart; 
+//---(1a)--- umspeichern mit Bewegung ---------------------------
+      U     "m_reload_move"; 
+      U(    ; 
+      L     "TMLoadIF".IF[1].SMag; 
+      L     B#16#1; 
+      ==I   ; //umsetzen nur von Mag.1
+      )     ; 
+      U(    ; 
+      L     "TMLoadIF".IF[1].TMag; 
+      ==I   ; //umsetzen nur nach Mag.1
+      )     ; 
+      UN    "DB_SIEM_KANAL_1".E_ChanActive; 
+      U     "DB_SIEM_KANAL_1".E_ChanReset; 
+      =     #LOp1; //Vorbedingungen für umspeichern mit Bewegung
+//---(1ac)--- Umsetzen Abbruch wenn ChanActive/kein ChanReset -----------
+      U     "m_reload_move"; 
+      U(    ; 
+      O     "DB_SIEM_KANAL_1".E_ChanActive; //Abbrechen, sonst bleibt "TMLoadIF".IF[1].Reloading log.1
+      ON    "DB_SIEM_KANAL_1".E_ChanReset; //und das Umsetzen beginnt nach Prg.Ende
+      )     ; 
+      S     "m_RsReload"; 
+//---(1ac)---------------------------------------------------------------
+//---(1aa)--- SrKette FB_TM_TBef.reset wenn nicht im Sr0 ----------------
+      U     #LOp1; 
+      U(    ; 
+      L     "DI_TM_T_BEFEHL".Schritt_Tx; 
+      L     191; 
+      ==I   ; 
+      )     ; 
+      U(    ; 
+      O(    ; 
+      L     11; 
+      L     "DI_TM_T_BEFEHL".Schritt; 
+      ==I   ; //Zustand SrKette nach Txx M30 wenn Wz bereits in Spi.(Wz vorbereiten)
+      )     ; 
+      O(    ; 
+      L     12; 
+      ==I   ; //Zustand SrKette nach T0 M30 wenn Wz in Spi.
+      )     ; 
+      )     ; 
+      U(    ; 
+      L     "DB_GREIFER_DATEN".TNR_Spindel; 
+      L     B#16#0; 
+      <>I   ; //Wz in Spindel
+      )     ; 
+      =     "m_RsTm_reload"; 
+//---(1aa)---------------------------------------------------------------
+//---(1ab)--- FB_TM_TBef.ist in Schritt 0 -------------------------------
+      U     #LOp1; 
+      U     "m_TmTBefSr0"; 
+      UN    "m_RsReload"; //nach Reset so lange warten bis "TMLoadIF".IF[1].Reloading zurückgesetzt ist
+      SPBN  u_ob; 
+      L     32; 
+      T     #EA_SKZ; 
+      SPA   S32; 
+//---(1ab)---------------------------------------------------------------
+//---(1a)--------------------------------------------------------
+//---(1b)--- umspeichern ohne Bewegung --------------------------
+u_ob: O(    ; 
+      L     "TMLoadIF".IF[1].SMag; 
+      L     9998; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     "TMLoadIF".IF[1].TMag; 
+      ==I   ; 
+      )     ; 
+      ON    "m_reload_move"; 
+      SPBN  wart; 
+      S     "m_QuRld_nomove"; 
+      L     30; 
+      T     #EA_SKZ; 
+      SPA   EndB; 
+//---(1b)--------------------------------------------------------
+//---(1)---------------------------------------------------------
+
+wart: BEB   ; 
+kett: NOP   0; 
+NETWORK
+TITLE =Beladen ins Magazin
+
+S1:   L     1; 
+      L     #EA_SKZ; 
+      ==I   ; 
+      SPBN  S2; // warten auf Magazin frei
+      L     "TMLoadIF".IF[2].TMag; // laden in Zwischenspeicher
+      L     4; 
+      >I    ; 
+      SPBN  cc2; 
+
+      L     3; 
+      T     #EA_SKZ; 
+      SPA   S3; 
+
+cc2:  S     #A_Anf_Magazin; 
+      L     "TMLoadIF".IF[2].TLoc; 
+      L     #Offset_Belade; 
+      +I    ; 
+      T     #T_Position; 
+      L     #Laenge_Mag; 
+      L     #T_Position; 
+      >=I   ; 
+      SPB   xx2; 
+      TAK   ; 
+      -I    ; 
+
+xx2:  T     #A_Position; 
+      L     2; 
+      T     #EA_SKZ; 
+
+S2:   L     2; 
+      L     #EA_SKZ; 
+      ==I   ; 
+      SPBN  S3; 
+
+      U     "M_MAG_In_Position"; // InPos
+      U     #EA_Done_Magazin; // M 160.1 Warten auf Magazin Fertig
+      U(    ; 
+      O     "I_WM_WZ_ZYL_RELEASE"; 
+      ON    "DB_CONFIG".ANWAHL_DURCH_USER_DATA.WZW_RAD_MIT_ZYLINDER; 
+      )     ; 
+      SPBN  EndB; 
+      S     "MX_TDS_MagSperre"; // Magsperre von TDS
+      R     #EA_Done_Magazin; // M 160.1
+      R     #A_Anf_Magazin; // M160.0
+      U     #E_Quittierplicht; 
+      S     "DB_FEHLERMELDUNG".Meldung._702026_Quit_Beladen; 
+      L     3; 
+      T     #EA_SKZ; 
+
+S3:   L     3; // Warten auf Quittierung
+      L     #EA_SKZ; 
+      ==I   ; 
+      SPBN  S4; 
+
+      UN    "DB_TDS".BE_ENTLADEN_TDS_AKT; 
+      U     #E_TIN; 
+      U     #E_Quittierplicht; 
+      ON    #E_Quittierplicht; 
+      S     "M_WZV_Beladen_ende"; 
+
+      U     "DB_TDS".BE_ENTLADEN_TDS_AKT; // Entladen über TDS
+      U     #E_TIN; 
+      UN    "M_TDS_RUNS"; 
+      S     "M_Request_TDS_bel"; //     "M_Request_TDS"             // Start TDS
+      R     "DB_FEHLERMELDUNG".Meldung._702026_Quit_Beladen; 
+
+      U     #E_TOUT; 
+      U     #E_Quittierplicht; 
+      S     "M_WZV_Entladen_Abbruch"; 
+
+      O     "M_WZV_Beladen_ende"; 
+      O     "M_WZV_Entladen_Abbruch"; 
+      ON    #E_Quittierplicht; 
+      SPBN  EndB; 
+      L     4; 
+      T     #EA_SKZ; 
+      SPA   EndB; 
+
+S4:   L     4; // Reset Quittiermerker
+      L     #EA_SKZ; 
+      ==I   ; 
+      SPBN  S5; 
+      U     #E_Quittierplicht; 
+      R     "DB_FEHLERMELDUNG".Meldung._702026_Quit_Beladen; 
+      SET   ; 
+      R     "M_WZV_Beladen_ende"; 
+      R     "M_WZV_Entladen_Abbruch"; 
+      R     "MX_TDS_MagSperre"; 
+      R     "M_Request_TDS_bel"; 
+      L     0; 
+      T     #EA_SKZ; 
+S5:   NOP   0; 
+NETWORK
+TITLE =Entladen aus Magazin
+
+S11:  L     11; 
+      L     #EA_SKZ; 
+      ==I   ; 
+      SPBN  S12; // warten auf Magazin frei
+      L     "TMLoadIF".IF[2].SMag; // Entladen aus Zwischenspeicher
+      L     4; 
+      >I    ; 
+      SPBN  cc1; 
+
+      L     13; 
+      T     #EA_SKZ; 
+      SPA   S13; 
+
+cc1:  S     #A_Anf_Magazin; 
+      L     "TMLoadIF".IF[2].SLoc; 
+      L     #Offset_Belade; 
+      +I    ; 
+      T     #T_Position; 
+      L     #Laenge_Mag; 
+      L     #T_Position; 
+      >=I   ; 
+      SPB   xx3; 
+      TAK   ; 
+      -I    ; 
+
+xx3:  T     #A_Position; 
+      L     12; 
+      T     #EA_SKZ; 
+
+S12:  L     12; 
+      L     #EA_SKZ; // Warten auf Magazin Fertig
+      ==I   ; 
+      SPBN  S13; 
+
+      U     #EA_Done_Magazin; 
+      U     "M_MAG_In_Position"; 
+      U(    ; 
+      O     "I_WM_WZ_ZYL_RELEASE"; 
+      ON    "DB_CONFIG".ANWAHL_DURCH_USER_DATA.WZW_RAD_MIT_ZYLINDER; 
+      )     ; 
+      SPBN  EndB; 
+      R     #A_Anf_Magazin; // M160.0
+      R     #EA_Done_Magazin; 
+      U     #E_Quittierplicht; 
+      S     "DB_FEHLERMELDUNG".Meldung._702105_Quit_Entladen; 
+
+      L     "TMLoadIF".IF[2].SMag; //Wegspeichern der Platzdaten des zu
+      T     "DI_FB_IF_FASTEMS".magnum3; // entladenden WZ's für Fastems Toolreport
+      L     "TMLoadIF".IF[2].SLoc; 
+      T     "DI_FB_IF_FASTEMS".platznum3; 
+
+      L     13; 
+      T     #EA_SKZ; 
+
+S13:  L     13; 
+      L     #EA_SKZ; // Warten auf Quittierung
+      ==I   ; 
+      SPBN  S14; 
+
+      UN    "DB_TDS".BE_ENTLADEN_TDS_AKT; 
+      U(    ; 
+      UN    "DB_CONFIG".ANWAHL_DURCH_USER_DATA.HASYS_FASTEMS_V3X_RPC; 
+      O     ; 
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.HASYS_FASTEMS_V3X_RPC; 
+      U     "DB_SINRPC".Mode.FLR_1_offline; 
+      )     ; 
+      U     #E_TOUT; 
+      U     #E_Quittierplicht; 
+      ON    #E_Quittierplicht; 
+      S     "M_WZV_Entladen_ende"; 
+
+      UN    "DB_TDS".BE_ENTLADEN_TDS_AKT; 
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.HASYS_FASTEMS_V3X_RPC; 
+      UN    "DB_SINRPC".Mode.FLR_1_offline; 
+      U     #E_TOUT; 
+      U     #E_Quittierplicht; 
+      ON    #E_Quittierplicht; 
+      FP    "M_FP_FMS_T_ENTL"; 
+      S     "DI_FB_IF_FASTEMS".req_tool_unload; 
+      R     "DB_FEHLERMELDUNG".Meldung._702105_Quit_Entladen; 
+
+      U     "DB_TDS".BE_ENTLADEN_TDS_AKT; // Entladen über TDS
+      U     #E_TOUT; 
+      UN    "M_TDS_RUNS"; 
+      S     "M_Request_TDS"; // Start TDS
+      R     "DB_FEHLERMELDUNG".Meldung._702105_Quit_Entladen; 
+
+      U     #E_TIN; 
+      UN    "DB_TDS".BE_ENTLADEN_TDS_AKT; 
+      UN    "DB_FEHLERMELDUNG".Meldung._702150_TDS_Vergleich; 
+      S     "M_WZV_Entladen_Abbruch"; 
+
+      O     "M_WZV_Entladen_ende"; 
+      O     "M_WZV_Entladen_Abbruch"; 
+      SPBN  EndB; 
+      L     14; 
+      T     #EA_SKZ; 
+      SPA   S15; 
+
+S14:  L     14; // Reset Quittiermerker
+      L     #EA_SKZ; 
+      ==I   ; 
+      SPBN  S15; 
+      U     #E_Quittierplicht; 
+      R     "DB_FEHLERMELDUNG".Meldung._702105_Quit_Entladen; 
+      SET   ; 
+      R     "M_WZV_Entladen_ende"; 
+      R     "M_WZV_Entladen_Abbruch"; 
+      R     "MX_TDS_MagSperre"; // Magsperre von TDS
+      R     "M_Request_TDS"; 
+      L     15; 
+      T     #EA_SKZ; 
+
+S15:  L     15; // Reset Quittiermerker
+      L     #EA_SKZ; 
+      ==I   ; 
+      SPBN  S16; 
+      U     "DB_TDS".BE_ENTLADEN_TDS_AKT; 
+      S     "M_TDS_WZ_NC_DELET"; 
+
+      L     0; 
+      T     #EA_SKZ; 
+S16:  NOP   0; 
+NETWORK
+TITLE =Positionieren zur Beladestelle
+
+S21:  L     21; 
+      L     #EA_SKZ; 
+      ==I   ; 
+      SPBN  S22; // warten auf Magazin frei
+
+      S     #A_Anf_Magazin; // M160.0
+      L     "TMLoadIF".IF[2].SLoc; 
+      L     #Offset_Belade; 
+      +I    ; 
+      T     #T_Position; 
+      L     #Laenge_Mag; 
+      L     #T_Position; 
+      >=I   ; 
+      SPB   xy3; 
+      TAK   ; 
+      -I    ; 
+xy3:  T     #A_Position; 
+      T     "MW_A_Position"; 
+      L     22; 
+      T     #EA_SKZ; 
+      SPA   S25; 
+
+S22:  L     22; // Warten auf Magazin Fertig
+      L     #EA_SKZ; 
+      ==I   ; 
+      SPBN  S24; 
+      U     #EA_Done_Magazin; // M 160.1 Magazin fertig
+      U     "M_MAG_In_Position"; // InPos
+      O     #E_TOUT; 
+      S     "M_WZV_Positionieren"; // Fertig
+      R     #A_Anf_Magazin; // M160.0
+
+      U     #EA_Done_Magazin; // M 160.1 Magazin fertig
+      U     "M_MAG_In_Position"; // InPos
+      R     #EA_Done_Magazin; // M 160.1
+
+      U     "M_WZV_Positionieren"; 
+      SPBN  EndB; 
+      L     24; 
+      T     #EA_SKZ; 
+      SPA   S25; 
+
+S24:  L     24; // Reset Quittiermerker
+      L     #EA_SKZ; 
+      ==I   ; 
+      SPBN  S25; 
+      R     "M_WZV_Positionieren"; 
+      L     0; 
+      T     #EA_SKZ; 
+S25:  NOP   0; 
+NETWORK
+TITLE =Umsetzen ohne Bewegung
+
+      L     30; 
+      L     #EA_SKZ; 
+      ==I   ; 
+      SPBN  S32; 
+      R     "m_QuRld_nomove"; 
+      L     B#16#0; 
+      T     #EA_SKZ; 
+      SPA   EndB; 
+NETWORK
+TITLE =Umsetzen mit Bewegung
+
+S32:  L     32; 
+      L     #EA_SKZ; 
+      >I    ; 
+      SPB   EndB; 
+      L     48; 
+      >I    ; 
+      SPB   EndB; 
+      TAK   ; 
+      +     -32; 
+      SPL   usmx; 
+      SPA   sr32; 
+      SPA   sr33; 
+      SPA   sr34; 
+      SPA   sr35; 
+      SPA   sr36; 
+      SPA   sr37; 
+      SPA   sr38; 
+      SPA   sr39; 
+      SPA   sr40; 
+      SPA   sr41; 
+      SPA   sr42; 
+      SPA   sr43; 
+      SPA   sr44; 
+      SPA   sr45; 
+      SPA   sr46; 
+      SPA   sr47; 
+usmx: SPA   EndB; 
+sr32: S     "m_StrtRld_move"; 
+      L     33; 
+      T     #EA_SKZ; 
+      SPA   EndB; 
+sr33: UN    "m_TmTBefSr0"; 
+      SPBN  EndB; 
+      L     34; 
+      T     #EA_SKZ; 
+      SPA   EndB; 
+sr34: U     "M_WZ_Rdy_Ablegen"; 
+      U     "DI_TM_T_BEFEHL".USortAkt; 
+      SPBN  EndB; 
+      L     35; 
+      T     #EA_SKZ; 
+      SPA   EndB; 
+sr35: U     "m_TmTBefSr0"; 
+      SPBN  EndB; 
+      R     "m_StrtRld_move"; 
+      S     "m_QuRld_move"; 
+      L     B#16#0; 
+      T     #EA_SKZ; 
+      SPA   EndB; 
+sr36: SPA   EndB; 
+sr37: SPA   EndB; 
+sr38: SPA   EndB; 
+sr39: SPA   EndB; 
+sr40: SPA   EndB; 
+sr41: SPA   EndB; 
+sr42: SPA   EndB; 
+sr43: SPA   EndB; 
+sr44: SPA   EndB; 
+sr45: SPA   EndB; 
+sr46: SPA   EndB; 
+sr47: SPA   EndB; 
+NETWORK
+TITLE =
+
+EndB: BE    ; 
+
+END_FUNCTION
+

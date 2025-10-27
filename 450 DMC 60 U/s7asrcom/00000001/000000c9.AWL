@@ -1,0 +1,266 @@
+FUNCTION "FC_KMTL_KSA4" : VOID
+TITLE =
+//$Revision: 1.6 $
+//$Date: 2008/06/04 16:04:16CEST $
+//$Author: hgc $
+
+
+VERSION : 0.1
+
+
+VAR_INPUT
+  MX_Pumpen_ein : BOOL ;	
+  MX_M7_aktiv : BOOL ;	
+  MX_M8_aktiv : BOOL ;	
+  MX_80bar_aktiv : BOOL ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =Kühlmittelanlage: 'Diagnose Grobbereich Füllstand Maximum' 0-Sig
+
+      O     "M_Reset_Taste"; 
+      O     "M_Fehler_Quit_Taste"; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700715_Grob_Kmtl_Mangel; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700716_Fein_Kmlt_Mangel; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700717_Feinst_Kmtl_Mang; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700718_Ueberl_Kmtl_Anl; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700735_Fehler_KMTL_Anl; 
+      R     "DB_FEHLERMELDUNG".Warnung._701856_Warnung_KMTL; 
+      R     "M_Fehler_Kmtl_Anlage"; 
+      R     "DB_FEHLERMELDUNG".WARNUNG2._701359_REIN_FUELL_MAX_0; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700834_KM_MSS_0Sig; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700835_KM_HebeSPf_NOTA; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700717_Feinst_Kmtl_Mang; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700904_KM_Filt_Fein_0S; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700833_KM_Foerderp_NOTA; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700834_KM_MSS_0Sig; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700914_Stoer_KMTL; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700904_KM_Filt_Fein_0S; 
+      R     "DB_FEHLERMELDUNG".SAFE_MELD._701519; 
+      R     "DB_FEHLERMELDUNG".SAFE_MELD._701518; 
+      R     "DB_FEHLERMELDUNG".SAFE_MELD._701520; 
+      R     "DB_FEHLERMELDUNG".SAFE_MELD._701522; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700932_BTB_ALLE_Pumpen; 
+
+
+      UN    "I_D_KM_MAX_NIVEAU"; 
+      =     "DB_FEHLERMELDUNG".WARNUNG2._701353_D_Grob_Fuell_Max; 
+
+      U     "I_KM_MIN_VOR_NIVEAU"; 
+      S     "DB_FEHLERMELDUNG".WARNUNG2._701338_Vorw_Min_Kmtl; 
+
+
+      UN    "I_D_KM_MIN_NIVEAU"; 
+      =     "DB_FEHLERMELDUNG".WARNUNG2._701354_D_Grob_Fuell_NOT; 
+
+      UN    "I_KM_DRUCK2_M7_ENABLE"; // symbol falsch in Schaltplan
+      U     "O_KM_PUMPE_FILTER_FEINB"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700904_KM_Filt_Fein_0S; 
+
+//SPIVH Kühlmittelanlage
+
+      U     "M_MA_Maschine_Ein"; 
+      UN    "I_KM_NEG_MSS_KSA"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700914_Stoer_KMTL; 
+
+
+
+      UN    "I_KM_BTB_PNOZ"; 
+      U(    ; 
+      U     #MX_M7_aktiv; 
+      O     #MX_M8_aktiv; 
+      )     ; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700931_PNOZ_KMTL_Anlage; 
+
+      UN    "I_KM_BTB_ALLE_PUMPEN"; 
+      U     #MX_M7_aktiv; 
+      UN    "M_PW_Aktiv"; 
+//   U     #MX_Pumpen_ein
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700932_BTB_ALLE_Pumpen; 
+
+
+
+      UN    "I_KM_NEG_KSA_MELDUNG"; 
+      =     "DB_FEHLERMELDUNG".WARNUNG2._701341_Stoerung_KMTL; 
+
+
+
+// Förderpumpe Feinstbereich ein
+      UN    "I_KM_FEINSTB_AUS"; 
+      U     "I_KM_FEINSTB_EIN"; 
+      S     "O_KM_PUMPE_FILTER_FEINB"; 
+
+// Pumpe Feinstbereich aus
+      U     "I_KM_FEINSTB_AUS"; 
+      O     "I_KM_FEINB_MIN"; 
+      O     "DB_FEHLERMELDUNG".WARNUNG3._700345_Feinst_Kmtl_max; 
+      O     "DB_FEHLERMELDUNG".SAFE_MELD._701519; 
+      O     "DB_FEHLERMELDUNG".SAFE_MELD._701518; 
+      O     "DB_FEHLERMELDUNG".SAFE_MELD._701522; 
+      R     "O_KM_PUMPE_FILTER_FEINB"; 
+
+// Notaus Feinstbereich min
+      U     "I_KM_FEINSTB_MIN"; 
+      U     #MX_80bar_aktiv; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700717_Feinst_Kmtl_Mang; 
+
+// Warnung Feinstbereich max
+//  U     "I_KM_FEINSTB_AUS"
+//   =     "DB_FEHLERMELDUNG".WARNUNG3._700345_Feinst_Kmtl_max
+
+// Diagnoseschalter Feinsbereich/Feinbereich
+      UN    "I_D_KM_FEINSTB_MIN"; 
+      =     "DB_FEHLERMELDUNG".SAFE_MELD._701520; 
+
+      UN    "I_D_KM_FEINSTB_EIN"; 
+      =     "DB_FEHLERMELDUNG".SAFE_MELD._701519; 
+
+      UN    "I_D_KM_FEINSTB_AUS"; 
+      =     "DB_FEHLERMELDUNG".SAFE_MELD._701518; 
+
+      UN    "I_D_KM_FEINB_MIN"; 
+      =     "DB_FEHLERMELDUNG".SAFE_MELD._701522; 
+
+//Kratzförderer
+      U     "M_MA_Maschine_Ein"; 
+      U     "M_Takt_1s"; 
+      SPBN  nw7b; 
+
+      L     "Z_MW_ZYkl_Kratzf."; 
+      L     1; 
+      +I    ; 
+      T     "Z_MW_ZYkl_Kratzf."; 
+nw7b: NOP   0; 
+      L     "Z_MW_ZYkl_Kratzf."; 
+      L     1800; 
+      >I    ; 
+      =     "M_Start_Kratzf"; 
+
+      U     "M_Start_Kratzf"; 
+      SPBN  nw7c; 
+      L     0; 
+      T     "Z_MW_ZYkl_Kratzf."; 
+
+nw7c: L     S5T#20S; 
+      U     "M_Start_Kratzf"; //Start bei Maschine Ein alle 30 Minuten
+      O     "I_KM_KRATZER_EIN"; 
+      SA    "T_Kratzfoerderer"; 
+
+      O     "T_Kratzfoerderer"; 
+      =     "O_KM_Motor_Kratzfoerd"; 
+
+      U     "M_MA_Maschine_Ein"; 
+      SPB   K003; 
+      L     0; 
+      T     "Z_MW_ZYkl_Kratzf."; 
+
+// Überwachung Grobbereich
+K003: U     "I_KM_MIN_NIVEAU"; 
+      U(    ; 
+      U     #MX_M7_aktiv; 
+      O     #MX_M8_aktiv; 
+      )     ; 
+      S     "M_Fehler_Kmtl_Anlage"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700715_Grob_Kmtl_Mangel; 
+//---- Überwachung Kühlmittelmange im Reintank und Grob
+
+
+// Vorwarnung Min Grob/Reintank  Min
+      L     S5T#5S; 
+      U     "I_KM_KRATZER_EIN"; 
+      O     "I_KM_MIN_NIVEAU"; 
+      SE    "TV_Vorwarnung_KMTL"; 
+
+      U     "TV_Vorwarnung_KMTL"; 
+      SPBN  VORW; 
+      U     "I_KM_MIN_NIVEAU"; 
+      S     "DB_FEHLERMELDUNG".WARNUNG3._700346_Grob_Kmtl_min; 
+      NOT   ; 
+      S     "DB_FEHLERMELDUNG".WARNUNG2._701338_Vorw_Min_Kmtl; 
+
+VORW: NOP   0; 
+
+// Vorwarnung Min Grob/Reintank  Max
+      L     S5T#10S; 
+      UN    "I_KM_KRATZER_EIN"; 
+      U     "I_KM_FEINB_MIN"; 
+      O     "I_KM_MAX_NIVEAU"; 
+      SE    "Te_Rein_Fuell_Max"; 
+
+      U     "Te_Rein_Fuell_Max"; 
+      SPBN  MAX; 
+
+      U     "I_KM_MAX_NIVEAU"; 
+      S     "DB_FEHLERMELDUNG".WARNUNG3._700347_Grob_Kmtl_max; 
+//     NOT   
+//    S     "DB_FEHLERMELDUNG".WARNUNG2._701359_REIN_FUELL_MAX_0
+
+//----------------------------------------------------------------
+MAX:  UN    "I_KM_MIN_NIVEAU"; 
+      R     "DB_FEHLERMELDUNG".WARNUNG3._700346_Grob_Kmtl_min; 
+      UN    "I_KM_MAX_NIVEAU"; 
+      R     "DB_FEHLERMELDUNG".WARNUNG3._700347_Grob_Kmtl_max; 
+      U     "I_KM_KRATZER_EIN"; 
+      U     "I_KM_FEINB_MIN"; 
+      R     "DB_FEHLERMELDUNG".WARNUNG2._701359_REIN_FUELL_MAX_0; 
+      R     "DB_FEHLERMELDUNG".WARNUNG2._701338_Vorw_Min_Kmtl; 
+//----------------------------------------------------------------
+
+      U     "I_KM_FEINB_MIN"; 
+      U     #MX_M7_aktiv; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700716_Fein_Kmlt_Mangel; 
+      S     "M_Fehler_Kmtl_Anlage"; 
+// Überlauf Überwachung KSA4 
+
+// Späneförderer
+      ON    "I_D_SF_NEG_PUMPE_EIN"; 
+      ON    "I_D_SF_NEG_PUMPE_AUS"; 
+      ON    "I_D_SF_NEG_UEBERLAUF"; 
+      S     "M_Fehler_Kmtl_Anlage"; 
+
+      UN    "I_D_SF_NEG_PUMPE_EIN"; 
+      =     "DB_FEHLERMELDUNG".WARNUNG2._701335_D_HebePumpe_Ein; 
+      UN    "I_D_SF_NEG_PUMPE_AUS"; 
+      =     "DB_FEHLERMELDUNG".WARNUNG2._701336_D_HebePumpe_Aus; 
+      UN    "I_D_SF_NEG_UEBERLAUF"; 
+      =     "DB_FEHLERMELDUNG".WARNUNG3._700341_D_SF_NEG_UEBER; 
+
+      U     "I_SF_PUMPE_EIN"; 
+      UN    "I_SF_PUMPE_AUS"; 
+      S     "O_SF_PUMPE_EIN"; 
+
+      O     "I_SF_PUMPE_AUS"; 
+      R     "O_SF_PUMPE_EIN"; 
+
+
+
+      L     8192; // Zeitbasis 1s laden
+      L     "DB_PLC_MD_DB20".UDInt._160_KMTL_ABPUMP_ZEIT; // MD in BCD wandeln und mit Zeitbasis
+      ITB   ; // verodern
+      OW    ; 
+
+      U     "I_SF_PUMPE_EIN"; 
+      SV    "Te_Kmtl_Ueberlauf"; 
+
+      UN    "Te_Kmtl_Ueberlauf"; 
+      U     "I_SF_PUMPE_EIN"; 
+//     U     "I_SF_NEG_UEBERLAUF"
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700718_Ueberl_Kmtl_Anl; 
+      S     "M_Fehler_Kmtl_Anlage"; 
+
+
+      U     "I_SF_UEBERLAUF"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700735_Fehler_KMTL_Anl; 
+      S     "M_Fehler_Kmtl_Anlage"; 
+
+// MSS KMTL_Anlage
+
+      UN    "I_KM_NEG_MSS_SSA"; 
+      S     "M_Fehler_Kmtl_Anlage"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700834_KM_MSS_0Sig; 
+
+
+      U     "M_KSS_TEMP_ZU_HOCH"; 
+      =     "DB_FEHLERMELDUNG".WARNUNG3._700428_KSS_TEMP_ZU_HOCH; 
+END_FUNCTION
+

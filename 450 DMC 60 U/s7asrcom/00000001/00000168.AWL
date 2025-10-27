@@ -1,0 +1,31 @@
+DATA_BLOCK "DI_SMARTKEY_COM"
+TITLE =
+{ S7_language := '7(1) Deutsch (Deutschland)  29.01.2008  09:24:10' }
+VERSION : 0.0
+
+"FB_SMARTKEY_COM"
+BEGIN
+   EX_Enable := FALSE; 
+   EX_Init := FALSE; 
+   EX_Reset := FALSE; 
+   EX_MaschineEin := FALSE; 
+   EX_TagRemoved := FALSE; 
+   EX_GEN_OM_ID_SYNC := FALSE; 
+   EX_GEN_OM_ID_CLOCK := FALSE; 
+   EX_GEN_OM_ID_DATA_0 := FALSE; 
+   EX_GEN_OM_ID_DATA_1 := FALSE; 
+   EB_Number_Attempt := B#16#0; 
+   EADW_Receive_Data := DW#16#0; 
+   EAX_GEN_OM_ID_DATA_0 := FALSE; 
+   EAX_GEN_OM_ID_DATA_1 := FALSE; 
+   EAX_Error_Max_Attempt := FALSE; 
+   EAX_Comm_Ready := FALSE; 
+   SW_Schrittkette := W#16#0; 
+   SW_Receive_Data_0 := W#16#0; 
+   SW_Receive_Data_1 := W#16#0; 
+   SB_Data_Counter := B#16#0; 
+   SB_Attempt_Counter := B#16#0; 
+   SX_FP_Tag_Removed := FALSE; 
+   SX_Tag_Removed := FALSE; 
+END_DATA_BLOCK
+

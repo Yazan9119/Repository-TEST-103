@@ -1,0 +1,554 @@
+FUNCTION "FC_WZB_Lesen" : VOID
+TITLE =
+//$Revision: 1.13 $
+//$Date: 2008/09/03 08:02:16CEST $
+//$Author: schmoelp $
+//
+VERSION : 0.1
+
+
+VAR_TEMP
+  TW_Bit4_7 : WORD ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =WZB: Anforderung Lesen
+//;WB770: Fehlercode = Messwert(8192) + Code
+//; Code:128 Letzter Messwert wurde nicht vollständig ausgelesen
+//;       64 Messtaster hat Parkzone nicht erreicht
+//;       32 Messwert zu hoch,->Falschmessung
+//;       16 Motorkreis hat Unterbrechung oder Kurzschluss
+//;        8 Timeoutfehler,Mechanik schwerg"ngig,blockiert,etc
+//;        4 "Ende Messbereich" hat falsches Signal
+//;        2 Werkzeugtaster hat falsches Signal
+//;        1 Parkzone hat falsches Signal
+//;
+//
+      U     "M_Reset_WZW"; 
+      U(    ; 
+      O     "DB_FEHLERMELDUNG".VSP_Halt_Satzwechsel._701201_WZB_EXT_GERAET; 
+      O     "O_WZB_Messung_Start"; 
+      )     ; 
+      O(    ; 
+      U     "DB_OEM".OEM_WZW_REttbildaktiv; 
+      O     "DB_OEM".OEM_WZW2_Rettbildaktiv; 
+      U     "M_Handbetrieb"; // "DB_SIEM_BAG".E_JOG
+      )     ; 
+      SPBN  ST01; 
+
+      SET   ; 
+      R     "MX_WZB_Anf_Lesen"; 
+      R     "MX_WZB_Fertig_Lesen"; 
+      R     "O_WZB_Messung_Start"; 
+      R     "DB_FEHLERMELDUNG".Warnung._701863_WZB_FR_MW_0SIG; 
+
+      L     0; 
+      T     "MB_SKZ_WZB_Lesen"; 
+
+NETWORK
+TITLE =Werkzeugbruchüberwachung Freigabe
+//
+//-
+// -- Schritt 0 ----------------------------------------------------------------
+//
+ST01: L     "MB_SKZ_WZB_Lesen"; // Schritt 0 ?
+      L     0; 
+      ==I   ; 
+      SPBN  SK01; // Nein => Schritt 1
+
+// UN    "M_BruchinParkstellung"
+// setze fehler
+
+// -----------------------------------------------------------------------------
+
+      SET   ; 
+      R     "O_WZB_Messung_Start"; 
+
+// -----------------------------------------------------------------------------
+
+      U     "M_MA_Maschine_Ein"; // ohne Steuerspannung gehts nicht weiter
+      SPBN  MEND; 
+
+      U     "MX_WZB_Anf_Lesen"; 
+      O     "DB_ANWENDER_SOFTKEY".Werkzeugbruch._start_messen; 
+      SPBN  MEND; 
+
+      L     1; 
+      T     "MB_SKZ_WZB_Lesen"; 
+      CLR   ; 
+      SV    "T_WZB"; 
+      SET   ; 
+      L     S5T#10S; 
+      SV    "T_WZB"; 
+      SPA   MEND; 
+
+// -- Schritt 1 ----------------------------------------------------------------
+
+SK01: L     "MB_SKZ_WZB_Lesen"; // Schritt 1 ?
+      L     1; 
+      ==I   ; 
+      SPBN  SK30; // Nein => Schritt 2
+
+// -----------------------------------------------------------------------------
+      SET   ; 
+      L     8192; 
+      L     "DB_PLC_MD_DB20".UDInt._174_WZB_Abblaszeit; 
+      ITB   ; 
+      OW    ; 
+      SV    "TV_WZB_Abblastimer"; 
+      CLR   ; 
+      SV    "TV_WZB_Abblastimer"; 
+
+      L     30; 
+      T     "MB_SKZ_WZB_Lesen"; 
+      SPA   MEND; 
+
+
+SK30: L     "MB_SKZ_WZB_Lesen"; 
+      L     30; 
+      ==I   ; 
+      SPBN  SK02; 
+
+
+      U     "TV_WZB_Abblastimer"; 
+      =     "O_WZB_Abblasen"; // Zwei unterschiedliche Symbole
+      =     "O_WZB_WB2_REINIGEN"; // für die gleiche Funktion
+
+      U     "O_WZB_Abblasen"; 
+      O     "O_WZB_WB2_REINIGEN"; 
+      SPB   SK02; 
+
+      SET   ; 
+      S     "O_WZB_Messung_Start"; 
+
+// -----------------------------------------------------------------------------
+
+      UN    "M_MA_Maschine_Ein"; // im NotAus Fall Timer neu starten
+      SPB   MAUS; 
+
+      UN    "T_WZB"; 
+      SPBN  E011; 
+      L     11; 
+      T     "MB_SKZ_WZB_Lesen"; 
+      SET   ; 
+      S     "DB_FEHLERMELDUNG".Warnung._701863_WZB_FR_MW_0SIG; 
+      R     "O_WZB_Messung_Start"; 
+      SPA   MEND; 
+
+E011: U     "I_WZB_Messung_Ende"; 
+      SPBN  MEND; 
+      R     "O_WZB_Messung_Start"; 
+
+      L     0; 
+      T     "DI_WZ_BRUCH".SW_WZ_LAENGE; 
+
+      U     "I_WZB_Bit_3"; 
+      SPBN  E013; 
+      L     1; 
+E013: SLW   1; 
+      T     "DI_WZ_BRUCH".SW_WZ_LAENGE; 
+
+      U     "I_WZB_Bit_2"; 
+      SPBN  E015; 
+      L     1; 
+      +I    ; 
+E015: SLW   1; 
+      T     "DI_WZ_BRUCH".SW_WZ_LAENGE; 
+
+      U     "I_WZB_Bit_1"; 
+      SPBN  E017; 
+      L     1; 
+      +I    ; 
+E017: SLW   1; 
+      T     "DI_WZ_BRUCH".SW_WZ_LAENGE; 
+
+      U     "I_WZB_Bit_0"; 
+      SPBN  E019; 
+      L     1; 
+      +I    ; 
+      T     "DI_WZ_BRUCH".SW_WZ_LAENGE; 
+
+E019: L     2; 
+      T     "MB_SKZ_WZB_Lesen"; 
+      L     S5T#200MS; 
+      CLR   ; 
+      SV    "T_WZB"; 
+      SET   ; 
+      SV    "T_WZB"; 
+
+      SPA   MEND; 
+
+// -- Schritt 2 ----------------------------------------------------------------
+
+SK02: L     "MB_SKZ_WZB_Lesen"; // Schritt 2 ?
+      L     2; 
+      ==I   ; 
+      SPBN  SK03; // Nein => Schritt 3
+
+// -----------------------------------------------------------------------------
+
+
+// -----------------------------------------------------------------------------
+
+      U     "T_WZB"; 
+      SPB   MEND; 
+
+      L     S5T#15S; 
+      CLR   ; 
+      SV    "T_WZB"; 
+      SET   ; 
+      SV    "T_WZB"; 
+
+      L     3; 
+      T     "MB_SKZ_WZB_Lesen"; 
+
+// -- Schritt 3 ----------------------------------------------------------------
+
+SK03: L     "MB_SKZ_WZB_Lesen"; // Schritt 3 ?
+      L     3; 
+      ==I   ; 
+      SPBN  SK04; // Nein => Schritt 4
+
+// -----------------------------------------------------------------------------
+
+      SET   ; 
+      =     "O_WZB_Messung_Start"; 
+
+// -----------------------------------------------------------------------------
+
+      UN    "M_MA_Maschine_Ein"; // im NotAus Fall Timer neu starten
+      SPB   MAUS; 
+
+      UN    "T_WZB"; 
+      SPBN  E031; 
+      L     11; 
+      T     "MB_SKZ_WZB_Lesen"; 
+      SET   ; 
+      S     "DB_FEHLERMELDUNG".Warnung._701863_WZB_FR_MW_0SIG; 
+      R     "O_WZB_Messung_Start"; 
+      SPA   MEND; 
+
+E031: U     "I_WZB_Messung_Ende"; 
+      SPBN  MEND; 
+      R     "O_WZB_Messung_Start"; 
+
+      L     0; 
+      T     #TW_Bit4_7; 
+
+      U     "I_WZB_Bit_3"; 
+      SPBN  E033; 
+      L     1; 
+      +I    ; 
+E033: SLW   1; 
+      T     #TW_Bit4_7; 
+
+      U     "I_WZB_Bit_2"; 
+      SPBN  E035; 
+      L     1; 
+      +I    ; 
+E035: SLW   1; 
+      T     #TW_Bit4_7; 
+
+      U     "I_WZB_Bit_1"; 
+      SPBN  E037; 
+      L     1; 
+      +I    ; 
+E037: SLW   1; 
+      T     #TW_Bit4_7; 
+
+      U     "I_WZB_Bit_0"; 
+      SPBN  E039; 
+      L     1; 
+      +I    ; 
+      T     #TW_Bit4_7; 
+
+E039: SLW   4; 
+      T     #TW_Bit4_7; 
+      L     "DI_WZ_BRUCH".SW_WZ_LAENGE; 
+      OW    ; 
+      T     "DI_WZ_BRUCH".SW_WZ_LAENGE; 
+
+      L     4; 
+      T     "MB_SKZ_WZB_Lesen"; 
+
+      L     S5T#200MS; 
+      CLR   ; 
+      SV    "T_WZB"; 
+      SET   ; 
+      SV    "T_WZB"; 
+
+      SPA   MEND; 
+
+// -- Schritt 4 ----------------------------------------------------------------
+
+SK04: L     "MB_SKZ_WZB_Lesen"; // Schritt 4 ?
+      L     4; 
+      ==I   ; 
+      SPBN  SK05; // Nein => Schritt 5
+
+// -----------------------------------------------------------------------------
+
+
+// -----------------------------------------------------------------------------
+
+      U     "T_WZB"; 
+      SPB   MEND; 
+
+      L     S5T#15S; 
+      CLR   ; 
+      SV    "T_WZB"; 
+      SET   ; 
+      SV    "T_WZB"; 
+
+      L     5; 
+      T     "MB_SKZ_WZB_Lesen"; 
+
+// -- Schritt 5 ----------------------------------------------------------------
+
+SK05: L     "MB_SKZ_WZB_Lesen"; // Schritt 5 ?
+      L     5; 
+      ==I   ; 
+      SPBN  SK06; // Nein => Schritt 6
+
+// -----------------------------------------------------------------------------
+
+      SET   ; 
+      =     "O_WZB_Messung_Start"; 
+
+// -----------------------------------------------------------------------------
+
+      UN    "M_MA_Maschine_Ein"; // im NotAus Fall Timer neu starten
+      SPB   MAUS; 
+
+      UN    "T_WZB"; 
+      SPBN  E051; 
+      L     11; 
+      T     "MB_SKZ_WZB_Lesen"; 
+      SET   ; 
+      S     "DB_FEHLERMELDUNG".Warnung._701863_WZB_FR_MW_0SIG; 
+      R     "O_WZB_Messung_Start"; 
+      SPA   MEND; 
+
+E051: U     "I_WZB_Messung_Ende"; 
+      SPBN  MEND; 
+      R     "O_WZB_Messung_Start"; 
+
+      L     0; 
+      T     #TW_Bit4_7; 
+
+      U     "I_WZB_Bit_3"; 
+      SPBN  E053; 
+      L     1; 
+      +I    ; 
+E053: SLW   1; 
+      T     #TW_Bit4_7; 
+
+      U     "I_WZB_Bit_2"; 
+      SPBN  E055; 
+      L     1; 
+      +I    ; 
+E055: SLW   1; 
+      T     #TW_Bit4_7; 
+
+      U     "I_WZB_Bit_1"; 
+      SPBN  E057; 
+      L     1; 
+      +I    ; 
+E057: SLW   1; 
+      T     #TW_Bit4_7; 
+
+      U     "I_WZB_Bit_0"; 
+      SPBN  E059; 
+      L     1; 
+      +I    ; 
+      T     #TW_Bit4_7; 
+
+E059: SLW   8; 
+      T     #TW_Bit4_7; 
+      L     "DI_WZ_BRUCH".SW_WZ_LAENGE; 
+      OW    ; 
+      T     "DI_WZ_BRUCH".SW_WZ_LAENGE; 
+
+      L     6; 
+      T     "MB_SKZ_WZB_Lesen"; 
+
+      L     S5T#200MS; 
+      CLR   ; 
+      SV    "T_WZB"; 
+      SET   ; 
+      SV    "T_WZB"; 
+
+      SPA   MEND; 
+
+// -- Schritt 6 ----------------------------------------------------------------
+
+SK06: L     "MB_SKZ_WZB_Lesen"; // Schritt 6 ?
+      L     6; 
+      ==I   ; 
+      SPBN  SK07; // Nein => Schritt 7
+
+// -----------------------------------------------------------------------------
+
+
+// -----------------------------------------------------------------------------
+
+      U     "T_WZB"; 
+      SPB   MEND; 
+
+      L     S5T#15S; 
+      CLR   ; 
+      SV    "T_WZB"; 
+      SET   ; 
+      SV    "T_WZB"; 
+
+      L     7; 
+      T     "MB_SKZ_WZB_Lesen"; 
+
+// -- Schritt 7 ----------------------------------------------------------------
+
+SK07: L     "MB_SKZ_WZB_Lesen"; // Schritt 7 ?
+      L     7; 
+      ==I   ; 
+      SPBN  SK10; // Nein => Schritt 10
+
+// -----------------------------------------------------------------------------
+
+      SET   ; 
+      =     "O_WZB_Messung_Start"; 
+
+// -----------------------------------------------------------------------------
+
+      UN    "M_MA_Maschine_Ein"; // im NotAus Fall Timer neu starten
+      SPB   MAUS; 
+
+      UN    "T_WZB"; 
+      SPBN  E071; 
+      L     11; 
+      T     "MB_SKZ_WZB_Lesen"; 
+      SET   ; 
+      S     "DB_FEHLERMELDUNG".Warnung._701863_WZB_FR_MW_0SIG; 
+      R     "O_WZB_Messung_Start"; 
+      SPA   MEND; 
+
+E071: U     "I_WZB_Messung_Ende"; 
+      SPBN  MEND; 
+      R     "O_WZB_Messung_Start"; 
+
+      L     0; 
+      T     #TW_Bit4_7; 
+
+      U     "I_WZB_Bit_3"; 
+      SPBN  E073; 
+      L     1; 
+      +I    ; 
+E073: SLW   1; 
+      T     #TW_Bit4_7; 
+
+      U     "I_WZB_Bit_2"; 
+      SPBN  E075; 
+      L     1; 
+      +I    ; 
+E075: SLW   1; 
+      T     #TW_Bit4_7; 
+
+      U     "I_WZB_Bit_1"; 
+      SPBN  E077; 
+      L     1; 
+      +I    ; 
+E077: SLW   1; 
+      T     #TW_Bit4_7; 
+
+      U     "I_WZB_Bit_0"; 
+      SPBN  E079; 
+      L     1; 
+      +I    ; 
+      T     #TW_Bit4_7; 
+
+E079: SLW   12; 
+      T     #TW_Bit4_7; 
+      L     "DI_WZ_BRUCH".SW_WZ_LAENGE; 
+      OW    ; 
+      T     "DI_WZ_BRUCH".SW_WZ_LAENGE; 
+
+      L     10; 
+      T     "MB_SKZ_WZB_Lesen"; 
+
+
+
+// -- Schritt 10 ----------------------------------------------------------------
+
+SK10: L     "MB_SKZ_WZB_Lesen"; // Schritt 10 ?
+      L     10; 
+      ==I   ; 
+      SPBN  SK11; // Nein => Schritt 11
+
+// -----------------------------------------------------------------------------
+
+      U     "MX_WZB_Anf_Lesen"; 
+      S     "MX_WZB_Fertig_Lesen"; 
+      R     "MX_WZB_Anf_Lesen"; 
+      U     "DB_ANWENDER_SOFTKEY".Werkzeugbruch._start_messen; 
+      R     "DB_ANWENDER_SOFTKEY".Werkzeugbruch._start_messen; 
+
+      L     0; 
+      T     "MB_SKZ_WZB_Lesen"; 
+      SPA   MEND; 
+
+// -- Schritt 11 ----------------------------------------------------------------
+
+SK11: L     "MB_SKZ_WZB_Lesen"; // Schritt 11 ?
+      L     11; 
+      ==I   ; 
+      SPBN  MEND; // Nein => Ende
+
+// -----------------------------------------------------------------------------
+
+
+// -----------------------------------------------------------------------------
+
+      U     "M_Ruecksetze_Fehler"; 
+      SPBN  MEND; 
+
+      SET   ; 
+      R     "DB_FEHLERMELDUNG".Warnung._701863_WZB_FR_MW_0SIG; 
+
+      L     1; 
+      T     "MB_SKZ_WZB_Lesen"; 
+      CLR   ; 
+      SV    "T_WZB"; 
+      SET   ; 
+      L     S5T#5S; 
+      SV    "T_WZB"; 
+
+MAUS: L     1; 
+      T     "MB_SKZ_WZB_Lesen"; 
+      CLR   ; 
+      =     "O_WZB_Messung_Start"; 
+      SV    "T_WZB"; 
+      SET   ; 
+      L     S5T#5S; 
+      SV    "T_WZB"; 
+
+MEND: NOP   0; 
+
+      U     "MX_WZB_Anf_Lesen"; 
+      FN    "M_FN_WZB_Anf_Lesen"; 
+      =     "M_IMP_WZB_Messung"; 
+
+      U     "M_WZB_Messung"; 
+      SPBN  te01; 
+      L     2; 
+      T     "MW_Mess_Nr"; 
+      SPA   te02; 
+te01: L     1; 
+      T     "MW_Mess_Nr"; 
+
+te02: CALL "FC_WZB_TEST" (
+           Enable                   := TRUE,
+           Messung_Start            := "M_IMP_WZB_Messung",
+           Greifer1_Pos_Mag         := "M_WZW_Gre1_Pos_Mag",
+           Greifer2_Pos_Mag         := "M_WZW_Gre1_Pos_Spi",
+           Messung_Nr               := "MW_Mess_Nr");
+
+END_FUNCTION
+

@@ -1,0 +1,212 @@
+FUNCTION_BLOCK "FB_TEMP_KTY_TRANSMIT"
+TITLE =
+//$Revision: 1.6.1.1 $
+//$Date: 2008/01/14 10:05:50CET $
+//$Author: sth $
+
+//
+//Auslesen der Temperaturdaten und Umrechnung
+//Eingänge Transmitter: TXD -> E36.7
+//Ausgänge Transmitter: DSR -> A40.5    CTS -> A40.6 
+//ha 01.09.99 
+AUTHOR : Hase
+FAMILY : DMG
+NAME : TempK
+VERSION : 0.2
+
+
+VAR_INPUT
+  E_TimerCPU : BOOL ;	
+  E_TempTransmitter_TXD : BOOL ;	
+  E_Transmitter_ok : BOOL  := TRUE;	
+  E_SpindleTemperaturTimer : TIMER ;	
+END_VAR
+VAR_OUTPUT
+  A_TempTransmitter_DSR : BOOL ;	
+  A_TempTransmitter_CTS : BOOL ;	
+  A_Fehler : BOOL ;	
+END_VAR
+VAR
+  run : BOOL ;	//Takt RUN
+  run_PF : BOOL ;	//pos. Flanke Takt RUN
+  CTS_NF : BOOL ;	//neg. Flanke Signal CTS
+  value_OK : BOOL ;	//Wertübernahme
+  start_mw : BOOL ;	//Startbit Mittelwertbildung
+  first_try : BOOL ;	//erster Eintrag nach Transmitter ok
+  count : BYTE ;	//Zähler
+  count1 : WORD ;	//Zähler Mittelwertbildung
+  messw_0 : WORD ;	//Wertspeicher ohne Wandlung 
+  messw_grd : REAL ;	//Temperatur in °C aktuell nach Wandlung
+  mwert : REAL ;	//Mittelwert Temperatur in °C
+  messw : ARRAY  [0 .. 30 ] OF REAL ;	
+  gradient : REAL ;	//max.akz.Temperatursprung
+END_VAR
+BEGIN
+NETWORK
+TITLE =Temperaturdaten lesen und speichern
+
+      U     #E_Transmitter_ok; 
+      SPB   xx1; 
+      L     0; 
+      T     #count; 
+      T     #messw_0; 
+xx1:  U     #E_TimerCPU; //Takt 1 Sekunde
+      FP    #run; 
+      =     #run_PF; 
+      SPB   inc1; 
+
+      SPA   end; 
+inc1: NOP   0; 
+      L     #count; //Beispiel: Zähler durch INC
+      INC   1; //eines MB
+      T     #count; //Ablaufzähler
+      L     15; //Zählerendstand
+      ==I   ; 
+      SPB   set1; 
+      SPA   end; 
+set1: NOP   0; 
+      L     0; //Rücksetzen Zählwert
+      T     #count; //Ablaufzähler
+end:  NOP   0; 
+NETWORK
+TITLE =Startsignal (DSR)
+//DSR 100ms auf Null entspricht Startsignal
+      L     1; //Bei Zählerstand 1 wird DSR
+      L     #count; //100ms auf 0 gesetzt
+      ==I   ; 
+      L     S5T#100MS; //DSR 100ms muß 100 auf "0" 
+      SI    #E_SpindleTemperaturTimer; //T     59; 
+      UN    #E_SpindleTemperaturTimer; //T     59; 
+      =     #A_TempTransmitter_DSR; //DSR
+      U     #E_SpindleTemperaturTimer; //T     59; 
+      R     #value_OK; 
+NETWORK
+TITLE =Ausgabe Lesesignal (CTS)
+//Bei jeder neg. Flanke von CTS werden die Daten gelesen (TXD)
+      L     3; //Ab Zählerstand 3 werden die Daten gelesen
+      L     #count; //8 - Takte 
+      <=I   ; 
+      SPB   txd; 
+      SPA   end2; 
+txd:  NOP   0; //Ende der 8 - Takte
+      L     11; 
+      L     #count; //Ablaufzähler
+      <=I   ; 
+      SPB   end2; 
+      U     #run; //Ablauftakt
+      =     #A_TempTransmitter_CTS; //CTS setzen
+end2: NOP   0; 
+      U     #A_TempTransmitter_CTS; //CTS aktiv
+      U     #A_TempTransmitter_DSR; //DSR nicht aktiv
+      FN    #CTS_NF; 
+      SPB   load; 
+      SPA   end3; 
+load: NOP   0; 
+      L     W#16#1; //Akku Bit 0 laden
+      U     #E_TempTransmitter_TXD; //E     34.7; //Einlesen des Zustandes
+      SPB   akk; 
+      L     0; //Akku Null setzen
+akk:  L     #messw_0; //Wertspeicher ohne Wandlung 
+      OW    ; 
+      SLW   1; 
+      T     #messw_0; //Wertspeicher ohne Wandlung 
+      SPA   end5; 
+
+end3: NOP   0; 
+      U     #value_OK; 
+      SPB   end4; 
+      L     #count; //Ablaufzähler
+      L     12; 
+      ==I   ; 
+      SPB   grd; 
+      SPA   end4; 
+
+NETWORK
+TITLE =Umwandlung Messwert in Grad
+//geändert: 05.12.01 AB
+//
+//Berechnung:  Wert 0   --> 15 Grad
+//             Wert 255 --> 79 Grad
+//
+//Auflösung 0,25 Grad
+//
+//Messwert = (Rohwert * 2,5) + 15 Grad
+// 
+grd:  NOP   0; 
+      SET   ; 
+      =     #value_OK; //Wert übernehmen
+
+      L     #messw_0; //Wertspeicher ohne Wandlung 
+      SRW   1; 
+      L     25; // Wertebereich 0..255 --> 15 Grad bis 79 Grad 256 * 0,25 Grad
+      *I    ; 
+      L     10; 
+      /I    ; 
+      L     150; //plus Temperaturoffset von 15°C
+      +I    ; 
+      DTR   ; //Umwandeln Ganzzahl in Real
+      L     1.000000e+001; 
+      /R    ; //Division durch 4 entsprechend der Transferrate
+      T     #messw_grd; //Temperatur in °C aktuell nach Wandlung
+      L     0; 
+      T     #messw_0; //Löschen der Zwischenspeicher 
+
+end4: NOP   0; 
+NETWORK
+TITLE =Temperaturwerte abspeichern 
+
+      SET   ; 
+      =     #start_mw; //Start-Bit für Beginn der Mittelwertbildung
+      L     13; //Ablaufzähler 
+      L     #count; //Wert ist O.K. und wird gespeichert
+      ==I   ; 
+      SPB   lo_1; 
+      SPA   end5; 
+lo_1: NOP   0; 
+      LAR1  P##messw; //1.Feldvariable 
+      SLW   3; //Pointerformat
+      L     #messw_grd; //Messwert in °C laden
+      T     D [AR1,P#0.0]; //auf 1.Feldvariable laden 
+
+      LAR1  P##messw; //1.Feldvariable
+      L     #count1; //Anzahl gelesene Feldvariable
+      SLW   3; //Pointerformat
+      +AR1  ; 
+      L     D [AR1,P#0.0]; 
+      T     D [AR1,P#4.0]; //Abspeichern aktueller Messwert
+
+      L     #count1; //Zähler wird rückwärts auf 0 gezählt 
+      L     4; // Format: REAL --> Datenabstand 4 Byte
+      -I    ; // DEC 4 Byte
+      L     0; 
+      TAK   ; 
+      <=I   ; 
+      SPB   c1; 
+      L     72; // (72+4+4)/4 = 20 Messwerte Reset Zähler
+c1:   T     #count1; // neuer Zählerstand
+
+end5: NOP   0; 
+
+NETWORK
+TITLE =Mittelwertbildung Messwerte
+//geändert: 05.12.01 AB
+//  --> Mittelwert der letzten 4 Werte nach Absprache mit Hr. Maisch
+      L     #count1; 
+      L     0; 
+      ==I   ; //Zähler = 0 ?
+      SPBN  MM1; 
+      L     #messw[0]; //Mittelwertbildung Messwert 10..19 /10
+      +R    ; 
+      L     #messw[1]; 
+      +R    ; 
+      L     #messw[2]; 
+      +R    ; 
+      L     #messw[3]; 
+      +R    ; 
+      L     4.000000e+000; //10.0 
+      /R    ; 
+      T     #mwert; //Ergebnis Mittelwert
+MM1:  NOP   0; 
+
+END_FUNCTION_BLOCK
+

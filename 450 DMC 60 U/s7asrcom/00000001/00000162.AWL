@@ -1,0 +1,677 @@
+FUNCTION_BLOCK "FB_GE_SPEZIFIKATION"
+TITLE =
+//$Revision: 1.5 $
+//$Date: 2007/12/20 11:55:04CET $
+//$Author: kee $
+//
+//General Electric Spezifikation GE P11T12
+//Baustein für Spezifikation GE P11T12 (mit OMATIVE ACM ab Version 2.0.6):
+//
+//Anwahl INT39==4 --> Standard GE P11TF12 mit Omative ACM
+//                    Funktion nur nach Installation von OMATIVE ACM Standard
+//                    ab Version 2.0.5
+//
+//Anwahl INT39==5 --> Erweiterte GE P11TF12 mit Omative ACM für Volvo
+//                --> Advanced Hole Making
+//                    Funktion nur nach Installation von OMATIVE ACM Custom Volvo
+//                    ab Version 2.2.4
+{ S7_language := '7(1) Deutsch (Deutschland)  26.03.2008  08:00:15' }
+VERSION : 0.1
+
+
+VAR_INPUT
+  ACM_ONLINE : BOOL ;	
+  ACM_ALARM : BOOL ;	
+  ACM_CONTROL : BOOL ;	
+  ACM_INMATERIAL : BOOL ;	
+  ACM_OVERLOAD : BOOL ;	
+  ACM_TOOLWORN : BOOL ;	
+  ACM_OPERATION : BOOL ;	
+  ACM_SPINDLE_ON : BOOL ;	
+  ACM_RESERVED_1 : BYTE ;	
+  ACM_RESERVED_2_0 : BOOL ;	
+  ACM_RESERVED_2_1 : BOOL ;	
+  ACM_ALARM_T_OVERLOAD_LBM : BOOL ;	
+  ACM_ALARM_T_OVERLOAD_MLM : BOOL ;	
+  ACM_ALARM_T_OVERLOAD_FCM : BOOL ;	
+  ACM_ALARM_T_BROKEN : BOOL ;	
+  ACM_ALARM_T_WORN : BOOL ;	
+  ACM_ALARM_SPI_T_OVERLOAD : BOOL ;	
+  ACM_ALARM_NR : BYTE ;	
+  ACM_RESET_ACKNOWLEDGE : BOOL ;	
+  ACM_RESERVED_5 : BYTE ;	
+  ACM_RESERVED_6 : INT ;	
+END_VAR
+VAR_OUTPUT
+  PLC_ACM_SPINDLE_LOAD : INT ;	
+  PLC_ACM_FLOWSENSOR_VALUE : INT ;	
+  PLC_ACM_ACKNOWLEDGE_SIGN : BOOL ;	
+  PLC_ACM_ACM_OFF_BIT : BOOL ;	
+  PLC_ACM_EXT_FLOWSEN_FLAG : BOOL ;	
+  PLC_ACM_RESERVED_6 : INT ;	
+  PLC_ACM_SPINDLE_SPEED : INT ;	
+  PLC_ACM_RESERVED_10 : INT ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =Anwahl von GE-Spezifikation P11T12 mit OMATIVE ACM
+
+      L     "DB_PLC_MD_DB20".UDInt._039_ANWAHL_DREHMOMENT; 
+      L     4; 
+      <I    ; 
+      SPB   OMEN; 
+
+      L     "DB_PLC_MD_DB20".UDInt._039_ANWAHL_DREHMOMENT; 
+      L     5; 
+      ==I   ; 
+      SPB   VOLV; 
+
+NETWORK
+TITLE =GE P11T12 Standard: Anwahl Spindellastüberwachung
+
+      U     "DB_DM_M_FUNKTION".MX_IM[130]; 
+      S     "M_GE_Spindellast_aktiv"; 
+      R     "DB_DM_M_FUNKTION".MX_IM[130]; 
+
+      U     "M_Reset_Taste"; 
+      O     "DB_DM_M_FUNKTION".MX_IM[131]; 
+      R     "DB_DM_M_FUNKTION".MX_IM[130]; 
+      R     "DB_DM_M_FUNKTION".MX_IM[131]; 
+      R     "M_GE_Spindellast_aktiv"; 
+
+NETWORK
+TITLE =GE P11T12 Standard: Anwahl Spindeldrehzahlüberwachung 
+
+      U     "DB_DM_M_FUNKTION".MX_IM[132]; 
+      S     "M_GE_Spindeldrehzahl_akt"; 
+      R     "DB_DM_M_FUNKTION".MX_IM[132]; 
+
+      U     "M_Reset_Taste"; 
+      O     "DB_DM_M_FUNKTION".MX_IM[133]; 
+      R     "DB_DM_M_FUNKTION".MX_IM[132]; 
+      R     "DB_DM_M_FUNKTION".MX_IM[133]; 
+      R     "M_GE_Spindeldrehzahl_akt"; 
+
+NETWORK
+TITLE =GE P11T12 Standard: Anwahl Kühlmitteldurchflussüberwachung
+//Wurde über SOKO-Software realisiert:
+//H20=10 --> Kühlmitteldurchflussüberwachung "EIN"
+//H20=11 --> Kühlmitteldurchflussüberwachung "AUS"
+// Anwahl mit M134  Abwahl mit M135
+//      U     "DB_DM_M_Funktion".MX_IM[134]
+//      S     "M_GE_KMTL_Durchfl_aktiv"
+//      R     "DB_DM_M_Funktion".MX_IM[134]
+//
+//      U     "DB_DM_M_Funktion".MX_IM[135]
+//      R     "DB_DM_M_Funktion".MX_IM[134]
+//      R     "DB_DM_M_Funktion".MX_IM[135]
+//      R     "M_GE_KMTL_Durchfl_aktiv"
+NETWORK
+TITLE =GE P11T12 Standard: Reaktion bei inaktivem Omative ACM
+
+      U     "M_GE_Spindellast_aktiv"; 
+      UN    "DI_GE_SPEZIFIKATION".ACM_OPERATION; 
+      O     ; 
+      U     "M_GE_Spindellast_aktiv"; 
+      U     "DI_GE_SPEZIFIKATION".ACM_ONLINE; 
+      =     "DB_FEHLERMELDUNG".Meldung4._702429_OMAT_inaktiv; 
+NETWORK
+TITLE =GE P11T12 Standard: Reaktion bei einem "Gelben" 
+// Tool Overload in Load Band Monitoring Mode
+      U     "M_GE_Spindellast_aktiv"; 
+      U     "DI_GE_SPEZIFIKATION".ACM_OVERLOAD; 
+      U     "DI_GE_SPEZIFIKATION".ACM_OPERATION; 
+      UN    "DI_GE_SPEZIFIKATION".ACM_ONLINE; 
+      U(    ; 
+      U     "DI_GE_SPEZIFIKATION".ACM_ALARM_T_OVERLOAD_LBM; 
+      U(    ; 
+      L     #ACM_ALARM_NR; 
+      L     41; 
+      ==I   ; 
+      )     ; 
+      )     ; 
+
+// Tool Overload in Maximum Load Monitoring Mode
+      O(    ; 
+      U     "DI_GE_SPEZIFIKATION".ACM_ALARM_T_OVERLOAD_MLM; 
+      U(    ; 
+      L     #ACM_ALARM_NR; 
+      L     37; 
+      ==I   ; 
+      )     ; 
+      )     ; 
+
+// Tool Overload in Feed Control Mode
+      O(    ; 
+      U     "DI_GE_SPEZIFIKATION".ACM_ALARM_T_OVERLOAD_FCM; 
+      U(    ; 
+      L     #ACM_ALARM_NR; 
+      L     35; 
+      ==I   ; 
+      )     ; 
+      )     ; 
+
+// Tool Broken
+      O(    ; 
+      U     "DI_GE_SPEZIFIKATION".ACM_ALARM_T_BROKEN; 
+      U(    ; 
+      L     #ACM_ALARM_NR; 
+      L     5; 
+      ==I   ; 
+      O(    ; 
+      L     #ACM_ALARM_NR; 
+      L     42; 
+      ==I   ; 
+      )     ; 
+      )     ; 
+      )     ; 
+
+// Tool Worn
+      O(    ; 
+      U     "DI_GE_SPEZIFIKATION".ACM_ALARM_T_WORN; 
+      U(    ; 
+      L     #ACM_ALARM_NR; 
+      L     6; 
+      ==I   ; 
+      )     ; 
+      )     ; 
+
+// Reaktion Einlesesperre --> Vorschubsperre
+      S     "DB_FEHLERMELDUNG".Einlesesperre._700557_OMAT_Alarm_gelb; 
+
+      U     "M_Ruecksetze_Fehler"; 
+      R     "DB_FEHLERMELDUNG".Einlesesperre._700557_OMAT_Alarm_gelb; 
+
+NETWORK
+TITLE =GE P11T12 Standard: Reaktion bei einem "Roten" Alarm
+// Tool Overload in Load Band Monitoring Mode
+      U     "M_GE_Spindellast_aktiv"; 
+      U     "DI_GE_SPEZIFIKATION".ACM_ALARM; 
+      U     "DI_GE_SPEZIFIKATION".ACM_OVERLOAD; 
+      U     "DI_GE_SPEZIFIKATION".ACM_OPERATION; 
+      UN    "DI_GE_SPEZIFIKATION".ACM_ONLINE; 
+      U(    ; 
+      U     "DI_GE_SPEZIFIKATION".ACM_ALARM_T_OVERLOAD_LBM; 
+      U(    ; 
+      L     #ACM_ALARM_NR; 
+      L     28; 
+      ==I   ; 
+      )     ; 
+      )     ; 
+
+// Tool Overload in Maximum Load Monitoring Mode
+      O(    ; 
+      U     "DI_GE_SPEZIFIKATION".ACM_ALARM_T_OVERLOAD_MLM; 
+      U(    ; 
+      L     #ACM_ALARM_NR; 
+      L     8; 
+      ==I   ; 
+      )     ; 
+      )     ; 
+
+// Tool Overload in Feed Control Mode
+      O(    ; 
+      U     "DI_GE_SPEZIFIKATION".ACM_ALARM_T_OVERLOAD_FCM; 
+      U(    ; 
+      L     #ACM_ALARM_NR; 
+      L     33; 
+      ==I   ; 
+      )     ; 
+      )     ; 
+
+// Tool Broken
+      O(    ; 
+      U     "DI_GE_SPEZIFIKATION".ACM_ALARM_T_BROKEN; 
+      U(    ; 
+      L     #ACM_ALARM_NR; 
+      L     29; 
+      ==I   ; 
+      )     ; 
+      )     ; 
+
+// Tool Worn
+      O(    ; 
+      U     "DI_GE_SPEZIFIKATION".ACM_ALARM_T_WORN; 
+      U(    ; 
+      L     #ACM_ALARM_NR; 
+      L     34; 
+      ==I   ; 
+      O(    ; 
+      L     #ACM_ALARM_NR; 
+      L     36; 
+      ==I   ; 
+      )     ; 
+      )     ; 
+      )     ; 
+
+// Spindle/Tool Overload
+      O(    ; 
+      U     "DI_GE_SPEZIFIKATION".ACM_ALARM_SPI_T_OVERLOAD; 
+      U(    ; 
+      L     #ACM_ALARM_NR; 
+      L     3; 
+      ==I   ; 
+      O(    ; 
+      L     #ACM_ALARM_NR; 
+      L     7; 
+      ==I   ; 
+      )     ; 
+      )     ; 
+      )     ; 
+
+// Reaktion Makro Start (Rückzug)
+
+      FP    "M_FP_GE_OMAT_ALARM"; 
+      UN    "DB_FAMILIEN_MODUL".Aktive_Funktionen; 
+      U     "M_Programm_Aktiv"; 
+      U     "M_GE_Spindellast_aktiv"; 
+      =     "DB_SIEM_NCK".A_Set_Inp8; 
+
+NETWORK
+TITLE =GE P11T12 Standard: Spindeldrehzahlüberwachung
+// Anwahl mit M132  Abwahl mit M133
+      U     "M_GE_Spindeldrehzahl_akt"; 
+      UN    "DI_GE_SPEZIFIKATION".ACM_ONLINE; 
+      U     "DI_GE_SPEZIFIKATION".ACM_ALARM; 
+      U     "DI_GE_SPEZIFIKATION".ACM_OPERATION; 
+      U(    ; 
+      L     #ACM_ALARM_NR; 
+      L     31; 
+      ==I   ; 
+      )     ; 
+      S     "DB_FEHLERMELDUNG".Einlesesperre._700558_OMAT_Alarm_SPI_n; 
+
+      U     "M_Reset_Taste"; 
+      R     "DB_FEHLERMELDUNG".Einlesesperre._700558_OMAT_Alarm_SPI_n; 
+
+NETWORK
+TITLE =GE P11T12 Standard: Kühlmitteldurchflussüberwachung
+//Wurde über SOKO-Software realisiert:
+//
+      SPA   OMEN; 
+
+NETWORK
+TITLE =Advanced Hole Making: Anwahl Spindellastüberwachung Volvo
+
+VOLV: U(    ; 
+      L     "DB_NC_PLC".Zusatz.WZVS_DPR.Monitoring_Parameter; 
+      L     4; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     "DB_NC_PLC".Zusatz.WZVS_DPR.Monitoring_Parameter; 
+      L     5; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     "DB_NC_PLC".Zusatz.WZVS_DPR.Monitoring_Parameter; 
+      L     6; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     "DB_NC_PLC".Zusatz.WZVS_DPR.Monitoring_Parameter; 
+      L     7; 
+      ==I   ; 
+      )     ; 
+      S     "M_GE_Spindellast_aktiv"; 
+
+
+      U     "M_Reset_Taste"; 
+      O(    ; 
+      L     "DB_NC_PLC".Zusatz.WZVS_DPR.Monitoring_Parameter; 
+      L     0; 
+      ==I   ; 
+      )     ; 
+      R     "M_GE_Spindellast_aktiv"; 
+
+NETWORK
+TITLE =Advanced Hole Making: Anwahl Spindeldrehzahlüberwachung
+
+      U(    ; 
+      L     "DB_NC_PLC".Zusatz.WZVS_DPR.Monitoring_Parameter; 
+      L     1; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     "DB_NC_PLC".Zusatz.WZVS_DPR.Monitoring_Parameter; 
+      L     3; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     "DB_NC_PLC".Zusatz.WZVS_DPR.Monitoring_Parameter; 
+      L     5; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     "DB_NC_PLC".Zusatz.WZVS_DPR.Monitoring_Parameter; 
+      L     7; 
+      ==I   ; 
+      )     ; 
+      S     "M_GE_Spindeldrehzahl_akt"; 
+
+      U     "M_Reset_Taste"; 
+      O(    ; 
+      L     "DB_NC_PLC".Zusatz.WZVS_DPR.Monitoring_Parameter; 
+      L     0; 
+      ==I   ; 
+      )     ; 
+      R     "M_GE_Spindeldrehzahl_akt"; 
+
+NETWORK
+TITLE =Advanced Hole Making: Anwahl Kühlmittelüberwachung
+
+      U(    ; 
+      L     "DB_NC_PLC".Zusatz.WZVS_DPR.Monitoring_Parameter; 
+      L     2; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     "DB_NC_PLC".Zusatz.WZVS_DPR.Monitoring_Parameter; 
+      L     3; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     "DB_NC_PLC".Zusatz.WZVS_DPR.Monitoring_Parameter; 
+      L     6; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     "DB_NC_PLC".Zusatz.WZVS_DPR.Monitoring_Parameter; 
+      L     7; 
+      ==I   ; 
+      )     ; 
+      S     "M_GE_KMTL_Durchfl_aktiv"; 
+
+      U     "M_Reset_Taste"; 
+      O(    ; 
+      L     "DB_NC_PLC".Zusatz.WZVS_DPR.Monitoring_Parameter; 
+      L     0; 
+      ==I   ; 
+      )     ; 
+      R     "M_GE_KMTL_Durchfl_aktiv"; 
+
+NETWORK
+TITLE =Advanced Hole Making: Reaktion bei inaktivem Omative ACM
+
+      U     "M_GE_Spindellast_aktiv"; 
+      UN    "DI_GE_SPEZIFIKATION".ACM_OPERATION; 
+      O     ; 
+      U     "M_GE_Spindellast_aktiv"; 
+      U     "DI_GE_SPEZIFIKATION".ACM_ONLINE; 
+      =     "DB_FEHLERMELDUNG".Meldung4._702429_OMAT_inaktiv; 
+NETWORK
+TITLE =Advanced Hole Making: Reaktion bei einem "Gelben" Alarm
+
+      U     "M_GE_Spindellast_aktiv"; 
+      U     "DI_GE_SPEZIFIKATION".ACM_OVERLOAD; 
+      UN    "DI_GE_SPEZIFIKATION".ACM_ALARM; 
+      U     "DI_GE_SPEZIFIKATION".ACM_OPERATION; 
+      UN    "DI_GE_SPEZIFIKATION".ACM_ONLINE; 
+      U(    ; 
+
+//Spindelleistungsüberwachung Volvo
+
+      U(    ; 
+      L     "DB_NC_PLC".Zusatz.WZVS_DPR.Monitoring_Parameter; 
+      L     4; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     "DB_NC_PLC".Zusatz.WZVS_DPR.Monitoring_Parameter; 
+      L     5; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     "DB_NC_PLC".Zusatz.WZVS_DPR.Monitoring_Parameter; 
+      L     6; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     "DB_NC_PLC".Zusatz.WZVS_DPR.Monitoring_Parameter; 
+      L     7; 
+      ==I   ; 
+      )     ; 
+      )     ; 
+      S     "M_SPI_Load_Alert"; 
+
+
+      U     "M_SPI_Load_Alert"; 
+      U(    ; 
+      L     "DB_NC_PLC".Zusatz.WZVS_DPR.Monitoring_Parameter; 
+      L     0; 
+      ==I   ; 
+      )     ; 
+// Reaktion Einlesesperre --> Vorschubsperre
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt1._510214_POWERMONITOR_YEL; 
+
+      U     "M_Reset_Taste"; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt1._510214_POWERMONITOR_YEL; 
+      R     "M_SPI_Load_Alert"; 
+NETWORK
+TITLE =Advanced Hole Making: Reaktion bei einem "Roten" Alarm
+
+      U     "M_GE_Spindellast_aktiv"; 
+      U     "DI_GE_SPEZIFIKATION".ACM_ALARM; 
+      U     "DI_GE_SPEZIFIKATION".ACM_OVERLOAD; 
+      U     "DI_GE_SPEZIFIKATION".ACM_OPERATION; 
+      UN    "DI_GE_SPEZIFIKATION".ACM_ONLINE; 
+      U(    ; 
+      L     #ACM_ALARM_NR; 
+      L     8; 
+      ==I   ; 
+      )     ; 
+
+//Spindelleistungsüberwachung Volvo
+      U(    ; 
+      O(    ; 
+      L     "DB_NC_PLC".Zusatz.WZVS_DPR.Monitoring_Parameter; 
+      L     4; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     "DB_NC_PLC".Zusatz.WZVS_DPR.Monitoring_Parameter; 
+      L     5; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     "DB_NC_PLC".Zusatz.WZVS_DPR.Monitoring_Parameter; 
+      L     6; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     "DB_NC_PLC".Zusatz.WZVS_DPR.Monitoring_Parameter; 
+      L     7; 
+      ==I   ; 
+      )     ; 
+      )     ; 
+
+// Reaktion Makro Start (Rückzug)
+
+      FP    "M_FP_GE_OMAT_ALARM"; 
+      UN    "DB_FAMILIEN_MODUL".Aktive_Funktionen; 
+      U     "M_Programm_Aktiv"; 
+      U     "M_GE_Spindellast_aktiv"; 
+      =     "DB_SIEM_NCK".A_Set_Inp8; 
+
+NETWORK
+TITLE =Advanced Hole Making: Reaktion Spindeldrehzahlüberwachung
+
+      U     "M_GE_Spindeldrehzahl_akt"; 
+      UN    "DI_GE_SPEZIFIKATION".ACM_ONLINE; 
+      U     "DI_GE_SPEZIFIKATION".ACM_ALARM; 
+      U     "DI_GE_SPEZIFIKATION".ACM_OVERLOAD; 
+      U     "DI_GE_SPEZIFIKATION".ACM_OPERATION; 
+      U(    ; 
+      L     #ACM_ALARM_NR; 
+      L     31; 
+      ==I   ; 
+      )     ; 
+
+//Spindeldrehzahlüberwachung Volvo
+      U(    ; 
+      O(    ; 
+      L     "DB_NC_PLC".Zusatz.WZVS_DPR.Monitoring_Parameter; 
+      L     1; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     "DB_NC_PLC".Zusatz.WZVS_DPR.Monitoring_Parameter; 
+      L     3; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     "DB_NC_PLC".Zusatz.WZVS_DPR.Monitoring_Parameter; 
+      L     5; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     "DB_NC_PLC".Zusatz.WZVS_DPR.Monitoring_Parameter; 
+      L     7; 
+      ==I   ; 
+      )     ; 
+      )     ; 
+      S     "M_SPI_Speed_Alert"; 
+
+
+      U     "M_SPI_Speed_Alert"; 
+      U(    ; 
+      L     "DB_NC_PLC".Zusatz.WZVS_DPR.Monitoring_Parameter; 
+      L     0; 
+      ==I   ; 
+      )     ; 
+// Reaktion Einlesesperre --> Vorschubsperre
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt1._510213_SPEED_MONITORING; 
+
+      U     "M_Reset_Taste"; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt1._510213_SPEED_MONITORING; 
+      R     "M_SPI_Speed_Alert"; 
+
+NETWORK
+TITLE =Advanced Hole Making: Reaktion Kühlmitteldurchflussüberwachung
+
+      U     "M_GE_KMTL_Durchfl_aktiv"; 
+      UN    "DI_GE_SPEZIFIKATION".ACM_ONLINE; 
+      U     "DI_GE_SPEZIFIKATION".ACM_ALARM; 
+      U     "DI_GE_SPEZIFIKATION".ACM_OPERATION; 
+      U(    ; 
+      U(    ; 
+      L     #ACM_ALARM_NR; 
+      L     38; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     #ACM_ALARM_NR; 
+      L     32; 
+      ==I   ; 
+      )     ; 
+      )     ; 
+//Spindeldrehzahlüberwachung Volvo
+      U(    ; 
+      O(    ; 
+      L     "DB_NC_PLC".Zusatz.WZVS_DPR.Monitoring_Parameter; 
+      L     2; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     "DB_NC_PLC".Zusatz.WZVS_DPR.Monitoring_Parameter; 
+      L     3; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     "DB_NC_PLC".Zusatz.WZVS_DPR.Monitoring_Parameter; 
+      L     6; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     "DB_NC_PLC".Zusatz.WZVS_DPR.Monitoring_Parameter; 
+      L     7; 
+      ==I   ; 
+      )     ; 
+      )     ; 
+      U     "M_Programm_Aktiv"; 
+      UN(   ; 
+      U     "DB_ACHSE4".E_SpNA; 
+      U     "M_FD_DM_TURN_AKTIV"; // "DB_NC_PLC".FD_DM_TURN_AKTIV
+      )     ; 
+      =     "DB_SIEM_NCK".A_Set_Inp7; 
+
+NETWORK
+TITLE =Advanced Hole Making: Transfer zusätzlicher Daten zu OMATIVE ACM
+//Für Volvo werden über den DB70 (DPR) zusätzliche Daten an Omative ACM übergeben
+//- Spindelleistung in mV
+//- Durchflussmenge Kühlmittel in dl/min
+//- Spindeldrehzahl in U/min 
+//Diese Daten werden von zusätzlichen Sensoren zur Verfügung gestellt
+// Spindelleistung in mV
+      L     "I_GEN_POWERMEAS_SPI"; 
+      ITD   ; 
+      DTR   ; 
+      L     2.764800e+000; 
+      /R    ; 
+      TRUNC ; 
+      TAW   ; 
+      T     "DI_GE_SPEZIFIKATION".PLC_ACM_SPINDLE_LOAD; 
+
+// Durchflussmenge Kühlmittel
+      L     "I_GEN_FLC_COOL_AG_2"; 
+      L     0; 
+      <I    ; 
+      SPB   NOCO; 
+
+      L     "I_GEN_FLC_COOL_AG_2"; 
+      L     28500; // max. Wert //27648
+      >I    ; 
+      L     9999; // default Wert
+      SPB   NOCO; 
+
+      L     "I_GEN_FLC_COOL_AG_2"; 
+      ITD   ; 
+      DTR   ; 
+      L     7.275700e+001; 
+      /R    ; 
+      TRUNC ; 
+
+NOCO: TAW   ; 
+      T     "DI_GE_SPEZIFIKATION".PLC_ACM_FLOWSENSOR_VALUE; 
+
+// Spindeldrehzahl in U/min
+      L     "DB_TOOL_DATA".Spindel_Ist_Drehzahl; 
+      TRUNC ; 
+      TAW   ; 
+      T     "DI_GE_SPEZIFIKATION".PLC_ACM_SPINDLE_SPEED; 
+
+// Acknoledge signal
+//    S     "DI_GE_SPEZIFIKATION".PLC_ACM_ACKNOWLEDGE_SIGN
+
+// ACM OFF Bit
+      L     "DB_NC_PLC".Zusatz.WZVS_DPR.Monitoring_Parameter; 
+      L     9; 
+      >=I   ; 
+      =     "DI_GE_SPEZIFIKATION".PLC_ACM_ACM_OFF_BIT; 
+
+// External Flow Sensor Flag
+      U     "DB_OUT".AMX_FLOW_CONTROL_M8; 
+      =     "DI_GE_SPEZIFIKATION".PLC_ACM_EXT_FLOWSEN_FLAG; 
+NETWORK
+TITLE =Advanced Hole Making: Freigeben und Sperren des Overrides
+
+      L     "DB_NC_PLC".Zusatz.WZVS_DPR.Monitoring_Parameter; 
+      L     0; 
+      <=I   ; 
+      SPB   OMEN; 
+
+      L     "DB_NC_PLC".Zusatz.WZVS_DPR.Monitoring_Parameter; 
+      L     2#1; 
+      UW    ; 
+      L     1; 
+      ==I   ; 
+      =     "M_GE_VS_OVR_gesperrt"; 
+      =     "M_GE_SPI_OVR_gesperrt"; 
+
+NETWORK
+TITLE =Ende OMATIVE ACM
+
+OMEN: NOP   0; 
+
+END_FUNCTION_BLOCK
+

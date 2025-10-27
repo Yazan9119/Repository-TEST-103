@@ -1,0 +1,537 @@
+FUNCTION "FC_TM_SS_QUIT_PLC" : VOID
+TITLE =
+//$Revision: 1.18 $
+//$Date: 2008/05/27 09:05:23CEST $
+//$Author: schmoelp $
+//Änderung: Datum     / Abteilung / Name  / Version x.y
+//Änderung: 12.06.2007 /          / slh   / 
+//        : Wz.umsetzen mit Bewegung
+//Änderung:          /            /      / 
+//        : 
+VERSION : 2.0
+
+
+VAR_INPUT
+  E_Quit : BOOL ;	
+  E_Beladen_Magazin_end : BOOL ;	
+  E_Entladen_Magazin_end : BOOL ;	
+  E_Positionieren_end : BOOL ;	
+  E_Beladen_Spindel_end : BOOL ;	
+  E_Entladen_Spindel_end : BOOL ;	
+  E_Beladen_TDS_end : BOOL ;	
+  E_Entladen_TDS_end : BOOL ;	
+  E_Wechsel_Vorber_end : BOOL ;	
+  E_Umsp_Wst_Gr1 : BOOL ;	
+  E_Umsp_Wst_Gr2 : BOOL ;	//wst->gr2
+  E_Umsp_Gr_TPU : BOOL ;	//Greifer x in TPU und Greifer y in Spindel
+  E_Umsp_Wst_TPU : BOOL ;	//x
+  E_Umsp_Wst_Spindel : BOOL ;	
+  E_Umsp_Gr2_Wst : BOOL ;	
+  E_Umsp_TPU_Wst : BOOL ;	//x
+  E_Umsp_TPU_Gr : BOOL ;	//TPU in Greifer x und Spindel in Greifer y
+  E_Umsp_BStP1_Gr1 : BOOL ;	//x
+  E_Umsp_Spi_Gr1 : BOOL ;	//Spi->gr1
+  E_Umsp_Gr2_Spi : BOOL ;	//gr2->Spi
+  E_Umsp_Gr1_Spindel : BOOL ;	
+  E_Umsp_Spindel_Gr2 : BOOL ;	
+  E_WW_Spindel_Mag : BOOL ;	
+  E_Umsp_Gr1_Wst : BOOL ;	
+  E_Abbruch_Be_entladen : BOOL ;	
+  E_FC8_ErrQuitt : BOOL ;	
+  E_USortAkt : BOOL ;	
+  E_ANF_HWZ_unload_M6 : BOOL ;	
+  E_Nr_Bereitst_Platz : INT ;	
+END_VAR
+VAR_IN_OUT
+  EA_Fehler_FC8 : BOOL ;	
+END_VAR
+VAR_TEMP
+  T_Quit : BOOL ;	
+  T_Beladen_Magazin_end : BOOL ;	
+  T_Entladen_Magazin_end : BOOL ;	
+  T_Positionieren_end : BOOL ;	
+  T_Beladen_Spindel_end : BOOL ;	
+  T_Entladen_Spindel_end : BOOL ;	
+  T_Beladen_TDS_end : BOOL ;	
+  T_Entladen_TDS_end : BOOL ;	
+  T_Wechsel_Vorber_end : BOOL ;	
+  T_Umsp_Wst_Gr1 : BOOL ;	
+  T_Umsp_Wst_Gr2 : BOOL ;	
+  T_Umsp_Gr_TPU : BOOL ;	
+  T_Umsp_Wst_TPU : BOOL ;	
+  T_Umsp_Wst_Spindel : BOOL ;	
+  T_Umsp_Gr2_Wst : BOOL ;	
+  T_Umsp_TPU_Wst : BOOL ;	
+  T_Umsp_TPU_Gr : BOOL ;	
+  T_Umsp_BStP1_Gr1 : BOOL ;	
+  T_Umsp_Spi_Gr1 : BOOL ;	
+  T_Umsp_Gr2_Spi : BOOL ;	
+  T_Umsp_Gr1_Spindel : BOOL ;	
+  T_Umsp_Spindel_Gr2 : BOOL ;	
+  T_WW_Spindel_Mag : BOOL ;	
+  T_Umsp_Gr1_Wst : BOOL ;	
+  Zwischenspeicher : DWORD ;	
+  TFM_Quit : BOOL ;	
+  TFM_Beladen_Magazin_end : BOOL ;	
+  TFM_Entladen_Magazin_end : BOOL ;	
+  TFM_Positionieren_end : BOOL ;	
+  TFM_Beladen_Spindel_end : BOOL ;	
+  TFM_Entladen_Spindel_end : BOOL ;	
+  TFM_Beladen_TDS_end : BOOL ;	
+  TFM_Entladen_TDS_end : BOOL ;	
+  TFM_Wechsel_Vorber_end : BOOL ;	
+  TFM_Umsp_Wst_Gr1 : BOOL ;	
+  TFM_Umsp_Wst_Gr2 : BOOL ;	
+  TFM_Umsp_Gr_TPU : BOOL ;	
+  TFM_Umsp_Wst_TPU : BOOL ;	
+  TFM_Umsp_Wst_Spindel : BOOL ;	
+  TFM_Umsp_Gr2_Wst : BOOL ;	
+  TFM_Umsp_TPU_Wst : BOOL ;	
+  TFM_Umsp_TPU_Gr : BOOL ;	
+  TFM_Umsp_BStP1_Gr1 : BOOL ;	
+  TFM_Umsp_Spi_Gr1 : BOOL ;	
+  TFM_Umsp_Gr2_Spi : BOOL ;	
+  TFM_Umsp_Gr1_Spindel : BOOL ;	
+  TFM_Umsp_Spindel_Gr2 : BOOL ;	
+  TFM_WW_Spindel_Mag : BOOL ;	
+  TFM_Umsp_Gr1_Wst : BOOL ;	
+  T_Modus_SpiMag : BOOL ;	//Modus direkt von Spindel in Magazin
+END_VAR
+BEGIN
+NETWORK
+TITLE =Netzwerkübersicht
+// Netzwerk-Übersicht
+// ==================
+// NW 1: Netzwerkübersicht
+// NW 2: Prepare change
+// NW 3: ASS1: Quittung Werkzeug beladen beendet Magazin
+// NW 4: ASS3: Abbruch/Reset Werkzeug beladen Magazin
+// NW 5: ASS2: Quittung Werkzeug entladen beendet Magazin
+// NW 6: ASS3: Abbruch/Reset Werkzeug entladen Magazin
+// NW 7: ASS31: Quittung Positionieren zur Beladestelle Magazin
+// NW 8: ASS32: Reset/Abbruch Positionieren zur Beladestelle Magazin
+// NW 9: ASS1: Quittung Werkzeug beladen beendet Spindel
+// NW 10: ASS3: Abbruch/Reset Werkzeug beladen/entladen Spindel/Magazin
+// NW 11: ASS2: Quittung Werkzeug entladen beendet Spindel
+// NW 12: ASS29: Quittung Umladen mit Bewegung
+// NW 13: ASS30: Quittung Umladen MMC
+// NW 14: ASS1: Quittung Werkzeug beladen beendet TDS
+// NW 15: ASS6: Abbruch/Reset Werkzeug beladen TDS
+// NW 16: ASS5: Quittung Werkzeug entladen beendet Spindel
+// NW 17: ASS7: Quittung Wechsel vorbereiten beendet
+// NW 18: ASS8: Abbruch/Reset Wechsel vorbereiten 
+// NW 19: ASS6: Umspeichern von Gr1 -> Mag
+// NW 20: ASS9: Umspeichern Wechselstelle -> 9998,2 Greifer 1
+// NW 21: ASS10: Umspeichern Wechselstelle -> 9998,3 Greifer 2
+// NW 22: ASS11: Umspeichern 9998,2 od. 3 Gr 1 od. 2 -> 9998,4 TPU
+// NW 23: ASS12: Umspeichern Magazin -> 9998,4 Transporteinheit
+// NW 24: ASS13: Umspeichern Wechselstelle -> 9998,1 Spindel
+// NW 25: ASS14: Umspeichern 9998,3  Greifer 2 -> Wechselstelle
+// NW 26: ASS15: Umspeichern 9998,4 Transporteinheit  -> Wechselstelle
+// NW 27: ASS16: Umspeichern 9998,4 Transporteinheit -> 9998,2 o 3 Greifer 
+// NW 28: ASS17: Umspeichern 9998,4 Transporteinheit  -> 9998,2 Greifer 1
+// NW 29: ASS18: Umspeichern 9998,1 Spindel  -> 9998,2 Greifer 1
+// NW 30: ASS19: Umspeichern 9998,3 Greifer 2  -> 9998,1 Spindel
+// NW 31: ASS20: Umspeichern 9998,2 Greifer 1  -> 9998,1 Spindel
+// NW 32: ASS21: Umspeichern 9998,1 Spindel  -> 9998,3 Greifer 2
+// NW 33: ASS22: Werkzeugwechsel 9998,1 Spindel  -> Magazin
+// NW 34: ASS23: Abbruch/Reset Wechsel 
+// NW 35: ASS25,26,27,28: Änderung Istposition
+// NW 36: Fehlerbit löschen
+// NW 37: Aufruf FB 195
+//
+      NOP   0; 
+
+NETWORK
+TITLE =Prepare change
+//
+//
+//Flanken erzeugen FM in DB 190
+//                 IM in Temp
+//--- Test  10.04.03 AB
+//--- nach Satzsuchlauf und neg.Quittierung von T/M6 
+//--- kommt es zu dem sonderbaren Zustand
+      UN    "TMSpindleIF".IFNo[1]; 
+      U     "TMSpindleIF".IF[1].Prepare; 
+      U     "M_Ruecksetze_Fehler"; 
+      R     "TMSpindleIF".IF[1].Prepare; 
+//----------------------------
+
+      U     #E_Quit; 
+      =     #TFM_Quit; 
+      U     #E_Beladen_Magazin_end; 
+      =     #TFM_Beladen_Magazin_end; 
+      U     #E_Entladen_Magazin_end; 
+      =     #TFM_Entladen_Magazin_end; 
+      U     #E_Positionieren_end; 
+      =     #TFM_Positionieren_end; 
+      U     #E_Beladen_Spindel_end; 
+      =     #TFM_Beladen_Spindel_end; 
+      U     #E_Entladen_Spindel_end; 
+      =     #TFM_Entladen_Spindel_end; 
+      U     #E_Beladen_TDS_end; 
+      =     #TFM_Beladen_TDS_end; 
+      U     #E_Entladen_TDS_end; 
+      =     #TFM_Entladen_TDS_end; 
+      U     #E_Wechsel_Vorber_end; 
+      =     #TFM_Wechsel_Vorber_end; 
+      U     #E_Umsp_Wst_Gr1; 
+      =     #TFM_Umsp_Wst_Gr1; 
+      U     #E_Umsp_Wst_Gr2; 
+      =     #TFM_Umsp_Wst_Gr2; 
+      U     #E_Umsp_Gr_TPU; 
+      =     #TFM_Umsp_Gr_TPU; 
+      U     #E_Umsp_Wst_TPU; 
+      =     #TFM_Umsp_Wst_TPU; 
+      U     #E_Umsp_Wst_Spindel; 
+      =     #TFM_Umsp_Wst_Spindel; 
+      U     #E_Umsp_Gr2_Wst; 
+      =     #TFM_Umsp_Gr2_Wst; 
+      U     #E_Umsp_TPU_Wst; 
+      =     #TFM_Umsp_TPU_Wst; 
+      U     #E_Umsp_TPU_Gr; 
+      =     #TFM_Umsp_TPU_Gr; 
+      U     #E_Umsp_BStP1_Gr1; 
+      =     #TFM_Umsp_BStP1_Gr1; 
+      U     #E_Umsp_Spi_Gr1; 
+      =     #TFM_Umsp_Spi_Gr1; 
+      U     #E_Umsp_Gr2_Spi; 
+      =     #TFM_Umsp_Gr2_Spi; 
+      U     #E_Umsp_Gr1_Spindel; 
+      =     #TFM_Umsp_Gr1_Spindel; 
+      U     #E_Umsp_Spindel_Gr2; 
+      =     #TFM_Umsp_Spindel_Gr2; 
+      U     #E_WW_Spindel_Mag; 
+      =     #TFM_WW_Spindel_Mag; 
+      U     #E_Umsp_Gr1_Wst; 
+      =     #TFM_Umsp_Gr1_Wst; 
+
+      L     P##TFM_Quit; 
+      LAR1  ; 
+      L     LD [AR1,P#0.0]; 
+      L     "DI_TM_QUITT_FC8".FlankenAnstoss; 
+      XOD   ; 
+      UD    ; 
+      T     #Zwischenspeicher; 
+      L     LD [AR1,P#0.0]; 
+      T     "DI_TM_QUITT_FC8".FlankenAnstoss; 
+      L     P##T_Quit; 
+      LAR1  ; 
+      L     #Zwischenspeicher; 
+      T     LD [AR1,P#0.0]; 
+      NOP   0; 
+
+NETWORK
+TITLE =ASS1: Quittung Werkzeug beladen beendet Magazin
+
+      U     "TMLoadIF".IFNo[2]; // SS 2, Beladestelle Magazin
+      SPBN  SS1; // SS2 Be/Entladen aktiv ? nein ->  
+      U     "TMLoadIF".IF[2].Loading; // Beladen aktiv
+      U     #E_Beladen_Magazin_end; // Flanke beladen Magazin beendet
+      S     "DI_TM_QUITT_FC8".ASS[1]; // ASS 1:Quittung WZ beladen beendet          
+
+NETWORK
+TITLE =ASS3: Abbruch/Reset Werkzeug beladen Magazin
+
+      O     #T_Quit; 
+      O     #E_Abbruch_Be_entladen; 
+      U     "TMLoadIF".IFNo[2]; // SS 2, Beladestelle Magazin
+      S     "DI_TM_QUITT_FC8".ASS[3]; // ASS 2:Abbruch/Reset WZ beladen   
+NETWORK
+TITLE =ASS2: Quittung Werkzeug entladen beendet Magazin
+
+      U     "TMLoadIF".IF[2].Unloading; // Entladen aktiv
+      U     #E_Entladen_Magazin_end; // Flanke entladen Magazin beendet
+      S     "DI_TM_QUITT_FC8".ASS[2]; // ASS 2:Quittung WZ entladen beendet                             
+NETWORK
+TITLE =ASS3: Abbruch/Reset Werkzeug entladen Magazin
+
+      O     #T_Quit; // Flanke Taste Reset
+      O     #E_Abbruch_Be_entladen; 
+      U     "TMLoadIF".IF[2].Unloading; // Entladen aktiv
+      S     "DI_TM_QUITT_FC8".ASS[3]; // ASS 3:Abbruch/Reset WZ entladen   
+NETWORK
+TITLE =ASS31: Quittung Positionieren zur Beladestelle Magazin
+
+      U     "TMLoadIF".IF[2].Positioning; // Positionieren zur Beladestelle Magazin
+      U     #T_Positionieren_end; // Positionieren beendet
+      S     "DI_TM_QUITT_FC8".ASS[31]; // ASS 31:Quittung Positionieren zur Beladestelle
+NETWORK
+TITLE =ASS32: Reset/Abbruch Positionieren zur Beladestelle Magazin
+
+      O     #E_Abbruch_Be_entladen; 
+      U     #T_Quit; // Flanke Taste Reset
+      U     "TMLoadIF".IF[2].Positioning; // Positionieren zur Beladestelle Magazin
+      S     "DI_TM_QUITT_FC8".ASS[32]; // ASS 32:Abruch/Reset Positionieren zur Beladestelle
+NETWORK
+TITLE =ASS1: Quittung Werkzeug beladen beendet Spindel
+
+SS1:  U     "TMLoadIF".IFNo[1]; // SS 1, Beladestelle Spindel
+      SPBN  TDS; // SS1 Be/Entladen aktiv ? nein ->  
+      U     "TMLoadIF".IF[1].Loading; // Beladen aktiv
+      U     #E_Beladen_Spindel_end; // Flanke beladen Spindel beendet
+      S     "DI_TM_QUITT_FC8".ASS[1]; // ASS 1:Quittung WZ beladen beendet          
+NETWORK
+TITLE =ASS3: Abbruch/Reset Werkzeug beladen/entladen Spindel/Magazin
+
+      U(    ; 
+      O     #T_Quit; 
+      O     #E_Abbruch_Be_entladen; 
+      O     "m_RsReload"; 
+      )     ; 
+      U(    ; 
+      U(    ; 
+      UN    "DI_TM_QUITT_FC8".ASS[1]; 
+      UN    "DI_TM_QUITT_FC8".ASS[2]; 
+      UN    "DI_TM_QUITT_FC8".ASS[3]; //slh, 12.06.2007, von Nw14 übernommen
+      UN    "DI_TM_QUITT_FC8".ASS[30]; //slh, 12.06.2007, von Nw14 übernommen
+      UN    "DI_TM_QUITT_FC8".ASS[31]; 
+      UN    "DI_TM_QUITT_FC8".ASS[32]; 
+      O     "TMLoadIF".IF[1].Reloading; // Umsetzen aktiv
+      )     ; 
+      UN    "m_StrtRld_move"; //slh, 12.06.2007, nicht bei laufendem Umsetzauftrag abbrechen
+      O     "TMLoadIF".IF[1].Loading; // Beladen aktiv
+      O     "TMLoadIF".IF[1].Unloading; // Entladen aktiv
+      O     "TMLoadIF".IFNo[2]; // SS 2, Beladestelle Magazin:Abbruch/Reset Werkzeug beladen Magazin
+      O     "TMLoadIF".IF[2].Unloading; // Entladen aktiv:Abbruch/Reset Werkzeug entladen Magazin
+      )     ; 
+      S     "DI_TM_QUITT_FC8".ASS[3]; // ASS 3:Abbruch/Reset WZ beladen  
+NETWORK
+TITLE =ASS2: Quittung Werkzeug entladen beendet Spindel
+
+      U     "TMLoadIF".IF[1].Unloading; // Entladen aktiv
+      U     #E_Entladen_Spindel_end; // Flanke entladen beendet
+      S     "DI_TM_QUITT_FC8".ASS[2]; // ASS 2:Quittung WZ entladen beendet                             
+NETWORK
+TITLE =ASS29: Quittung Umladen mit Bewegung
+
+      U     "TMLoadIF".IF[1].Reloading; // Umladen
+      U     "m_QuRld_move"; 
+      S     "DI_TM_QUITT_FC8".ASS[29]; // ASS 29:Quittung Umladen mit Bewegung
+      R     "TMLoadIF".IF[1].Reloading; // Umladen
+NETWORK
+TITLE =ASS30: Quittung Umladen MMC
+
+      U     "TMLoadIF".IF[1].Reloading; // Umladen
+      U     "m_QuRld_nomove"; 
+      S     "DI_TM_QUITT_FC8".ASS[30]; // ASS 30:Quittung Umladen MMC 
+      R     "TMLoadIF".IF[1].Reloading; // Umladen
+NETWORK
+TITLE =ASS1: Quittung Werkzeug beladen beendet TDS
+
+TDS:  U     "TMLoadIF".IFNo[3]; // SS 1, Beladestelle TDS
+      CLR   ; 
+      SPBN  WZvo; // SS1 Be/Entladen aktiv ? nein ->  
+      U     "TMLoadIF".IF[3].Loading; // Beladen aktiv
+      U     #T_Beladen_TDS_end; // Flanke beladen Spindel beendet
+      S     "DI_TM_QUITT_FC8".ASS[1]; // ASS 4:Quittung WZ beladen beendet TDS 30.3
+NETWORK
+TITLE =ASS6: Abbruch/Reset Werkzeug beladen TDS
+
+      O     "TMLoadIF".IF[3].Loading; // Beladen aktiv
+      O     "TMLoadIF".IF[3].Unloading; // entladen aktiv
+      U(    ; 
+      O     #T_Quit; 
+      O     #E_Abbruch_Be_entladen; 
+      )     ; 
+      S     "DI_TM_QUITT_FC8".ASS[6]; // ASS 6:Abbruch/Reset WZ beladen TDS 
+NETWORK
+TITLE =ASS5: Quittung Werkzeug entladen beendet Spindel
+
+      U     "TMLoadIF".IF[3].Unloading; // Entladen aktiv
+      U     #T_Entladen_Spindel_end; // Flanke entladen beendet
+      S     "DI_TM_QUITT_FC8".ASS[5]; // ASS 5:Quittung WZ entladen beendet TDS
+NETWORK
+TITLE =ASS7: Quittung Wechsel vorbereiten beendet
+
+WZvo: UN    "TMSpindleIF".IFNo[1]; // SS 1, Spindel 1
+      R     "TMSpindleIF".IF[1].Perform; 
+      SPB   QWWV; // SS Spindel 1 nicht aktiv ->
+      U     "TMSpindleIF".IF[1].Prepare; // Wechsel vorbereiten
+      UN    "TMSpindleIF".IF[1].Perform; // Wechsel durchführen
+      U     #T_Wechsel_Vorber_end; // Flanke Wechsel vorbereitet beendet
+      O     "MX_FP_W_Prep"; 
+      S     "DI_TM_QUITT_FC8".ASS[7]; // ASS 7:Quittung Wechsel vorbereiten 
+NETWORK
+TITLE =ASS8: Abbruch/Reset Wechsel vorbereiten 
+
+      U     "TMSpindleIF".IF[1].Prepare; // Wechsel vorbereiten
+      U     #T_Quit; // Flanke Taste Reset
+      S     "DI_TM_QUITT_FC8".ASS[8]; // ASS 8:Abbruch/Reset Wechsel vorbereiten
+NETWORK
+TITLE =ASS6: Umspeichern von Gr1 -> Mag
+
+QWWV: U     #T_Umsp_Gr1_Wst; // Flanke umspeichern
+      S     "DI_TM_QUITT_FC8".ASS[6]; // ASS 6
+
+NETWORK
+TITLE =ASS9: Umspeichern Wechselstelle -> 9998,2 Greifer 1
+
+      U     #T_Umsp_Wst_Gr1; // Flanke umspeichern
+      S     "DI_TM_QUITT_FC8".ASS[9]; // ASS 9
+NETWORK
+TITLE =ASS10: Umspeichern Wechselstelle -> 9998,3 Greifer 2
+
+      U     #T_Umsp_Wst_Gr2; // Flanke umspeichern
+      S     "DI_TM_QUITT_FC8".ASS[10]; // ASS 10
+NETWORK
+TITLE =ASS11: Umspeichern 9998,2 od. 3 Gr 1 od. 2 -> 9998,4 TPU
+
+      U     #T_Umsp_Gr_TPU; // Flanke umspeichern
+      S     "DI_TM_QUITT_FC8".ASS[11]; // ASS 11
+NETWORK
+TITLE =ASS12: Umspeichern Magazin -> 9998,4 Transporteinheit
+
+      U     #T_Umsp_Wst_TPU; // Flanke umspeichern
+      S     "DI_TM_QUITT_FC8".ASS[12]; // ASS 12
+NETWORK
+TITLE =ASS13: Umspeichern Wechselstelle -> 9998,1 Spindel
+
+      U     #T_Umsp_Wst_Spindel; // Flanke umspeichern
+      S     "DI_TM_QUITT_FC8".ASS[13]; // ASS 13
+NETWORK
+TITLE =ASS14: Umspeichern 9998,3  Greifer 2 -> Wechselstelle
+
+      U     #T_Umsp_Gr2_Wst; // Flanke umspeichern
+      S     "DI_TM_QUITT_FC8".ASS[14]; // ASS 14
+NETWORK
+TITLE =ASS15: Umspeichern 9998,4 Transporteinheit  -> Wechselstelle
+
+      U     #T_Umsp_TPU_Wst; // Flanke umspeichern
+      S     "DI_TM_QUITT_FC8".ASS[15]; // ASS 15
+NETWORK
+TITLE =ASS16: Umspeichern 9998,4 Transporteinheit -> 9998,2 o 3 Greifer
+//Bei synchronem Datentausch gleichzeitig
+//Umspeichern 9998,1 Spindel -> 9998,3 oder 2 Greifer 2 oder 1
+      U     #T_Umsp_TPU_Gr; // Flanke umspeichern
+      S     "DI_TM_QUITT_FC8".ASS[16]; // ASS 16
+NETWORK
+TITLE =ASS17: Umspeichern 9998,4 Transporteinheit  -> 9998,2 Greifer 1
+
+      U     #T_Umsp_BStP1_Gr1; // Flanke umspeichern
+      S     "DI_TM_QUITT_FC8".ASS[17]; // ASS 17
+NETWORK
+TITLE =ASS18: Umspeichern 9998,1 Spindel  -> 9998,2 Greifer 1
+
+      U     #T_Umsp_Spi_Gr1; // Flanke umspeichern
+      S     "DI_TM_QUITT_FC8".ASS[18]; // ASS 18
+NETWORK
+TITLE =ASS19: Umspeichern 9998,3 Greifer 2  -> 9998,1 Spindel
+
+      U     #T_Umsp_Gr2_Spi; // Flanke umspeichern
+      S     "DI_TM_QUITT_FC8".ASS[19]; // ASS 19
+NETWORK
+TITLE =ASS20: Umspeichern 9998,2 Greifer 1  -> 9998,1 Spindel
+
+      U     #T_Umsp_Gr1_Spindel; // Flanke umspeichern
+      S     "DI_TM_QUITT_FC8".ASS[20]; // ASS 20
+NETWORK
+TITLE =ASS21: Umspeichern 9998,1 Spindel  -> 9998,3 Greifer 2
+
+      U     #T_Umsp_Spindel_Gr2; // Flanke umspeichern
+      S     "DI_TM_QUITT_FC8".ASS[21]; // ASS 21
+NETWORK
+TITLE =ASS22: Werkzeugwechsel 9998,1 Spindel  -> Magazin
+
+      U     #T_WW_Spindel_Mag; // Flanke umspeichern
+      S     "DI_TM_QUITT_FC8".ASS[22]; // ASS 22
+NETWORK
+TITLE =ASS23: Abbruch/Reset Wechsel 
+
+      U     "TMSpindleIF".IF[1].Perform; 
+      UN    "TMSpindleIF".IF[1].Prepare; // Wechsel durchführen
+      U(    ; 
+      L     "TMSpindleIF".IF[1].SMag; 
+      L     9998; // Wz ist bereits in der Spindel
+      ==I   ; 
+      )     ; 
+      U(    ; 
+      L     "TMSpindleIF".IF[1].SLoc; 
+      L     1; 
+      ==I   ; 
+      )     ; 
+      O     ; 
+      U     "TMSpindleIF".IF[1].Perform; 
+      UN    "TMSpindleIF".IF[1].Prepare; 
+      U     #T_Quit; 
+      O     ; 
+      U     "TMSpindleIF".IF[1].Perform; // Flanke Taste Reset
+      U     "TMSpindleIF".IF[1].Prepare; 
+
+//--- 09.04.03 AB eingebaut Satzsuchlauf "Warten auf WW-Quittung
+//--- FSO xxx
+
+      O     "M_Quit_M206"; 
+      S     "DI_TM_QUITT_FC8".ASS[23]; 
+NETWORK
+TITLE =ASS25,26,27,28: Änderung Istposition
+// In "DB_WZV".IstPosMag[1] steht die aktuelle Istposition der Wechselstelle in 
+//Format Int (ist 
+// vom Anwender zu versorgen). 
+      SPA   N35; 
+
+      L     "DI_TM_QUITT_FC8".AltPosMag[1]; // Istposition alt 
+      L     "DI_TM_QUITT_FC8".IstPosMag[1]; // Istposition neu 
+      T     "DI_TM_QUITT_FC8".AltPosMag[1]; // Istposition alt 
+      <>I   ; 
+      S     "DI_TM_QUITT_FC8".ASS[25]; // ASS 25: Änderung Istposition 
+
+      L     "DI_TM_QUITT_FC8".AltPosMag[2]; // Istposition alt 
+      L     "DI_TM_QUITT_FC8".IstPosMag[2]; // Istposition neu 
+      T     "DI_TM_QUITT_FC8".AltPosMag[2]; // Istposition alt 
+      <>I   ; 
+      S     "DI_TM_QUITT_FC8".ASS[26]; // ASS 26: Änderung Istposition 
+
+      L     "DI_TM_QUITT_FC8".AltPosMag[3]; // Istposition alt 
+      L     "DI_TM_QUITT_FC8".IstPosMag[3]; // Istposition neu 
+      T     "DI_TM_QUITT_FC8".AltPosMag[3]; // Istposition alt 
+      <>I   ; 
+      S     "DI_TM_QUITT_FC8".ASS[27]; // ASS 27: Änderung Istposition 
+
+      L     "DI_TM_QUITT_FC8".AltPosMag[4]; // Istposition alt 
+      L     "DI_TM_QUITT_FC8".IstPosMag[4]; // Istposition neu 
+      T     "DI_TM_QUITT_FC8".AltPosMag[4]; // Istposition alt 
+      <>I   ; 
+      S     "DI_TM_QUITT_FC8".ASS[28]; // ASS 28: Änderung Istposition 
+N35:  NOP   0; 
+NETWORK
+TITLE =Fehlerbit löschen
+
+      U     "DI_TM_QUITT_FC8".Fehler; 
+      =     #EA_Fehler_FC8; 
+
+      U     #E_FC8_ErrQuitt; // Taste Fehler löschen
+      R     "DI_TM_QUITT_FC8".Fehler; // Fehler Quittung FC 8
+NETWORK
+TITLE =Aufruf FB 195
+//
+//     CALL  FB    195 , DB195
+      L     "DB_PLC_MD_DB20".UDInt._008_ANWAHL_WZW_TYP; // WZW nicht angewaehlt oder
+      L     3; // Modul nicht angewaehlt
+      ==I   ; 
+      O(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._008_ANWAHL_WZW_TYP; 
+      L     4; 
+      ==I   ; 
+      )     ; 
+      =     #T_Modus_SpiMag; 
+
+      U     "M_WZM_Regal_angewaehlt"; 
+      SPBN  n38a; 
+
+      U     "DI_WZV_ABL_REGAL".A_Anf_unload_load_M6; 
+      O     "DI_WZV_ABL_REGAL".A_ANF_HWZ_unload_M6; 
+      O     "DI_WZV_ABL_REGAL".A_Anf_HWZ_load_M6; 
+      =     "DI_TM_QUITT_FC8".GrWz; 
+
+n38a: NOP   0; 
+      CALL "FB_TM_QUITT_FC8" , "DI_TM_QUITT_FC8" (
+           E_Modus_Spi_Mag          := #T_Modus_SpiMag,
+           E_Spi_Mag                := FALSE,//TRUE          //"M_Umsp_Spdl-Mag"
+           USortAkt                 := #E_USortAkt,
+           ANF_HWZ_unload_M6        := #E_ANF_HWZ_unload_M6,
+           Nr_Bereitst_Platz        := #E_Nr_Bereitst_Platz,
+           AUSEIN_Einvorgang        := "DB_NC_PLC".WZW_AusEin_Einwechsel);
+
+END_FUNCTION
+

@@ -1,0 +1,379 @@
+DATA_BLOCK "DB_OEM"
+TITLE =
+//$Revision: 1.30 $
+//$Date: 2008/05/20 09:50:48CEST $
+//$Author: hgc $
+VERSION : 0.1
+
+
+  STRUCT 	
+   OEM_SpeEinrbildaktiv : BOOL ;	//OEM Speicher einrichtbild aktiv
+   OEM_SpeRettbildaktiv : BOOL ;	//OEM Speicher Rettungsbild aktiv
+   OEM_WZW_REttbildaktiv : BOOL ;	//OEM WZW Rettungsbild aktiv
+   OEM_PW_Rettbildaktiv : BOOL ;	
+   OEM_WZW2_Rettbildaktiv : BOOL ;	
+   OEM_BlumRettaktiv : BOOL ;	
+   OEM_PW2_Rettbildaktiv : BOOL ;	
+   OEM_WZW3_Rettbildaktiv : BOOL ;	
+   OEM_SKRettaktiv : BOOL ;	
+   OEM_Regalrettaktiv : BOOL ;	
+   OEM_bild9aktiv : BOOL ;	
+   OEM_Winkelkopfrettaktiv : BOOL ;	
+   OEM_PW3_Rettbildaktiv : BOOL ;	
+   OEM_Aktiv : BOOL ;	
+   Einrichten_Aktiv : BOOL ;	
+   Einrichten_Reset : BOOL ;	
+   OEM_PS4_Rettbildaktiv : BOOL ;	
+   OEM_PS5_Rettbildaktiv : BOOL ;	
+   OEM_SpH_TeachenAktiv : BOOL ;	//OEM Bild 41 aktiv: SpannHydraulik TEACHEN
+   OEM_WZW6_Rettbildaktiv : BOOL ;	
+   OEM_WZW5_Rettbildaktiv : BOOL ;	
+   OEM_MT_KAL_Rettbildaktiv : BOOL ;	//OEM Bild 26 aktiv: MT Kalibrieren
+   OEM_Winkelkopfrettaktiv2 : BOOL ;	
+   OEM_SpeRettbildaktiv3 : BOOL ;	//OEM Speicher 3 Rettungsbild aktiv
+   oem_word : WORD ;	
+   oem_dword : DWORD ;	
+   oem_dword1 : DWORD ;	
+   linearachse_einricht_akt : BOOL ;	
+   Telachse_einricht_akt : BOOL ;	
+   Hubachse_einricht_aktiv : BOOL ;	
+   frei_einricht : BOOL ;	
+   frei_einricht1 : BOOL ;	
+   frei_einricht2 : BOOL ;	
+   WZW_Reset : BOOL ;	//Taste für Werkzeugwechsler rücksetzen
+   WZ_ueberprueft : BOOL ;	//Taste für Werkzeug überprüft
+   Linear_rett_aktiv : BOOL ;	
+   Tel_rett_aktiv : BOOL ;	
+   Hub_rett_aktiv : BOOL ;	
+   RP_Tuer_Rett_aktiv : BOOL ;	
+   PW_in_Grdst : BOOL ;	
+   WZW_in_Grdst : BOOL ;	
+   Blum_Grdst : BOOL ;	
+   Speicher_GrdST : BOOL ;	
+   VertikalSKStatus : BYTE ;	
+   Bildnummer : INT ;	
+   Bewegungsnummer : INT ;	
+   Anwahl : STRUCT 	
+    WZW : STRUCT 	
+     Maske1 : BOOL ;	//Anwahl WZW_MASKE_1: WZW-Grundfunktionen
+     Maske2 : BOOL ;	//Anwahl WZW_MASKE_2: WZW-Achsen und Quittierungen
+     Maske3 : BOOL ;	//Anwahl WZW_MASKE_3: WZW-Reinigung und Verriegelung
+     Maske4 : BOOL ;	//Anwahl WZW_MASKE_4: WZW-Regalrettung
+     Maske5 : BOOL ;	//Anwahl WZW_MASKE_5: WZW-Winkelkopf Wechselpositionen
+     Maske6 : BOOL ;	//Anwahl WZW_MASKE_6: 
+     Maske7 : BOOL ;	//Anwahl WZW_MASKE_7: WZW-Einstellungen
+    END_STRUCT ;	
+    PW : STRUCT 	
+     Maske1 : BOOL ;	//Anwahl PW_MASKE_1: PW1
+     Maske2 : BOOL ;	//Anwahl PW_MASKE_2: PW2
+     Maske3 : BOOL ;	//Anwahl PW_MASKE_3: PW3
+     Maske4 : BOOL ;	//Anwahl PW_MASKE_4:
+     Maske5 : BOOL ;	//Anwahl PW_MASKE_5:
+     Maske6 : BOOL ;	//Anwahl PW_MASKE_6:
+     Maske7 : BOOL ;	//Anwahl PW_MASKE_7:
+    END_STRUCT ;	
+    Option : STRUCT 	
+     SK : BOOL ;	//Anwahl Option: SK (hydraulischer Schwenkkopf)
+     WFK1 : BOOL ;	//Anwahl Option: WFK1 (Winkelfräskopf)
+     WFK2 : BOOL ;	//Anwahl Option: WFK2 (Winkelfräskopf)
+     System3R : BOOL ;	//Anwahl Option: Handlingsystem 3R
+     Reserve2 : BOOL ;	//Anwahl Option:
+     Reserve3 : BOOL ;	//Anwahl Option:
+     Reserve4 : BOOL ;	//Anwahl Option:
+     Ebene : BOOL ;	//Anwahl Option: Haupt-Ebene
+    END_STRUCT ;	
+    Blum : STRUCT 	
+     Maske1 : BOOL ;	//Anwahl Blum_Maske_1: WZ-Vermessung Einstiegsmaske
+     Maske2 : BOOL ;	//Anwahl Blum_Maske_2: WZ-Vermessung
+     Maske3 : BOOL ;	//Anwahl Blum_Maske_3: Kalibrierring
+     Maske4 : BOOL ;	//Anwahl Blum_Maske_4: 
+     Maske5 : BOOL ;	//Anwahl Blum_Maske_5: 
+     Maske6 : BOOL ;	//Anwahl Blum_Maske_6: 
+    END_STRUCT ;	
+    Speicher : STRUCT 	
+     Ebene : BOOL ;	
+     Maske1 : BOOL ;	//Anwahl Speicher_Maske_1:
+     Maske2 : BOOL ;	//Anwahl Speicher_Maske_2:
+     Maske3 : BOOL ;	//Anwahl Speicher_Maske_3:
+     Maske4 : BOOL ;	//Anwahl Speicher_Maske_4: Wiegenfräskopf
+     Maske5 : BOOL ;	//Anwahl Speicher_Maske_5: Wiegenfräskopf 2
+    END_STRUCT ;	
+   END_STRUCT ;	
+   Spannhydraulik : STRUCT 	
+    Maske1 : BOOL ;	//FG-Softkey: SpannHydraulik-Rüstplatz Bild:36
+    Maske2 : BOOL ;	//FG-Softkey: SpannHydraulik-Maschinenraum Bild:37
+    Maske3 : BOOL ;	//FG-Softkey: SpannHydraulik-Konfiguration ohne RS Bild:63
+    Maske4 : BOOL ;	//FG-Softkey: SpannHydraulik-Konfiguration mit RS Bild:64
+    Maske5 : BOOL ;	//FG-Softkey: SpannHydraulik-Teachen Bild:65
+    Maske6 : BOOL ;	//SpannHydraulik
+    Maske7 : BOOL ;	//SpannHydraulik
+    Ebene : BOOL ;	//Haupt-Softkey: SpannHydraulik
+   END_STRUCT ;	
+   Anwender : STRUCT 	
+    Maske1 : BOOL ;	
+    Maske2 : BOOL ;	
+    Maske3 : BOOL ;	//FG-Softkey: Anwenderfunktionen Bild:24
+    Maske4 : BOOL ;	//FG-Softkey: WZVS Bild:25
+    Maske5 : BOOL ;	//FG-Softkey: Rettung Spaenerechen Bild:30
+    Maske6 : BOOL ;	//FG-Softkey: "Anwender Funktion 2" Bild:31
+   END_STRUCT ;	
+   WZW_Ablauf_Schritt : BYTE ;	// Byte 36 Schrittnummer
+   OEM_Anwender_1 : BOOL ;	
+   OEM_Anwender_2 : BOOL ;	
+   OEM_SpH_Ruestplatz : BOOL ;	//HMI-Bild-Nr 36 aktiv: Spannhydraulik Rüstplatz
+   OEM_SpH_Konfig : BOOL ;	//HMI-Bild-Nr 63 aktiv: SpannHydraulik Konfiguration
+   OEM_SpH_Arbeitsraum : BOOL ;	//HMI-Bild-Nr 37 aktiv: SpannHydraulik Arbeitsraum
+   OEM_WZW_MagEinstellung : BOOL ;	//HMI-Bild-Nr 35 aktiv: WZW7 Magazineinstellung
+   RS_WIKO_in_Grdst : BOOL ;	
+   OEM_ANWENDER : BOOL ;	//HMI-Bild-Nr 24 aktiv: Anwender-Funktionen
+   OEM_Bildnummer : BYTE ;	
+   OEM_HSKNummer : BYTE ;	
+   OEM_WZVS_aktiv : BOOL ;	//HMI-Bild-Nr 25 aktiv: WZVS-System
+   OEM_FAS_St_Fertigteil : BOOL ;	//HMI-Bild Fastems Pal.Status: Fertigteil
+   OEM_FAS_St_Defekt : BOOL ;	//HMI-Bild Fastems Pal.Status: Defekt
+   OEM_Rett_Spaenerechen : BOOL ;	//HMI_Bild-Nr 30 aktiv: Spaenerechen
+   OEM_Anw_Funkt_2 : BOOL ;	//HMI-Bild-Nr-31 aktiv: Anwender-Funktion 2
+   OEM_frei15 : BOOL ;	
+   OEM_frei16 : BOOL ;	
+   OEM_WZW4_Rettbildaktiv : BOOL ;	
+   frei2 : BYTE ;	
+   RowInaktiv : STRUCT 	
+    WZW : STRUCT 	
+     Maske1 : BYTE ;	//Zeilen ausblenden: "WZW1"
+     Maske2 : BYTE ;	//Zeilen ausblenden: "WZW2"
+     Maske3 : BYTE ;	//Zeilen ausblenden: "WZW3"
+     Maske4 : BYTE ;	//Zeilen ausblenden: "WZW4"
+     Maske5 : BYTE ;	//Zeilen ausblenden: "WZW5"
+     Maske6 : BYTE ;	//Zeilen ausblenden: "WZW6"
+     Maske7 : BYTE ;	//Zeilen ausblenden: "WZW7"
+    END_STRUCT ;	
+    PW : STRUCT 	
+     Maske1 : BYTE ;	//Zeilen ausblenden: "PW1"
+     Maske2 : BYTE ;	//Zeilen ausblenden: "PW2"
+     Maske3 : BYTE ;	//Zeilen ausblenden: 
+     Maske4 : BYTE ;	//Zeilen ausblenden: 
+     Maske5 : BYTE ;	//Zeilen ausblenden: 
+     Maske6 : BYTE ;	//Zeilen ausblenden: 
+     Maske7 : BYTE ;	//Zeilen ausblenden: 
+    END_STRUCT ;	
+    Schwenkkopf : STRUCT 	
+     Maske1 : BYTE ;	//Zeilen ausblenden: 
+     Maske2 : BYTE ;	//Zeilen ausblenden: 
+     Maske3 : BYTE ;	//Zeilen ausblenden: 
+     Maske4 : BYTE ;	//Zeilen ausblenden: 
+     Maske5 : BYTE ;	//Zeilen ausblenden: 
+     Maske6 : BYTE ;	//Zeilen ausblenden: 
+     Maske7 : BYTE ;	//Zeilen ausblenden: 
+    END_STRUCT ;	
+    BLUM : STRUCT 	
+     Maske1 : BYTE ;	//Zeilen ausblenden: 
+     Maske2 : BYTE ;	//Zeilen ausblenden: 
+     Maske3 : BYTE ;	//Zeilen ausblenden: 
+     Maske4 : BYTE ;	//Zeilen ausblenden: 
+     Maske5 : BYTE ;	//Zeilen ausblenden: 
+     Maske6 : BYTE ;	//Zeilen ausblenden: 
+     Maske7 : BYTE ;	//Zeilen ausblenden: 
+    END_STRUCT ;	
+    Speicher : STRUCT 	
+     Maske1 : BYTE ;	//Zeilen ausblenden: Speicher Maske 1
+     Maske2 : BYTE ;	//Zeilen ausblenden: Speicher Maske 2
+     Maske3 : BYTE ;	//Zeilen ausblenden: 
+     Maske4 : BYTE ;	//Zeilen ausblenden: 
+     Maske5 : BYTE ;	//Zeilen ausblenden: 
+     Maske6 : BYTE ;	//Zeilen ausblenden: 
+     Maske7 : BYTE ;	//Zeilen ausblenden: 
+    END_STRUCT ;	
+    Spannhydraulik : STRUCT 	
+     Maske1 : BYTE ;	//Zeilen ausblenden: "Spannhydr. Rüstpl" Bild: 36
+     Maske2 : BYTE ;	//Zeilen ausblenden: "Spannhydr. Arbeitsr." Bild: 37
+     Maske3 : BYTE ;	//Zeilen ausblenden: "Spannhydr. Konfig.oRS" Bild: 63
+     Maske4 : BYTE ;	//Zeilen ausblenden: "Spannhydr. Konfig.mRS" Bild: 64
+     Maske5 : BYTE ;	//Zeilen ausblenden: "Spannhydr. Teachen" Bild: 65
+     Maske6 : BYTE ;	//Zeilen ausblenden: 
+     Maske7 : BYTE ;	//Zeilen ausblenden: 
+    END_STRUCT ;	
+    Anwender : STRUCT 	//Anwender-Funktionen
+     Maske1 : BYTE ;	//Zeilen ausblenden: 
+     Maske2 : BYTE ;	//Zeilen ausblenden: 
+     Maske3 : BYTE ;	//Zeilen ausblenden: Anwender-Funktionen
+     Maske4 : BYTE ;	//Zeilen ausblenden: WZVS-System
+     Maske5 : BYTE ;	//Zeilen ausblenden: Spänerechen
+     Maske6 : BYTE ;	//Zeilen ausblenden: Anwender-Funktion-2
+     Maske7 : BYTE ;	//Zeilen ausblenden: 
+    END_STRUCT ;	
+   END_STRUCT ;	
+   PS_DREHST_ZUR_POSITION : BYTE ;	//Rettung Palettenspeicher Eingabe der Sollposition für die Drehstation
+   Handlingsystem_Aktiv : BOOL ;	
+   Handlingsystem_2_Aktiv : BOOL ;	
+   Handlingsystem_GrdSt : BOOL ;	
+  END_STRUCT ;	
+BEGIN
+   OEM_SpeEinrbildaktiv := FALSE; 
+   OEM_SpeRettbildaktiv := FALSE; 
+   OEM_WZW_REttbildaktiv := FALSE; 
+   OEM_PW_Rettbildaktiv := FALSE; 
+   OEM_WZW2_Rettbildaktiv := FALSE; 
+   OEM_BlumRettaktiv := FALSE; 
+   OEM_PW2_Rettbildaktiv := FALSE; 
+   OEM_WZW3_Rettbildaktiv := FALSE; 
+   OEM_SKRettaktiv := FALSE; 
+   OEM_Regalrettaktiv := FALSE; 
+   OEM_bild9aktiv := FALSE; 
+   OEM_Winkelkopfrettaktiv := FALSE; 
+   OEM_PW3_Rettbildaktiv := FALSE; 
+   OEM_Aktiv := FALSE; 
+   Einrichten_Aktiv := FALSE; 
+   Einrichten_Reset := FALSE; 
+   OEM_PS4_Rettbildaktiv := FALSE; 
+   OEM_PS5_Rettbildaktiv := FALSE; 
+   OEM_SpH_TeachenAktiv := FALSE; 
+   OEM_WZW6_Rettbildaktiv := FALSE; 
+   OEM_WZW5_Rettbildaktiv := FALSE; 
+   OEM_MT_KAL_Rettbildaktiv := FALSE; 
+   OEM_Winkelkopfrettaktiv2 := FALSE; 
+   OEM_SpeRettbildaktiv3 := FALSE; 
+   oem_word := W#16#0; 
+   oem_dword := DW#16#0; 
+   oem_dword1 := DW#16#0; 
+   linearachse_einricht_akt := FALSE; 
+   Telachse_einricht_akt := FALSE; 
+   Hubachse_einricht_aktiv := FALSE; 
+   frei_einricht := FALSE; 
+   frei_einricht1 := FALSE; 
+   frei_einricht2 := FALSE; 
+   WZW_Reset := FALSE; 
+   WZ_ueberprueft := FALSE; 
+   Linear_rett_aktiv := FALSE; 
+   Tel_rett_aktiv := FALSE; 
+   Hub_rett_aktiv := FALSE; 
+   RP_Tuer_Rett_aktiv := FALSE; 
+   PW_in_Grdst := FALSE; 
+   WZW_in_Grdst := FALSE; 
+   Blum_Grdst := FALSE; 
+   Speicher_GrdST := FALSE; 
+   VertikalSKStatus := B#16#0; 
+   Bildnummer := 0; 
+   Bewegungsnummer := 0; 
+   Anwahl.WZW.Maske1 := FALSE; 
+   Anwahl.WZW.Maske2 := FALSE; 
+   Anwahl.WZW.Maske3 := FALSE; 
+   Anwahl.WZW.Maske4 := FALSE; 
+   Anwahl.WZW.Maske5 := FALSE; 
+   Anwahl.WZW.Maske6 := FALSE; 
+   Anwahl.WZW.Maske7 := FALSE; 
+   Anwahl.PW.Maske1 := FALSE; 
+   Anwahl.PW.Maske2 := FALSE; 
+   Anwahl.PW.Maske3 := FALSE; 
+   Anwahl.PW.Maske4 := FALSE; 
+   Anwahl.PW.Maske5 := FALSE; 
+   Anwahl.PW.Maske6 := FALSE; 
+   Anwahl.PW.Maske7 := FALSE; 
+   Anwahl.Option.SK := FALSE; 
+   Anwahl.Option.WFK1 := FALSE; 
+   Anwahl.Option.WFK2 := FALSE; 
+   Anwahl.Option.System3R := FALSE; 
+   Anwahl.Option.Reserve2 := FALSE; 
+   Anwahl.Option.Reserve3 := FALSE; 
+   Anwahl.Option.Reserve4 := FALSE; 
+   Anwahl.Option.Ebene := FALSE; 
+   Anwahl.Blum.Maske1 := FALSE; 
+   Anwahl.Blum.Maske2 := FALSE; 
+   Anwahl.Blum.Maske3 := FALSE; 
+   Anwahl.Blum.Maske4 := FALSE; 
+   Anwahl.Blum.Maske5 := FALSE; 
+   Anwahl.Blum.Maske6 := FALSE; 
+   Anwahl.Speicher.Ebene := FALSE; 
+   Anwahl.Speicher.Maske1 := FALSE; 
+   Anwahl.Speicher.Maske2 := FALSE; 
+   Anwahl.Speicher.Maske3 := FALSE; 
+   Anwahl.Speicher.Maske4 := FALSE; 
+   Anwahl.Speicher.Maske5 := FALSE; 
+   Spannhydraulik.Maske1 := FALSE; 
+   Spannhydraulik.Maske2 := FALSE; 
+   Spannhydraulik.Maske3 := FALSE; 
+   Spannhydraulik.Maske4 := FALSE; 
+   Spannhydraulik.Maske5 := FALSE; 
+   Spannhydraulik.Maske6 := FALSE; 
+   Spannhydraulik.Maske7 := FALSE; 
+   Spannhydraulik.Ebene := FALSE; 
+   Anwender.Maske1 := FALSE; 
+   Anwender.Maske2 := FALSE; 
+   Anwender.Maske3 := FALSE; 
+   Anwender.Maske4 := FALSE; 
+   Anwender.Maske5 := FALSE; 
+   Anwender.Maske6 := FALSE; 
+   WZW_Ablauf_Schritt := B#16#0; 
+   OEM_Anwender_1 := FALSE; 
+   OEM_Anwender_2 := FALSE; 
+   OEM_SpH_Ruestplatz := FALSE; 
+   OEM_SpH_Konfig := FALSE; 
+   OEM_SpH_Arbeitsraum := FALSE; 
+   OEM_WZW_MagEinstellung := FALSE; 
+   RS_WIKO_in_Grdst := FALSE; 
+   OEM_ANWENDER := FALSE; 
+   OEM_Bildnummer := B#16#0; 
+   OEM_HSKNummer := B#16#0; 
+   OEM_WZVS_aktiv := FALSE; 
+   OEM_FAS_St_Fertigteil := FALSE; 
+   OEM_FAS_St_Defekt := FALSE; 
+   OEM_Rett_Spaenerechen := FALSE; 
+   OEM_Anw_Funkt_2 := FALSE; 
+   OEM_frei15 := FALSE; 
+   OEM_frei16 := FALSE; 
+   OEM_WZW4_Rettbildaktiv := FALSE; 
+   frei2 := B#16#0; 
+   RowInaktiv.WZW.Maske1 := B#16#0; 
+   RowInaktiv.WZW.Maske2 := B#16#0; 
+   RowInaktiv.WZW.Maske3 := B#16#0; 
+   RowInaktiv.WZW.Maske4 := B#16#0; 
+   RowInaktiv.WZW.Maske5 := B#16#0; 
+   RowInaktiv.WZW.Maske6 := B#16#0; 
+   RowInaktiv.WZW.Maske7 := B#16#0; 
+   RowInaktiv.PW.Maske1 := B#16#0; 
+   RowInaktiv.PW.Maske2 := B#16#0; 
+   RowInaktiv.PW.Maske3 := B#16#0; 
+   RowInaktiv.PW.Maske4 := B#16#0; 
+   RowInaktiv.PW.Maske5 := B#16#0; 
+   RowInaktiv.PW.Maske6 := B#16#0; 
+   RowInaktiv.PW.Maske7 := B#16#0; 
+   RowInaktiv.Schwenkkopf.Maske1 := B#16#0; 
+   RowInaktiv.Schwenkkopf.Maske2 := B#16#0; 
+   RowInaktiv.Schwenkkopf.Maske3 := B#16#0; 
+   RowInaktiv.Schwenkkopf.Maske4 := B#16#0; 
+   RowInaktiv.Schwenkkopf.Maske5 := B#16#0; 
+   RowInaktiv.Schwenkkopf.Maske6 := B#16#0; 
+   RowInaktiv.Schwenkkopf.Maske7 := B#16#0; 
+   RowInaktiv.BLUM.Maske1 := B#16#0; 
+   RowInaktiv.BLUM.Maske2 := B#16#0; 
+   RowInaktiv.BLUM.Maske3 := B#16#0; 
+   RowInaktiv.BLUM.Maske4 := B#16#0; 
+   RowInaktiv.BLUM.Maske5 := B#16#0; 
+   RowInaktiv.BLUM.Maske6 := B#16#0; 
+   RowInaktiv.BLUM.Maske7 := B#16#0; 
+   RowInaktiv.Speicher.Maske1 := B#16#0; 
+   RowInaktiv.Speicher.Maske2 := B#16#0; 
+   RowInaktiv.Speicher.Maske3 := B#16#0; 
+   RowInaktiv.Speicher.Maske4 := B#16#0; 
+   RowInaktiv.Speicher.Maske5 := B#16#0; 
+   RowInaktiv.Speicher.Maske6 := B#16#0; 
+   RowInaktiv.Speicher.Maske7 := B#16#0; 
+   RowInaktiv.Spannhydraulik.Maske1 := B#16#0; 
+   RowInaktiv.Spannhydraulik.Maske2 := B#16#0; 
+   RowInaktiv.Spannhydraulik.Maske3 := B#16#0; 
+   RowInaktiv.Spannhydraulik.Maske4 := B#16#0; 
+   RowInaktiv.Spannhydraulik.Maske5 := B#16#0; 
+   RowInaktiv.Spannhydraulik.Maske6 := B#16#0; 
+   RowInaktiv.Spannhydraulik.Maske7 := B#16#0; 
+   RowInaktiv.Anwender.Maske1 := B#16#0; 
+   RowInaktiv.Anwender.Maske2 := B#16#0; 
+   RowInaktiv.Anwender.Maske3 := B#16#0; 
+   RowInaktiv.Anwender.Maske4 := B#16#0; 
+   RowInaktiv.Anwender.Maske5 := B#16#0; 
+   RowInaktiv.Anwender.Maske6 := B#16#0; 
+   RowInaktiv.Anwender.Maske7 := B#16#0; 
+   PS_DREHST_ZUR_POSITION := B#16#0; 
+   Handlingsystem_Aktiv := FALSE; 
+   Handlingsystem_2_Aktiv := FALSE; 
+   Handlingsystem_GrdSt := FALSE; 
+END_DATA_BLOCK
+

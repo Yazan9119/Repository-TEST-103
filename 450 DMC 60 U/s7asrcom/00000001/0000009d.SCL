@@ -1,0 +1,78 @@
+FUNCTION "FC_PS_Check_Transport" : VOID
+
+TITLE = ''
+//$Revision: 1.7 $
+//$Date: 2007/10/19 07:35:42CEST $
+//$Author: hgc $
+
+
+VAR_INPUT
+PlatzNr: INT  ;// Eingangsparameter
+HolenoBringen: BOOL; // 1.checke auf holen moeglich 0.checke auf bringen moeglich
+AnzSpPl: INT  ;//Anzahl der Speicherplätze
+END_VAR
+
+VAR_IN_OUT
+  // Durchgangsparameter
+END_VAR
+
+VAR_OUTPUT
+retWert: BOOL; // 1 --> holen / bringen moeglich     
+ // Ausgangsparameter
+END_VAR
+
+VAR_TEMP
+   iPalNr: INT;
+   tintdummy: INT;
+   tPlNr: INT;
+  // temporäre Variablen
+END_VAR
+
+BEGIN
+
+retWert:= 0;
+
+tPlNr:=AnzSpPl + 4;
+IF PlatzNr > tPlNr THEN
+    retWert:=0;
+    RETURN;
+END_IF;     
+
+ // Anweisungsteil
+ //tintdummy:=WORD_TO_INT(BYTE_TO_WORD(PlatzNr))
+// checke holen moeglich --> PalNr muss != 0 sein
+// 0:Maschine,1:Überpl1,2:Überpl2,3:Transportw,4:Ruepl,5-xx:Speicherpl 1 -- xx 
+IF HolenoBringen THEN 
+  //CASE tintdummy OF
+   CASE PlatzNr OF 
+    4 :         iPalNr:="DB_PAL_NR".Platz[4].Pal_Nr; //RP
+                IF ("DB_LSSchnittstelle".IX_RP_LS_verfuegbar = 0) THEN // RP nicht verfuegbar
+                    retWert:= 0;
+                    RETURN;
+                END_IF;     
+    1,2,5,6,7,8,9,10,11,12,13,14:  iPalNr:= "DB_PAL_NR".Platz[PlatzNr].Pal_Nr;    //.DW12; // UebPl1
+   ELSE: 
+    retWert:= 0; 
+   END_CASE ; 
+   IF (iPalNr<>0) THEN
+         retWert:= 1;
+   END_IF;
+   RETURN;
+// checke bringen moeglich --> PalNr muss  0 sein    
+ELSE
+     CASE PlatzNr OF 
+    4 :         iPalNr:="DB_PAL_NR".Platz[4].Pal_Nr; //DW48;
+                IF ("DB_LSSchnittstelle".IX_RP_LS_verfuegbar = 0) THEN // RP nicht verfuegbar
+                    retWert:= 0;
+                    RETURN;
+                END_IF;     
+    1,2,5,6,7,8,9,10,11,12,13,14: iPalNr:= "DB_PAL_NR".Platz[PlatzNr].Pal_Nr; //DW12; // UebPl1
+           
+    ELSE: 
+       retWert:= 0; 
+    END_CASE ; 
+    IF (iPalNr=0) THEN
+       retWert:= 1;
+    END_IF;
+ END_IF;
+END_FUNCTION

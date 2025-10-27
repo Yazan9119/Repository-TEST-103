@@ -1,0 +1,257 @@
+FUNCTION "FC_ASUP_MACHINE" : VOID
+TITLE =
+//$Revision: 1.18 $
+//$Date: 2007/10/04 11:06:21CEST $
+//$Author: fuh $
+//
+// Funktionesbeschreibung:
+// M20x.0 = Rückmeldung FC9 (Aktiviere ASUP) activ 
+// M20x.1ASUP mit ASUP_Nr.1 aktivieren
+// M20x.2ASUP mit ASUP_Nr.2 aktivieren
+// M20x.3ASUP mit ASUP_Nr.3 aktivieren
+// M20x.4ASUP mit ASUP_Nr.4 aktivieren
+// M20x.5ASUP mit ASUP_Nr.5 aktivieren
+// M20x.6ASUP mit ASUP_Nr.6 aktivieren
+// M20x.7ASUP mit ASUP_Nr.7 aktivieren
+// Jedes Bit führt zu einer ASUB-Nr. im Baustein und wird über $A_DBB [x] 
+//übertragen
+//
+// Logbuch:
+//
+// V0.1 /03.12.99
+// - Modul angelegt
+//
+AUTHOR : Schnabel
+FAMILY : ASUP
+NAME : AS_Machi
+VERSION : 0.1
+
+
+VAR_INPUT
+  E_EN : BOOL ;	//Enable Modul-Freigabe
+END_VAR
+BEGIN
+NETWORK
+TITLE =Modul-Freigabe
+
+      UN    #E_EN; 
+      SPB   MEnd; 
+
+      U     "M_Ruecksetze_Fehler"; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt._700156_Err_ASUP_Init_M; 
+NETWORK
+TITLE =Verzögerung Programm läuft nicht
+
+      UN    "DB_SIEM_KANAL_1".E_ProgRunn; // Programm läuft
+      L     S5T#1S; 
+      SE    "Te_Prg_nicht_aktiv_ASUP"; 
+
+NETWORK
+TITLE = Start FC201/DB201  >> FC9, FB4/db368
+
+      L     "Start_ASUP_Machine"; 
+      T     "DB_ASUP_MACHINE".ASUP_Step; 
+
+NETWORK
+TITLE = Lade ASUP-Start-Mask
+
+      L     "DB_ASUP_MACHINE".ASUP_Step; 
+      L     0; 
+      ==I   ; 
+      R     "DB_ASUP_MACHINE".Start_Impuls_1; 
+      L     "DB_ASUP_MACHINE".ASUP_Step; 
+      <>I   ; 
+      S     "DB_ASUP_MACHINE".Start_Impuls_1; 
+      SPB   st01; 
+
+NETWORK
+TITLE = Lade Transfer-Nr. für ASUP
+
+      SPA   enst; 
+st01: NOP   0; 
+      U     "DB_ASUP_MACHINE".Start_Asup; 
+      O     "DB_ASUP_MACHINE".FC9_Request; 
+      O     "DB_ASUP_MACHINE".FC9_Activ; 
+      SPB   enst; 
+
+      U     DB201.DBX    0.1; 
+      SPB   lnr1; 
+      U     DB201.DBX    0.2; 
+      SPB   lnr2; 
+      U     DB201.DBX    0.3; 
+      SPB   lnr3; 
+      U     DB201.DBX    0.4; 
+      SPB   lnr4; 
+      U     DB201.DBX    0.5; 
+      SPB   lnr5; 
+      U     DB201.DBX    0.6; 
+      SPB   lnr6; 
+      U     DB201.DBX    0.7; 
+      SPB   lnr7; 
+      SPA   strt; 
+
+lnr1: NOP   0; 
+      L     1; 
+      T     "DB_NC_PLC".ASUP_Schrittkette[1]; 
+      R     DB201.DBX    0.1; 
+      R     "Start_ASUP_Machine_Nr.1"; 
+      S     "DB_ASUP_MACHINE".Start_Asup; 
+      SPA   strt; 
+lnr2: NOP   0; 
+      L     2; 
+      T     "DB_NC_PLC".ASUP_Schrittkette[1]; 
+      R     DB201.DBX    0.2; 
+      R     "Start_ASUP_Machine_Nr.2"; 
+      S     "DB_ASUP_MACHINE".Start_Asup; 
+      SPA   strt; 
+lnr3: NOP   0; 
+      L     3; 
+      T     "DB_NC_PLC".ASUP_Schrittkette[1]; 
+      R     DB201.DBX    0.3; 
+      R     "Start_ASUP_Machine_Nr.3"; 
+      S     "DB_ASUP_MACHINE".Start_Asup; 
+      SPA   strt; 
+lnr4: NOP   0; 
+      L     4; 
+      T     "DB_NC_PLC".ASUP_Schrittkette[1]; 
+      R     DB201.DBX    0.4; 
+      R     "Start_ASUP_Machine_Nr.4"; 
+      S     "DB_ASUP_MACHINE".Start_Asup; 
+      SPA   strt; 
+lnr5: NOP   0; 
+      L     5; 
+      T     "DB_NC_PLC".ASUP_Schrittkette[1]; 
+      R     DB201.DBX    0.5; 
+      R     "Start_ASUP_Machine_Nr.5"; 
+      S     "DB_ASUP_MACHINE".Start_Asup; 
+      SPA   strt; 
+lnr6: NOP   0; 
+      L     6; 
+      T     "DB_NC_PLC".ASUP_Schrittkette[1]; 
+      R     DB201.DBX    0.6; 
+      R     "Start_ASUP_Machine_Nr.6"; 
+      S     "DB_ASUP_MACHINE".Start_Asup; 
+      SPA   strt; 
+lnr7: NOP   0; 
+      L     7; 
+      T     "DB_NC_PLC".ASUP_Schrittkette[1]; 
+      R     DB201.DBX    0.7; 
+      R     "Start_ASUP_Machine_Nr.7"; 
+      S     "DB_ASUP_MACHINE".Start_Asup; 
+      SPA   strt; 
+enst: NOP   0; 
+
+strt: NOP   0; 
+      U     "DB_ASUP_MACHINE".FB4_Done_Asup; 
+      U     "DB_ASUP_MACHINE".Start_Asup; 
+      U     "Te_Prg_nicht_aktiv_ASUP"; 
+      UN    "DB_ASUP_MACHINE".FC9_Done; 
+      UN    "DB_ASUP_MACHINE".FC9_Error; 
+      UN    "DB_ASUP_MACHINE".FC9_4; 
+      S     "DB_ASUP_MACHINE".FC9_Request; 
+
+      O     "DB_ASUP_MACHINE".FC9_Done; 
+      O     "DB_ASUP_MACHINE".FC9_Error; 
+      O     "DB_ASUP_MACHINE".FC9_4; 
+      O     "DB_SIEM_KANAL_1".A_Reset; 
+      R     "DB_ASUP_MACHINE".FC9_Request; 
+
+NETWORK
+TITLE = Call Fc9 
+
+      CALL "ASUP" (
+           Start                    := "DB_ASUP_MACHINE".FC9_Request,
+           ChanNo                   := 1,
+           IntNo                    := 5,
+           Activ                    := "DB_ASUP_MACHINE".FC9_Activ,
+           Done                     := "DB_ASUP_MACHINE".FC9_Done,
+           Error                    := "DB_ASUP_MACHINE".FC9_Error,
+           StartErr                 := "DB_ASUP_MACHINE".FC9_4,
+           Ref                      := "DB_ASUP_MACHINE".FC9_Error_1);
+
+      O     "DB_ASUP_MACHINE".FC9_Done; 
+      O     "DB_SIEM_KANAL_1".A_Reset; 
+      R     "DB_ASUP_MACHINE".Start_Asup; 
+      SPBN  n5a; 
+      L     0; 
+      T     "Start_ASUP_Machine"; 
+
+n5a:  NOP   0; 
+
+NETWORK
+TITLE = ASUP_MACHINE initialisieren
+
+      U     "DB_OEM".OEM_WZW2_Rettbildaktiv; 
+      O     "DB_OEM".OEM_WZW_REttbildaktiv; 
+      O     "DB_OEM".OEM_PW2_Rettbildaktiv; 
+      O     "DB_OEM".Handlingsystem_2_Aktiv; 
+      U     "M_Handbetrieb"; // "DB_SIEM_BAG".E_JOG
+      O     E      4.3; 
+      FP    "M_IMP_Asup_Init"; 
+      O     "M_5_ter_OB1_Zyklus"; 
+      S     "DB_ASUP_MACHINE".FB4_Request; 
+
+      CALL "FB_SIEM_PI" , "DB_INST_FB3_db368" (
+           Req                      := "DB_ASUP_MACHINE".FB4_Request,
+           PIService                := "DB_SIEM_PI".ASUP,
+           Unit                     := 1,
+           Addr1                    := "DB_ASUP_MACHINE".PATH,
+           Addr2                    := "DB_ASUP_MACHINE".ASUP,
+           WVar1                    := W#16#5,
+           WVar2                    := W#16#1,
+           WVar3                    := W#16#0,
+           WVar4                    := W#16#0,
+           Error                    := "DB_ASUP_MACHINE".FB4_Error,
+           Done                     := "DB_ASUP_MACHINE".FB4_Done,
+           State                    := "DB_ASUP_MACHINE".FB4_Error_1);
+
+      UN    "DB_ASUP_MACHINE".FB4_Done; 
+      SPB   Done; 
+      CALL "FB_SIEM_PI" , "DB_INST_FB3_db368" ;
+Done: NOP   0; 
+
+NETWORK
+TITLE = Start/Reset Initialize ASUP
+
+      U     "DB_ASUP_MACHINE".FB4_Done; 
+      O     "DB_ASUP_MACHINE".FB4_Error; 
+      R     "DB_ASUP_MACHINE".FB4_Request; 
+
+      U     "DB_ASUP_MACHINE".FB4_Done; 
+      S     "DB_ASUP_MACHINE".FB4_Done_Asup; 
+      R     "DB_ASUP_MACHINE".FB4_Done; 
+      U     "DB_ASUP_MACHINE".FB4_Error; 
+      S     "DB_ASUP_MACHINE".FB4_Error_Asup; 
+
+
+NETWORK
+TITLE = Reset Start ASUP
+
+      U     "DB_SIEM_KANAL_1".A_Reset; 
+      R     DB201.DBX    0.0; 
+      R     "DB_ASUP_MACHINE".Start_Asup; 
+      R     "DB_ASUP_MACHINE".Start_Impuls_1; 
+      R     "DB_ASUP_MACHINE".Start_Impuls_2; 
+      R     "DB_ASUP_MACHINE".Start_Step7; 
+
+
+
+
+
+
+NETWORK
+TITLE =Alarm & Operator Message
+
+      U     "DB_ASUP_MACHINE".FB4_Request; 
+      =     "DB_FEHLERMELDUNG".Meldung._702031_INITIALISIEREN; 
+
+      U     "DB_ASUP_MACHINE".FB4_Error; 
+      CLR   ; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt._700156_Err_ASUP_Init_M; 
+NETWORK
+TITLE =
+
+MEnd: NOP   0; 
+
+END_FUNCTION
+

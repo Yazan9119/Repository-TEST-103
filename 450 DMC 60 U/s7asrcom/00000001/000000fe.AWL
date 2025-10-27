@@ -1,0 +1,592 @@
+FUNCTION "FC_BETRIEBSARTEN" : VOID
+TITLE =
+//$Revision: 1.43 $
+//$Date: 2008/11/05 11:21:23CET $
+//$Author: hgc $
+//
+//Logbuch:
+//
+//25.05.00  AB Flankenmerker Betriebsarten eingeführt
+{ S7_language := '7(1) Deutsch (Deutschland)  26.03.2008  08:00:15' }
+AUTHOR : SCH
+FAMILY : MA
+NAME : LEISTUNG
+VERSION : 0.1
+
+
+VAR_TEMP
+  T_IMN_Fehler_ASUP : BOOL ;	
+  T_IMN_Fehler_ASUP1 : BOOL ;	
+  T_ASUP_RM_FALSCH : BOOL ;	
+  T_Einricht_OK : BOOL ;	
+  T_3_BA_OK : BOOL ;	
+  T_4_BA_OK : BOOL ;	
+  T_KSOBA_OK : BOOL ;	
+  T_Freigabe_Ablauefe : BOOL ;	
+  Max_soll : REAL ;	
+  Prog_soll : REAL ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =Betriebsarten
+
+      U     "I_AL_3_Betriebsart"; 
+      UN    "I_AL_4_Betriebsart"; 
+      UN    "I_AL_2_Betriebsart"; 
+      U(    ; 
+      O(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._024_ANWAHL_SONDER_BA; 
+      L     1; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      TAK   ; 
+      L     2; 
+      ==I   ; 
+      )     ; 
+      )     ; 
+      U(    ; 
+      U     "M_Satzfolge_aktiv"; 
+      O     "M_Handbetrieb"; 
+      O     "MX_MDA"; 
+      )     ; 
+      UN    "M_Spritz_Tuer_Zu"; 
+      =     "M_3Te_Betriebsart"; 
+      =     "DB_FEHLERMELDUNG".Meldung._702011_3te_Betriebsart; 
+
+      U     "M_3Te_Betriebsart"; 
+      FP    "M_FM_3Te_Betriebsart"; 
+      =     "M_IMP_3Te_Betriebsart"; 
+
+// Zeit zaehler
+      U     "M_Takt_1s"; 
+      SPBN  xx2; 
+      L     "DB_REMANENT".BA3_Zeitwert; 
+      L     1; 
+      +I    ; 
+      T     "DB_REMANENT".BA3_Zeitwert; 
+
+// Zeit rücksetzen   
+xx2:  ON    "M_3Te_Betriebsart"; // BA3 ist abgewählt
+      O(    ; 
+      O     "DB_REMANENT".Ba3_Meldung; // Stop steht an
+      O     "DB_REMANENT".BA3_Hupe; // Stop steht an
+      O     "DB_REMANENT".BA3_Stop_Satzgrenze; // Stop steht an
+      U     "M_Ruecksetze_Fehler"; // Cancel Taste
+      )     ; 
+      O     "DB_REMANENT".Ba34_Zeit_Abwahl; // Abwahl Timer
+      SPBN  t3ok; 
+      L     0; 
+      T     "DB_REMANENT".BA3_Zeitwert; 
+t3ok: NOP   0; 
+
+//--- Schritt 1 Meldung ausgeben
+      L     "DB_REMANENT".BA3_Zeitwert; 
+      L     "DB_REMANENT".BA34_Time_Meld; 
+      >I    ; 
+      =     "DB_REMANENT".Ba3_Meldung; 
+
+//--- Schritt 2 Hupe ansteuern
+
+      L     "DB_REMANENT".BA3_Zeitwert; 
+      L     "DB_REMANENT".BA34_Time_Hupe; 
+      >I    ; 
+      =     "DB_REMANENT".BA3_Hupe; 
+
+//--- Schritt 3 Stop an Satzgrenzen ausgeben 
+
+      L     "DB_REMANENT".BA3_Zeitwert; 
+      L     "DB_REMANENT".BA34_Time_End; 
+      >I    ; 
+      =     "DB_REMANENT".BA3_Stop_Satzgrenze; 
+
+// 4. Betriebsart
+
+      UN    "I_AL_3_Betriebsart"; 
+      U     "I_AL_4_Betriebsart"; 
+      UN    "I_AL_2_Betriebsart"; 
+      U(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._024_ANWAHL_SONDER_BA; 
+      L     2; 
+      ==I   ; 
+      )     ; 
+      UN    "M_Spritz_Tuer_Zu"; 
+      S     "M_4Te_Betriebsart"; 
+      UN    "I_AL_4_Betriebsart"; 
+      R     "M_4Te_Betriebsart"; 
+
+// Selbsthaltung 4. BA setzen
+
+      U     "M_4Te_Betriebsart"; 
+      UN    "M_WZSP_angewaehlt"; 
+      =     "O_AL_4_BA_Selbsthaltung"; 
+
+// Meldung 4. Betriebsart
+
+      U     "M_4Te_Betriebsart"; 
+      =     "DB_FEHLERMELDUNG".Meldung._702012_4te_Betriebsart; 
+
+      U     "M_4Te_Betriebsart"; 
+      FP    "M_FM_4Te_Betriebsart"; 
+      =     "M_IMP_4Te_Betriebsart"; 
+
+//---- BA4 Zeiten aus DB 20 laden (Meldung, Hupe, Stop an Satzgrenzen)
+
+      L     "DB_PLC_MD_DB20".UDInt._102_BA4_TIME_MELD; 
+      T     "DB_REMANENT".BA34_Time_Meld; 
+
+      L     "DB_PLC_MD_DB20".UDInt._103_BA4_TIME_HUPE; 
+      +I    ; 
+      T     "DB_REMANENT".BA34_Time_Hupe; 
+      L     "DB_PLC_MD_DB20".UDInt._104_BA4_TIME_STOP; 
+      +I    ; 
+      T     "DB_REMANENT".BA34_Time_End; 
+
+
+      U     "M_Takt_1s"; 
+      SPBN  xx1; 
+      L     "DB_REMANENT".BA4_Zeitwert; 
+      L     1; 
+      +I    ; 
+      T     "DB_REMANENT".BA4_Zeitwert; 
+
+// Zeit rücksetzten 
+
+xx1:  L     "DB_REMANENT".BA34_Time_Meld; 
+      L     0; 
+      ==I   ; 
+      =     "DB_REMANENT".Ba34_Zeit_Abwahl; 
+
+      U     "I_AL_Zustimmtaste"; 
+      FP    "DB_REMANENT".FP_Zustimmtaste1; 
+      =     "DB_REMANENT".IM_Zustimmtaste; 
+
+      ON    "M_4Te_Betriebsart"; // BA4 ist abgewählt
+      O(    ; 
+      U     "M_4Te_Betriebsart"; 
+      U     "DB_REMANENT".IM_Zustimmtaste; 
+      )     ; 
+      O(    ; 
+      O     "DB_REMANENT".Ba4_Meldung; // Stop steht an
+      O     "DB_REMANENT".BA4_Hupe; // Stop steht an
+      O     "DB_REMANENT".BA4_Stop_Satzgrenze; // Stop steht an
+      U     "M_Ruecksetze_Fehler"; // Cancel Taste
+      )     ; 
+      O     "DB_REMANENT".Ba34_Zeit_Abwahl; // Abwahl Timer
+      SPBN  tok; 
+      L     0; 
+      T     "DB_REMANENT".BA4_Zeitwert; 
+tok:  NOP   0; 
+NETWORK
+TITLE =Schritt 1 Meldung ausgeben
+
+      L     "DB_REMANENT".BA4_Zeitwert; 
+      L     "DB_REMANENT".BA34_Time_Meld; 
+      >I    ; 
+      =     "DB_REMANENT".Ba4_Meldung; 
+NETWORK
+TITLE =Schritt 2 Hupe ansteuern
+
+      L     "DB_REMANENT".BA4_Zeitwert; 
+      L     "DB_REMANENT".BA34_Time_Hupe; 
+      >I    ; 
+      =     "DB_REMANENT".BA4_Hupe; 
+NETWORK
+TITLE =Schritt 3 Stop an Satzgrenzen ausgeben
+
+      L     "DB_REMANENT".BA4_Zeitwert; 
+      L     "DB_REMANENT".BA34_Time_End; 
+      >I    ; 
+      =     "DB_REMANENT".BA4_Stop_Satzgrenze; 
+NETWORK
+TITLE =Meldung: Bitte BA3/4 quittieren 1.Stufe
+
+      O     "DB_REMANENT".Ba4_Meldung; 
+      O     "DB_REMANENT".Ba3_Meldung; 
+      =     "DB_FEHLERMELDUNG".SAFE_MELD._701507_BA34_Meldung; 
+NETWORK
+TITLE =Meldung: Bitte BA3/4 quittieren 2.Stufe
+
+      O     "DB_REMANENT".BA4_Hupe; 
+      O     "DB_REMANENT".BA3_Hupe; 
+      =     "DB_FEHLERMELDUNG".SAFE_MELD._701508_BA34_Hupe; 
+NETWORK
+TITLE =Alarm:Stop an Satzgrenze, Quittieung BA fehlte
+
+      O     "DB_REMANENT".BA4_Stop_Satzgrenze; 
+      O     "DB_REMANENT".BA3_Stop_Satzgrenze; 
+      =     "DB_FEHLERMELDUNG".VSP_Halt_Satzwechsel._701207_BA34_Stop; 
+NETWORK
+TITLE =Einrichtbetrieb
+
+      UN    "I_AL_3_Betriebsart"; 
+      UN    "I_AL_4_Betriebsart"; 
+      O(    ; // o AB
+      L     "DB_PLC_MD_DB20".UDInt._024_ANWAHL_SONDER_BA; 
+      L     0; 
+      ==I   ; 
+      )     ; 
+      U     "I_AL_2_Betriebsart"; 
+      UN    "M_Spritz_Tuer_Zu"; 
+      U     "M_Handbetrieb"; 
+      =     "M_Einrichtbetrieb"; 
+      =     "O_AL_Manual_Betrieb"; 
+      =     "DB_FEHLERMELDUNG".Meldung._702010_Einrichtbetrieb; 
+
+      U     "I_AL_3_Betriebsart"; 
+      U     "M_Spritz_Tuer_Zu"; 
+      UN    "M_3Te_Betriebsart"; 
+      O(    ; 
+      U     "I_AL_2_Betriebsart"; 
+      U     "M_Spritz_Tuer_Zu"; 
+      UN    "M_Einrichtbetrieb"; 
+      )     ; 
+      =     "DB_FEHLERMELDUNG".MELDUNG5._510305_BA_nicht_moegl; 
+
+NETWORK
+TITLE =Keine SonderBetriebsart aktiv
+
+      UN    "M_3Te_Betriebsart"; 
+      UN    "M_4Te_Betriebsart"; 
+      UN    "M_Einrichtbetrieb"; 
+      FP    "M_FMN_SonderBetriebsart"; 
+      =     "M_IMN_SonderBetriebsart"; 
+NETWORK
+TITLE =Einrichtbetrieb Impuls
+
+      U     "M_Einrichtbetrieb"; 
+      FP    "M_FP_Einrichtb"; 
+      =     "M_Imp_Einrichtberieb"; 
+NETWORK
+TITLE =Betriebsart 3 Impuls 
+
+      U     "M_3Te_Betriebsart"; 
+      FP    "M_FP_BA3"; 
+      =     "M_Imp_Betriebsart 3"; 
+NETWORK
+TITLE =Betriebsart 4 aktiv schalten
+
+      U     "M_4Te_Betriebsart"; 
+      U     "O_AL_4_BA_Selbsthaltung"; 
+      FP    "M_FP_BA4+ZUSTT"; 
+      S     "M_BA4_aktiv_schalten_"; 
+      U(    ; 
+      ON    "M_4Te_Betriebsart"; 
+      ON    "O_AL_4_BA_Selbsthaltung"; 
+      )     ; 
+      R     "M_BA4_aktiv_schalten_"; 
+      NOP   0; 
+NETWORK
+TITLE =Alarm: Zustimmtaste schon 1 Signal
+
+      U     "I_AL_Zustimmtaste"; 
+      U(    ; 
+      O     "M_Imp_Einrichtberieb"; 
+      O     "M_Imp_Betriebsart 3"; 
+      )     ; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700840_Zustimm_1Sign; 
+NETWORK
+TITLE =Vorschubfreigabe ein
+
+      O     "M_Einrichtbetrieb"; 
+      O     "M_3Te_Betriebsart"; 
+      U     "I_AL_Zustimmtaste"; 
+      O(    ; 
+      U     "M_4Te_Betriebsart"; 
+      )     ; 
+      O     "M_Spritz_Tuer_Zu"; 
+      O     "DB_PLC_MD_DB20".UDHex._05_BIT2_SAFTY_ABNAHME; 
+      U     "M_MA_Maschine_Ein"; 
+      =     "M_VORSCH_FREIG"; // Fahrfreigabe Freigabe
+NETWORK
+TITLE =Meldung: Safety Abnahme->Vorschubfreigabe auch bei offener Türe
+
+      U     "DB_PLC_MD_DB20".UDHex._05_BIT2_SAFTY_ABNAHME; 
+      =     "DB_FEHLERMELDUNG".MELDUNG2._701263_SAFETY_ABNAHME; 
+NETWORK
+TITLE =Meldung: ANWAHL BA1 -> Rückmeldung von PNOZ-Multi fehlt
+
+      U     "M_MA_Maschine_Ein"; 
+      U     "I_AL_Kabine_Verriegelt"; 
+      UN    "I_AL_ANWAHL_BA1"; 
+      =     "DB_FEHLERMELDUNG".Meldung4._702461_PNOZ_BA1_FEHLT; 
+NETWORK
+TITLE =Meldung: ANWAHL BA2 -> Rückmeldung von PNOZ-Multi fehlt
+
+      U     "M_MA_Maschine_Ein"; 
+      U     "I_AL_2_Betriebsart"; 
+      U     "I_AL_Zustimmtaste"; 
+      UN    "I_AL_Kabine_Verriegelt"; 
+      UN    "I_AL_4_Betriebsart"; 
+      UN    "I_AL_ANWAHL_BA2"; 
+      =     "DB_FEHLERMELDUNG".Meldung4._702462_PNOZ_BA2_FEHLT; 
+NETWORK
+TITLE =Meldung: ANWAHL BA3/4 -> Rückmeldung von PNOZ-Multi fehlt
+
+      U     "M_MA_Maschine_Ein"; 
+      U(    ; 
+      U     "I_AL_3_Betriebsart"; 
+      U     "I_AL_Zustimmtaste"; 
+      UN    "I_AL_Kabine_Verriegelt"; 
+      UN    "I_AL_4_Betriebsart"; 
+      O     ; 
+      U     "I_AL_4_Betriebsart"; 
+      U     "O_AL_4_BA_Selbsthaltung"; 
+      UN    "I_AL_2_Betriebsart"; 
+      UN    "I_AL_3_Betriebsart"; 
+      )     ; 
+      UN    "I_AL_ANWAHL_BA3/4"; 
+      =     "DB_FEHLERMELDUNG".Meldung4._702463_PNOZ_BA3_4_FEHLT; 
+NETWORK
+TITLE ="DB_PLC_MD_DB20".UDHex._04_BIT4 Einrichtbit aktiv
+
+      U     "DB_PLC_MD_DB20".UDHex._04_BIT4_EINRICHT_BETR; 
+      =     "DB_FEHLERMELDUNG".WARNUNG4._702328_Einrichtbit_akt; 
+NETWORK
+TITLE =Merker: Reset-Taste / Reset Impuls
+
+      U(    ; 
+      U     "MSSTstReset"; 
+      FP    "M_FP_MSSTstReset"; 
+      O     "M_MA_FP_Maschine_Ein"; 
+      O     "M_RESET_RPC_3R"; 
+      O     "DI_FB_IF_FASTEMS".FMS_MC_External_reset; 
+      )     ; 
+      U     "MX_PLC_Initialisiert"; 
+      =     "M_Reset_Taste"; 
+NETWORK
+TITLE =Reset verlängerter Impuls
+//M17 als Prog_event Ende erkennen
+      U     "M_Reset_Taste"; 
+      L     S5T#1S; 
+      SV    "Tv_Reset_Impuls"; 
+      U     "DB_DM_M_FUNKTION".MX_M[17]; 
+      R     "Tv_Reset_Impuls"; 
+      NOP   0; 
+      NOP   0; 
+
+      NOP   0; 
+NETWORK
+TITLE =Merker: Fehler löschen (Quittierungs-Taste)
+
+      O     "DB_SIEM_MMC".E_Cancel; 
+      O     ; 
+      U     "Tv_Maschine_ein_aus"; 
+      U     "M_MA_Maschine_Ein"; 
+      =     "M_Fehler_Quit_Taste"; 
+NETWORK
+TITLE =Merker: Fehler löschen (Quittierungs-Taste + Reset-Taste)
+
+      O     "M_Reset_Taste"; 
+      O     "M_Fehler_Quit_Taste"; 
+
+// Negative Flanke von Einrichtbetrieb + Leistung M5 ausgeben Negative Flanke von Einrichtbetrieb + Leistung M5 ausgeben
+
+      =     "M_Ruecksetze_Fehler"; 
+NETWORK
+TITLE =Spindel Vorschub Halt wegen BA-Wechsel
+
+      U     "M_Leistung_Steht_an"; 
+      U(    ; 
+      O     "M_Einrichtbetrieb"; 
+      O     "M_3Te_Betriebsart"; 
+      )     ; 
+      UN    "M_Programm_Aktiv"; 
+      UN    "M_Hauptspindel_steht"; 
+      UN    "DB_SIEM_KANAL_1".E_ProgInterrupt; 
+      UN    "M_Satzfolge_aktiv"; 
+      FN    "M_FN_Leistung_Einricht"; 
+      =     "M_M5_Einrichtbetrieb"; 
+NETWORK
+TITLE =M30 als Unterprogramm-Ende erkennen
+
+      UN    "DB_PLC_MD_DB20".UDHex._31_Bit1_SOLUTIONLINE; 
+      SPB   NQUT; 
+//Bei Solutionline fehlt Shopmill-PLC, es erfolgt kein Spindel Halt bei M30!
+// deshalb über PLC Restweg löschen und M30 wird quittierplichtig 
+      SET   ; 
+      S     "DB_DM_M_FUNKTION".MX_QuitPflicht[30]; 
+
+      U     "DB_ACHSE6_SPINDEL".E_Stat; 
+      O     "DB_NC_PLC".LASER_Aktiv; 
+      =     "DB_DM_M_FUNKTION".MX_Quitt[30]; 
+      R     "M_SPI_RESTW_LOESCH_M30"; 
+
+NQUT: O     "M_Reset_Taste"; 
+      O(    ; 
+      ON    "DB_SIEM_KANAL_1".E_ChanReset; 
+      U     "M_Hauptprogramm_Ende"; 
+      )     ; 
+      R     "M_Hauptprogramm_Ende"; 
+
+      U     "M_Reset_Taste"; 
+      R     "M_HM_Hauptprogramm_Ende"; 
+
+      U     "DB_DM_M_FUNKTION".MX_M[30]; 
+      UN    "M_ShopMill_Positionieren"; 
+      UN    "M_Handbetrieb"; 
+      =     "m_vke_uebertrag_1"; 
+      S     "M_HM_Hauptprogramm_Ende"; 
+
+      U     "m_vke_uebertrag_1"; 
+      UN    "DB_NC_PLC".LASER_Aktiv; 
+      S     "M_SPI_RESTW_LOESCH_M30"; 
+
+      U     "M_HM_Hauptprogramm_Ende"; 
+      U     "DB_SIEM_KANAL_1".E_ProgrAborted; 
+      S     "M_Hauptprogramm_Ende"; 
+      R     "M_HM_Hauptprogramm_Ende"; 
+
+      U     "DB_DM_M_FUNKTION".MX_M[30]; 
+      O     "M_Reset_Taste"; 
+      R     "DB_DM_M_FUNKTION".MX_M[30]; 
+
+      U     "DB_DM_M_FUNKTION".MX_M[2]; 
+      R     "DB_DM_M_FUNKTION".MX_M[2]; 
+
+      U     "DB_DM_M_FUNKTION".MX_M[17]; 
+      O     "M_Reset_Taste"; 
+      R     "DB_DM_M_FUNKTION".MX_M[17]; 
+
+NETWORK
+TITLE =10s Takt
+
+      SET   ; 
+      R     "M_Takt_10s"; 
+
+      U     "M_Takt_01s"; 
+      SPBN  T001; 
+
+      L     "MB_10s_Takt_Count"; 
+      INC   1; 
+      T     "MB_10s_Takt_Count"; 
+
+T001: L     "MB_10s_Takt_Count"; 
+      L     100; 
+      ==I   ; 
+      SPBN  T002; 
+      S     "M_Takt_10s"; 
+      L     0; 
+      T     "MB_10s_Takt_Count"; 
+
+T002: NOP   0; 
+NETWORK
+TITLE =Vorschub- und Spindelbegrenzungen in den Sonder-Betriebsarten
+// 
+      O     "M_Einrichtbetrieb"; 
+      O     "M_3Te_Betriebsart"; 
+
+      O     "M_4Te_Betriebsart"; 
+      ON    "DB_SIEM_KANAL_1".E_AxesRef; 
+      O     ; 
+      U     "DB_PLC_MD_DB20".UDHex._16_BIT5_Eilg_Ovr_JOG_Nu; 
+
+      U     "M_Handbetrieb"; 
+      =     "M_Eilgang_verriegeln"; 
+
+NETWORK
+TITLE =Zusatzfunktion Programm Ende (M30)
+//Programm Ende: MD=0 Puls, =1 Statisch bis zum Reset oder Start
+      U     "DB_PLC_MD_DB20".UDHex._10_BIT0_ENDE_PROG; 
+      SPB   STAT; 
+
+      U     "DB_SIEM_KANAL_1".E_M30; 
+      FP    "MX_Prog_Ende_Flanke"; 
+      =     "O_Programm_Ende"; 
+      SPA   STE; 
+
+STAT: U     "DB_SIEM_KANAL_1".E_M30; 
+      =     "O_Programm_Ende"; 
+
+STE:  NOP   0; 
+NETWORK
+TITLE =PLC Initialisiert
+
+      U     "M_7_ter_OB1_Zyklus"; 
+      UN    "MX_PLC_Initialisiert"; 
+
+//      R     "DB_FehlerMeldung_DB102".NotAus._700014_Spannvor_0Signal      R     "DB_FehlerMeldung_DB102".NotAus._700014_Spannvor_0Signal
+
+// --- Spannhydraulik angewaehlt --- Spannhydraulik angewaehlt
+      S     "MX_PLC_Initialisiert"; 
+NETWORK
+TITLE =Spannhydraulik
+//Überwachung vom Eingang 'Freigabe Spannvorrichtung', wenn 
+//- Spannhydraulik angewählt (DB20.DBW52)
+//- Frässpindel läuft
+//- oder ein Programm läuft
+//- oder eine Achse fährt
+//
+//keine Überwachung bei
+//- aktive Palettenwechsel
+//  
+// --- Ini
+      U     "M_Ruecksetze_Fehler"; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700750_SpannVor_Druck0; 
+
+// --- Spannhydraulik angewaehlt
+      O     "DB_PLC_MD_DB20".UDHex._33_Bit0_SPH_RPL; 
+      O     "DB_PLC_MD_DB20".UDHex._33_Bit1_SPH_MPL; 
+      O     "DB_PLC_MD_DB20".UDHex._33_Bit2_SPH_oPW; 
+      O     "DB_PLC_MD_DB20".UDHex._33_Bit3_SPH_FD; 
+      O     "DB_HR".ABST.SP_ohnePROP; 
+      SPB   SPEN; 
+
+// --- Bedingungen checken
+
+// Sobald Rundspeicher angewählt auf 6s entprellen sonst 100ms
+
+      U     "MX_Rundspeicher_RS4"; 
+      SPBN  XX1; 
+
+      L     S5T#6S; 
+      SPA   XX2; 
+
+XX1:  L     S5T#1S; 
+
+XX2:  NOP   0; // UN    "M_Hauptspindel_steht"
+      U     "DB_HR".ABST.SP_SA_MTU; 
+      R     "DB_FEHLERMELDUNG".Meldung._702057_Spannhydr_Gesp_0; 
+
+
+//O(U Programm läuft UN manueller WZW) 
+//O(Achsebwegung un REf.Punkt angefahren)
+      U     "M_MA_Maschine_Ein"; 
+      UN    "M_PW_Aktiv"; 
+      U     "M_Leistung_Steht_an"; 
+      U     "M_Leistung_Steht_an"; 
+      U(    ; 
+      UN    "I_MAS_SPANNDUCK_OK"; //"I_SpannDruck_Maschine"
+      U     "DB_HR".ABST.SP_SA_MTU; 
+      O     ; 
+      UN    "I_ACHS_PNOZ_FRG"; 
+      U     "DB_HR".ABST.SP_FD; 
+      )     ; 
+      SE    "TV_Spannvorrichtung"; 
+
+      U     "TV_Spannvorrichtung"; 
+      UN    "DB_HR".ABST.SpannHydraulik; 
+      UN    "DB_HR".ABST.SP_ext_Nullpunktspannsys; 
+      SPBN  SPEN; 
+
+//--- Not-Aus Fehler ausgeben
+      O     "DB_HR".ABST.SP_SA_MTU; 
+      O     "DB_HR".ABST.SP_FD; 
+      S     "DB_FEHLERMELDUNG".Meldung._702057_Spannhydr_Gesp_0; 
+      SPB   SPEN; 
+
+      U     "DB_HR".ABST.SP_ohnePROP; 
+      UN    "I_AL_Kabine_Verriegelt"; 
+      UN    "I_AL_2_Betriebsart"; 
+      UN    "I_AL_3_Betriebsart"; 
+      UN    "I_AL_4_Betriebsart"; 
+      SPB   SPEN; 
+
+      SET   ; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700750_SpannVor_Druck0; 
+
+SPEN: NOP   0; 
+
+
+END_FUNCTION
+

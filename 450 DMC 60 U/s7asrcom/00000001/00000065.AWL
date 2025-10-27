@@ -1,0 +1,718 @@
+FUNCTION "FC_SIEM_MCP_STANDARD" : VOID
+TITLE =
+//$Revision: 1.5 $
+//$Date: 2008/06/06 08:35:31CEST $
+//$Author: hgc $
+//
+//SIEMENS Standard Maschinensteuertafel
+//
+FAMILY : DM_BASIC
+NAME : FC_INOUT
+VERSION : 0.1
+
+
+VAR_INPUT
+  MSST_Teil_1_Lesen : BOOL ;	
+  MSST_Teil_2_Schreiben : BOOL ;	
+END_VAR
+VAR_TEMP
+  Spindel_Override : BYTE ;	
+  MSST_Taste_SP_Overr_100 : BOOL ;	
+  Ovrride_temp : WORD ;	
+  zwischenspeicher : WORD ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE =Anwahl: MSST Siemens Standard Teil 1 / Teil 2 ? 
+// 
+      U     #MSST_Teil_1_Lesen; 
+      SPB   M001; 
+      U     #MSST_Teil_2_Schreiben; 
+      SPB   M002; 
+
+      SPA   ENDE; 
+
+M001: NOP   0; 
+NETWORK
+TITLE =------------- MSST-Teil 1 aktiv --------------------------------
+
+NETWORK
+TITLE =OP12/15A: Direkttasten links
+
+      L     "IX_Direkttasten_links"; 
+      T     "I_Direkttasten_links"; 
+      NOP   0; 
+NETWORK
+TITLE =OP12/15A: Direkttasten rechts
+
+      L     "IX_Direkttasten_rechts"; 
+      T     "I_Direkttasten_rechts"; 
+      NOP   0; 
+
+NETWORK
+TITLE =Anwahl Increment über Konstante ausblenden
+
+      U     "DB_PLC_MD_DB20".UDHex._11_BIT2_Abw_INC_MSST; 
+      R     E      1.5; 
+      R     E      1.0; 
+      R     E      1.1; 
+      R     E      1.2; 
+      R     E      1.3; 
+      R     E      1.4; 
+NETWORK
+TITLE =SIEMENS Standard MSST: Anwahl 10000 INC unterdrücken
+//10000 INC Taste ist bei DM MSST nicht vorhanden und wird nicht verwendet
+      U     "m_eins"; 
+      R     E      1.4; 
+NETWORK
+TITLE =Overridewandlung für FC_MASCHTYP_MCP
+// Jog mit Eilgangsüberlagerung
+      U     "I_DM_Ta Eilgang"; 
+      U     "M_Handbetrieb"; // "DB_SIEM_BAG".E_JOG
+      UN    "DB_ICON"._1.UI_17; 
+      UN    "DB_SIEM_BAG".E_REF; 
+      SPBN  ovr1; 
+      L     400; // 100 % bei Eilgangstaste im Jog
+      T     #zwischenspeicher; 
+      LAR1  ; 
+      SPA   ovr2; 
+
+// - EB Override laden -------------- 
+ovr1: L     "MSST_Vorschub_OVR"; 
+      L     W#16#1F; 
+      UW    ; 
+      L     1; 
+      -D    ; 
+      L     2; 
+      *D    ; 
+      SLW   3; 
+      T     #zwischenspeicher; 
+      LAR1  ; 
+
+// - Wert gültig -------------------- ?
+ovr2: L     #zwischenspeicher; 
+      L     480; 
+      >D    ; // Pointer > 31  -->
+      SPBN  ovr3; 
+      L     480; // --> auf 31 begrenzt
+      LAR1  ; 
+
+// - Wandeln ------------------------
+ovr3: AUF   "DB_OVR_WANDLER"; 
+      L     DBW [AR1,P#240.0]; //  Bereich MSST2 SIEMENS Standard
+      T     #Ovrride_temp; 
+
+// - Wert auf EB Override transferieren ----- 
+      L     "MSST_Vorschub_OVR"; 
+      SRW   5; 
+      SLW   5; 
+      L     #Ovrride_temp; 
+      OW    ; 
+      T     "MSST_Vorschub_OVR"; 
+
+NETWORK
+TITLE =CALL  "FC_MASCHTYP_MCP"
+//hier wird entschieden ob Baustein abgearbeitet wird
+//->Modul Enabled
+//->im Jog oder Referenzbetrieb
+//
+//Das Modul wird vor dem FC24 mit MSST_lesen_schreiben true aufgerufen
+//und Netzwerk 2 wird bearbeitet
+//
+//und nach dem FC24 mit MSST_lesen_schreiben false aufgerufen
+//und Netzwerk 3 und 4 werden bearbeitet
+//
+//Die Verfahrtasten(Deckel Maho werden alle rueckgesetzt und erst am Ende)
+//Netzerk 4 bearbeitet (FC24 bekommt nichts von den Verfahrebefehlen mit)
+//
+//Die Spindeltasten der DECKEL MAHO MSST werden in Standardeingaenge der 
+//Standard-MSST umgewandel und anschliessen im FC24 bearbeitet.
+//Im zweiten Aufruf (nach Abarbeitung FC24)werden Sie wieder in die DECKEL MAHO 
+//MSST Eingaenge/Ausgaenge zuruckgesetzt.
+      CALL "FC_MASCHTYP_MCP" (
+           EAX_MSST_NC_Start        := "MSSTst 10 INC",
+           EAX_MSST_NC_Stop         := "MSSTst 1 INC",
+           EAX_MSST_Feed_Start      := "MSSTst 1000 INC",
+           EAX_MSST_Reset           := "MSSTstReset",
+           EAX_MSST_SP_Overr_100    := #MSST_Taste_SP_Overr_100,
+           EAX_MSST_WZAX_Rett3070   := E      7.6,
+           EAX_MSST_WZAX_Rett3071   := E      7.6,
+           EAB_MSST_Eilgang_Overr   := "MSST_Vorschub_OVR",
+           EAB_MSST_Vorschub_Overr  := "MSST_Vorschub_OVR");
+      NOP   0; 
+NETWORK
+TITLE =Aktivieren Vorschub Start bei Jog + / -
+
+      U(    ; 
+      O     E      4.6; 
+      O     E      4.7; 
+      )     ; 
+      U     "M_Handbetrieb"; 
+      O     "MSSTst 1000 INC"; 
+      =     "MSSTst 1000 INC"; 
+NETWORK
+TITLE =Aufruf SIEMENS Standard Maschinensteuertafel
+
+      CALL "FC_SIEM_MCP_IFM" (
+           BAGNo                    := B#16#1,
+           ChanNo                   := B#16#1,
+           SpindleIFNo              := B#16#6,
+           FeedHold                 := "M_FeedHold_from_FC24",
+           SpindleHold              := "M_SpindleHold");
+      NOP   0; 
+NETWORK
+TITLE =Umspeichern Vorschub auf Eilgang / Eilgang auf Achsen
+
+      L     "DB_SIEM_KANAL_1".A_FD_OR; // Vorschub Override ->
+      T     "DB_SIEM_KANAL_1".A_RT_OR; // -> Eilgang Override
+
+// Bei Positionierachsen wirkt der Vorschuboverride im Achs-DB
+// Deshalb muss bei Eilgang der Eilgangoveride in den Achs-DB geschrieben werden
+
+      U     "M_G00_aktiv"; 
+      SPBN  EAOV; 
+
+      L     "DB_SIEM_KANAL_1".A_RT_OR; 
+      T     "DB_ACHSE1_X".A_FD_OR; 
+      T     "DB_ACHSE2_Y".A_FD_OR; 
+      T     "DB_ACHSE3_Z".A_FD_OR; 
+      T     "DB_ACHSE4".A_FD_OR; 
+      T     "DB_ACHSE5".A_FD_OR; 
+
+EAOV: NOP   0; 
+NETWORK
+TITLE =GEO-Achsen +/-
+
+      L     "DB_OEM".Bildnummer; 
+      L     0; 
+      <>I   ; 
+      UN    "DB_PLC_MD_DB20".UDHex._04_BIT4_EINRICHT_BETR; 
+      SPB   Mxx2; 
+
+      CLR   ; 
+      =     "DB_SIEM_KANAL_1".A_Geo[1].Plus; 
+      =     "DB_SIEM_KANAL_1".A_Geo[1].Minus; 
+      =     "DB_SIEM_KANAL_1".A_Geo[2].Minus; 
+      =     "DB_SIEM_KANAL_1".A_Geo[2].Plus; 
+      =     "DB_SIEM_KANAL_1".A_Geo[3].Plus; 
+      =     "DB_SIEM_KANAL_1".A_Geo[3].Minus; 
+
+      ON    "DB_ICON"._1.UI_17; 
+      ON    "DB_SIEM_MMC".A_ActWCS; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.MASCHTYP_3071_AKTIV; 
+      O(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._042_ANWAHL_KINE_TYP; 
+      L     1; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._021_ANWAHL_IKUEZ; 
+      L     2; 
+      ==I   ; 
+      )     ; 
+      SPB   Mxx2; 
+
+      U     "I_DM_Ta Eilgang"; 
+      =     "DB_SIEM_KANAL_1".A_Geo[1].RapidTrOR; 
+      =     "DB_SIEM_KANAL_1".A_Geo[2].RapidTrOR; 
+      =     "DB_SIEM_KANAL_1".A_Geo[3].RapidTrOR; 
+
+
+      U     "DB_ACHSE1_X".A_Plus; 
+      UN    "DB_SIEM_BAG".E_REF; 
+      =     "DB_SIEM_KANAL_1".A_Geo[1].Plus; 
+      R     "DB_ACHSE1_X".A_Plus; 
+
+      U     "DB_ACHSE1_X".A_Minus; 
+      UN    "DB_SIEM_BAG".E_REF; 
+      =     "DB_SIEM_KANAL_1".A_Geo[1].Minus; 
+      R     "DB_ACHSE1_X".A_Minus; 
+
+      U     "DB_ACHSE2_Y".A_Minus; 
+      UN    "DB_SIEM_BAG".E_REF; 
+      =     "DB_SIEM_KANAL_1".A_Geo[2].Minus; 
+      R     "DB_ACHSE2_Y".A_Minus; 
+
+      U     "DB_ACHSE2_Y".A_Plus; 
+      UN    "DB_SIEM_BAG".E_REF; 
+      =     "DB_SIEM_KANAL_1".A_Geo[2].Plus; 
+      R     "DB_ACHSE2_Y".A_Plus; 
+
+      U     "DB_ACHSE3_Z".A_Plus; 
+      UN    "DB_SIEM_BAG".E_REF; 
+      =     "DB_SIEM_KANAL_1".A_Geo[3].Plus; 
+      R     "DB_ACHSE3_Z".A_Plus; 
+
+      U     "DB_ACHSE3_Z".A_Minus; 
+      UN    "DB_SIEM_BAG".E_REF; 
+      =     "DB_SIEM_KANAL_1".A_Geo[3].Minus; 
+      R     "DB_ACHSE3_Z".A_Minus; 
+Mxx2: NOP   0; 
+NETWORK
+TITLE =Tasten von MSST2 SIEMENS Maschinensteuertafel zwischenspeichern
+
+      L     ED     0; 
+      T     DB500.DBD    0; 
+      L     ED     4; 
+      T     DB500.DBD    4; 
+NETWORK
+TITLE =MSST2 ->  Nicht verwendete Eingänge rücksetzen
+//E0.4 / E0.5 / E0.6 Spindel Override Taste Plus/minus/100% existieren nicht
+//                   Override wird über Spindelpoti realisiert
+//
+//E6.6/5.2/6.5/5.0/5.1/4.2/5.3/4.1  DM MSST Achskreuztasten
+//
+//E4.4 Bei SIEMENS Standard Schlüsselschalter Stellung 3 / Bei DM MSST nicht 
+//     benutzt
+//
+//E5.4 Bei SIEMENS Standard Umschaltung MKS/WKS / Bei DM MSST nicht 
+//     benutzt
+//
+//E5.7 "MSST _T 33" nicht benutzt
+//
+//E6.2 Bei DM Taste zwischen + und - nicht benutzt ... Text Handrad scheint falsch
+// 
+//zu sein 
+//
+//E6.4 nicht benutzt
+//
+//E7.7 "Ta_Foerd_Tuere_entrie" 
+//
+      U     "m_eins"; 
+      R     E      0.4; 
+      R     E      0.5; 
+      R     E      0.6; 
+      R     E      6.6; 
+      R     E      5.2; 
+      R     E      6.5; 
+      R     E      5.0; 
+      R     E      5.1; 
+      R     E      4.2; 
+      R     E      5.3; 
+      R     E      4.1; 
+      R     E      4.4; 
+      R     E      5.4; 
+      R     "MSST _T 33"; 
+      R     "MSSTst Handrad EIN"; 
+      R     E      6.4; 
+      R     "Ta_Foerd_Tuere_entrie"; 
+NETWORK
+TITLE =MSST2 -> Erzeugen von Eingang Taste [Auto]
+
+      U     "DB_MCP_IO_ANPASSUNG".MSST2_SIEMENS_E_0_0; 
+      =     "MSSTst BA AUTO"; 
+NETWORK
+TITLE =MSST2 -> Erzeugen von Eingang Taste [MDA]
+
+      U     "DB_MCP_IO_ANPASSUNG".MSST2_SIEMENS_E_0_1; 
+      =     "MSSTst BA MDA"; 
+NETWORK
+TITLE =MSST2 -> Erzeugen von Eingang Taste [JOG]
+
+      U     "DB_MCP_IO_ANPASSUNG".MSST2_SIEMENS_E_0_3; 
+      =     "MSSTst BA JOG"; 
+NETWORK
+TITLE =MSST2 -> Erzeugen von Eingang Taste [Einzelsatz]
+
+      U     "DB_MCP_IO_ANPASSUNG".MSST2_SIEMENS_E_3_5; 
+      =     "MSSTst Einzelsatz"; 
+NETWORK
+TITLE =MSST2 -> Erzeugen von Eingang Taste [Spindel Override 100%]
+
+      U     #MSST_Taste_SP_Overr_100; 
+      =     E      0.5; 
+NETWORK
+TITLE =MSST2 -> Erzeugen von Eingang Taste [* NC STOP]
+
+      U     "DB_MCP_IO_ANPASSUNG".MSST2_SIEMENS_E_2_0; 
+      =     "MSSTst NC-Stop *"; 
+NETWORK
+TITLE =MSST2 -> Erzeugen von Eingang Taste [TEACH IN]
+
+      U     "DB_MCP_IO_ANPASSUNG".MSST2_SIEMENS_E_0_2; 
+      =     E      1.0; 
+NETWORK
+TITLE =MSST2 -> Erzeugen von Eingang Taste [REPOS]
+
+      U     "DB_MCP_IO_ANPASSUNG".MSST2_SIEMENS_E_1_7; 
+      =     E      1.1; 
+NETWORK
+TITLE =MSST2 -> Erzeugen von Eingang Taste [REF]
+
+      U     "DB_MCP_IO_ANPASSUNG".MSST2_SIEMENS_E_1_6; 
+      =     E      1.2; 
+NETWORK
+TITLE =MSST2 -> Erzeugen von Eingang Taste [Rettung gelb]
+
+      U     "DB_MCP_IO_ANPASSUNG".MSST2_SIEMENS_E_7_7; 
+      =     E      1.3; 
+NETWORK
+TITLE =MSST2 -> Erzeugen von Eingang Taste [Spindel links/rechts]
+//Bei SIEMENS Standard gibt es bur Spindelstart
+//Deshalb im Moment Linkslauf gesperrt, sollte er notwendig sein wird eine OEM 
+//bzw. HMI Vorwahl links / rechts benötigt
+      U     "DB_MCP_IO_ANPASSUNG".MSST2_SIEMENS_E_2_5; 
+      =     L      6.0; 
+      U     L      6.0; 
+      U     "m_null"; 
+      =     E      1.4; 
+      U     L      6.0; 
+      BLD   102; 
+      =     E      1.6; 
+NETWORK
+TITLE =MSST2 -> Erzeugen von Eingang Taste [* Spindel Halt]
+
+      U     "DB_MCP_IO_ANPASSUNG".MSST2_SIEMENS_E_2_4; 
+      =     E      1.5; 
+NETWORK
+TITLE =MSST2 -> Erzeugen von Eingang Taste [NC-START]
+
+      U     "DB_MCP_IO_ANPASSUNG".MSST2_SIEMENS_E_2_1; 
+      =     "MSSTst_NC_Start"; 
+NETWORK
+TITLE =MSST2 -> Erzeugen von Eingang Taste [1 INC]
+
+      U     "DB_MCP_IO_ANPASSUNG".MSST2_SIEMENS_E_1_0; 
+      =     "MSSTst 1 INC"; 
+NETWORK
+TITLE =MSST2 -> Erzeugen von Eingang Taste [10 INC]
+
+      U     "DB_MCP_IO_ANPASSUNG".MSST2_SIEMENS_E_1_1; 
+      =     "MSSTst 10 INC"; 
+NETWORK
+TITLE =MSST2 -> Erzeugen von Eingang Taste [100 INC]
+
+      U     "DB_MCP_IO_ANPASSUNG".MSST2_SIEMENS_E_1_2; 
+      =     "MSSTst 100 INC"; 
+NETWORK
+TITLE =MSST2 -> Erzeugen von Eingang Taste [1000 INC]
+
+      U     "DB_MCP_IO_ANPASSUNG".MSST2_SIEMENS_E_1_3; 
+      =     "MSSTst 1000 INC"; 
+NETWORK
+TITLE =MSST2 -> Erzeugen von Eingang Taste [zur Grundstellung]
+
+      U     "DB_MCP_IO_ANPASSUNG".MSST2_SIEMENS_E_7_6; 
+      =     "IX_MSST_Ta_2_4"; 
+NETWORK
+TITLE =MSST2 -> Erzeugen von Eingang Taste [var. INC]
+
+      U     "DB_MCP_IO_ANPASSUNG".MSST2_SIEMENS_E_1_5; 
+      =     "MSSTst var. INC"; 
+NETWORK
+TITLE =MSST2 -> Erzeugen von Eingang Taste [Vorschub Halt]
+
+      U     "DB_MCP_IO_ANPASSUNG".MSST2_SIEMENS_E_2_2; 
+      =     "MSSTst Feed Halt *"; 
+NETWORK
+TITLE =MSST2 -> Erzeugen von Eingang Taste [Vorschub Start]
+
+      U     "DB_MCP_IO_ANPASSUNG".MSST2_SIEMENS_E_2_3; 
+      =     "I_DM_Ta_Feed_Start"; 
+NETWORK
+TITLE =MSST2 -> Erzeugen von Eingang Taste [Eilgang/Vorschuborr.A]
+
+      U     "DB_MCP_IO_ANPASSUNG".MSST2_SIEMENS_E_3_0; 
+      =     E      3.0; 
+      =     E      7.0; 
+NETWORK
+TITLE =MSST2 -> Erzeugen von Eingang Taste [Eilgang/Vorschuborr.B]
+
+      U     "DB_MCP_IO_ANPASSUNG".MSST2_SIEMENS_E_3_1; 
+      =     E      3.1; 
+      =     E      7.1; 
+NETWORK
+TITLE =MSST2 -> Erzeugen von Eingang Taste [Eilgang/Vorschuborr.C]
+
+      U     "DB_MCP_IO_ANPASSUNG".MSST2_SIEMENS_E_3_2; 
+      =     E      3.2; 
+      =     E      7.2; 
+NETWORK
+TITLE =MSST2 -> Erzeugen von Eingang Taste [Eilgang/Vorschuborr.D]
+
+      U     "DB_MCP_IO_ANPASSUNG".MSST2_SIEMENS_E_3_3; 
+      =     E      3.3; 
+      =     E      7.3; 
+NETWORK
+TITLE =MSST2 -> Erzeugen von Eingang Taste [Eilgang/Vorschuborr.E]
+
+      U     "DB_MCP_IO_ANPASSUNG".MSST2_SIEMENS_E_3_4; 
+      =     E      3.4; 
+      =     E      7.4; 
+NETWORK
+TITLE =MSST2 -> Erzeugen von Eingang Taste [Werkzeugspanner AufZu]
+
+      U     "DB_MCP_IO_ANPASSUNG".MSST2_SIEMENS_E_7_4; 
+      =     "I_DM_Ta_Anwahl_WZSp"; 
+NETWORK
+TITLE =MSST2 -> Erzeugen von Eingang Taste [Rettung blau]
+
+      U     "DB_MCP_IO_ANPASSUNG".MSST2_SIEMENS_E_7_5; 
+      =     E      3.6; 
+NETWORK
+TITLE =MSST2 -> Erzeugen von Eingang Taste [Reset]
+
+      U     "DB_MCP_IO_ANPASSUNG".MSST2_SIEMENS_E_3_7; 
+      =     "MSSTstReset"; 
+NETWORK
+TITLE =MSST2 -> Erzeugen von Eingang Taste [MKS/WKS]
+
+      U     "DB_MCP_IO_ANPASSUNG".MSST2_SIEMENS_E_5_4; 
+      =     E      4.0; 
+NETWORK
+TITLE =MSST2 -> Erzeugen von Eingang Taste [Be-/Entladen quittieren]
+
+      U     "DB_MCP_IO_ANPASSUNG".MSST2_SIEMENS_E_7_2; 
+      =     E      4.3; 
+NETWORK
+TITLE =MSST2 -> Erzeugen von Eingang Taste [Eilgang]
+
+      U     "DB_MCP_IO_ANPASSUNG".MSST2_SIEMENS_E_4_5; 
+      =     E      4.5; 
+NETWORK
+TITLE =MSST2 -> Erzeugen von Eingang Taste [Achse minus]
+
+      U     "DB_MCP_IO_ANPASSUNG".MSST2_SIEMENS_E_4_6; 
+      =     E      4.6; 
+NETWORK
+TITLE =MSST2 -> Erzeugen von Eingang Taste [Achse plus]
+
+      U     "DB_MCP_IO_ANPASSUNG".MSST2_SIEMENS_E_4_7; 
+      =     E      4.7; 
+NETWORK
+TITLE =MSST2 -> Erzeugen von Eingang Taste [IKZ]
+
+      U     "DB_MCP_IO_ANPASSUNG".MSST2_SIEMENS_E_7_0; 
+      =     E      5.5; 
+NETWORK
+TITLE =MSST2 -> Erzeugen von Eingang Taste [KÜHLMITTEL]
+
+      U     "DB_MCP_IO_ANPASSUNG".MSST2_SIEMENS_E_7_1; 
+      =     E      5.6; 
+NETWORK
+TITLE =MSST2 -> Erzeugen von Eingang Taste [WZM rechts]
+
+      U     "DB_MCP_IO_ANPASSUNG".MSST2_SIEMENS_E_6_4; 
+      =     E      6.0; 
+NETWORK
+TITLE =MSST2 -> Erzeugen von Eingang Taste [WZM links]
+
+      U     "DB_MCP_IO_ANPASSUNG".MSST2_SIEMENS_E_6_6; 
+      =     E      6.1; 
+NETWORK
+TITLE =MSST2 -> Erzeugen von Eingang Taste [TOFRAME]
+
+      U     "DB_MCP_IO_ANPASSUNG".MSST2_SIEMENS_E_7_3; 
+      =     E      6.3; 
+NETWORK
+TITLE =MSST2 -> Erzeugen von Eingang Taste [HANDRAD]
+
+      U     "DB_MCP_IO_ANPASSUNG".MSST2_SIEMENS_E_6_7; 
+      =     E      6.7; 
+NETWORK
+TITLE =MSST2 -> Erzeugen von Eingang Taste [Freigabe PW]
+
+      U     "DB_MCP_IO_ANPASSUNG".MSST2_SIEMENS_E_6_1; 
+      =     E      7.5; 
+NETWORK
+TITLE =MSST2 -> Erzeugen von Eingang Taste [Türe entriegeln]
+
+      U     "DB_MCP_IO_ANPASSUNG".MSST2_SIEMENS_E_6_3; 
+      =     E      7.6; 
+NETWORK
+TITLE =Aufruf FC_OPERATOR_PANEL
+
+      CALL "FC_OPERATOR_PANEL" (
+           SpindleIFNo              := B#16#6);
+      NOP   0; 
+NETWORK
+TITLE =Spindel Override auf max 100% begrenzen
+
+      O     "M_Einrichtbetrieb"; 
+      O     "M_3Te_Betriebsart"; 
+      O     "M_4Te_Betriebsart"; 
+      SPBN  yyy1; 
+
+      CALL "FC_UT_GRAY_TO_BIN" (
+           Greycode                 := "DB_ACHSE6_SPINDEL".A_SpOR,
+           Binaerwert               := #Spindel_Override);
+
+      U(    ; 
+      L     #Spindel_Override; 
+      L     11; 
+      >I    ; 
+      )     ; 
+      O     "MX_Override100"; 
+      SPBN  yyy1; 
+
+      L     W#16#E; 
+      T     "DB_ACHSE6_SPINDEL".A_SpOR; 
+
+yyy1: NOP   0; 
+
+NETWORK
+TITLE =Umschaltung MKS/WKS
+
+      U     "DB_SIEM_MMC".E_ActWCS; 
+      O     E      4.0; 
+      FP    "M_FP_MKS/WKS"; 
+      SPBN  KS; 
+      UN    "DB_SIEM_MMC".A_ActWCS; 
+      =     "DM_LED_MKS_WKS"; 
+      =     "DB_SIEM_MMC".A_ActWCS; 
+KS:   NOP   0; 
+
+NETWORK
+TITLE =Ende Aufrufteil 1
+
+      SPA   ENDE; 
+
+NETWORK
+TITLE =------------- MSST-Teil 2 aktiv --------------------------------
+
+M002: NOP   0; 
+
+NETWORK
+TITLE =MSST2: LED Cycle Start
+
+      U(    ; 
+      U     "DB_SIEM_KANAL_1".E_ProgRunn; 
+      UN    "Tv_Reset_Impuls"; 
+      O     "DB_SIEM_KANAL_1".E_ProgWait; 
+      O     ; 
+      U(    ; 
+      O     "DB_SIEM_KANAL_1".A_Ref; 
+      O     ; 
+      U     "DB_SIEM_BAG".E_REF; 
+      U     "m_hmi_nc_start_led_hm"; 
+      )     ; 
+      U(    ; 
+      ON    "M_Hauptachsen_stehen"; 
+      ON    "DB_SIEM_KANAL_1".E_AxesRef; 
+      )     ; 
+      )     ; 
+      UN    "DB_SIEM_KANAL_1".E_ProgStop; 
+      =     "m_hmi_nc_start_led_hm"; 
+      U     "m_hmi_nc_start_led_hm"; 
+      =     "DM_LED Z-Achse plus(3)"; 
+NETWORK
+TITLE =MSST2: LED Cycle Stop
+
+      UN    "DM_LED Z-Achse plus(3)"; 
+      =     "DM_LED Y-Achse plus"; 
+NETWORK
+TITLE =MSST2: LED Spindel Start
+
+      O     "DB_ICON"._1.UI_11; 
+      O     "DB_ICON"._1.UI_12; 
+      =     "MSSTLED 10 INC"; 
+NETWORK
+TITLE =MSST2: LED Spindel Stop
+
+      U     "DB_ICON"._1.UI_13; 
+      =     "MSSTLED 1 INC"; 
+NETWORK
+TITLE =MSST2: LED Vorschub Halt
+
+      UN    A      1.7; 
+      =     "DM_LED 4-Achse rechts"; 
+NETWORK
+TITLE =MSST2: LED Reset
+
+      U     "MSSTstReset"; 
+      =     "DM_LED_MKS_WKS"; 
+NETWORK
+TITLE =MSST2: LED Taste gelb
+
+      U     "DB_MCP_IO_ANPASSUNG".MSST2_SIEMENS_E_7_7; 
+      =     A      5.7; 
+NETWORK
+TITLE =MSST2: LED Taste blau
+
+      U     "DB_MCP_IO_ANPASSUNG".MSST2_SIEMENS_E_7_5; 
+      =     "MSSTLED C-Achse (6)"; 
+NETWORK
+TITLE =MSST2: LED BHG aktiv
+
+      U     "DB_ICON"._1.UI_15; 
+      =     "DM_LED 5/6-Achse plus"; 
+NETWORK
+TITLE =MSST2: LED PW-Freigabe
+
+      U     "DB_ICON"._1.UI_4; 
+      =     A      4.1; 
+NETWORK
+TITLE =MSST2: LED Kühlmittel EIN
+
+      U     "DB_ICON"._1.UI_9; 
+      =     "DM_LED Eilgang"; 
+NETWORK
+TITLE =MSST2: LED IKZ EIN
+
+      U     "DB_ICON"._1.UI_10; 
+      =     "DM_LED X-Achse minus(1)"; 
+NETWORK
+TITLE =MSST2: LED Arbeitsraumtür
+//      U     "O_MSSTLED_ART_auf"
+      U     "DB_ICON"._1.UI_5; 
+      =     A      4.3; 
+NETWORK
+TITLE =MSST2: LED Werkzeugspanner
+
+      U     "I_WZ-Spanner_Gesp_O_WZ"; 
+      U     "m_takt_1sec."; 
+      O     "I_WZ_SPA_gespannt"; 
+      O     "I_WZ-Spanner_Gesp_mit_WZ"; 
+      =     "DM_LED Z-Achse minus(3)"; 
+NETWORK
+TITLE =MSST2: LED Grundstellung
+
+      UN    "m_inbetrieb_logisch_1"; 
+      =     A      5.6; 
+NETWORK
+TITLE =MSST2: LED TOFRAME
+
+      U     "DB_ICON"._1.UI_17; 
+      =     "DM_LED Y-Achse minus"; 
+NETWORK
+TITLE =Lampentest Ein
+
+      U(    ; 
+      U     "DB_HMI".lampentest; 
+      SPBNB _001; 
+      L     DW#16#FFFFFFFF; 
+      T     AD     0; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+_001: U     BIE; 
+      )     ; 
+      SPBNB _002; 
+      L     DW#16#FFFFFFFF; 
+      T     AD     4; 
+_002: NOP   0; 
+NETWORK
+TITLE =Lampentest Aus
+
+      U(    ; 
+      U     "DB_HMI".lampentest; 
+      FN    "m_hmi_lampentest_fn"; 
+      SPBNB _003; 
+      L     DW#16#0; 
+      T     AD     0; 
+      SET   ; 
+      SAVE  ; 
+      CLR   ; 
+_003: U     BIE; 
+      )     ; 
+      SPBNB _004; 
+      L     DW#16#0; 
+      T     AD     4; 
+_004: NOP   0; 
+NETWORK
+TITLE =Ende Aufrufteil 2
+
+ENDE: NOP   0; 
+
+END_FUNCTION
+

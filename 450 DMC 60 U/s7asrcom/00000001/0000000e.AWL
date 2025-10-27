@@ -1,0 +1,116 @@
+TYPE "UDT100"
+//$Revision: 1.23 $
+//$Date: 2008/07/22 13:37:36CEST $
+//$Author: schmoelp $
+
+
+  STRUCT 	
+   Restzeit_Schmierung : WORD ;	//Restzeit Schmierung
+   Aktueller_Tag_desMonats : BYTE ;	//Aktuell gespeicherter Tag (des Monats) -> für Kennwort rücksetzen Fc136 
+   Klemmung_PW_geloest : BOOL ;	//Klemmung des PW's wurde geloest
+   WZ_Im_Greifer : BOOL ;	//Merker ob ein WZ im Greifer ist
+   Schrittmerker_RS4 : BYTE ;	//Schrittmerker RS4 MB320 Remanent
+   Status_RS4 : BYTE ;	//Status RS4 MB321 Remanent
+   Handrad_Inkrement_normal : BYTE  := B#16#2;	//1: Var INC, 2: 1 INC, 3: 10 INC, 4: 100 INC, 5: 1000 INC
+   Handrad_Inkrement_Eilgan : BYTE  := B#16#3;	//1: Var INC, 2: 1 INC, 3: 10 INC, 4: 100 INC, 5: 1000 INC
+   Betriebsart_SPF : BYTE ;	//1: Permanent 2: Intervall 3: Nachlauf
+   SPF_Einschaltzeit : WORD ;	//Einschaltzeit des Spaenefoerderers (Intervallbetrieb)
+   SPF_Intervallzeit : WORD ;	//(Ausschalt)Intervallzeit des Spaenefoerderers (Intervallbetrieb) 
+   SPF_Nachlaufzeit : WORD ;	//Nachlaufzeit des Spaenefoerderers (Nachlaufbetrieb)
+   Schmierung_Achsen_Erford : BOOL ;	//Schmierung erforderlich
+   IKZ_Leckage_vorhanden : BOOL ;	//Leckageüberwachung hat ausgelöst
+   O_Hub_Zyl1_einge : BOOL ;	//STA
+   O_Hub_Zyl1_ausge : BOOL ;	//STA
+   O_Hub_Zyl2_einge : BOOL ;	//STA
+   O_Hub_Zyl2_ausge : BOOL ;	//STA
+   O_Hub_Zyl3_einge : BOOL ;	//STA
+   O_Hub_Zyl3_ausge : BOOL ;	//STA
+   O_Klappe_auf : BOOL ;	//STA
+   O_Klappe_zu : BOOL ;	//STA
+   O_Reitstock_hoch : BOOL ;	//REIT
+   O_REitstock_runter : BOOL ;	//REIT
+   O_Reitstock_vor : BOOL ;	//REIT
+   O_REitstock_zurueck : BOOL ;	//REIT
+   O_Geifer_zu : BOOL ;	//6TE
+   O_Greifer_auf : BOOL ;	//6TE
+   MB_frei : BYTE ;	//PW2
+   Zeit_Foerderband_ein : WORD ;	//Zeit für Förderband ein in Sekunden 
+   Word_frei : WORD ;	
+   Stange_Werkstuecklaenge : DINT ;	//Werkstuecklaenge
+   Stange_Abstechpos : DINT ;	//neue Abstechpos
+   Stange_alt_Abstechpos : DINT ;	//alte Abstechpos
+   BA34_Time_End : INT ;	//Zeitwert in BA34 bis Einlesesperre
+   B44_Time_Res : INT ;	//Reserve
+   BA4_Zeitwert : INT ;	//Zeitwert in BA 4
+   Ba4_Meldung : BOOL ;	//Meldung in BA 4
+   BA4_Hupe : BOOL ;	//Hupe in BA 4
+   BA4_Stop_Satzgrenze : BOOL ;	//Stop an Satzgrenze in BA 4
+   Ba34_Zeit_Abwahl : BOOL ;	//Abwahl der Zeitüberwachung in BA 4
+   Ba4res4 : BOOL ;	
+   Ba4res5 : BOOL ;	
+   Ba4res6 : BOOL ;	
+   Ba4res7 : BOOL ;	
+   FP_Zustimmtaste1 : BOOL ;	
+   IM_Zustimmtaste : BOOL ;	
+   BA3_Zeitwert : INT ;	//Zeitwert in BA 3
+   Ba3_Meldung : BOOL ;	//Meldung in BA 3
+   BA3_Hupe : BOOL ;	//Hupe in BA 3
+   BA3_Stop_Satzgrenze : BOOL ;	//Stop an Satzgrenze in BA 3
+   Ba3res3 : BOOL ;	
+   Ba3res4 : BOOL ;	
+   Ba3res5 : BOOL ;	
+   Ba3res6 : BOOL ;	
+   Ba3res7 : BOOL ;	
+   BA34_Time_Meld : INT ;	//Zeitwert in BA34 bis Warnung kommt
+   BA34_Time_Hupe : INT ;	//Zeitwert in BA34 bis Hupe kommt
+   O_Reitstock_hoch_Tuere : BOOL ;	//REIT: abspeichern der Ausgaenge, vor Tuere aufgemacht wird
+   O_REitstock_runter_Tuere : BOOL ;	//REIT
+   O_Reitstock_vor_Tuere : BOOL ;	//REIT
+   O_REitstock_zurueck_Tuer : BOOL ;	//REIT
+   O_Geifer_zu_Tuere : BOOL ;	//6TE
+   O_Greifer_auf_Tuere : BOOL ;	//6TE
+   Speich_Solldruck_Greifer : INT ;	//Solldruck Greifer v. Wizard 
+   Neu_Solldruck_Greifer : INT ;	//Anzeige Solldruck v. Wizard
+   Speich_Solldruck_Pinole : INT ;	
+   Neu_Solldruck_Pinole : INT ;	
+   Anz_Istdr_Grei_in_Bar : INT ;	
+   Anz_Istdr_Pinol_in_Bar : INT ;	
+   Zeit_Spindel_steht : DWORD ;	//Zeit für nächste Vorschmierung
+   SPI_WZ_TYP : DWORD ;	
+   WZB_GREIFER : INT ;	//Reaktion bei Bruch: 1 Vorschubsperre 2 nur Fehler 3 Vorschub- und Eilgangsperre
+   WZB_Spindel : INT ;	//Reaktion bei Bruch: 1 Vorschubsperre 2 nur Fehler 3 Vorschub- und Eilgangsperre
+   Achse_4_modulo : BOOL ;	//MD30310
+   Soko_Error : WORD ;	
+   Externe_NV_Tisch : REAL ;	//Übergabewert externe Nullpunktverschiebung Tisch ( 4-Seitenbearbeitung)
+   Knoll_Error : WORD ;	
+   Zeit_Schmierung_FD_Tisch : DINT ;	//Laufzeit Schmierung FD-Tisch
+   M7_analogDruckvorgabe : WORD ;	
+   M7_normiertDruckVentil1 : WORD ;	
+   Achse_6_virtuell : BOOL ;	
+   SPF_eingeschaltet : BOOL ;	
+   LASER_AKTIV : BOOL ;	//Laser aktiv im Bereich ausserhalb Arbeitsraum
+   Reserve_96_3 : BOOL ;	
+   Reserve_96_4 : BOOL ;	
+   Reserve_96_5 : BOOL ;	
+   Reserve_96_6 : BOOL ;	
+   Reserve_96_7 : BOOL ;	
+   Reserve_97 : BYTE ;	
+   Restzeit_Schmierung_PW : WORD ;	//Restzeit Schmierung Palettenwechsler
+   Vert_Mag_SKZ_SAVE : BYTE ;	
+   A7_INDEX_ASIGN_POS_TAB : BYTE ;	//30500 Teilungsachse
+   A7_JOG_VELO : REAL ;	
+   A7_JOG_VELO_RAPID : REAL ;	
+   A14_JOG_VELO_RAPID : REAL ;	
+   WZW_Intervall_hebepumpe : WORD  := W#16#30;	//Intervallzeit für Hebepumpe Werkzeugwechsler in Minuten
+   WZW_Restzeit_hebepumpe : DWORD ;	//Restzeit für Hebepumpe Werkzeugwechsler in Sekunden
+   WZW_altwert_hebepumpe : WORD  := W#16#30;	//Altwert Intervallzeit für Hebepumpe Werkzeugwechsler in Minuten
+   Speicher_Typ_WZB : INT ;	//Speicher des Typs Werkzeugbruchkontrolle
+   WZB_mechanisch_dekativie : BOOL ;	//Werkzeugbruch wurde deaktiviert
+   VMS_REF_SPI_TIME_MAX : WORD  := W#16#1440;	//Spindelüberwachung: Eingest. Überwachungsintervall Spindelreferenzlauf in Min.
+   VMS_REF_SPI_TIME_IST : WORD ;	//Spindelüberwachung: Abgelaufene Überwachungszeit Spindelreferenzlauf in Min.
+   Offset_Kegelreinigung_VM : REAL ;	
+   A6_gear_change_enable : DINT ;	//MD35010 Spindel mit Getriebestufenwechsel
+   Hub_Greifer_ausfahren : REAL  := 6.250000e+001;	
+  END_STRUCT ;	
+END_TYPE
+

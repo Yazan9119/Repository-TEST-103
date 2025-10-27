@@ -1,0 +1,814 @@
+FUNCTION "FC_CHAN1" : VOID
+TITLE =
+//$Revision: 1.61 $
+//$Date: 2008/11/18 13:46:01CET $
+//$Author: hgc $
+//
+//erstellt: 14.02.2000 AB
+//
+//
+//Der Baustein bedient die Signale im Kanal-DB 21..30
+//Die Anforderungen werden aus dem DB65 entnommen
+//
+//NC-Stop an Satzwechsel       DBX    7.2 / Impuls      
+//NC Startsperre               DBX    7.0 / statisch
+//Vorschubsperre Achsen im Ka. DBX    6.0 / statisch  
+//NC Einlesesperre             DBX    6.1 / statisch
+//
+//Es werden Impulsmerker erzeugt für 
+//Reset-Taste
+//Quittier-Taste
+//Reset -oder Quittier-Taste
+//
+//Es werden Anforderungen erzeugt für
+//
+//NC-Stop                               durch Tastenbedienung
+//Vorschub Halt Kanal                   durch Fehler 
+//Spindel Halt Kanal                    durch Fehler
+//Vorschub Halt Hauptachsen             durch Fehler oder Taste
+//Vorschub Halt asznchr.Prozess1        durch Fehler
+//Vorschub Halt asznchr.Prozess2        durch Fehler
+//Vorschub Halt asznchr.Prozess3        durch Fehler
+//Vorschub Halt asznchr.Prozess4        durch Fehler
+//
+//
+// 
+VERSION : 0.1
+
+
+VAR_INPUT
+  E_EN : BOOL ;	//Enable / Modul-Freigabe
+  E_Er_Not_Aus : BOOL ;	//DB65.DBX0.0
+  E_Er_Stop_Satzgrenzen : BOOL ;	//DB65.DBX0.2
+  E_Er_Vorschub_Halt_Kanal : BOOL ;	//DB65.DBX0.3
+  E_Er_Spindel_Halt_Kanal : BOOL ;	//DB65.DBX0.4
+  E_Er_Vorsch_Halt_Hauptax : BOOL ;	//DB65.DBX0.6
+  E_Er_Einlesesperre : BOOL ;	//DB65.DBX0.5
+  E_Er_NC_Startsperre : BOOL ;	//DB65.DBX2.3
+  E_Er_Vorschub_Halt_Asyn1 : BOOL ;	//DB65.DBX3.0
+  E_Er_Vorschub_Halt_Asyn2 : BOOL ;	//DB65.DBX3.1
+  E_Er_Vorschub_Halt_Asyn3 : BOOL ;	//DB65.DBX3.2
+  E_Er_Vorschub_Halt_Asyn4 : BOOL ;	//DB65.DBX3.3
+  E_Taste_Reset : BOOL ;	
+  E_Taste_NC_Stop : BOOL ;	
+  E_Taste_NC_Start : BOOL ;	
+  E_Vorschubsperre_FC24 : BOOL ;	
+  E_Taste_VS_Spi_Halt : BOOL ;	
+  E_Fehler_Quit_Taste : BOOL ;	
+  E_ShopMill_angewaehlt : BOOL ;	//Konfigurationsbit ShopMill angewählt 
+END_VAR
+VAR_IN_OUT
+  EA_Flanken : WORD ;	
+END_VAR
+VAR_TEMP
+  T_IM_NotAus : BOOL ;	
+  T_IM_Stop_Satzgrenzen : BOOL ;	
+  T_IM_Vorschub_Halt_Kanal : BOOL ;	
+  T_IM_Spindel_Halt_Kanal : BOOL ;	
+  T_IM_Einlesesperre : BOOL ;	
+  T_IM_Taste_Reset : BOOL ;	
+  T_IM_Taste_Quit : BOOL ;	
+  T_IM_Taste_NC_Stop : BOOL ;	
+  T_IM_Taste_NC_Start : BOOL ;	
+  T_IM_Taste_Vorschubsperr : BOOL ;	
+  T_IM_Taste_VS_Spi_Halt : BOOL ;	
+  T_IM_FN_Vorschubsperre : BOOL ;	
+  T_Schmier : WORD ;	
+  T_E_Not_Aus : BOOL ;	
+  T_E_Stop_Satzgrenzen : BOOL ;	
+  T_E_Vorschub_Halt_Kanal : BOOL ;	
+  T_E_Spindel_Halt_Kanal : BOOL ;	
+  T_E_Einlesesperre : BOOL ;	
+  T_E_Taste_Reset : BOOL ;	
+  T_E_Taste_Quit : BOOL ;	
+  T_E_Taste_NC_Stop : BOOL ;	
+  T_E_Taste_NC_Start : BOOL ;	
+  T_E_Taste_Vorschubsperr : BOOL ;	
+  T_E_Taste_VS_Spi_Halt : BOOL ;	
+  T_E_FN_Vorschubsperre : BOOL ;	
+  TX_NC_START_JOB : BOOL ;	//NC-Start bei Jobbearbeitung / Handlingsystem
+  TX_RESET_VSH_ASYNCHR : BOOL ;	//Reset Vorschub Halt Asynchroner Prozess
+  TX_NC_STSP_DURCH_TASTE : BOOL ;	//NC-Startsperre durch Starttaste steht an
+END_VAR
+BEGIN
+NETWORK
+TITLE =Rangierungen in Temp-Variablen Flanken erzeugen
+
+      UN    #E_EN; 
+      BEB   ; 
+      U     #E_Er_Not_Aus; 
+      =     #T_E_Not_Aus; 
+      U     #E_Er_Stop_Satzgrenzen; 
+      =     #T_E_Stop_Satzgrenzen; 
+      U     #E_Er_Vorschub_Halt_Kanal; 
+      =     #T_E_Vorschub_Halt_Kanal; 
+      U     #E_Er_Spindel_Halt_Kanal; 
+      =     #T_E_Spindel_Halt_Kanal; 
+      U     #E_Er_Einlesesperre; 
+      =     #T_E_Einlesesperre; 
+      U     #E_Taste_Reset; 
+      =     #T_E_Taste_Reset; 
+      U     #E_Fehler_Quit_Taste; 
+      =     #T_E_Taste_Quit; 
+      UN    #E_Taste_NC_Stop; 
+      =     #T_E_Taste_NC_Stop; 
+      U     #E_Taste_NC_Start; 
+      =     #T_E_Taste_NC_Start; 
+      U     #E_Vorschubsperre_FC24; 
+      =     #T_E_Taste_Vorschubsperr; 
+      U     #E_Taste_VS_Spi_Halt; 
+      =     #T_E_Taste_VS_Spi_Halt; 
+      UN    #E_Vorschubsperre_FC24; 
+      =     #T_E_FN_Vorschubsperre; 
+
+
+
+      L     P##T_E_Not_Aus; // Zeiger auf Temp.Variablen
+      LAR1  ; 
+      L     LW [AR1,P#0.0]; // wortweise Variblae lesen
+      L     #EA_Flanken; // Altwerte lesen
+      XOW   ; // alle Unterschiede
+      UW    ; // Pos. Flanken
+      T     #T_Schmier; // Zwischenspeicher  
+      L     LW [AR1,P#0.0]; // wortweise Variblae lesen
+      T     #EA_Flanken; // Altwerte schreiben
+
+      L     P##T_IM_NotAus; // Zeiger auf Temp.Variablen Pos. Flanken
+      LAR1  ; 
+      L     #T_Schmier; 
+      T     LW [AR1,P#0.0]; // Pos. Flanken schreiben in Temp.Variablen
+
+NETWORK
+TITLE =Maschine in AUTO
+//      U     "Mx_FMS_OM1_DISABLED"
+      U     "DB_SIEM_BAG".E_AUTO; 
+      UN    "DB_CMM_PLC".CMM_OUT.cmm_mmc_activ; 
+      O     ; 
+      U     "DB_CMM_PLC".CMM_OUT.base_sig.main_mode_mill.automatic; 
+      UN    "DB_CMM_PLC".CMM_OUT.base_sig.main_mode_mill.manual; 
+      U     "DB_CMM_PLC".CMM_OUT.cmm_mmc_activ; 
+      =     "M_Automatik_Betrieb"; 
+NETWORK
+TITLE =Maschine in JOG
+
+      U     "DB_CMM_PLC".CMM_OUT.base_sig.main_mode_mill.manual; 
+      UN    "DB_CMM_PLC".CMM_OUT.base_sig.main_mode_mill.automatic; 
+      UN    "DB_CMM_PLC".CMM_OUT.base_sig.nc_cycle_activ; 
+      U     "DB_CMM_PLC".CMM_OUT.cmm_mmc_activ; 
+      O     ; 
+      U     "DB_SIEM_BAG".E_JOG; 
+      UN    "DB_CMM_PLC".CMM_OUT.cmm_mmc_activ; 
+      =     "M_Handbetrieb"; 
+NETWORK
+TITLE =Maschine in MDA
+
+      U     "DB_CMM_PLC".CMM_OUT.cmm_mmc_activ; 
+      UN    "DB_CMM_PLC".CMM_OUT.base_sig.main_mode_mill.automatic; 
+      UN    "DB_CMM_PLC".CMM_OUT.base_sig.main_mode_mill.manual; 
+      O     ; 
+      UN    "DB_CMM_PLC".CMM_OUT.cmm_mmc_activ; 
+      U     "DB_SIEM_BAG".E_MDA; 
+      =     "MX_MDA"; 
+      =     "DB_NC_PLC".Zusatz.PLC_an_NC.CHAN1_BA_MDA; 
+NETWORK
+TITLE =Shop Mill aktiv
+
+      U     "DB_CMM_PLC".CMM_OUT.cmm_mmc_activ; 
+      =     "M_ShopMill_aktiv"; 
+NETWORK
+TITLE =Single Block aktivieren
+//Keine Anwahl von SBL in BA --> Vorraussetzung für BA3* für Schweiz!!!!!     
+//
+//      U     "M_3Te_Betriebsart"
+//      U     "DB_REMANENT".Ba34_Zeit_Abwahl
+//      U     "DB_SAFE_ALLG1".SPL_NC_OK
+//      S     "DB_SIEM_KANAL_1".A_SBL
+//      U     "M_3Te_Betriebsart"
+//      FN    "M_FN_3te_BA"
+//      R     "DB_SIEM_KANAL_1".A_SBL
+//
+      NOP   0; 
+
+NETWORK
+TITLE =Sprung zum ShopMill Bereich
+
+      U     #E_ShopMill_angewaehlt; 
+      U     "DB_CMM_PLC".CMM_OUT.cmm_mmc_activ; 
+      SPB   SpMl; 
+NETWORK
+TITLE =Automatik-Betrieb (Satzfolge) aktiv
+
+      O     "M_Automatik_Betrieb"; 
+      O     "MX_MDA"; 
+      =     "M_Satzfolge_aktiv"; 
+NETWORK
+TITLE =Einzelsatz aktiv
+//-------------------Automatik-Betrieb--------------------------------------------
+//----------------Automatik-Betrieb-----------------------------------------
+      U     "DB_SIEM_KANAL_1".A_SBL; 
+      =     "M_Einzelsatz"; 
+NETWORK
+TITLE =NC-Programm laeuft
+
+      O     "DB_SIEM_KANAL_1".E_ProgRunn; 
+      O     "DB_SIEM_KANAL_1".E_ProgTest; 
+      =     "M_Programm_Aktiv"; 
+NETWORK
+TITLE =NC-Programm laeuft im Kanal 1
+
+      U(    ; 
+      O     "DB_SIEM_KANAL_1".E_ProgRunn; 
+      O     "DB_SIEM_KANAL_1".E_ProgWait; 
+      O     "DB_SIEM_KANAL_1".E_ProgStop; 
+      O     "DB_SIEM_KANAL_1".E_ProgInterrupt; 
+      )     ; 
+      U     "DB_SIEM_BAG".E_MGOK; 
+      U     "M_MA_Maschine_Ein"; 
+      =     "M_Programm_Aktiv_Kanal_1"; 
+NETWORK
+TITLE =Sprung über den ShopMill Bereich 
+//--------NC-Programm laeuft-------------------------------------NC-Programm 
+//laeuft-----------------------------
+      SPA   Stdr; 
+
+NETWORK
+TITLE =ShopMill Bereich
+//--------ShopMill in Konfiguration-----------------------
+//----------Manual T/S/M --> Einrichten------------------
+SpMl: L     "DB_CMM_PLC".CMM_OUT.mask_number; 
+      L     2; 
+      ==I   ; 
+      O(    ; 
+      L     "DB_CMM_PLC".CMM_OUT.mask_number; // 9.7.01 SCH: nach Hochrüstung SM
+      L     19; 
+      ==I   ; 
+      )     ; 
+      =     "M_ShopMill_Manual"; 
+      TAK   ; 
+      L     4; //SM Positionieren
+      ==I   ; 
+      =     "M_ShopMill_Positionieren"; 
+
+
+      U     "M_Handbetrieb"; 
+      U     "M_Einrichtbetrieb"; 
+      U(    ; 
+      L     "DB_CMM_PLC".CMM_OUT.mask_number; 
+      L     2; 
+      <>I   ; 
+      )     ; 
+      U     #T_IM_Taste_NC_Start; // NC Start
+      S     "DB_FEHLERMELDUNG".NC_Startsperre._700102_Einrichtbetrieb; 
+      ON    "M_Handbetrieb"; 
+      ON    "M_Einrichtbetrieb"; 
+      O(    ; 
+      L     "DB_CMM_PLC".CMM_OUT.mask_number; 
+      L     2; 
+      ==I   ; 
+      )     ; 
+      O     "M_Reset_Taste"; 
+      R     "DB_FEHLERMELDUNG".NC_Startsperre._700102_Einrichtbetrieb; 
+
+
+//-------------------Automatik-Betrieb-------------------
+
+      U     "DB_CMM_PLC".CMM_OUT.base_sig.main_mode_mill.automatic; 
+      =     "M_Satzfolge_aktiv"; 
+
+//--------NC-Programm laeuft-----------------------------
+
+      U     "DB_CMM_PLC".CMM_OUT.cycle_state.machining_process; 
+      U     "DB_CMM_PLC".CMM_OUT.base_sig.nc_cycle_activ; 
+      =     "M_Programm_Aktiv"; 
+
+///--------NC-Programm aktiv-----------------------------
+      U(    ; 
+      O     "DB_CMM_PLC".CMM_OUT.base_sig.nc_cycle_activ; 
+      O     "DB_CMM_PLC".CMM_OUT.base_sig.nc_cycle_stopped; 
+      )     ; 
+      U     "DB_SIEM_BAG".E_MGOK; 
+      U     "M_MA_Maschine_Ein"; 
+      =     "M_Programm_Aktiv_Kanal_1"; 
+
+
+//--------NC-Programmtest angewählt----------------------
+
+      U     "DB_CMM_PLC".CMM_OUT.cmm_mmc_activ; 
+      U(    ; 
+      O     "DB_CMM_PLC".CMM_OUT.program_test_activ; 
+      O     "DB_CMM_PLC".CMM_OUT.dry_run_activ; 
+      )     ; 
+      =     "M_Simulation_Aktiv"; 
+
+//-------------------Einzelsatz-----------------------------------------
+
+      U     "DB_SIEM_KANAL_1".A_SBL; 
+      =     "M_Einzelsatz"; 
+
+
+//-----Ende ShopMill Bereich ------------------------------
+
+NETWORK
+TITLE =NC-Start-Taste
+
+Stdr: U     #T_IM_Taste_NC_Start; 
+      UN    "MSSTstReset"; 
+      =     "M_NC_Start_Taste"; 
+NETWORK
+TITLE =NC-Stop Taste
+//--------------------NC-Start-Taste---------------------------
+      U     #T_IM_Taste_NC_Stop; 
+      =     "M_NC_Stop_Taste"; 
+NETWORK
+TITLE =Eilgang Taste
+
+      UN    "M_GE_VS_OVR_gesperrt"; 
+      =     "DB_SIEM_KANAL_1".A_RT_ORA; 
+      =     "DB_SIEM_KANAL_1".A_FD_ORA; 
+
+      L     "MSST_Eilgang_OVR"; 
+      T     "DB_SIEM_KANAL_1".A_RT_OR; 
+NETWORK
+TITLE =M0 M1 Aktiv auswerten
+
+      U     "DB_SIEM_KANAL_1".E_M01; 
+      FP    "MX_Flanke_M01"; 
+      S     "MX_M0_1_Aktiv"; 
+      U(    ; 
+      U     #E_Taste_NC_Start; 
+      FP    "M_FLANKE_START_TASTE"; 
+      U     "M_Leistung_Steht_an"; 
+      O     "M_Reset_Taste"; 
+      )     ; 
+      R     "MX_M0_1_Aktiv"; 
+      NOP   0; 
+NETWORK
+TITLE =NC-Stop
+
+      U(    ; 
+      O     #E_Taste_NC_Start; 
+      O     "M_IMP_Leistung_steht_an"; 
+      O     ; 
+      U     "M_Handbetrieb"; 
+      UN    "DB_CMM_PLC".CMM_OUT.cmm_mmc_activ; 
+      O     ; 
+      U     "DB_CMM_PLC".CMM_OUT.base_sig.main_mode_mill.manual; 
+      U     "DB_CMM_PLC".CMM_OUT.cmm_mmc_activ; 
+      U(    ; 
+      L     "DB_CMM_PLC".CMM_OUT.mask_number; 
+      L     2; 
+      ==I   ; 
+      )     ; 
+      O     "Tv_Reset_Impuls"; 
+      )     ; 
+      R     "M_NC_Stop"; 
+      U(    ; 
+      O     "M_NC_Stop_Taste"; 
+      O     "DB_SIEM_KANAL_1".E_NCKalarmStop; 
+      O     ; 
+      U     #E_Er_Stop_Satzgrenzen; 
+      U     "DB_SIEM_KANAL_1".E_ChanActive; 
+      )     ; 
+      S     "M_NC_Stop"; 
+      NOP   0; 
+NETWORK
+TITLE =Vorschub Halt
+
+      U(    ; 
+      O     "Tv_Reset_Impuls"; 
+      O     ; 
+      U     "M_NC_Start_Taste"; 
+      U     "M_Leistung_Steht_an"; 
+      O     "M_IMP_Leistung_steht_an"; 
+      O     ; 
+      U     "M_Handbetrieb"; 
+      UN    "DB_FAMILIEN_MODUL".Aktive_Funktionen; 
+      )     ; 
+      R     "M_Vorschub_Halt_Kanal"; 
+      U(    ; 
+      O     "M_NC_Stop"; 
+      O     #E_Er_Not_Aus; 
+      O     #E_Er_Vorschub_Halt_Kanal; 
+      )     ; 
+      S     "M_Vorschub_Halt_Kanal"; 
+      NOP   0; 
+NETWORK
+TITLE =Vorschub Halt an Nahtstelle
+
+      U     "M_Vorschub_Halt_Kanal"; 
+      UN    "DB_SAFE_ZD".GR1_BT.Override_auf_100; 
+      =     "DB_SIEM_KANAL_1".A_FDdisable; 
+NETWORK
+TITLE =Reset Spindel Halt und SonderBA Stop
+
+      U     #E_Taste_NC_Start; 
+      O     "Tv_Reset_Impuls"; 
+      U     "M_Leistung_Steht_an"; 
+      O(    ; 
+      U     "M_Handbetrieb"; // "DB_SIEM_BAG".E_JOG
+      U(    ; 
+      O     "I_DM_Ta Spindel rechts"; 
+      O     "I_DM_Ta_Spindel links"; 
+      O     "DB_EINRICHTFUNKTION".Bewegung_16_Plus; // Spindel auf WZW-Position über Rettung
+      )     ; 
+      U     "M_Leistung_Steht_an"; 
+      UN    "MX_M0_1_Aktiv"; // M0/1 nicht aktiv
+      )     ; 
+      R     "M_Spindel_Halt_Kanal"; 
+      R     "MX_SonderBA_Stop"; 
+NETWORK
+TITLE =Stop aktiv nach Verlassen der Sonder BA`s
+
+      UN    "M_Spritz_Tuer_Zu"; 
+      U     "MX_IMP_Leistung_0"; 
+      S     "MX_SonderBA_Stop"; 
+NETWORK
+TITLE =Spindel Halt
+
+      O     "M_Spindel_Sperre_Auto"; 
+      O     #E_Er_Spindel_Halt_Kanal; 
+      O     #E_Er_Not_Aus; 
+      O     "MX_M0_1_Aktiv"; 
+      O     "MX_SonderBA_Stop"; 
+      S     "M_Spindel_Halt_Kanal"; 
+NETWORK
+TITLE =Vorschubsperre Hauptachsen
+//"DB_SAFE_ZD".GR1_BT.AX_Sperren_Z_bruecken -> Vorschub Halt Hauptachsen 
+//unterdrücken während Bremsentest
+      U(    ; 
+      U(    ; 
+      O     "Tv_Reset_Impuls"; 
+      O     #T_IM_FN_Vorschubsperre; 
+      O     ; 
+      U     #T_IM_Taste_NC_Start; 
+      U     "M_Leistung_Steht_an"; 
+      O     "M_IMP_Leistung_steht_an"; 
+      O     ; 
+      U     "M_Handbetrieb"; 
+      UN    "DB_FAMILIEN_MODUL".Aktive_Funktionen; 
+      )     ; 
+      R     "M_Temp_VHH"; 
+      U(    ; 
+      O     #E_Er_Vorsch_Halt_Hauptax; 
+      O     #E_Er_Not_Aus; 
+      O     "M_NC_Stop"; 
+      O     "M_Vorschub_Halt_Kanal"; 
+      O     #E_Vorschubsperre_FC24; 
+      ON    "M_VORSCH_FREIG"; 
+      )     ; 
+      S     "M_Temp_VHH"; 
+      U     "M_Temp_VHH"; 
+      )     ; 
+      UN    "DB_SAFE_ZD".GR1_BT.AX_Sperren_Z_bruecken; 
+      =     "M_Vorschub_Halt_Haupt"; 
+NETWORK
+TITLE =Reset Vorschub Halt Asynchroner Prozess
+
+      O     "M_IMP_Leistung_steht_an"; 
+      O     ; 
+      U     "M_Handbetrieb"; 
+      U(    ; 
+      ON    "DB_FAMILIEN_MODUL".Aktive_Funktionen; 
+      O     "M_Ruecksetze_Fehler"; 
+      )     ; 
+      =     #TX_RESET_VSH_ASYNCHR; 
+NETWORK
+TITLE =Vorschub Halt Asynchroner Prozess 1 701548-701631 -> Mag:Achse7
+
+      U(    ; 
+      U     #T_IM_Taste_NC_Start; 
+      U     "M_Leistung_Steht_an"; 
+      UN    #E_Er_Vorschub_Halt_Asyn1; 
+      O     #TX_RESET_VSH_ASYNCHR; 
+      O     ; 
+      U     "I_WM_ZUSTIMMTASTE"; 
+      U(    ; 
+      O     "I_WM_Taste_links"; 
+      O     "I_WM_Taste_rechts"; 
+      )     ; 
+      UN    "I_WM_Beladung_zu"; 
+      )     ; 
+      R     "M_Vorschub_Halt_Asyn1"; 
+      U     #E_Er_Vorschub_Halt_Asyn1; 
+      S     "M_Vorschub_Halt_Asyn1"; 
+      NOP   0; 
+NETWORK
+TITLE =Vorschub Halt Asynchroner Prozess 2 701632-701715 -> PW: Achse8 
+
+      U(    ; 
+      U     #T_IM_Taste_NC_Start; 
+      U     "M_Leistung_Steht_an"; 
+      UN    #E_Er_Vorschub_Halt_Asyn2; 
+      O     #TX_RESET_VSH_ASYNCHR; 
+      )     ; 
+      R     "M_Vorschub_Halt_Asyn2"; 
+      U     #E_Er_Vorschub_Halt_Asyn2; 
+      S     "M_Vorschub_Halt_Asyn2"; 
+      NOP   0; 
+NETWORK
+TITLE =Vorschub Halt Asynchroner Prozess 3 701716-701763->Pal.Sp Ax9/10
+
+      U(    ; 
+      U     #T_IM_Taste_NC_Start; 
+      U     "M_Leistung_Steht_an"; 
+      UN    #E_Er_Vorschub_Halt_Asyn3; 
+      O     #TX_RESET_VSH_ASYNCHR; 
+      )     ; 
+      R     "M_Vorschub_Halt_Asyn3"; 
+      U     #E_Er_Vorschub_Halt_Asyn3; 
+      S     "M_Vorschub_Halt_Asyn3"; 
+      NOP   0; 
+NETWORK
+TITLE =Vorschub Halt Asynchroner Prozess 4 701800-701847->Mag: Achse 7
+
+      U(    ; 
+      U     #T_IM_Taste_NC_Start; 
+      U     "M_Leistung_Steht_an"; 
+      UN    #E_Er_Vorschub_Halt_Asyn4; 
+      O     #TX_RESET_VSH_ASYNCHR; 
+      )     ; 
+      R     "M_Vorschub_Halt_Asyn4"; 
+      U     #E_Er_Vorschub_Halt_Asyn4; 
+      S     "M_Vorschub_Halt_Asyn4"; 
+      NOP   0; 
+NETWORK
+TITLE =Vorschub Halt Asynchroner Prozess 1.Start unterdrücken
+//Ersten Start unterdrücken nach Vorschub Halt Asynchroner Prozess
+//wenn in der Maschine ein Fertigteil ist
+      UN    #E_Taste_NC_Start; 
+      R     "M_VSH_ASYN_DISABLE_START"; 
+      U     "DB_FEHLERMELDUNG".Meldung4._702458_VSH_ASYNCH_PROZ; 
+      U     "DB_SIEM_KANAL_1".E_ChanReset; 
+      U(    ; 
+      L     "DB_PAL_NR".Platz[0].Status; 
+      L     4; 
+      ==I   ; 
+      )     ; 
+      U     #T_IM_Taste_NC_Start; 
+      S     "M_VSH_ASYN_DISABLE_START"; 
+      NOP   0; 
+NETWORK
+TITLE =Meldung:Vorschub Halt Asynchroner Prozess -> Weiter mit NC-Start
+
+      U(    ; 
+      U     "M_Vorschub_Halt_Asyn1"; 
+      UN    #E_Er_Vorschub_Halt_Asyn1; 
+      O     ; 
+      U     "M_Vorschub_Halt_Asyn2"; 
+      UN    #E_Er_Vorschub_Halt_Asyn2; 
+      O     ; 
+      U     "M_Vorschub_Halt_Asyn3"; 
+      UN    #E_Er_Vorschub_Halt_Asyn3; 
+      O     ; 
+      U     "M_Vorschub_Halt_Asyn4"; 
+      UN    #E_Er_Vorschub_Halt_Asyn4; 
+      )     ; 
+      UN    "M_Handbetrieb"; 
+      =     "DB_FEHLERMELDUNG".Meldung4._702458_VSH_ASYNCH_PROZ; 
+NETWORK
+TITLE =Nahtstelle: Einlesesperre
+
+      O     #E_Er_Einlesesperre; 
+      O     "DB_OUT".AMX_SPINDLE_FEED_STOP_P; 
+      O     "DB_OUT".AMX_EMERGENCY_STOP_P; 
+      =     "DB_SIEM_KANAL_1".A_RIdisable; 
+NETWORK
+TITLE =Nahtstelle: NC-Stop an Satzgrenzen
+
+      U     #T_IM_Stop_Satzgrenzen; 
+      =     "DB_SIEM_KANAL_1".A_NCStopBlock; 
+NETWORK
+TITLE =Nahtstelle: Referenzpunktfahren aktivieren
+
+      U     "DB_SIEM_BAG".E_REF; 
+      U     "MSSTst_NC_Start"; 
+      =     "DB_SIEM_KANAL_1".A_Ref; 
+NETWORK
+TITLE =Meldung: Achsen nicht referiert
+
+      ON    "DB_SIEM_KANAL_1".E_AxesRef; 
+      O     ; 
+      U(    ; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.MAG_KETTE_GEREGELT; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.MAG_KETTE_MASTER_SLAVE; 
+      )     ; 
+      UN    "M_MAG_Ref_Gefunden"; 
+      UN    "M_MAG_Laeuft"; 
+      =     "DB_FEHLERMELDUNG".Meldung._702022_Ref_Punkt; 
+NETWORK
+TITLE =NC-Startsperre C-Achse nicht referiert
+//(bei "DB_SIEM_KANAL_1".E_AxesRef" und  nicht referenzierpflichtiger C-Achse)
+      U     "M_4Achse_existiert"; 
+      U     #E_Taste_NC_Start; 
+      UN    "DB_SIEM_BAG".E_REF; 
+      U     "DB_SIEM_KANAL_1".E_AxesRef; 
+      UN    "DB_ACHSE4".E_RefSyn1; 
+      UN    "DB_ACHSE4".E_RefSyn2; 
+      =     "DB_FEHLERMELDUNG".NC_Startsperre._700108_C_Achs_nicht_ref; 
+NETWORK
+TITLE =NC-Startsperre: Start nicht erlaubt bei aktivem Einrichtbit
+//  U     "M_Automatik_Betrieb"
+//  U     #E_Taste_NC_Start
+//  UN    "DB_SIEM_BAG".E_REF
+//  U     "DB_PLC_MD_DB20".UDHex._04_BIT4_EINRICHT_BETR
+//  =     "DB_FEHLERMELDUNG".NC_Startsperre._700109_K_START_BEI_EINR
+//
+NETWORK
+TITLE =NC-Startsperre: X-Achse nicht im Bereich Arbeitsraum
+
+      UN    "M_Handbetrieb"; 
+      U     #E_Taste_NC_Start; 
+      UN    "DB_SIEM_BAG".E_REF; 
+      UN    "DB_REMANENT".LASER_AKTIV; 
+      U(    ; 
+      ON    "M_Programm_Aktiv_Kanal_1"; 
+      O     "MX_Satzsuchlauf_gesp"; 
+      )     ; 
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.WZW_ANGEWAEHLT; 
+      UN    "M_WW_X_imArbeitsraum"; 
+      =     "DB_FEHLERMELDUNG".NC_Startsperre._700110_X_N_IM_ARBEITSR; 
+NETWORK
+TITLE =NC-Startsperre: von SOKO steht an
+
+      UN    "M_Handbetrieb"; 
+      U     "MSSTst_NC_Start"; 
+      UN    "DB_SIEM_BAG".E_REF; 
+      UN    "M_Programm_Aktiv"; 
+      U     "M_SOKO_NC_STARTSPERRE"; 
+      =     "DB_FEHLERMELDUNG".NC_Startsperre._700111_STSP_VON_SOKO; 
+NETWORK
+TITLE =NC-Startsperre durch Starttaste steht an
+
+      O     "DB_FEHLERMELDUNG".NC_Startsperre._700108_C_Achs_nicht_ref; 
+      O     "DB_FEHLERMELDUNG".NC_Startsperre._700109_K_START_BEI_EINR; 
+      O     "DB_FEHLERMELDUNG".NC_Startsperre._700110_X_N_IM_ARBEITSR; 
+      O     "DB_FEHLERMELDUNG".NC_Startsperre._700111_STSP_VON_SOKO; 
+      =     #TX_NC_STSP_DURCH_TASTE; 
+NETWORK
+TITLE =Meldung: NC-Start nicht erlaubt
+
+      U     "DB_SIEM_KANAL_1".A_NCStartDisabl; 
+      U     #E_Taste_NC_Start; 
+      UN    "MX_Jobbetrieb"; 
+      UN    "DB_SIEM_BAG".E_REF; 
+      UN    #TX_NC_STSP_DURCH_TASTE; 
+      UN    "M_Programm_Aktiv_Kanal_1"; 
+      =     "DB_FEHLERMELDUNG".Meldung._702018_NC_Start_sperre; 
+NETWORK
+TITLE =Nahtstelle: NC-Startsperre
+//alle Fehler aus Fehlermodul auswerten
+      O     #E_Er_Spindel_Halt_Kanal; 
+      O     #E_Er_Vorsch_Halt_Hauptax; 
+      O     #E_Er_Vorsch_Halt_Hauptax; 
+      O     #E_Er_Not_Aus; 
+      O     #E_Er_Stop_Satzgrenzen; 
+      O     #E_Er_Vorschub_Halt_Kanal; 
+      O     ; 
+      U     #E_Er_Einlesesperre; 
+      U(    ; 
+      ON    "DB_PLC_MD_DB20".UDHex._28_Bit7_B_C_Takttisch; 
+      ON    "DB_FEHLERMELDUNG".Einlesesperre._700552; 
+      )     ; 
+      O     #E_Er_NC_Startsperre; 
+      O     #TX_NC_STSP_DURCH_TASTE; 
+      =     "DB_SIEM_KANAL_1".A_NCStartDisabl; 
+NETWORK
+TITLE =Satzsuchlauf aktiv gespeichert
+
+      U     "DB_SIEM_KANAL_1".E_BlockSearch; 
+      S     "MX_Satzsuchlauf_gesp"; 
+      U     #E_Taste_NC_Start; 
+      UN    "DB_SIEM_KANAL_1".A_NCStartDisabl; 
+      R     "MX_Satzsuchlauf_gesp"; 
+      NOP   0; 
+NETWORK
+TITLE =G0 Aktiv
+//Auskodieren der G-Funktionen
+      L     "DB_SIEM_KANAL_1".GAct[1]; 
+      L     1; 
+      ==I   ; 
+      =     "M_G00_aktiv"; 
+NETWORK
+TITLE =G1 Aktiv
+//Auskodieren der G-Funktionen
+      L     "DB_SIEM_KANAL_1".GAct[1]; 
+      L     2; 
+      ==I   ; 
+      =     "M_G01_aktiv"; 
+NETWORK
+TITLE =G02 oder G03 Aktiv
+//Auskodieren der G-Funktionen
+      L     "DB_SIEM_KANAL_1".GAct[1]; // G00 aktiv
+      L     3; // G2/G3
+      ==I   ; 
+      TAK   ; 
+      O(    ; 
+      L     4; 
+      ==I   ; 
+      )     ; 
+      =     "M_G02_G03_aktiv"; //G2 oder G3 aktiv
+NETWORK
+TITLE =G74 Aktiv
+//Auskodieren der G-Funktionen
+      L     "DB_SIEM_KANAL_1".GAct[2]; 
+      L     3; 
+      ==I   ; 
+      =     "M_G74_aktiv"; 
+NETWORK
+TITLE =Nahtstelle: Gewindeschneiden aktiv
+
+      L     "DB_SIEM_KANAL_1".GAct[1]; // Gruppe 1 Nummer 1: G00 aktiv
+      L     10; // Gruppe 1 Nummer 10: G33
+      ==I   ; 
+      O(    ; 
+      TAK   ; 
+      L     11; // Gruppe 1 Nummer 11: G331
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      TAK   ; 
+      L     12; // Gruppe 1 Nummer 12: G332
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      L     "DB_SIEM_KANAL_1".GAct[2]; // Gruppe 2 Nummer 2: G63
+      L     2; 
+      ==I   ; 
+      )     ; 
+      =     "M_Gewindeschneiden_aktiv"; // Gewindeschneiden aktiv
+NETWORK
+TITLE =NC-Start Jobbearbeitung
+
+      U(    ; 
+      U     "MSSTst_NC_Start"; 
+      U     "MX_Jobbetrieb"; 
+      O     ; 
+      U     "DI_FB_IF_FASTEMS".FMS_MC_cycle_start; // U     "DI_FB_IF_FASTEMS".I_MMS_cycle_start
+      U     "Mx_FMS_OM1_DISABLED"; 
+      U(    ; 
+      U     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.HASYS_FASTEMS; 
+      U(    ; 
+      ON    "DB_SINRPC".Mode.FLR_1_offline; 
+      ON    "DB_SINRPC".Mode.FLR_2_offline; 
+      )     ; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.HASYS_FASREMS_V3X; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.HASYS_FASTEMS_V3X_RPC; 
+      )     ; 
+      O     ; 
+      U     "M_NC_START_RPC_3R"; 
+      U(    ; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.HASYS_3R_MIT_RPC; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.HASYS_EROWA_MIT_RPC; 
+      )     ; 
+      )     ; 
+      U     "M_Automatik_Betrieb"; 
+      UN    "DB_SIEM_KANAL_1".E_ProgRunn; 
+      U     "M_Leistung_Steht_an"; 
+      UN    "DB_FAMILIEN_MODUL".E_Fehler.Not_Aus; 
+      UN    "DB_FAMILIEN_MODUL".E_Fehler.NC_Start_Sperre; 
+      UN    "DB_FAMILIEN_MODUL".E_Fehler.NC_Start_Sperre; 
+      UN    "DB_FAMILIEN_MODUL".E_Fehler.Vorschub_Halt_Kanal; 
+      =     "m_vke_uebertrag_1"; 
+NETWORK
+TITLE =NC-Start Jobbearbeitung
+
+      U     "m_vke_uebertrag_1"; 
+      UN    "DB_FAMILIEN_MODUL".E_Fehler.Spindel_Halt_Kanal; 
+      UN    "DB_FAMILIEN_MODUL".E_Fehler.Vorschub_Halt_Haupt_Achs; 
+      UN    "DB_FAMILIEN_MODUL".E_Fehler.Einlesesperre; 
+      UN    "DB_FAMILIEN_MODUL".E_Fehler.Stop_Werkzeugwechsel; 
+      UN    "DB_FAMILIEN_MODUL".E_Fehler.Stop_Palettenwechsel; 
+      UN    "DB_FAMILIEN_MODUL".E_Fehler.Stop_Kopf_schwenken; 
+      UN    "DB_FAMILIEN_MODUL".E_Fehler.Stop_Sonderaktion; 
+      UN    "DB_FAMILIEN_MODUL".E_Fehler.Stop_Asychron_Prozess1; 
+      UN    "DB_FAMILIEN_MODUL".E_Fehler.Stop_Asychron_Prozess2; 
+      UN    "DB_FAMILIEN_MODUL".E_Fehler.Stop_Asychron_Prozess3; 
+      UN    "DB_FAMILIEN_MODUL".E_Fehler.Stop_Asychron_Prozess4; 
+      =     #TX_NC_START_JOB; 
+NETWORK
+TITLE =Nahtstellensignal NC-Start
+//Beeinflusung des Nahtstellensignals erfolgt entweder durch:
+//
+//1. FC_MASCHTYP_MCP  (hier wird die Taste "MSSTst_NC_Start" beeinflusst
+//   und im "FC_DM_KONZ_MCP_FC24" gelesen)    
+//   
+//   u  "MSSTst_NC_Start"
+//   = "DB_SIEM_KANAL_1".A_NCStart
+//
+//oder:
+//2. Im vorhergehenden OB1 NW "NC-Start für Achsen-Test und Jobbearbeitung"  
+// 
+//   .
+//   .   
+//   )     
+//   =     #NC_START_JOB_TEST
+//
+      U(    ; 
+      O     "DB_SIEM_KANAL_1".A_NCStart; 
+      O     #TX_NC_START_JOB; 
+      )     ; 
+      UN    "DB_SIEM_KANAL_1".A_NCStopASp; 
+      UN    "M_VSH_ASYN_DISABLE_START"; 
+      =     "DB_SIEM_KANAL_1".A_NCStart; 
+END_FUNCTION
+

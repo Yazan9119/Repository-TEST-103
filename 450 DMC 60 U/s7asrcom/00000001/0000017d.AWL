@@ -1,0 +1,453 @@
+DATA_BLOCK "DB_SAFE_ZD"
+TITLE =
+//$Revision: 1.4 $
+//$Date: 2008/01/24 15:29:55CET $
+//$Author: hgc $
+//
+//
+VERSION : 0.1
+
+
+  STRUCT 	
+   GR1_ZD : STRUCT 	
+    Start_Taste_FP : BOOL ;	//GR1_ZD Zwangsdynamisierung anfordern Flanke positiv
+    Schritt1 : BOOL ;	//GR1_ZD SCHRITT 1: Bremsen in hängenden Achsen einfallen lassen
+    Schritt2 : BOOL ;	//GR1_ZD SCHRITT 2: Reglerfreigabe für hängenden Achsen wegnehmen
+    Reglerfreigabe : BOOL ;	//GR1_ZD Reglerfreigabe für hängende Achsen wegnehmen
+    Schritt3 : BOOL ;	//GR1_ZD SCHRITT 3: ARBEITSRAUMACHSEN Test der Abschaltpfade (Antrieb/NCK intern)
+    ZD1_error_int : BOOL ;	//GR1_ZD Parametrierfehler Achsanzahl ...
+    ZD1_serror_int : BOOL ;	//GR1_ZD Startbed. nicht gegeben : mind. 1 Achse mit DBX108.2 == 0
+    Schritt4 : BOOL ;	//GR1_ZD SCHRITT 4: ZUSATZACHSEN Test der Abschaltpfade (Antrieb/NCK intern)
+    ZD1_error_ext : BOOL ;	//GR1_ZD Parametrierfehler Achsanzahl ...
+    ZD1_serror_ext : BOOL ;	//GR1_ZD Startbed. nicht gegeben : mind. 1 Achse mit DBX108.2 == 0
+    Schritt5 : BOOL ;	//GR1_ZD SCHRITT 5: ARBEITSRAUMACHSEN Test der externen Stops
+    ZD2_error : BOOL ;	//GR1_ZD Parametrierfehler Achsanzahl ...
+    ZD2_serror : BOOL ;	//GR1_ZD Startbed. nicht gegeben : mind. 1 Achse mit DBX108.2 == 0
+    Schritt6 : BOOL ;	//GR1_ZD SCHRITT 6: ZUSATZACHSEN Test der externen Stops
+    Schritt7 : BOOL ;	//GR1_ZD SCHRITT 7: Abschluss --> RF wieder setzen / Bremsen wieder freigeben
+    ZD_Fertig : BOOL ;	//GR1_ZD Fertigmeldung
+    req_stopd_plc : BOOL ;	//GR1_ZD req_stopd_plc
+    req_stopc_plc : BOOL ;	//GR1_ZD req_stopc_plc
+    req_stopa_plc : BOOL ;	//GR1_ZD req_stopa_plc
+    Bremse : BOOL ;	//GR1_ZD Bremsen in hängenden Achsen einfallen lassen bei ZD
+    Tuere_zuhalten : BOOL ;	//GR1_ZD Ausgang Türe entriegeln sperren
+    Ax_Notaus_disable : BOOL ;	//GR1_ZD Überwachung im AX-Baustein überbrücken
+    Schritt8 : BOOL ;	//GR1_ZD SCHRITT 8: Hilfsschritt
+    FC_SPL_ZD1_SERROR1 : BOOL ;	
+    FC_SPL_ZD1_SERROR2 : BOOL ;	
+    FC_SPL_ZD1_ERROR1 : BOOL ;	
+    FC_SPL_ZD1_ERROR2 : BOOL ;	
+    FC_SPL_ZD2_SERROR1 : BOOL ;	
+    FC_SPL_ZD2_SERROR2 : BOOL ;	
+    FC_SPL_ZD2_ERROR1 : BOOL ;	
+    FC_SPL_ZD2_ERROR2 : BOOL ;	
+    S3_READY : BOOL ;	
+    S4_START : BOOL ;	
+    S5_READY : BOOL ;	
+    S6_START : BOOL ;	
+    aux_dword_ZD1_int1 : DWORD ;	//GR1_ZD Hilfsdoppelwort ZD1_int1
+    aux_dword_ZD1_int2 : DWORD ;	//GR1_ZD Hilfsdoppelwort ZD1_int2
+    aux_dword_ZD2_ext1 : DWORD ;	//GR1_ZD Hilfsdoppelwort ZD2_ext1
+    aux_dword_ZD2_ext2 : DWORD ;	//GR1_ZD Hilfsdoppelwort ZD2_ext2
+   END_STRUCT ;	
+   GR1_BT : STRUCT 	
+    res1 : BOOL ;	//BT vertikale Achse:
+    res2 : BOOL ;	//BT vertikale Achse:
+    BT_laeuft : BOOL ;	//BT vertikale Achse: Bremsentest läuft
+    BT_Start_Taste_FP : BOOL ;	//BT vertikale Achse: Bremsentest Start Taste Flanke positiv
+    BT_error : BOOL ;	//BT vertikale Achse: Error
+    Schritt1 : BOOL ;	//BT vertikale Achse: Schritt1 Neutrale Achse anfordern
+    Schritt1_FP : BOOL ;	//BT vertikale Achse: Schritt1_FP
+    Schritt2 : BOOL ;	//BT vertikale Achse: Schritt2 Warten auf RM neutrale Achse
+    Schtitt2_FP : BOOL ;	//BT vertikale Achse: Schtitt2_FP
+    Start_BT_FB11 : BOOL ;	//BT vertikale Achse: Start_BT_FB11
+    Bclosed_FB11 : BOOL ;	//BT vertikale Achse: Bclosed_FB11
+    MoveAxis_FB11 : BOOL ;	//BT vertikale Achse: Done_FB11
+    Done_FB11 : BOOL ;	//BT vertikale Achse: Done_Error_FB11_FP
+    Done_Error_FB11_FP : BOOL ;	//BT vertikale Achse: Done_Error_FB11_FP
+    BT_laeuft_PLCAx_FP : BOOL ;	//BT vertikale Achse: Rueckmeldung Achse wird von PLC kontrolliert
+    State_FB11 : BYTE ;	//BT vertikale Achse: State_FB11
+    InPos_FC18 : BOOL ;	//BT vertikale Achse: InPos_FC18
+    Error_FC18 : BOOL ;	//BT vertikale Achse: Error_FC18
+    State_FC18 : BYTE ;	//BT vertikale Achse: State_FC18
+    HM_BTest_ok : BOOL ;	//BT vertikale Achse: HM_BTest_ok
+    BTest_Fertig : BOOL ;	//BT vertikale Achse: BTest_Fertig
+    Override_auf_100 : BOOL ;	//BT vertikale Achse: Override während Bremsentest auf 100 % stellen
+    AX_Sperren_Z_bruecken : BOOL ;	//BT vertikale Achse: Achssperre während Bremsentest überbrücken
+    Bremse_schliessen : BOOL ;	//BT vertikale Achse: Bremsen schliessen zum Bremsentest
+   END_STRUCT ;	
+   GR1_BT2 : STRUCT 	
+    res1 : BOOL ;	//BT Kopf-Achse:
+    res2 : BOOL ;	//BT Kopf-Achse:
+    BT_laeuft : BOOL ;	//BT Kopf-Achse: Bremsentest läuft
+    BT_Start_Taste_FP : BOOL ;	//BT Kopf-Achse: Bremsentest Start Taste Flanke positiv
+    BT_error : BOOL ;	//BT Kopf-Achse: Error
+    Schritt1 : BOOL ;	//BT Kopf-Achse: Schritt1 Neutrale Achse anfordern
+    Schritt1_FP : BOOL ;	//BT Kopf-Achse: Schritt1_FP
+    Schritt2 : BOOL ;	//BT Kopf-Achse: Schritt2 Warten auf RM neutrale Achse
+    Schtitt2_FP : BOOL ;	//BT Kopf-Achse: Schtitt2_FP
+    Start_BT_FB11 : BOOL ;	//BT Kopf-Achse: Start_BT_FB11
+    Bclosed_FB11 : BOOL ;	//BT Kopf-Achse: Bclosed_FB11
+    MoveAxis_FB11 : BOOL ;	//BT Kopf-Achse: Done_FB11
+    Done_FB11 : BOOL ;	//BT Kopf-Achse: Done_Error_FB11_FP
+    Done_Error_FB11_FP : BOOL ;	//BT Kopf-Achse: Done_Error_FB11_FP
+    BT_laeuft_PLCAx_FP : BOOL ;	//BT Kopf-Achse: Rueckmeldung Achse wird von PLC kontrolliert
+    State_FB11 : BYTE ;	//BT Kopf-Achse: State_FB11
+    InPos_FC18 : BOOL ;	//BT Kopf-Achse: InPos_FC18
+    Error_FC18 : BOOL ;	//BT Kopf-Achse: Error_FC18
+    State_FC18 : BYTE ;	//BT Kopf-Achse: State_FC18
+    HM_BTest_ok : BOOL ;	//BT Kopf-Achse: HM_BTest_ok
+    BTest_Fertig : BOOL ;	//BT Kopf-Achse: BTest_Fertig
+    Override_auf_100 : BOOL ;	//BT Kopf-Achse: Override während Bremsentest auf 100 % stellen
+    AX_Sperren_Z_bruecken : BOOL ;	//BT Kopf-Achse: Achssperre während Bremsentest überbrücken
+    Bremse_schliessen : BOOL ;	//BT Kopf-Achse: Bremsen schliessen zum Bremsentest
+   END_STRUCT ;	
+   res : ARRAY  [1 .. 2 ] OF BYTE ;	
+   GR2_ZD : STRUCT 	
+    Start_Taste_FP : BOOL ;	//GR2_ZD Zwangsdynamisierung anfordern Flanke positiv
+    Schritt1 : BOOL ;	//GR2_ZD SCHRITT 1: Bremsen in hängenden Achsen einfallen lassen
+    Schritt2 : BOOL ;	//GR2_ZD SCHRITT 2: Reglerfreigabe für hängenden Achsen wegnehmen
+    Reglerfreigabe : BOOL ;	//GR2_ZD Reglerfreigabe für hängende Achsen wegnehmen
+    Schritt3 : BOOL ;	//GR2_ZD SCHRITT 3: PS-ACHSEN Test der Abschaltpfade (Antrieb/NCK intern)
+    ZD1_error_int : BOOL ;	//GR2_ZD Parametrierfehler Achsanzahl ...
+    ZD1_serror_int : BOOL ;	//GR2_ZD Startbed. nicht gegeben : mind. 1 Achse mit DBX108.2 == 0
+    Schritt4 : BOOL ;	//GR2_ZD SCHRITT 4: PS-ACHSEN Test der externen Stops
+    ZD1_error_ext : BOOL ;	//GR2_ZD Parametrierfehler Achsanzahl ...
+    ZD1_serror_ext : BOOL ;	//GR2_ZD Startbed. nicht gegeben : mind. 1 Achse mit DBX108.2 == 0
+    Schritt5 : BOOL ;	//GR2_ZD SCHRITT 5:  Abschluss --> RF wieder setzen / Bremse wieder freigeben
+    ZD2_error : BOOL ;	//GR2_ZD Parametrierfehler Achsanzahl ...
+    ZD2_serror : BOOL ;	//GR2_ZD Startbed. nicht gegeben : mind. 1 Achse mit DBX108.2 == 0
+    Schritt6 : BOOL ;	//GR2_ZD SCHRITT 6:  Fertigmeldung
+    Schritt7 : BOOL ;	//GR2_ZD Hilfsschritt
+    ZD_Fertig : BOOL ;	//GR2_ZD Fertigmeldung
+    req_stopd_plc : BOOL ;	//GR2_ZD req_stopd_plc
+    req_stopc_plc : BOOL ;	//GR2_ZD req_stopc_plc
+    req_stopa_plc : BOOL ;	//GR2_ZD req_stopa_plc
+    Bremse : BOOL ;	//GR2_ZD Bremsen in hängenden Achsen einfallen lassen bei ZD
+    Tuere_zuhalten : BOOL ;	//GR2_ZD Ausgang Türe entriegeln sperren
+    Ax_Notaus_disable : BOOL ;	//GR2_ZD Überwachung im AX-Baustein überbrücken
+    PS_Test_Tuere_verriegeln : BOOL ;	//GR2_ZD Testbit für Türe verriegeln (Safetyabnahmetest)
+    aux_dword_ZD1_int1 : DWORD ;	//GR2_ZD Hilfsdoppelwort ZD1_int1
+    aux_dword_ZD1_int2 : DWORD ;	//GR2_ZD Hilfsdoppelwort ZD1_int2
+    aux_dword_ZD2 : DWORD ;	//GR2_ZD Hilfsdoppelwort ZD2
+   END_STRUCT ;	
+   GR2_BT : STRUCT 	
+    res1 : BOOL ;	//BT Hub-Achse:
+    res2 : BOOL ;	//BT Hub-Achse:
+    BT_laeuft : BOOL ;	//BT Hub-Achse: Bremsentest läuft
+    BT_Start_Taste_FP : BOOL ;	//BT Hub-Achse: Bremsentest Start Taste Flanke positiv
+    BT_error : BOOL ;	//BT Hub-Achse: Error
+    Schritt1 : BOOL ;	//BT Hub-Achse: Schritt1 Neutrale Achse anfordern
+    Schritt1_FP : BOOL ;	//BT Hub-Achse: Schritt1_FP
+    Schritt2 : BOOL ;	//BT Hub-Achse: Schritt2 Warten auf RM neutrale Achse
+    Schtitt2_FP : BOOL ;	//BT Hub-Achse: Schtitt2_FP
+    Start_BT_FB11 : BOOL ;	//BT Hub-Achse: Start_BT_FB11
+    Bclosed_FB11 : BOOL ;	//BT Hub-Achse: Bclosed_FB11
+    MoveAxis_FB11 : BOOL ;	//BT Hub-Achse: Done_FB11
+    Done_FB11 : BOOL ;	//BT Hub-Achse: Done_Error_FB11_FP
+    Done_Error_FB11_FP : BOOL ;	//BT Hub-Achse: Done_Error_FB11_FP
+    BT_laeuft_PLCAx_FP : BOOL ;	//BT Hub-Achse: Rueckmeldung Achse wird von PLC kontrolliert
+    State_FB11 : BYTE ;	//BT Hub-Achse: State_FB11
+    InPos_FC18 : BOOL ;	//BT Hub-Achse: InPos_FC18
+    Error_FC18 : BOOL ;	//BT Hub-Achse: Error_FC18
+    State_FC18 : BYTE ;	//BT Hub-Achse: State_FC18
+    HM_BTest_ok : BOOL ;	//BT Hub-Achse: HM_BTest_ok
+    BTest_Fertig : BOOL ;	//BT Hub-Achse: BTest_Fertig
+    Override_auf_100 : BOOL ;	//BT Hub-Achse: Override während Bremsentest auf 100 % stellen
+    AX_Sperren_Z_bruecken : BOOL ;	//BT Hub-Achse: Achssperre während Bremsentest überbrücken
+    Bremse_schliessen : BOOL ;	//BT Hub-Achse: Bremsen schliessen zum Bremsentest
+   END_STRUCT ;	
+   GR2_BT2 : STRUCT 	
+    res1 : BOOL ;	//BT Reserve-Achse:
+    res2 : BOOL ;	//BT Reserve-Achse:
+    BT_laeuft : BOOL ;	//BT Reserve-Achse: Bremsentest läuft
+    BT_Start_Taste_FP : BOOL ;	//BT Reserve-Achse: Bremsentest Start Taste Flanke positiv
+    BT_error : BOOL ;	//BT Reserve-Achse: Error
+    Schritt1 : BOOL ;	//BT Reserve-Achse: Schritt1 Neutrale Achse anfordern
+    Schritt1_FP : BOOL ;	//BT Reserve-Achse: Schritt1_FP
+    Schritt2 : BOOL ;	//BT Reserve-Achse: Schritt2 Warten auf RM neutrale Achse
+    Schtitt2_FP : BOOL ;	//BT Reserve-Achse: Schtitt2_FP
+    Start_BT_FB11 : BOOL ;	//BT Reserve-Achse: Start_BT_FB11
+    Bclosed_FB11 : BOOL ;	//BT Reserve-Achse: Bclosed_FB11
+    MoveAxis_FB11 : BOOL ;	//BT Reserve-Achse: Done_FB11
+    Done_FB11 : BOOL ;	//BT Reserve-Achse: Done_Error_FB11_FP
+    Done_Error_FB11_FP : BOOL ;	//BT Reserve-Achse: Done_Error_FB11_FP
+    BT_laeuft_PLCAx_FP : BOOL ;	//BT Reserve-Achse: Rueckmeldung Achse wird von PLC kontrolliert
+    State_FB11 : BYTE ;	//BT Reserve-Achse: State_FB11
+    InPos_FC18 : BOOL ;	//BT Reserve-Achse: InPos_FC18
+    Error_FC18 : BOOL ;	//BT Reserve-Achse: Error_FC18
+    State_FC18 : BYTE ;	//BT Reserve-Achse: State_FC18
+    HM_BTest_ok : BOOL ;	//BT Reserve-Achse: HM_BTest_ok
+    BTest_Fertig : BOOL ;	//BT Reserve-Achse: BTest_Fertig
+    Override_auf_100 : BOOL ;	//BT Reserve-Achse: Override während Bremsentest auf 100 % stellen
+    AX_Sperren_Z_bruecken : BOOL ;	//BT Reserve-Achse: Achssperre während Bremsentest überbrücken
+    Bremse_schliessen : BOOL ;	//BT Reserve-Achse: Bremsen schliessen zum Bremsentest
+   END_STRUCT ;	
+   res1 : ARRAY  [1 .. 12 ] OF BYTE ;	
+   Seco_Test : STRUCT 	
+    FP_BA1 : BOOL ;	
+    IM_BA1 : BOOL ;	
+    FP_BA2 : BOOL ;	
+    IM_BA2 : BOOL ;	
+    FP_BA3 : BOOL ;	
+    IM_BA3 : BOOL ;	
+    FP_BA4 : BOOL ;	
+    IM_BA4 : BOOL ;	
+    Anwahl_BA1 : BOOL ;	
+    Anwahl_BA2 : BOOL ;	
+    Anwahl_BA3 : BOOL ;	
+    Anwahl_BA4 : BOOL ;	
+    FP_HW_Test : BOOL ;	
+    IM_HW_Test : BOOL ;	
+    res2 : BOOL ;	
+    res3 : BOOL ;	
+    Test_HW_laueft : BOOL ;	//Test der Hardware laeuft
+    Test_Bremse_laeuft : BOOL ;	//Test der Bremsen in hängenden Achsen laeuft
+    Test_ABSP_laeuft : BOOL ;	//Test der Abschaltpfade laeuft
+    Test_extStop_laeuft : BOOL ;	//Test der externen Stops laeuft
+    Test_Sammelmeldung : BOOL ;	//Sammelmelung Zwangsdynamisierung laeuft
+    BER2_Test_HW_laueft : BOOL ;	//Bereich 2 Palettenspeicher Test der Hardware laeuft
+    BER2_Test_Bremse_laeuft : BOOL ;	//Bereich 2 Palettenspeicher Test der Bremsen in hängenden Achsen laeuft
+    BER2_Test_ABSP_laeuft : BOOL ;	//Bereich 2 Palettenspeicher Test der Abschaltpfade laeuft
+    BER2_Test_extStop_laeuft : BOOL ;	//Bereich 2 Palettenspeicher Test der externen Stops laeuft
+    BER2_Test_Sammelmeldung : BOOL ;	//Bereich 2 Palettenspeicher Sammelmelung Zwangsdynamisierung laeuft
+    BER2_FP_BA1 : BOOL ;	
+   END_STRUCT ;	
+   KONFIGURATION : STRUCT 	
+    GR1_ANZAHL_ARB_ACHSEN : INT ;	//Anzahl der Arbeitsraumachsen
+    GR1_ANZAHL_ZUSATZACHSEN : INT ;	//Anzahl der Zustazachsen
+    GR1_ZUSATZACHSE_1_NUMMER : INT ;	//Achsnummer der Zusatzachse 1
+    GR1_ZUSATZACHSE_2_NUMMER : INT ;	//Achsnummer der Zusatzachse 2
+    GR1_ZUSATZACHSE_3_NUMMER : INT ;	//Achsnummer der Zusatzachse 3
+    GR1_ZUSATZACHSE_4_NUMMER : INT ;	//Achsnummer der Zusatzachse 4
+    GR1_ZUSATZACHSE_5_NUMMER : INT ;	//Achsnummer der Zusatzachse 5
+    GR1_ZUSATZACHSE_6_NUMMER : INT ;	//Achsnummer der Zusatzachse 6
+    GR1_ARB_ACHSE_6_NUMMER : INT ;	//Achsnummer der Arbeitsraumachse 6
+    GR2_ANZAHL_ACHSEN_BER : INT ;	//Anzahl der Bereichsachsen PS+PW
+    GR2_INT_AX_NR_BT : INT ;	//Achsnummer für Bremsentest
+    RES_1 : INT ;	//Reserve
+    RES_2 : INT ;	//Reserve
+    RES_3 : INT ;	//Reserve
+    GR1_MASCH_MIT_5_ARB_AX : BOOL ;	//Maschine mit 5 Arbeitsraumachsen
+   END_STRUCT ;	
+  END_STRUCT ;	
+BEGIN
+   GR1_ZD.Start_Taste_FP := FALSE; 
+   GR1_ZD.Schritt1 := FALSE; 
+   GR1_ZD.Schritt2 := FALSE; 
+   GR1_ZD.Reglerfreigabe := FALSE; 
+   GR1_ZD.Schritt3 := FALSE; 
+   GR1_ZD.ZD1_error_int := FALSE; 
+   GR1_ZD.ZD1_serror_int := FALSE; 
+   GR1_ZD.Schritt4 := FALSE; 
+   GR1_ZD.ZD1_error_ext := FALSE; 
+   GR1_ZD.ZD1_serror_ext := FALSE; 
+   GR1_ZD.Schritt5 := FALSE; 
+   GR1_ZD.ZD2_error := FALSE; 
+   GR1_ZD.ZD2_serror := FALSE; 
+   GR1_ZD.Schritt6 := FALSE; 
+   GR1_ZD.Schritt7 := FALSE; 
+   GR1_ZD.ZD_Fertig := FALSE; 
+   GR1_ZD.req_stopd_plc := FALSE; 
+   GR1_ZD.req_stopc_plc := FALSE; 
+   GR1_ZD.req_stopa_plc := FALSE; 
+   GR1_ZD.Bremse := FALSE; 
+   GR1_ZD.Tuere_zuhalten := FALSE; 
+   GR1_ZD.Ax_Notaus_disable := FALSE; 
+   GR1_ZD.Schritt8 := FALSE; 
+   GR1_ZD.FC_SPL_ZD1_SERROR1 := FALSE; 
+   GR1_ZD.FC_SPL_ZD1_SERROR2 := FALSE; 
+   GR1_ZD.FC_SPL_ZD1_ERROR1 := FALSE; 
+   GR1_ZD.FC_SPL_ZD1_ERROR2 := FALSE; 
+   GR1_ZD.FC_SPL_ZD2_SERROR1 := FALSE; 
+   GR1_ZD.FC_SPL_ZD2_SERROR2 := FALSE; 
+   GR1_ZD.FC_SPL_ZD2_ERROR1 := FALSE; 
+   GR1_ZD.FC_SPL_ZD2_ERROR2 := FALSE; 
+   GR1_ZD.S3_READY := FALSE; 
+   GR1_ZD.S4_START := FALSE; 
+   GR1_ZD.S5_READY := FALSE; 
+   GR1_ZD.S6_START := FALSE; 
+   GR1_ZD.aux_dword_ZD1_int1 := DW#16#0; 
+   GR1_ZD.aux_dword_ZD1_int2 := DW#16#0; 
+   GR1_ZD.aux_dword_ZD2_ext1 := DW#16#0; 
+   GR1_ZD.aux_dword_ZD2_ext2 := DW#16#0; 
+   GR1_BT.res1 := FALSE; 
+   GR1_BT.res2 := FALSE; 
+   GR1_BT.BT_laeuft := FALSE; 
+   GR1_BT.BT_Start_Taste_FP := FALSE; 
+   GR1_BT.BT_error := FALSE; 
+   GR1_BT.Schritt1 := FALSE; 
+   GR1_BT.Schritt1_FP := FALSE; 
+   GR1_BT.Schritt2 := FALSE; 
+   GR1_BT.Schtitt2_FP := FALSE; 
+   GR1_BT.Start_BT_FB11 := FALSE; 
+   GR1_BT.Bclosed_FB11 := FALSE; 
+   GR1_BT.MoveAxis_FB11 := FALSE; 
+   GR1_BT.Done_FB11 := FALSE; 
+   GR1_BT.Done_Error_FB11_FP := FALSE; 
+   GR1_BT.BT_laeuft_PLCAx_FP := FALSE; 
+   GR1_BT.State_FB11 := B#16#0; 
+   GR1_BT.InPos_FC18 := FALSE; 
+   GR1_BT.Error_FC18 := FALSE; 
+   GR1_BT.State_FC18 := B#16#0; 
+   GR1_BT.HM_BTest_ok := FALSE; 
+   GR1_BT.BTest_Fertig := FALSE; 
+   GR1_BT.Override_auf_100 := FALSE; 
+   GR1_BT.AX_Sperren_Z_bruecken := FALSE; 
+   GR1_BT.Bremse_schliessen := FALSE; 
+   GR1_BT2.res1 := FALSE; 
+   GR1_BT2.res2 := FALSE; 
+   GR1_BT2.BT_laeuft := FALSE; 
+   GR1_BT2.BT_Start_Taste_FP := FALSE; 
+   GR1_BT2.BT_error := FALSE; 
+   GR1_BT2.Schritt1 := FALSE; 
+   GR1_BT2.Schritt1_FP := FALSE; 
+   GR1_BT2.Schritt2 := FALSE; 
+   GR1_BT2.Schtitt2_FP := FALSE; 
+   GR1_BT2.Start_BT_FB11 := FALSE; 
+   GR1_BT2.Bclosed_FB11 := FALSE; 
+   GR1_BT2.MoveAxis_FB11 := FALSE; 
+   GR1_BT2.Done_FB11 := FALSE; 
+   GR1_BT2.Done_Error_FB11_FP := FALSE; 
+   GR1_BT2.BT_laeuft_PLCAx_FP := FALSE; 
+   GR1_BT2.State_FB11 := B#16#0; 
+   GR1_BT2.InPos_FC18 := FALSE; 
+   GR1_BT2.Error_FC18 := FALSE; 
+   GR1_BT2.State_FC18 := B#16#0; 
+   GR1_BT2.HM_BTest_ok := FALSE; 
+   GR1_BT2.BTest_Fertig := FALSE; 
+   GR1_BT2.Override_auf_100 := FALSE; 
+   GR1_BT2.AX_Sperren_Z_bruecken := FALSE; 
+   GR1_BT2.Bremse_schliessen := FALSE; 
+   res[1] := B#16#0; 
+   res[2] := B#16#0; 
+   GR2_ZD.Start_Taste_FP := FALSE; 
+   GR2_ZD.Schritt1 := FALSE; 
+   GR2_ZD.Schritt2 := FALSE; 
+   GR2_ZD.Reglerfreigabe := FALSE; 
+   GR2_ZD.Schritt3 := FALSE; 
+   GR2_ZD.ZD1_error_int := FALSE; 
+   GR2_ZD.ZD1_serror_int := FALSE; 
+   GR2_ZD.Schritt4 := FALSE; 
+   GR2_ZD.ZD1_error_ext := FALSE; 
+   GR2_ZD.ZD1_serror_ext := FALSE; 
+   GR2_ZD.Schritt5 := FALSE; 
+   GR2_ZD.ZD2_error := FALSE; 
+   GR2_ZD.ZD2_serror := FALSE; 
+   GR2_ZD.Schritt6 := FALSE; 
+   GR2_ZD.Schritt7 := FALSE; 
+   GR2_ZD.ZD_Fertig := FALSE; 
+   GR2_ZD.req_stopd_plc := FALSE; 
+   GR2_ZD.req_stopc_plc := FALSE; 
+   GR2_ZD.req_stopa_plc := FALSE; 
+   GR2_ZD.Bremse := FALSE; 
+   GR2_ZD.Tuere_zuhalten := FALSE; 
+   GR2_ZD.Ax_Notaus_disable := FALSE; 
+   GR2_ZD.PS_Test_Tuere_verriegeln := FALSE; 
+   GR2_ZD.aux_dword_ZD1_int1 := DW#16#0; 
+   GR2_ZD.aux_dword_ZD1_int2 := DW#16#0; 
+   GR2_ZD.aux_dword_ZD2 := DW#16#0; 
+   GR2_BT.res1 := FALSE; 
+   GR2_BT.res2 := FALSE; 
+   GR2_BT.BT_laeuft := FALSE; 
+   GR2_BT.BT_Start_Taste_FP := FALSE; 
+   GR2_BT.BT_error := FALSE; 
+   GR2_BT.Schritt1 := FALSE; 
+   GR2_BT.Schritt1_FP := FALSE; 
+   GR2_BT.Schritt2 := FALSE; 
+   GR2_BT.Schtitt2_FP := FALSE; 
+   GR2_BT.Start_BT_FB11 := FALSE; 
+   GR2_BT.Bclosed_FB11 := FALSE; 
+   GR2_BT.MoveAxis_FB11 := FALSE; 
+   GR2_BT.Done_FB11 := FALSE; 
+   GR2_BT.Done_Error_FB11_FP := FALSE; 
+   GR2_BT.BT_laeuft_PLCAx_FP := FALSE; 
+   GR2_BT.State_FB11 := B#16#0; 
+   GR2_BT.InPos_FC18 := FALSE; 
+   GR2_BT.Error_FC18 := FALSE; 
+   GR2_BT.State_FC18 := B#16#0; 
+   GR2_BT.HM_BTest_ok := FALSE; 
+   GR2_BT.BTest_Fertig := FALSE; 
+   GR2_BT.Override_auf_100 := FALSE; 
+   GR2_BT.AX_Sperren_Z_bruecken := FALSE; 
+   GR2_BT.Bremse_schliessen := FALSE; 
+   GR2_BT2.res1 := FALSE; 
+   GR2_BT2.res2 := FALSE; 
+   GR2_BT2.BT_laeuft := FALSE; 
+   GR2_BT2.BT_Start_Taste_FP := FALSE; 
+   GR2_BT2.BT_error := FALSE; 
+   GR2_BT2.Schritt1 := FALSE; 
+   GR2_BT2.Schritt1_FP := FALSE; 
+   GR2_BT2.Schritt2 := FALSE; 
+   GR2_BT2.Schtitt2_FP := FALSE; 
+   GR2_BT2.Start_BT_FB11 := FALSE; 
+   GR2_BT2.Bclosed_FB11 := FALSE; 
+   GR2_BT2.MoveAxis_FB11 := FALSE; 
+   GR2_BT2.Done_FB11 := FALSE; 
+   GR2_BT2.Done_Error_FB11_FP := FALSE; 
+   GR2_BT2.BT_laeuft_PLCAx_FP := FALSE; 
+   GR2_BT2.State_FB11 := B#16#0; 
+   GR2_BT2.InPos_FC18 := FALSE; 
+   GR2_BT2.Error_FC18 := FALSE; 
+   GR2_BT2.State_FC18 := B#16#0; 
+   GR2_BT2.HM_BTest_ok := FALSE; 
+   GR2_BT2.BTest_Fertig := FALSE; 
+   GR2_BT2.Override_auf_100 := FALSE; 
+   GR2_BT2.AX_Sperren_Z_bruecken := FALSE; 
+   GR2_BT2.Bremse_schliessen := FALSE; 
+   res1[1] := B#16#0; 
+   res1[2] := B#16#0; 
+   res1[3] := B#16#0; 
+   res1[4] := B#16#0; 
+   res1[5] := B#16#0; 
+   res1[6] := B#16#0; 
+   res1[7] := B#16#0; 
+   res1[8] := B#16#0; 
+   res1[9] := B#16#0; 
+   res1[10] := B#16#0; 
+   res1[11] := B#16#0; 
+   res1[12] := B#16#0; 
+   Seco_Test.FP_BA1 := FALSE; 
+   Seco_Test.IM_BA1 := FALSE; 
+   Seco_Test.FP_BA2 := FALSE; 
+   Seco_Test.IM_BA2 := FALSE; 
+   Seco_Test.FP_BA3 := FALSE; 
+   Seco_Test.IM_BA3 := FALSE; 
+   Seco_Test.FP_BA4 := FALSE; 
+   Seco_Test.IM_BA4 := FALSE; 
+   Seco_Test.Anwahl_BA1 := FALSE; 
+   Seco_Test.Anwahl_BA2 := FALSE; 
+   Seco_Test.Anwahl_BA3 := FALSE; 
+   Seco_Test.Anwahl_BA4 := FALSE; 
+   Seco_Test.FP_HW_Test := FALSE; 
+   Seco_Test.IM_HW_Test := FALSE; 
+   Seco_Test.res2 := FALSE; 
+   Seco_Test.res3 := FALSE; 
+   Seco_Test.Test_HW_laueft := FALSE; 
+   Seco_Test.Test_Bremse_laeuft := FALSE; 
+   Seco_Test.Test_ABSP_laeuft := FALSE; 
+   Seco_Test.Test_extStop_laeuft := FALSE; 
+   Seco_Test.Test_Sammelmeldung := FALSE; 
+   Seco_Test.BER2_Test_HW_laueft := FALSE; 
+   Seco_Test.BER2_Test_Bremse_laeuft := FALSE; 
+   Seco_Test.BER2_Test_ABSP_laeuft := FALSE; 
+   Seco_Test.BER2_Test_extStop_laeuft := FALSE; 
+   Seco_Test.BER2_Test_Sammelmeldung := FALSE; 
+   Seco_Test.BER2_FP_BA1 := FALSE; 
+   KONFIGURATION.GR1_ANZAHL_ARB_ACHSEN := 0; 
+   KONFIGURATION.GR1_ANZAHL_ZUSATZACHSEN := 0; 
+   KONFIGURATION.GR1_ZUSATZACHSE_1_NUMMER := 0; 
+   KONFIGURATION.GR1_ZUSATZACHSE_2_NUMMER := 0; 
+   KONFIGURATION.GR1_ZUSATZACHSE_3_NUMMER := 0; 
+   KONFIGURATION.GR1_ZUSATZACHSE_4_NUMMER := 0; 
+   KONFIGURATION.GR1_ZUSATZACHSE_5_NUMMER := 0; 
+   KONFIGURATION.GR1_ZUSATZACHSE_6_NUMMER := 0; 
+   KONFIGURATION.GR1_ARB_ACHSE_6_NUMMER := 0; 
+   KONFIGURATION.GR2_ANZAHL_ACHSEN_BER := 0; 
+   KONFIGURATION.GR2_INT_AX_NR_BT := 0; 
+   KONFIGURATION.RES_1 := 0; 
+   KONFIGURATION.RES_2 := 0; 
+   KONFIGURATION.RES_3 := 0; 
+   KONFIGURATION.GR1_MASCH_MIT_5_ARB_AX := FALSE; 
+END_DATA_BLOCK
+

@@ -1,0 +1,3644 @@
+FUNCTION "FC_WW_TELLER" : VOID
+TITLE =
+//$Revision: 1.56 $
+//$Date: 2008/09/09 10:15:54CEST $
+//$Author: schmoelp $
+//
+// Werkzeugwechsler Teller
+AUTHOR : PS
+FAMILY : DMC_H
+NAME : WWPICKUP
+VERSION : 0.0
+
+
+VAR_INPUT
+  gespannt : BOOL ;	// gespannt mit oder ohne Werkzeug
+  gespannt_mWz : BOOL ;	// gespannt mit Werkzeug
+  gespannt_oWz : BOOL ;	// gespannt ohne Werkzeug
+  gespannt_Frg_Sp : BOOL ;	// gespannt mit Werkzeug Freigabe Spindeldrehen
+  IB_MagKontr_aus : BOOL ;	//IB-Bit: Belegungskontrolle Magazin ausblenden
+  AB_mit_Entriegeln : BOOL ;	//Ausbaustufe gesteuertes entriegeln im Magazin
+  Frg_Service : BOOL ;	//Freigabe der Einzelbewegungen ohne Bedingung
+  Bild_MAGEinstellung : BOOL ;	
+END_VAR
+VAR_TEMP
+  Klappe_auf_1 : BOOL ;	
+  Klappe_auf_2 : BOOL ;	
+  Vorbedingung_AF1 : BOOL ;	
+  Vorbedingung_AF2 : BOOL ;	
+  Vorbedingung_AF3 : BOOL ;	
+  PruefeAblageplatz : BOOL ;	
+  PruefeAbholplatz : BOOL ;	
+  ZvonPLC : BOOL ;	
+  IKZ_ausblasen : BOOL ;	
+  FC18_Error : BOOL ;	
+  Klappe_auf_BBK : BOOL ;	
+  Reset_Prgende : BOOL ;	
+  WV_laden_M1_aktiv : BOOL ;	
+  Schritt_gesetzt : BOOL ;	
+  Bild_WW_Handbedienung : BOOL ;	
+  MSST_Reset : BOOL ;	
+  WW_von_WZV : BOOL ;	
+  WZM_Fahrbefehl : BOOL ;	
+  BA_3_4 : BOOL ;	
+  F_ZHub_n_ausgefahren : BOOL ;	
+  F_ZHub_n_eingefahren : BOOL ;	
+  F_Mag_n_in_Position : BOOL ;	
+  F_Zange_n_auf : BOOL ;	
+  F_Zange_n_zu : BOOL ;	
+  F_Spanner_n_zu : BOOL ;	
+  F_Spanner_n_auf : BOOL ;	
+  F_Sp_n_gerichtet : BOOL ;	
+  F_MagKlappe_n_auf : BOOL ;	
+  F_MagKlappe_n_zu : BOOL ;	
+  F_Spindel_leer : BOOL ;	
+  F_VSP_Y_WW : BOOL ;	
+  HalterSp_auf : BOOL ;	
+  HalterSp_zu : BOOL ;	
+  PI_WZ_LS_GST : BOOL ;	//Positive Flanke Grundstellung Werkzeug entriegeln Ladestation
+  FRG_WZ_MAN_RELEASE : BOOL ;	
+  Frg_Ventil_Hub : BOOL ;	
+  t_PI_T_quitt_Entladen : BOOL ;	
+  AB_WZB : BOOL ;	//mechanische Bruchkontrolle
+  SFC12_RET_VAL : INT ;	
+  SFC12_SRCBLK : INT ;	
+  SFC12_DSTBLK : INT ;	
+  Achssperre : BOOL ;	
+  NewToolTx : BOOL ;	
+  NewToolT0 : BOOL ;	
+  OldToolTx : BOOL ;	
+  OldToolT0 : BOOL ;	
+  Schritt_vorwaerts : BOOL ;	//Schrittkette vorwärts
+  Schritt_rueckwaerts : BOOL ;	//Schrittkette rückwärts
+  Taste_vorwaerts : BOOL ;	
+  Taste_rueckwaerts : BOOL ;	
+  PI_T_vorwaerts : BOOL ;	
+  PI_T_rueckwaerts : BOOL ;	
+  EB_Frg_Klappe_auf : BOOL ;	
+  EB_Klappe_auf : BOOL ;	
+  EB_Frg_Klappe_zu : BOOL ;	
+  EB_Klappe_zu : BOOL ;	
+  EB_Frg_Wz_aus : BOOL ;	
+  EB_Frg_Wz_ein : BOOL ;	
+  EB_Frg_entspannen : BOOL ;	
+  EB_entspannen : BOOL ;	
+  EB_Frg_spannen : BOOL ;	
+  EB_spannen : BOOL ;	
+  EB_Frg_KR_einfahren : BOOL ;	
+  EB_KR_einfahren : BOOL ;	
+  EB_Frg_KR_ausfahren : BOOL ;	
+  EB_KR_ausfahren : BOOL ;	
+  EB_Frg_X_WWPos : BOOL ;	
+  EB_Frg_X_WartePos : BOOL ;	
+  EB_Hand_WW : BOOL ;	
+  Handbetrieb : BOOL ;	
+  Achse_angewaehlt : BOOL ;	
+  PI_Start_KR : BOOL ;	
+  Temp_INT : INT ;	
+  VSP_M_Wechsler : BOOL ;	
+  VSP_M_KR_GRSTn : BOOL ;	
+  VSP_M_Ls_GRSTn : BOOL ;	
+  VSP_M_BBK : BOOL ;	
+  VSP_M_aus_n : BOOL ;	
+  EB_Taste_steht_an : BOOL ;	
+  FC21_Error : BOOL ;	
+  t_AxFrg_y : BOOL ;	
+  t_Fahrbefehl_y : BOOL ;	
+  TX_O_WW_1_ZYL_GST : BOOL ;	
+  TX_O_WW_1_ZYL_SPI : BOOL ;	
+  A_DPR : ARRAY  [0 .. 15 ] OF BOOL ;	
+  FC21_ErrCode : INT ;	
+END_VAR
+BEGIN
+NETWORK
+TITLE ============ allgemeine Signale ==============
+// Netzwerk-Übersicht
+// ==================
+// NW 1: =========== allgemeine Signale ==============
+// NW 2: Ausbaustufe mechanische Werkzeugbruchkontrolle
+// NW 3: Taste Reset oder Programmende
+// NW 4: Betriebsart 3, 4
+// NW 5: JOG-Betrieb
+// NW 6: Bildanwahl Einzelbewegung
+// NW 7: Bildanwahl Semifunktion
+// NW 8: Zange geöffnet
+// NW 9: Zange geschlossen
+// NW 10: Fahrbefehl Werkzeugmagazin steht an
+// NW 11: ========== Signale von Werkzeugverwalung ==============
+// NW 12: WZV: Werkzeugwechsel steht an
+// NW 13: WZV: Aufgerufenes Werkzeug Tx
+// NW 14: WZV: Aufgerufenes Werkzeug T0
+// NW 15: WZV: Spindel belegt
+// NW 16: WZV: Spindel leer
+// NW 17: WZV: Vorbedingung Folge 1 Tx M6 Spindel leer
+// NW 18: WZV: Vorbedingung Folge 2 Tx M6 Spindel belegt
+// NW 19: WZV: Vorbedingung Folge 3 T0 M6 Spindel belegt
+// NW 20: ============= Kegelreinigung ==================
+// NW 21: KR: Einzelbewegung Freigabe einfahren
+// NW 22: KR: Einzelbewegung einfahren
+// NW 23: KR: Einzelbewegung Freigabe ausfahren
+// NW 24: KR: Einzelbewegung ausfahren
+// NW 25: KR: Einzelbewegung ausfahren speichern
+// NW 26: KR: Einzelbewegung Ansteuerung Anzeige
+// NW 27: Überwachung Kegelreinigung
+// NW 28: KR: Start Werkzeug reinigen Tellermagazin
+// NW 29: KR: aus-/einfahren 
+// NW 30: KR: Ausgang ausfahren
+// NW 31: KR: Zeit starten
+// NW 32: KR: beendet
+// NW 33: ============== Werkzeugwechsel ===============
+// NW 34: WW: Zyklus L6 wurde gestartet
+// NW 35: WW: rücksetzen
+// NW 36: WW: Auswertung Schritt gesetzt
+// NW 37: WW: START
+// NW 38: WW: Rücksetzen M-Funktion M06
+// NW 39: WZW: Aktiver Ablauf
+// NW 40: WW: 2nd software limit switch plus
+// NW 41: WW: Folge 1 Tx M6 Spindel leer / Auftrag 1
+// NW 42: WW: Folge 1 Freigabe fahre ins Magazin
+// NW 43: WW: Folge 1 Auftrag 2: Einwechseln neues Werkzeug
+// NW 44: WW: Folge 1 Tx M6 Spindel leer beendet
+// NW 45: WW: Folge 2 Tx M6 Spindel belegt / Auftrag 3
+// NW 46: WW: Folge 2 Freigabe fahre ins Magazin
+// NW 47: WW: Folge 2 HILFSSCHRITT2
+// NW 48: WW: Folge 2 Auftrag 2: Einwechseln neues Werkzeug
+// NW 49: WW: Folge 2 beendet
+// NW 50: WW: Folge 3 T0 M6 Spindel belegt / Auftrag 3
+// NW 51: WW: Folge 3 Freigabe fahre ins Magazin
+// NW 52: WW: Folge 3 Einwechseln kein Werkzeug
+// NW 53: WW: Folge 3 beendet
+// NW 54: WW: ABBRUCH -> FREIFAHREN
+// NW 55: Taste Werkzeugwechsler vorwärts in Grundstellung fahren
+// NW 56: Taste Werkzeugwechsler rückwärts in Grundstellung fahren
+// NW 57: WW: Vorwärts Taste
+// NW 58: WW: Rückwärts Taste
+// NW 59: WW: Freigabe VOR/ZURUECK Freifahren
+// NW 60: WW: Vorwärts Flanke Taste
+// NW 61: WW: Vorwärts Bewegung
+// NW 62: WW: Vorwärts Schrittkette
+// NW 63: WW: Rückwärts Flanke Taste
+// NW 64: WW: Rückwärts Bewegung
+// NW 65: WW: Rückwärts gespeichert
+// NW 66: WW: Rückwärts Schrittkette
+// NW 67: WW: FREIGABE AUSGAENGE FUER ABLAUF
+// NW 68: WW: ANZEIGE VORWAERTS
+// NW 69: WW: ANZEIGE RUECKWAERTS
+// NW 70: WW: Semifunktion Ansteuerung Anzeige Werkzeugwechsler
+// NW 71: WW: initialisieren
+// NW 72: WW: SCHRITT_0 GRUNDSTELLUNG
+// NW 73: WW: GRUNDSTELLUNG MELDEN
+// NW 74: WW: Grundstellung Werkzeugwechsler
+// NW 75: WW: Werkzeugwechsel beendet an andere Module
+// NW 76: WW: SCHRITT_1
+// NW 77: WW: SCHRITT_2
+// NW 78: WW: SCHRITT_3
+// NW 79: WW: SCHRITT_4
+// NW 80: WW: Datentausch ablegen
+// NW 81: WW: SCHRITT_5
+// NW 82: WW: SCHRITT_6
+// NW 83: WW: SCHRITT_7 SONDERSCHRITT
+// NW 84: WW: Rücksetzen Auftrag 1 und 3
+// NW 85: WW: SCHRITT_8
+// NW 86: WW: SCHRITT_9
+// NW 87: WW: Datentausch aufnehmen
+// NW 88: WW: SCHRITT_10
+// NW 89: WW: SCHRITT_11
+// NW 90: WW: Rücksetzen Schritt 10
+// NW 91: WW: SCHRITT_12
+// NW 92: WW: Prüfen, ob Ablageplatz im Magazin leer ist
+// NW 93: WW: Prüfen, ob Abholplatz im Magazin belegt ist
+// NW 94: WW: Magazinplatz Belegung kontrolliert und i.O.
+// NW 95: =========== Magazinklappe (Werkzeugwechslertür) =============
+// NW 96: WWT: öffnen mit Freigabe
+// NW 97: WWT: öffnen ohne Freigabe
+// NW 98: WWT: Einzelbewegung Freigabe öffnen
+// NW 99: WWT: Einzelbewegung öffnen
+// NW 100: WWT: Einzelbewegung Freigabe schliessen 
+// NW 101: WWT: Einzelbewegung schliessen 
+// NW 102: WWT: Einzelbewegung öffnen speichern
+// NW 103: WWT: Einzelbewegung schliessen speichern
+// NW 104: WWT: Einzelbewegung Ansteuerung Anzeige
+// NW 105: HMI-Bild 35 (WZW7): WWT: Einzelbewegung Ansteuerung Anzeige
+// NW 106: WWT: Ausgang öffnen
+// NW 107: WWT: Ausgang schliessen
+// NW 108: WWT: Ausgang schliessen Reset M272 
+// NW 109: WWT: Reset Ausgang schliessen
+// NW 110: ========== Werkzeug in / aus Spindel ===============
+// NW 111: WZHUB: BEFEHL FAHRE auf AUSFAHRPOSITION
+// NW 112: WZHUB: BEFEHL FAHRE WW-Achse auf Einfahrposition
+// NW 113: Hub in Spindelstellung
+// NW 114: Hub in Grundstellung
+// NW 115: WZHUB: Einzelbewegung Freigabe Werkzeug Spindel aus- einfahren
+// NW 116: WZHUB: Einzelbewegung Werkzeug aus Spindel ausfahren
+// NW 117: WZHUB: Einzelbewegung WW-Achse auf Einfahrposition
+// NW 118: WZHUB: Reset Einzelbewegung WW-Achse wenn nicht in Position
+// NW 119: WZHUB: Freigabe Ansteuerung Ventil Hub ein- / ausfahren
+// NW 120: WZHUB: Ventil Hub einfahren
+// NW 121: WZHUB: Ventil Hub ausfahren
+// NW 122: WZHUB: (WZW1) Einzelbewegung Ansteuerung Anzeige
+// NW 123: WZHUB: (WZW7) Einzelbewegung Ansteuerung Anzeige
+// NW 124: =========== Spindel in / aus Werkzeugwechsler ============
+// NW 125: X-Achse: Befehl auf Warteposition fahren
+// NW 126: X-Achse: Befehl auf Wechselposition fahren
+// NW 127: X-Achse: Einzelbewegung Freigabe auf Warteposition
+// NW 128: X-Achse: Einzelbewegung auf Warteposition fahren
+// NW 129: X-Achse: Einzelbewegung Freigabe auf Wechselposition
+// NW 130: X-Achse: Einzelbewegung auf Wechselposition fahren
+// NW 131: X-Achse: Einzelbewegung Ansteuerung Anzeige
+// NW 132: Y-Achse: Freigabe
+// NW 133: Y-Achse: Fahrbefehl
+// NW 134: Y-Achse: HMI Rettung
+// NW 135: Spindel: Befehl auf Werkzeugwechselposition
+// NW 136: Spindel: HMI Rettung
+// NW 137: ======== Werkzeug im Magazin entsichern Wechselstelle ========
+// NW 138: WW_MagTasche: BEFEHL Werkzeug entsichern Spindelseite
+// NW 139: WW_MagTasche: Ausgang Werkzeug entsichern Spindelseite
+// NW 140: ======== Werkzeug im Magazin entsichern Ladestelle ========
+// NW 141: WM_MagTasche: Ausgang Werkzeug entsichern an BELADESTATION
+// NW 142: WM_MagTasche: Werkzeug wurde an BELADESTATION entsichert
+// NW 143: ========= Werkzeug entspannen im Ablauf ===========
+// NW 144: WZ-Spanner: Einzelbewegung Freigabe Werkzeug entspannen
+// NW 145: WZ-Spanner: Einzelbewegung Werkzeug entspannen
+// NW 146: WZ-Spanner: Einzelbewegung Freigabe Werkzeug spannen
+// NW 147: WZ-Spanner: Einzelbewegung Werkzeug spannen
+// NW 148: WZ-Spanner: Einzelbewegung Ansteuerung Anzeige
+// NW 149: WZ-Spanner: Einzelbewegung Ansteuerung Anzeige
+// NW 150: WZ-Spanner: BEFEHL WZ ENTSPANNEN
+// NW 151: WZ-Spanner: BEFEHL WZ SPANNEN
+// NW 152: WZ-Spanner: Ausgang Spanner öffnen
+// NW 153: Ausgang SPINDELKONUS AUSBLASEN
+// NW 154: Positive Flanke Taste quittieren Entladen
+// NW 155: Pneumatikzyl. Verriegelung WZ lösen
+// NW 156: Pneumatikzyl. Verriegelung WZ verriegeln
+// NW 157: ========= Vorschubsperren ===============
+// NW 158: VSP, alle Achsen
+// NW 159: VSP-X, Werkzeugwechsler
+// NW 160: _701303 Vorschubsperre X Werkzeugwechsler
+// NW 161: VSP-Y, Werkzeugwechsler
+// NW 162: Fehler Vorschubsperre Y Werkzeugwechsler
+// NW 163: VSP-Z, Werkzeugwechsler
+// NW 164: _701305 Vorschubsperre Z Werkzeugwechsler
+// NW 165: VSP-M, Bohrerbruchkontrolle nicht in Grundstellung
+// NW 166: VSP-M, Magazin nicht in Position aus Spindel ausgefahren
+// NW 167: VSP-M, Werkzeugwechsler
+// NW 168: VSP-M, Waschstation nicht in Grundstellung
+// NW 169: Positive Flanke Grundstellung Werkzeug entriegeln Ladestation
+// NW 170: Werkzeug wurde richtig eingelegt
+// NW 171: VSP-M, Werkzeug in Ladestation nicht gesichert
+// NW 172: VSP-M, Werkzeugwechsler
+// NW 173: VSP-M, Verzögerung Fehlermeldung
+// NW 174: 701306 "MEL, Vorschubsperre Magazin Werkzeugwechsler"
+// NW 175: 701307 Vorschubsperre Magazin Waschstation nicht in Grundst
+// NW 176: 701308 VSP Magazin Bohrerbruchkontrolle nicht in Grundstellung
+// NW 177: 701309 VSP, Magazin nicht in Position aus Spindel ausgefahren
+// NW 178: 700363 Warnung: Werkzeug in Ladestation nicht gesichert
+// NW 179: 511214: Meldung: Werkzeug in Ladestation nicht gesichert
+// NW 180: _700434 VS-H, ENDSCHALTERSTOERUNG Werkzeugwechsel
+// NW 181: ============ Überwachung Endposition ==========
+// NW 182: Fehler MAGAZIN NICHT AUSGEFAHREN
+// NW 183: Fehler MAGAZIN NICHT EINGEFAHREN
+// NW 184: Fehler MAGAZIN NICHT IN POSITION
+// NW 185: Fehler WZ-ZANGE NICHT OFFEN
+// NW 186: Fehler WZ-ZANGE NICHT GESCHLOSSEN
+// NW 187: Fehler WZ-SPANNER NICHT GESPANNT
+// NW 188: Fehler WZ-SPANNER NICHT GELOEST
+// NW 189: Fehler SPINDEL NICHT GERICHTET
+// NW 190: Fehler Magazinklappe nicht geöffnet
+// NW 191: Fehler Magazinklappe nicht geschlossen
+// NW 192: Fehler Spindel leer
+// NW 193: gespeicherte Fehlermeldungen löschen
+// NW 194: WZW nicht erlaubt
+// NW 195: Start Wartezeit für Endlagenkontrolle
+// NW 196: Wartezeit für Endlagenkontrolle abgelaufen ?
+// NW 197: _700355 Werkzeugmagazin nicht ausgefahren
+// NW 198: _700356 Werkzeugmagazin nicht eingefahren
+// NW 199: _700361 Magazin nicht in Position
+// NW 200: _700354 Werkzeug im Magazin nicht entsichert
+// NW 201: _700362 Werkzeug in Magazin nicht gesichert
+// NW 202: _700353 Werkzeug in Spindel nicht gespannt
+// NW 203: _700351 Werkzeug in Spindel nicht entspannt
+// NW 204: _700360 Spindel nicht gerichtet
+// NW 205: _700357 Magazinklappe nicht geöffnet
+// NW 206: _700358 Magazinklappe nicht geschlossen
+// NW 207: _701302 Spindel leer
+// NW 208: _701304 VSP-Y Werkzeugwechsler
+// NW 209: ======== Sonstige Fehler- Betriebsmeldungen ===========
+// NW 210: _700348 Magazinplatz/Greifer belegt
+// NW 211: _700349 Magazinplatz/Greifer leer
+// NW 212: _700350 Ladestation nicht geschlossen
+// NW 213: _701321 Spindel belegt
+// NW 214: _700352 Werkzeug Be- oder Entladen aktiv
+// NW 215: Taste für Einzelbewegung Achsen betätigt
+// NW 216: _700550 EINLESESPERRE, Werkzeugwechsel
+// NW 217: ======== ASUP Einzelbewegung Achsen ========
+// NW 218: ASUP-EB: Schnittstelle Dual-Port-RAM 16.0
+// NW 219: ASUP-EB: Schnittstelle Dual-Port-RAM 16.1
+// NW 220: ASUP-EB: Schnittstelle Dual-Port-RAM 16.2
+// NW 221: ASUP-EB: Schnittstelle Dual-Port-RAM 16.3
+// NW 222: ASUP-EB: Schnittstelle Dual-Port-RAM 16.4
+// NW 223: Asup abbrechen wenn Taste wieder losgelassen wird
+// NW 224: Eingang "MSSTstReset" auf "1" zuweisen
+// NW 225: ASUP-Rettung: Werkzeugwechsler automatisch in Grundstellung
+// NW 226: ASUP-EB: Schnittstelle Dual-Port-RAM nicht benutzte Bits
+// NW 227: ASUP-EB: Aufruf Kanal-DB für FC21
+// NW 228: ASUP-EB: Übergabe an DUAL-PORT-RAM
+// NW 229: ASUP-EB: Start für Einzelbewegung Achsen
+// NW 230: GRundstelltung Radmagazin
+// NW 231: ============ Signale an andere Module =============
+// NW 232: Übergabe der Schrittnummer Werkzeugwechsel an HMI
+// NW 233: An NC: PLC-Freigabe Werkzeugwechsel
+// NW 234: An NC: Rad in Wechselstellung nach Be./Enladen an Beladestelle
+//
+      NOP   0; 
+
+NETWORK
+TITLE =Ausbaustufe mechanische Werkzeugbruchkontrolle
+
+      L     "DB_PLC_MD_DB20".UDInt._010_ANWAHL_WERZEUGBRUCH; 
+      L     0; 
+      ==I   ; 
+      =     #AB_WZB; 
+NETWORK
+TITLE =Taste Reset oder Programmende
+
+      O     "DB_SIEM_KANAL_1".E_M30; // RESET KANAL 1
+      O     "M_Reset_Taste"; // RESET Taste    
+      =     #Reset_Prgende; 
+
+NETWORK
+TITLE =Betriebsart 3, 4
+
+      O     "I_AL_3_Betriebsart"; // Schlüsselschalter Betriebsart 3
+      O     "I_AL_4_Betriebsart"; // Schlüsselschalter Betriebsart 4
+      =     #BA_3_4; 
+
+
+NETWORK
+TITLE =JOG-Betrieb
+
+      U     "M_Handbetrieb"; // JOG
+      =     #Handbetrieb; 
+
+NETWORK
+TITLE =Bildanwahl Einzelbewegung
+//   
+      U(    ; 
+      O     "DB_OEM".OEM_WZW_REttbildaktiv; 
+      O     "DB_OEM".OEM_WZW2_Rettbildaktiv; 
+      O     "DB_OEM".Anwahl.WZW.Maske3; 
+      O     "DB_OEM".Anwahl.WZW.Maske7; 
+      )     ; // JOG
+      U     "M_Handbetrieb"; 
+
+      =     #EB_Hand_WW; 
+NETWORK
+TITLE =Bildanwahl Semifunktion
+
+      U(    ; 
+      L     "DB_OEM".Bildnummer; 
+      L     1; 
+      ==I   ; 
+      )     ; 
+      U     "M_Handbetrieb"; // JOG
+      =     "M_WW_Bild_freifahren"; 
+
+NETWORK
+TITLE =Zange geöffnet
+
+      ON    "I_WM_WZ_SPI_CLAMP"; //"I_WW_MagTasche_auf"
+      ON    #AB_mit_Entriegeln; 
+      =     #HalterSp_auf; 
+
+NETWORK
+TITLE =Zange geschlossen
+
+      O     "I_WM_WZ_SPI_CLAMP"; //"I_WW_MagTasche_zu"
+      ON    #AB_mit_Entriegeln; 
+      =     #HalterSp_zu; 
+
+NETWORK
+TITLE =Fahrbefehl Werkzeugmagazin steht an
+
+      O     "DB_ACHSE7".E_TCPlus; // Minus-Fahrbefehl WZM 1
+      O     "DB_ACHSE7".E_TCMinus; // Plus-Fahrbefehl WZM 1
+      =     #WZM_Fahrbefehl; 
+
+NETWORK
+TITLE =========== Signale von Werkzeugverwalung ==============
+
+
+
+NETWORK
+TITLE =WZV: Werkzeugwechsel steht an
+
+      U     "TMSpindleIF".IFNo[1]; // Schnittstelle 1 aktiv
+      U     "TMSpindleIF".IF[1].Perform; // Befehl Werkzeugwechsel
+      UN    "TMSpindleIF".IF[1].Prepare; // Wechsel vorbereiten
+      =     #WW_von_WZV; // Werkzeugwechsel Schnittstelle 1
+
+NETWORK
+TITLE =WZV: Aufgerufenes Werkzeug Tx
+
+      L     "TMSpindleIF".IF[1].SMag; // NEUES WERKZEUG
+      L     0; 
+      <>I   ; 
+      =     #NewToolTx; 
+
+NETWORK
+TITLE =WZV: Aufgerufenes Werkzeug T0
+
+      L     "TMSpindleIF".IF[1].SMag; // NEUES WERKZEUG
+      L     0; 
+      ==I   ; 
+      =     #NewToolT0; 
+
+NETWORK
+TITLE =WZV: Spindel belegt
+
+      L     0; 
+      L     "TMSpindleIF".IF[1].TMag; // ALTES WERKZEUG
+      <>I   ; 
+      =     #OldToolTx; 
+
+NETWORK
+TITLE =WZV: Spindel leer
+
+      L     0; 
+      L     "TMSpindleIF".IF[1].TMag; // ALTES WERKZEUG
+      ==I   ; 
+      =     #OldToolT0; 
+
+NETWORK
+TITLE =WZV: Vorbedingung Folge 1 Tx M6 Spindel leer
+
+      U     #NewToolTx; 
+      U     #OldToolT0; 
+      =     #Vorbedingung_AF1; 
+
+NETWORK
+TITLE =WZV: Vorbedingung Folge 2 Tx M6 Spindel belegt
+
+      U     #NewToolTx; 
+      U     #OldToolTx; 
+      =     #Vorbedingung_AF2; 
+NETWORK
+TITLE =WZV: Vorbedingung Folge 3 T0 M6 Spindel belegt
+
+      U     #NewToolT0; 
+      U     #OldToolTx; 
+      =     #Vorbedingung_AF3; 
+NETWORK
+TITLE ============== Kegelreinigung ==================
+
+
+
+NETWORK
+TITLE =KR: Einzelbewegung Freigabe einfahren
+
+      U     #EB_Hand_WW; 
+      U     "DB_ACHSE7".E_IndexAxisPos; 
+      O     #Frg_Service; 
+      =     #EB_Frg_KR_einfahren; 
+
+NETWORK
+TITLE =KR: Einzelbewegung einfahren
+
+      U     #EB_Frg_KR_einfahren; 
+      U     "DB_EINRICHTFUNKTION".Bewegung_56_Plus; 
+      =     #EB_KR_einfahren; 
+
+NETWORK
+TITLE =KR: Einzelbewegung Freigabe ausfahren
+
+      U     "I_WW_1_ZYL_GST"; 
+      U     "DB_ACHSE7".E_IndexAxisPos; 
+      U     #EB_Hand_WW; 
+      O     #Frg_Service; 
+      =     #EB_Frg_KR_ausfahren; 
+NETWORK
+TITLE =KR: Einzelbewegung ausfahren
+
+      U     #EB_Frg_KR_ausfahren; 
+      U     "DB_EINRICHTFUNKTION".Bewegung_56_Minus; 
+      =     #EB_KR_ausfahren; 
+
+NETWORK
+TITLE =KR: Einzelbewegung ausfahren speichern
+
+      U     #EB_KR_ausfahren; 
+      UN    #EB_KR_einfahren; 
+      S     "DB_WW".KR_ausfahren_EB; 
+
+      U(    ; 
+      UN    #EB_KR_ausfahren; 
+      U     #EB_KR_einfahren; 
+      ON    #EB_Hand_WW; 
+      )     ; 
+      R     "DB_WW".KR_ausfahren_EB; 
+      NOP   0; 
+
+NETWORK
+TITLE =KR: Einzelbewegung Ansteuerung Anzeige
+
+      U     #EB_Frg_KR_ausfahren; 
+      =     L     24.0; 
+      BLD   103; 
+      U     #EB_Frg_KR_einfahren; 
+      =     L     24.1; 
+      BLD   103; 
+      U     "I_WW_Rein_in_Rein_Pos"; 
+      =     L     24.2; 
+      BLD   103; 
+      U     "I_WW_Rein_in_GST"; 
+      =     L     24.3; 
+      BLD   103; 
+      U     "O_WW_Hub_ZYL_in_Rein"; 
+      =     L     24.4; 
+      BLD   103; 
+      UN    "O_WW_Hub_ZYL_in_Rein"; 
+      =     L     24.5; 
+      BLD   103; 
+      CALL "FC_HMI_IO_TO_TLINE" (
+           Freigabe_AST_Hand        := L     24.0,
+           Freigabe_GST_Hand        := L     24.1,
+           Endlage_AST              := L     24.2,
+           Endlage_GST              := L     24.3,
+           Ventil_AST               := L     24.4,
+           Ventil_GST               := L     24.5,
+           Bewegungsnummer          := 56);
+      NOP   0; 
+NETWORK
+TITLE =Überwachung Kegelreinigung
+
+      U     "DB_WZV".AB_HSK; 
+      =     L     24.0; 
+      BLD   103; 
+      U     "I_WW_Rein_in_Rein_Pos"; 
+      =     L     24.1; 
+      BLD   103; 
+      U     "O_WW_Hub_ZYL_in_Rein"; 
+      =     L     24.2; 
+      BLD   103; 
+      U     "I_WW_Rein_in_GST"; 
+      =     L     24.3; 
+      BLD   103; 
+      UN    "O_WW_Hub_ZYL_in_Rein"; 
+      =     L     24.4; 
+      BLD   103; 
+      U     "M_Ruecksetze_Fehler"; 
+      =     L     24.5; 
+      BLD   103; 
+      CALL "FC_UT_DYN_UEBW" (
+           Enable                   := L     24.0,
+           Eingang1                 := L     24.1,
+           Ausgang1                 := L     24.2,
+           Eingang2                 := L     24.3,
+           Ausgang2                 := L     24.4,
+           Ueberwachungszeit        := 5,
+           Zeitzaehler              := "Te_KegRein",
+           Fehlerquitt              := L     24.5,
+           Fehlerdyn1               := "DB_FEHLERMELDUNG".VS_Halt_Async1._701608_WZK_Reinig_pos_0,
+           Fehlerdyn2               := "DB_FEHLERMELDUNG".VS_Halt_Async1._701609_WZK_Grundstell_0,
+           Fehlerstatisch           := "DB_FEHLERMELDUNG".VS_Halt_Async1._701610_WZK_Beide_1Sig);
+      NOP   0; 
+NETWORK
+TITLE =KR: Start Werkzeug reinigen Tellermagazin
+
+      U     "DB_WW".Wz_reinigen_T; // WZ-Teller Waschen starten
+      FP    "DB_WW".FP_Wz_reinigen_T; // PF: WZ waschen Start
+      =     #PI_Start_KR; 
+      R     "DB_WW".Wz_reinigen_T; // WZ-Teller Waschen starten
+
+NETWORK
+TITLE =KR: aus-/einfahren 
+
+      U     #PI_Start_KR; 
+      U     "I_WW_Rein_in_GST"; // HSK-Spuelen eingefahren
+      S     "DB_WW".KR_ausfahren; // HSK-Spuelen ausfahren
+
+      U(    ; 
+      U     "DB_TIMER".Zeit_34.Ausgang; 
+      U     "I_WW_Rein_in_Rein_Pos"; 
+      O     #Reset_Prgende; 
+
+      ON    "I_WW_1_ZYL_GST"; 
+      )     ; 
+      R     "DB_WW".KR_ausfahren; 
+      NOP   0; 
+NETWORK
+TITLE =KR: Ausgang ausfahren
+
+      O     "DB_WW".KR_ausfahren; 
+      O     "DB_WW".KR_ausfahren_EB; 
+      =     "O_WW_Hub_ZYL_in_Rein"; 
+
+NETWORK
+TITLE =KR: Zeit starten
+
+      U     "O_WW_Hub_ZYL_in_Rein"; // HSK-Spuelen ausfahren
+      =     "DB_TIMER".Zeit_34.Start; 
+
+NETWORK
+TITLE =KR: beendet
+
+      UN    "O_WW_Hub_ZYL_in_Rein"; // HSK-Spuelen ausfahren
+      U     "I_WW_Rein_in_GST"; // HSK-Spuelen eingefahren
+      O     #Reset_Prgende; //Reset
+      R     "DB_WW".Wz_reinigen_T; // WZ-Teller Waschen starten
+
+NETWORK
+TITLE =============== Werkzeugwechsel ===============
+
+
+
+NETWORK
+TITLE =WW: Zyklus L6 wurde gestartet
+
+      U     "M_H5000_H5004_WW_Start"; // L6 aktiv
+      FP    "DB_WW".PF_L6_aktiv; 
+      =     "DB_WW".PI_L6_aktiv; 
+      S     "DB_WW".MFkt_06; 
+
+NETWORK
+TITLE =WW: rücksetzen
+
+      U     "DB_WW".WW_Gst; // WZW IN GRUNDSTELLUNG
+      U     #Reset_Prgende; // RESET KANAL 1
+      O     "DB_WW".PI_WW_Gst; // IPM: WZW IN GRUNDSTELLUNG
+      R     "DB_WW".WW_gestartet; // STARTEN VON WZW-ABLAUF
+      R     "DB_WW".WW_T_Folge_1; // ABLAUFFOLGE 1
+      R     "DB_WW".WW_T_Folge_2; // ABLAUFFOLGE 2
+      R     "DB_WW".WW_T_Folge_3; // ABLAUFFOLGE 3
+      R     "DB_WW".WW_SEMA_Folgen; // SEMA ABLAUFFOLGEN
+      R     "DB_WW".WW_Frg_ins_Mag; // FREIGABE FAHRE INS MAGAZIN
+      R     "DB_WW".WW_T_Auftrag_1; // AUFTRAG1 ABLEGEN I ->Z-HUB AUSGEFAHREN
+      R     "DB_WW".WW_T_Auftrag_2; // AUFTRAG2 HOLEN II ->Z-HUB EINGEFAHREN
+      R     "DB_WW".WW_T_Auftrag_3; // AUFTRAG3 ABLEGEN II ->Z-HUB EINGEFAHREN
+      R     "DB_WW".WW_T_Auftrag_4; // AUFTRAG4 HOLEN I ->Z-HUB AUSGEFAHREN
+
+NETWORK
+TITLE =WW: Auswertung Schritt gesetzt
+
+      O     "DB_WW".Schritt_T[1]; // Schritt_1 M: Spindel richten,X-Achse auf Warteposition
+      O     "DB_WW".Schritt_T[2]; // Schritt_2 M: X-Achse auf Magposition
+      O     "DB_WW".Schritt_T[3]; // Schritt_3 M: WZ-Entspannen
+      O     "DB_WW".Schritt_T[4]; // Schritt_4 M: Datenaustausch
+      O     "DB_WW".Schritt_T[5]; // Schritt_5 M: WZ-Zange schliessen
+      O     "DB_WW".Schritt_T[6]; // Schritt_6 M: Magazinhub ausfahren
+      O     "DB_WW".Schritt_T[7]; // Schritt_7 M: Sonderschritt
+      O     "DB_WW".Schritt_T[8]; // Schritt_8 M: Magazinhub einfahren
+      O     "DB_WW".Schritt_T[9]; // Schritt_9 M: Datentausch
+      O     "DB_WW".Schritt_T[10]; // Schritt_10 M: WZ-Spanner schliessen
+      O     "DB_WW".Schritt_T[11]; // Schritt_11 M: WZ-Zange oeffnen, X-Achse auf Warteposition
+      O     "DB_WW".Schritt_T[12]; // Schritt_12 M: WZ-Zange schliessen, Achsen freigeben
+      =     #Schritt_gesetzt; 
+
+NETWORK
+TITLE =WW: START
+
+      UN(   ; 
+      U(    ; 
+      L     "TMSpindleIF".IF[1].SMag; // NEUES WERKZEUG
+      L     9999; 
+      ==I   ; 
+      )     ; 
+      U(    ; 
+      L     "TMSpindleIF".IF[1].TMag; // ALTES WERKZEUG
+      L     0; 
+      ==I   ; 
+      )     ; 
+      O     ; 
+      U(    ; 
+      L     "TMSpindleIF".IF[1].SMag; // NEUES WERKZEUG
+      L     9999; 
+      ==I   ; 
+      )     ; 
+      U(    ; 
+      L     "TMSpindleIF".IF[1].TMag; // ALTES WERKZEUG
+      L     9999; 
+      ==I   ; 
+      )     ; 
+      )     ; 
+      U     "DB_WW".MFkt_06; 
+      UN    "DB_WW".PI_WW_Gst; 
+      U     "DB_WW".WW_Gst; 
+      UN    "DB_WZV".Mag1_Laden_aktiv; 
+      U     "DB_WZV".Mag1_inPos_WST; 
+      U     "I_WM_Energiefreigabe"; 
+      UN    "DB_WW".WW_gestartet; 
+      O     #Schritt_gesetzt; 
+      S     "DB_WW".WW_gestartet; 
+NETWORK
+TITLE =WW: Rücksetzen M-Funktion M06
+
+      O     "DB_WW".WW_gestartet; 
+      O     #Reset_Prgende; 
+      O     "M_Not_aus"; 
+      R     "DB_WW".MFkt_06; 
+NETWORK
+TITLE =WZW: Aktiver Ablauf
+
+      U     "DB_WW".WW_gestartet; 
+      =     "M_WZW_Aktiv"; 
+
+NETWORK
+TITLE =WW: 2nd software limit switch plus
+
+      U(    ; 
+      O     "M_H5000_H5004_WW_Start"; // L6 aktiv
+      O     #Schritt_gesetzt; 
+      )     ; 
+      U(    ; 
+      ON    "DB_WW".Schritt_T[11]; // Schritt_11 M: WZ-Zange oeffnen, X-Achse auf Warteposition
+      ON    "M_WW_X_imArbeitsraum"; // X-Achse nicht im Wechsler
+      )     ; 
+      U(    ; 
+      ON    "DB_WW".Schritt_T[11]; // Schritt_11 M: WZ-Zange oeffnen, X-Achse auf Warteposition
+      O     "Mx_X_ACHSE_WZW_POS"; // X-ACHSE IST AUF MAGAZINPOSITION
+      O     "DB_WW".WW_Freifahren; 
+      )     ; 
+
+      O     "DB_SIEM_KANAL_1".E_ProgTest; // Programmtest aktiv
+      O     ; 
+      U(    ; 
+      O     "DB_OEM".OEM_WZW_REttbildaktiv; 
+      O     "DB_OEM".OEM_WZW2_Rettbildaktiv; 
+      O     "DB_OEM".OEM_WZW_MagEinstellung; 
+      )     ; 
+      U     "M_Handbetrieb"; // "DB_SIEM_BAG".E_JOG
+//    U     "DB_EINRICHTFUNKTION".Bewegung_14_Plus
+      U     "I_WW_1_Klappe_auf"; 
+      U(    ; 
+      U(    ; 
+      O     "I_WW_1_ZYL_GST"; 
+      O     "I_WW_1_ZYL_SPI"; 
+      )     ; 
+      U     "I_WW_Y_inWWPos"; 
+      O     #Frg_Service; // 2.SOFTWAREENDSCHALTER PLUS AKTIV
+
+      )     ; 
+      U     #EB_Hand_WW; 
+      =     "DB_ACHSE1_X".A_SWLimit2Plus; 
+NETWORK
+TITLE =WW: Folge 1 Tx M6 Spindel leer / Auftrag 1
+
+      U     #Vorbedingung_AF1; 
+      U     "DB_WW".WW_gestartet; // STARTEN VON WZW-ABLAUF
+      UN    "DB_WW".WW_SEMA_Folgen; // SEMA ABLAUFFOLGEN
+      S     "DB_WW".WW_SEMA_Folgen; // SEMA ABLAUFFOLGEN
+      S     "DB_WW".WW_T_Auftrag_1; // AUFTRAG1 ABLEGEN I ->Z-HUB AUSGEFAHREN
+      S     "DB_WW".WW_T_Folge_1; // ABLAUFFOLGE 1
+
+NETWORK
+TITLE =WW: Folge 1 Freigabe fahre ins Magazin
+
+      U     "DB_WW".WW_T_Auftrag_1; // AUFTRAG1 ABLEGEN I ->Z-HUB AUSGEFAHREN
+      U     "DB_WW".WW_T_Folge_1; // ABLAUFFOLGE 1
+      U     "DB_WZV".Mag1_inPos_WST; 
+      U(    ; // FREIGABE FAHRE INS MAGAZIN
+
+      ON    "I_WW_MagPlatz_frei"; 
+      O     #IB_MagKontr_aus; 
+      )     ; 
+      S     "DB_WW".WW_Frg_ins_Mag; 
+NETWORK
+TITLE =WW: Folge 1 Auftrag 2: Einwechseln neues Werkzeug
+
+      UN    "DB_WW".WW_T_Auftrag_1; // AUFTRAG1 ABLEGEN I ->Z-HUB AUSGEFAHREN
+      U     "DB_WW".WW_T_Folge_1; // ABLAUFFOLGE 1
+      S     "DB_WW".WW_T_Auftrag_2; // AUFTRAG2 HOLEN II ->Z-HUB EINGEFAHREN
+
+NETWORK
+TITLE =WW: Folge 1 Tx M6 Spindel leer beendet
+
+      UN    "DB_WW".WW_T_Auftrag_1; // AUFTRAG1 ABLEGEN I ->Z-HUB AUSGEFAHREN
+      UN    "DB_WW".WW_T_Auftrag_2; // AUFTRAG2 HOLEN II ->Z-HUB EINGEFAHREN
+      U     "DB_WW".WW_T_Folge_1; // ABLAUFFOLGE 1
+      R     "DB_WW".WW_T_Folge_1; // ABLAUFFOLGE 1
+      R     "DB_WW".WW_SEMA_Folgen; // SEMA ABLAUFFOLGEN
+      R     "DB_WW".WW_Frg_ins_Mag; // FREIGABE FAHRE INS MAGAZIN
+
+NETWORK
+TITLE =WW: Folge 2 Tx M6 Spindel belegt / Auftrag 3
+
+      U     #Vorbedingung_AF2; 
+      U     "DB_WW".WW_gestartet; // STARTEN VON WZW-ABLAUF
+      UN    "DB_WW".WW_SEMA_Folgen; // SEMA ABLAUFFOLGEN
+      S     "DB_WW".WW_SEMA_Folgen; // SEMA ABLAUFFOLGEN
+      S     "DB_WW".WW_T_Auftrag_3; // AUFTRAG3 ABLEGEN II ->Z-HUB EINGEFAHREN
+      S     "DB_WW".WW_T_Folge_2; // ABLAUFFOLGE 2
+      S     "DB_WW".WW_Hschritt_1; // HILFSSCHRITT1
+
+NETWORK
+TITLE =WW: Folge 2 Freigabe fahre ins Magazin
+
+      U     "DB_WW".WW_T_Auftrag_3; // AUFTRAG3 ABLEGEN II ->Z-HUB EINGEFAHREN
+      U     "DB_WW".WW_T_Folge_2; // ABLAUFFOLGE 2
+      U     "DB_WZV".Mag1_inPos_WST; 
+      U(    ; 
+      O     "I_WW_MagPlatz_frei"; // WZ in Wechselposition (Magazinplatz frei)
+      O     #IB_MagKontr_aus; // Kontrolle Magazinplatz ausblenden
+      )     ; 
+      S     "DB_WW".WW_Frg_ins_Mag; // FREIGABE FAHRE INS MAGAZIN
+
+NETWORK
+TITLE =WW: Folge 2 HILFSSCHRITT2
+
+      UN    "DB_WW".WW_T_Auftrag_3; // AUFTRAG3 ABLEGEN II ->Z-HUB EINGEFAHREN
+      U     "DB_WW".WW_T_Folge_2; // ABLAUFFOLGE 2
+      U     "DB_WW".WW_Hschritt_1; // HILFSSCHRITT1
+      U     "TMSpindleIF".IFNo[1]; // SCHNITTSTELLE SPINDEL AKTIV
+      U     "TMSpindleIF".IF[1].Perform; // WERKZEUG WECHSELN
+      =     "DB_WW".WW_HM_4; // HM4: VORGANG BEENDET
+      S     "DB_WW".WW_Hschritt_2; // HILFSSCHRITT2
+      R     "DB_WW".WW_Frg_ins_Mag; // FREIGABE FAHRE INS MAGAZIN
+      R     "DB_WW".WW_Hschritt_1; // HILFSSCHRITT1
+
+NETWORK
+TITLE =WW: Folge 2 Auftrag 2: Einwechseln neues Werkzeug
+
+      UN    "DB_WW".WW_T_Auftrag_3; // AUFTRAG3 ABLEGEN II ->Z-HUB EINGEFAHREN
+      U     "DB_WW".WW_T_Folge_2; // ABLAUFFOLGE 2
+      U     "DB_WZV".Mag1_inPos_WST; 
+      UN    "DB_WW".WW_HM_4; // HM4: VORGANG BEENDET
+      U     "DB_WW".WW_Hschritt_2; // HILFSSCHRITT2
+      S     "DB_WW".WW_T_Auftrag_2; // AUFTRAG2 HOLEN II ->Z-HUB EINGEFAHREN
+      S     "DB_WW".WW_Frg_ins_Mag; // FREIGABE FAHRE INS MAGAZIN
+      R     "DB_WW".WW_Hschritt_2; // HILFSSCHRITT2
+
+NETWORK
+TITLE =WW: Folge 2 beendet
+
+      UN    "DB_WW".WW_T_Auftrag_2; // AUFTRAG2 HOLEN II ->Z-HUB EINGEFAHREN
+      UN    "DB_WW".WW_T_Auftrag_3; // AUFTRAG3 ABLEGEN II ->Z-HUB EINGEFAHREN
+      UN    "DB_WW".WW_HM_4; // HM4: VORGANG BEENDET
+      UN    "DB_WW".WW_Hschritt_2; // HILFSSCHRITT2
+      U     "DB_WW".WW_T_Folge_2; // ABLAUFFOLGE 2
+      R     "DB_WW".WW_T_Folge_2; // ABLAUFFOLGE 2
+      R     "DB_WW".WW_SEMA_Folgen; // SEMA ABLAUFFOLGEN
+      R     "DB_WW".WW_Frg_ins_Mag; // FREIGABE FAHRE INS MAGAZIN
+
+NETWORK
+TITLE =WW: Folge 3 T0 M6 Spindel belegt / Auftrag 3
+//3.AUFTRAGSFOLGE: SPINDEL BELEGT UND T0 PROGRAMMIERT
+      U     #Vorbedingung_AF3; 
+      U     "DB_WW".WW_gestartet; // STARTEN VON WZW-ABLAUF
+      UN    "DB_WW".WW_SEMA_Folgen; // SEMA ABLAUFFOLGEN
+      S     "DB_WW".WW_SEMA_Folgen; // SEMA ABLAUFFOLGEN
+      S     "DB_WW".WW_T_Auftrag_3; // AUFTRAG3 ABLEGEN II ->Z-HUB EINGEFAHREN
+      S     "DB_WW".WW_T_Folge_3; // ABLAUFFOLGE 3
+
+NETWORK
+TITLE =WW: Folge 3 Freigabe fahre ins Magazin
+
+      U     "DB_WW".WW_T_Auftrag_3; // AUFTRAG3 ABLEGEN II ->Z-HUB EINGEFAHREN
+      U     "DB_WW".WW_T_Folge_3; // ABLAUFFOLGE 3
+      U     "DB_WZV".Mag1_inPos_WST; 
+      U(    ; 
+      O     "I_WW_MagPlatz_frei"; // WZ in Wechselposition (Magazinplatz frei)
+      O     #IB_MagKontr_aus; // Kontrolle Magazinplatz ausblenden
+      )     ; 
+      S     "DB_WW".WW_Frg_ins_Mag; // FREIGABE FAHRE INS MAGAZIN
+
+NETWORK
+TITLE =WW: Folge 3 Einwechseln kein Werkzeug
+
+      UN    "DB_WW".WW_T_Auftrag_3; // AUFTRAG3 ABLEGEN II ->Z-HUB EINGEFAHREN
+      U     "DB_WW".WW_T_Folge_3; // ABLAUFFOLGE 3
+      S     "DB_WW".WW_T_Auftrag_4; // AUFTRAG4 HOLEN I ->Z-HUB AUSGEFAHREN
+
+NETWORK
+TITLE =WW: Folge 3 beendet
+
+      UN    "DB_WW".WW_T_Auftrag_3; // AUFTRAG3 ABLEGEN II ->Z-HUB EINGEFAHREN
+      UN    "DB_WW".WW_T_Auftrag_4; // AUFTRAG4 HOLEN I ->Z-HUB AUSGEFAHREN
+      U     "DB_WW".WW_T_Folge_3; // ABLAUFFOLGE 3
+      R     "DB_WW".WW_T_Folge_3; // ABLAUFFOLGE 3
+      R     "DB_WW".WW_SEMA_Folgen; // SEMA ABLAUFFOLGEN
+      R     "DB_WW".WW_Frg_ins_Mag; // FREIGABE FAHRE INS MAGAZIN
+
+NETWORK
+TITLE =WW: ABBRUCH -> FREIFAHREN
+
+      U(    ; 
+      U     "M_WW_Bild_freifahren"; // BILD WERKZEUGWECHSEL SPINDEL<->WZ-MAG
+      U(    ; 
+      O     "DB_EINRICHTFUNKTION".Bewegung_1_Minus; 
+      O     "DB_EINRICHTFUNKTION".Bewegung_1_Plus; 
+      )     ; 
+      O     "M_Reset_Taste"; // RESET Taste    
+      O     "M_Not_aus"; // NOT-AUS steht an
+      )     ; 
+      U     "DB_WW".WW_SEMA_Folgen; // SEMA Ablauffolgen
+      S     "DB_WW".WW_Freifahren; // ABBRUCH -> FREIFAHREN NOETIG
+
+      U     "DB_WW".Schritt_T[0]; // SCHRITT0 GRUNDSTELLUNG
+      UN    "DB_WW".WW_SEMA_Folgen; // SEMA Ablauffolgen
+      R     "DB_WW".WW_Freifahren; // ABBRUCH -> FREIFAHREN NOETIG
+
+      U     "DB_WW".WW_Freifahren; // ABBRUCH -> FREIFAHREN NOETIG
+      R     "DB_WW".WW_T_Folge_1; // ABLAUFFOLGE 1
+      R     "DB_WW".WW_T_Folge_2; // ABLAUFFOLGE 2
+      R     "DB_WW".WW_T_Folge_3; // ABLAUFFOLGE 3
+      R     "DB_WW".WW_Hschritt_1; // HILFSSCHRITT1
+      R     "DB_WW".WW_Hschritt_2; // HILFSSCHRITT2
+      R     "DB_WW".WW_Frg_ins_Mag; // FREIGABE FAHRE INS MAGAZIN
+
+NETWORK
+TITLE =Taste Werkzeugwechsler vorwärts in Grundstellung fahren
+
+      U     "IX_MSST_Ta_2_4"; 
+      U     "DB_WW".WW_Freifahren; 
+      UN    "M_Handbetrieb"; 
+      U(    ; 
+      O     "DB_WW".Schritt_T[4]; 
+      O     "DB_WW".Schritt_T[5]; 
+      O     "DB_WW".Schritt_T[6]; 
+      O     "DB_WW".Schritt_T[9]; 
+      O     "DB_WW".Schritt_T[10]; 
+      O     "DB_WW".Schritt_T[11]; 
+      )     ; 
+      =     "M_T_WW_Gst_vorwaerts"; 
+
+
+NETWORK
+TITLE =Taste Werkzeugwechsler rückwärts in Grundstellung fahren
+
+      U     "IX_MSST_Ta_2_4"; 
+      UN    "M_Handbetrieb"; 
+      U(    ; 
+      U     "DB_WW".WW_Freifahren; 
+      U(    ; 
+      O     "DB_WW".Schritt_T[1]; 
+      O     "DB_WW".Schritt_T[2]; 
+      O     "DB_WW".Schritt_T[3]; 
+      O     "DB_WW".Schritt_T[7]; 
+      O     "DB_WW".Schritt_T[8]; 
+      )     ; 
+      O     ; 
+      U     "DB_WW".Schritt_T[0]; 
+      UN    "I_WW_1_Klappe_zu"; 
+      )     ; 
+      =     "M_T_WW_Gst_rueckwaerts"; 
+
+NETWORK
+TITLE =WW: Vorwärts Taste
+//      UN    "I_DM_Ta_SKR_gelb"          // BILD WERKZEUGWECHSEL 
+//SPINDEL<->WZ-MAG.1
+//      U     "I_DM_Ta_SKR_blau"          // TASTE: FUNKTION BILD LINKS
+      UN    "DB_EINRICHTFUNKTION".Bewegung_1_Minus; 
+      U     "DB_EINRICHTFUNKTION".Bewegung_1_Plus; 
+      =     #Taste_vorwaerts; 
+
+NETWORK
+TITLE =WW: Rückwärts Taste
+//      U     "I_DM_Ta_SKR_gelb"          // BILD WERKZEUGWECHSEL 
+//SPINDEL<->WZ-MAG.1
+//      UN    "I_DM_Ta_SKR_blau"          // TASTE: FUNKTION BILD LINKS
+      U     "DB_EINRICHTFUNKTION".Bewegung_1_Minus; 
+      UN    "DB_EINRICHTFUNKTION".Bewegung_1_Plus; 
+      =     #Taste_rueckwaerts; 
+
+NETWORK
+TITLE =WW: Freigabe VOR/ZURUECK Freifahren
+// FREIGABE ZUM WECHSEL VORWAERTS/RUECKWAERTS-FREIFAHREN, WENN NICHT
+// DATENAUSTAUSCH STATTFINDET
+//      UN    "I_DM_Ta_SKR_gelb"          // TASTE: FUNKTION BILD LINKS
+//      UN    "I_DM_Ta_SKR_blau"          // TASTE: FUNKTION BILD RECHTS
+      UN    "DB_EINRICHTFUNKTION".Bewegung_1_Minus; 
+      UN    "DB_EINRICHTFUNKTION".Bewegung_1_Plus; 
+      R     "DB_WW".WW_Frg_Bewegung; // FG ZUM WECHSEL ZW. VOR- U. RUECKWAERTS F
+
+      U(    ; 
+      O     #Taste_vorwaerts; 
+      O     #Taste_rueckwaerts; 
+      O     ; // TASTE: FUNKTION BILD LINKS
+      U     "DB_WW".Schritt_T[1]; 
+      U     #Reset_Prgende; 
+      U     "M_WW_X_imArbeitsraum"; // SCHRITT1 WARTEPOS, RICHTEN, WZ-ENTSPANNE
+      )     ; // RESET KANAL 1
+      S     "DB_WW".WW_Frg_Bewegung; // X-Achse nicht im WZW
+      NOP   0; 
+NETWORK
+TITLE =WW: Vorwärts Flanke Taste
+
+      U     #Taste_vorwaerts; 
+      FP    "DB_WW".PF_T_vorwaerts; 
+      =     #PI_T_vorwaerts; 
+
+NETWORK
+TITLE =WW: Vorwärts Bewegung
+// ZUR STEUERUNG DER SCHRITTKETTE MUSS DIE RICHTUNG, WELCHE DIE SCHRITT-
+// KETTE MACHT FESTGELEGT WERDEN
+      U     "M_WW_Bild_freifahren"; 
+      U     "DB_WW".WW_Frg_Bewegung; 
+      U     #Handbetrieb; 
+      U(    ; 
+      U     "M_WW_Einzelschritt"; 
+      U     #PI_T_vorwaerts; 
+      O     ; 
+      UN    "M_WW_Einzelschritt"; 
+      U     #Taste_vorwaerts; 
+      )     ; 
+      O     "M_T_WW_Gst_vorwaerts"; 
+      O     ; 
+      U     "I_WM_Energiefreigabe"; 
+      UN    "DB_FAMILIEN_MODUL".Gesamt.A_Vorschub_Halt_Kanal; 
+      U     "DB_WW".WW_Freifahren; 
+      UN    "M_H5000_H5004_WW_Start"; 
+      U     "DB_WW".WW_gestartet; 
+      U     #Handbetrieb; 
+      U     #Taste_vorwaerts; 
+      =     "DB_WW".WW_vorwaerts; 
+NETWORK
+TITLE =WW: Vorwärts Schrittkette
+
+      U     "DB_WW".WW_vorwaerts; 
+      UN    "M_WW_Einzelfunktion"; 
+      =     #Schritt_vorwaerts; 
+
+NETWORK
+TITLE =WW: Rückwärts Flanke Taste
+
+      U     #Taste_rueckwaerts; 
+      FP    "DB_WW".PF_T_rueckwaerts; 
+      =     #PI_T_rueckwaerts; 
+
+NETWORK
+TITLE =WW: Rückwärts Bewegung
+
+      U     "M_WW_Bild_freifahren"; // BILD WERKZEUGWECHSEL SPINDEL<->WZ-MAG.1
+      U     "DB_WW".WW_Frg_Bewegung; // FG ZUM WECHSEL ZW. VOR- U. RUECKWAERTS F
+      U     #Handbetrieb; 
+      U(    ; 
+      U     "M_WW_Einzelschritt"; 
+      U     #PI_T_rueckwaerts; 
+      O     ; 
+      UN    "M_WW_Einzelschritt"; 
+      U     #Taste_rueckwaerts; 
+      )     ; 
+      O     "M_T_WW_Gst_rueckwaerts"; 
+      O     ; 
+      U     "DB_WW".Schritt_T[1]; // SCHRITT1 WARTEPOS, RICHTEN, WZ-ENTSPANNE
+      U     #Reset_Prgende; // RESET KANAL 1
+      U     "M_WW_X_imArbeitsraum"; // X-Achse nicht im WZW
+      =     "DB_WW".WW_rueckwaerts; // SCHRITTKETTE RUECKWAERTS
+
+NETWORK
+TITLE =WW: Rückwärts gespeichert
+
+      U     "DB_WW".WW_rueckwaerts; // SCHRITTKETTE RUECKWAERTS
+      S     "DB_WW".WW_rueckwaerts_S; // Rückwärts Freifahren gespeichert
+
+
+      U(    ; // SCHRITTKETTE VORWAERTS
+      O     "DB_WW".WW_vorwaerts; // WZW IN GRUNDSTELLUNG
+      O     "DB_WW".WW_Gst; // BILD WERKZEUGWECHSEL SPINDEL<->WZ-MAG.1
+      ON    "M_WW_Bild_freifahren"; // Rückwärts Freifahren gespeichert
+      )     ; 
+
+      R     "DB_WW".WW_rueckwaerts_S; 
+      NOP   0; 
+NETWORK
+TITLE =WW: Rückwärts Schrittkette
+
+      U     "DB_WW".WW_rueckwaerts; // SCHRITTKETTE RUECKWAERTS
+      UN    "M_WW_Einzelfunktion"; 
+      =     #Schritt_rueckwaerts; 
+
+NETWORK
+TITLE =WW: FREIGABE AUSGAENGE FUER ABLAUF
+//      U(    
+//      O     "DB_WW".WW_vorwaerts      // SCHRITTKETTE VORWAERTS
+//      O     "DB_WW".WW_rueckwaerts    // SCHRITTKETTE RUECKWAERTS
+//      O     "M_H5000_H5004_WW_Start"
+//      )     
+      U     "I_AL_Kabine_Verriegelt"; // Arbeitsraumtür geschlossen und verriegelt
+      U     "I_WM_Energiefreigabe"; // Wz-Magazintür geschlossen
+      =     "DB_WW".WW_Frg_Ausgaenge; // FREIGABE AUSGAENGE FUER ABLAUF
+
+NETWORK
+TITLE =WW: ANZEIGE VORWAERTS
+
+      U(    ; 
+      U     "DB_WZV".Mag1_Laden_aktiv; 
+      U     "DB_WW".MFkt_06; 
+      ON    "DB_WW".WW_Gst; 
+      )     ; 
+      UN    "I_DM_Ta_SKR_gelb"; 
+      UN    "DB_WW".WW_rueckwaerts_S; 
+      U     "m_takt_1,6sec."; 
+      O     ; 
+      U     "M_WW_Bild_freifahren"; 
+      U     "DB_WW".WW_Gst; 
+      =     "DB_WW".WW_Anz_vorw; 
+NETWORK
+TITLE =WW: ANZEIGE RUECKWAERTS
+
+      U     "DB_WW".WW_rueckwaerts_S; // Rückwärts Freifahren gespeichert
+      U     "m_takt_1,6sec."; // BINKTAKT 0,5 HZ
+      =     "DB_WW".WW_Anz_rueckw; // ANZEIGE WZW RUECKWAERTS
+
+NETWORK
+TITLE =WW: Semifunktion Ansteuerung Anzeige Werkzeugwechsler
+
+      U     "DB_WW".WW_Freifahren; 
+      =     L     24.0; 
+      BLD   103; 
+      U     "DB_WW".WW_Freifahren; 
+      =     L     24.1; 
+      BLD   103; 
+      U     "DB_WW".WW_Gst; 
+      =     L     24.2; 
+      BLD   103; 
+      U     "DB_WW".WW_Gst; 
+      =     L     24.3; 
+      BLD   103; 
+      U     "DB_WW".WW_rueckwaerts; 
+      =     L     24.4; 
+      BLD   103; 
+      U     "DB_WW".WW_vorwaerts; 
+      =     L     24.5; 
+      BLD   103; 
+      CALL "FC_HMI_IO_TO_TLINE" (
+           Freigabe_AST_Hand        := L     24.0,
+           Freigabe_GST_Hand        := L     24.1,
+           Endlage_AST              := L     24.2,
+           Endlage_GST              := L     24.3,
+           Ventil_AST               := L     24.4,
+           Ventil_GST               := L     24.5,
+           Bewegungsnummer          := 1);
+      NOP   0; 
+NETWORK
+TITLE =WW: initialisieren
+
+      U     "M_WW_X_imArbeitsraum"; // X-ACHSE NICHT IM WZW 
+      UN    #Schritt_gesetzt; 
+      UN    "DB_WW".Schritt_T[0]; 
+      =     "DB_WW".WW_Initialisieren; // GRUNDSTELLUNG INITIALISIEREN
+
+NETWORK
+TITLE =WW: SCHRITT_0 GRUNDSTELLUNG
+// DER SCHRITT0 IST DER SCHRITT, WELCHER NACH JEDEM WZ-WECHSEL ANGELAUFEN
+// WERDEN MUSS.
+//
+// X-ACHSE NICHT IM WECHSLER
+      U(    ; 
+      U     "DB_WW".Schritt_T[7]; // SCHRITT7 SONDERSCHRITT
+      U     "DB_WW".WW_Freifahren; // ABBRUCH -> FREIFAHREN NOETIG
+      U     "M_WW_X_imArbeitsraum"; // X-ACHSE NICHT IM WERKZEUGWECHSLER
+
+      O     ; 
+      U(    ; 
+      U     "DB_WW".WW_T_Auftrag_2; // AUFTRAG2 HOLEN II ->Z-HUB EINGEFAHREN
+      U     #gespannt; // gespannt mit oder ohne Werkzeug
+      O     ; 
+      U     "DB_WW".WW_T_Auftrag_4; // AUFTRAG4 HOLEN I ->Z-HUB AUSGEFAHREN
+      U     #gespannt_oWz; // gespannt ohne Werkzeug
+      )     ; 
+      U     "DB_WW".Schritt_T[12]; // SCHRITT12 WZ-ZANGE ZU, Z-HUB EINFAHREN
+      U(    ; 
+      O     #Schritt_vorwaerts; // SCHRITTKETTE VORWAERTS
+      ON    "DB_WW".WW_Freifahren; // ABBRUCH -> FREIFAHREN NOETIG
+      )     ; 
+      UN    "DB_SIEM_KANAL_1".E_ProgInterrupt; // PROGRAMM UNTERBROCHEN
+
+      O     ; 
+      U(    ; 
+      U     "DB_WW".WW_T_Auftrag_1; // AUFTRAG1 ABLEGEN I ->Z-HUB AUSGEFAHREN
+      U     #gespannt_oWz; // gespannt ohne Werkzeug
+      O     ; 
+      U     "DB_WW".WW_T_Auftrag_3; // AUFTRAG3 ABLEGEN II ->Z-HUB EINGEFAHREN
+      U(    ; 
+      U     #gespannt_oWz; // gespannt ohne Werkzeug
+      U(    ; 
+      O     #IB_MagKontr_aus; // Kontrolle Magazinplatz ausblenden
+      O     "M_Ruecksetze_Fehler"; // Fehlermeldung löschen
+      )     ; 
+      O     #gespannt_mWz; // gespannt mit Werkzeug
+      )     ; 
+      )     ; 
+      U     "DB_WW".Schritt_T[1]; // SCHRITT1 WARTEPOS, RICHTEN, WZ-ENTSPANNE
+      U     #Schritt_rueckwaerts; // SCHRITTKETTE RUECKWAERTS
+
+      )     ; 
+      U     "M_WW_X_imArbeitsraum"; // X-Achse nicht im WZW
+      U     #HalterSp_zu; // WZ-Halter geschlossen Spindelseite
+      UN    "DB_WW".WW_DT_ablegen; // Datentausch 1
+      UN    "DB_WW".WW_DT_aufnehmen; // Datentausch 2
+
+      O     "DB_WW".WW_Initialisieren; // GRUNDSTELLUNG INITIALISIEREN
+
+      S     "DB_WW".Schritt_T[0]; // SCHRITT0 GRUNDSTELLUNG
+      R     "DB_WW".Schritt_T[12]; // SCHRITT12 WZ-ZANGE ZU, Z-HUB EINFAHREN
+      R     "DB_WW".Schritt_T[1]; // SCHRITT1 WARTEPOS, RICHTEN, WZ-ENTSPANNE
+      R     "DB_WW".Schritt_T[7]; // SCHRITT7 SONDERSCHRITT
+      R     "DB_WW".WW_T_Auftrag_2; // AUFTRAG2 HOLEN II ->Z-HUB EINGEFAHREN
+      R     "DB_WW".WW_T_Auftrag_4; // AUFTRAG4 HOLEN I ->Z-HUB AUSGEFAHREN
+      R     "DB_WW".WW_T_Auftrag_1; // AUFTRAG1 ABLEGEN I ->Z-HUB AUSGEFAHREN
+      R     "DB_WW".WW_T_Auftrag_3; // AUFTRAG3 ABLEGEN II ->Z-HUB EINGEFAHREN
+      R     "DB_WW".WW_Frg_ins_Mag; // FREIGABE FAHRE INS MAGAZIN
+
+NETWORK
+TITLE =WW: GRUNDSTELLUNG MELDEN
+
+      U     "DB_WW".Schritt_T[0]; // SCHRITT0 GRUNDSTELLUNG
+      FP    "DB_WW".PF_WW_Gst; // PF: Werkzeugwechsel in Schritt 0
+      =     "DB_WW".PI_WW_Gst; // PI: Grundschritt 0
+
+NETWORK
+TITLE =WW: Grundstellung Werkzeugwechsler
+
+      U     "DB_WW".Schritt_T[0]; // SCHRITT0 GRUNDSTELLUNG
+      U     #gespannt; // gespannt mit oder ohne Werkzeug
+      U     "M_WW_X_imArbeitsraum"; // X-Achse nicht im WZW
+      U     #HalterSp_zu; // WZ-Halter geschlossen Spindelseite
+      =     "DB_WW".WW_Gst; // WZW IN GRUNDSTELLUNG
+      =     "M_WZW_Grdst"; 
+NETWORK
+TITLE =WW: Werkzeugwechsel beendet an andere Module
+
+      U     "DB_WW".PI_WW_Gst; // PI: Grundschritt 0
+      =     "DB_WW".PI_WW_beendet; // PI: Werkzeugwechsel beendet
+
+NETWORK
+TITLE =WW: SCHRITT_1
+// VORW.AUFTRAG1    : SPINDEL RICHTEN, Z-HUB AUSFAHREN, WZ-ENTSPANNEN,
+// VORW.AUFTRAG3    : X-ACHSE AUF WARTEPOS, SPINDEL RICHTEN, WZ-ZANGE OEFFNEN
+// RUECK.AUFTRAG1,3 : Z-HUB EINFAHREN, WZ-SPANNEN, WZ-ZANGE SCHLIESSEN
+      U(    ; 
+      U     "DB_WW".WW_T_Auftrag_1; // AUFTRAG1 ABLEGEN I ->Z-HUB AUSGEFAHREN
+      U     #gespannt_oWz; // gespannt ohne Werkzeug
+      O     ; 
+      U     "DB_WW".WW_T_Auftrag_3; // AUFTRAG3 ABLEGEN II ->Z-HUB EINGEFAHREN
+      U(    ; 
+      U     #gespannt_oWz; // gespannt ohne Werkzeug
+      U(    ; 
+      O     #IB_MagKontr_aus; // Kontrolle Magazinplatz ausblenden
+      O     "M_Ruecksetze_Fehler"; // Fehlermeldung löschen
+      )     ; 
+      O     #gespannt_mWz; // gespannt mit Werkzeug
+      )     ; 
+      U(    ; 
+      O     "I_WW_MagPlatz_frei"; // WZ in Wechselposition (Magazinplatz frei)
+      O     #IB_MagKontr_aus; // Kontrolle Magazinplatz ausblenden
+      )     ; 
+      )     ; 
+      U     #HalterSp_zu; // WZ-Halter geschlossen Spindelseite
+      U     "M_WW_X_imArbeitsraum"; // X-Achse nicht im WZW
+      U     "DB_WW".Schritt_T[0]; // SCHRITT0 GRUNDSTELLUNG
+      U     #Schritt_vorwaerts; // SCHRITTKETTE VORWAERTS
+
+      O     ; 
+      U(    ; 
+      O     "DB_WW".WW_T_Auftrag_1; // AUFTRAG1 ABLEGEN I ->Z-HUB AUSGEFAHREN
+      O     "DB_WW".WW_T_Auftrag_3; // AUFTRAG3 ABLEGEN II ->Z-HUB EINGEFAHREN
+      )     ; 
+      U(    ; 
+      O     "I_WW_X_inWartePos"; // X-ACHSE IST AUF WARTEPOSITION
+      O     "M_WW_X_imArbeitsraum"; // X-ACHSE NICHT IM WZW 
+      )     ; 
+      U     "DB_WW".Schritt_T[2]; // SCHRITT2 MAGPOS, WZ-ZANGE AUF
+      U     #Schritt_rueckwaerts; // SCHRITTKETTE RUECKWAERTS
+
+      S     "DB_WW".Schritt_T[1]; // SCHRITT1 WARTEPOS, RICHTEN, WZ-ENTSPANNE
+      R     "DB_WW".Schritt_T[0]; // SCHRITT0 GRUNDSTELLUNG
+      R     "DB_WW".Schritt_T[2]; // SCHRITT2 MAGPOS, WZ-ZANGE AUF
+
+NETWORK
+TITLE =WW: SCHRITT_2
+// VORW.AUFTRAG1,3: X-ACHSE MAGPOS ANFAHREN
+// RUECK.AUFTRAG1 : X-ACHSE WARTEPOS ANFAHREN
+// RUECK.AUFTRAG3 : WZ-ZANGE SCHLIESSEN, X-ACHSE WARTEPOS ANFAHREN
+      U(    ; 
+      U     "DB_WW".WW_T_Auftrag_1; // AUFTRAG1 ABLEGEN I ->Z-HUB AUSGEFAHREN
+      U(    ; 
+      O     "I_WW_1_ZYL_GST"; // Z-HUB IST AUSGEFAHREN
+      ON    "DB_WW".WW_Freifahren; // Freifahren nötig
+      )     ; 
+      U     "I_WW_1_Klappe_auf"; // Magazinklappe geöffnet
+      O     ; 
+      U     "DB_WW".WW_T_Auftrag_3; // AUFTRAG3 ABLEGEN II ->Z-HUB EINGEFAHREN
+      U(    ; 
+      O     "I_WW_1_ZYL_SPI"; // Z-HUB IST EINGEFAHREN
+      ON    "DB_WW".WW_Freifahren; // Freifahren nötig
+      )     ; 
+      U     #HalterSp_auf; // WZ-Halter offen Spindelseite
+      U(    ; 
+      U     #gespannt_oWz; // gespannt ohne Werkzeug
+      U(    ; 
+      O     #IB_MagKontr_aus; // Kontrolle Magazinplatz ausblenden
+      O     "M_Ruecksetze_Fehler"; // Fehlermeldung löschen
+      )     ; 
+      O     #gespannt_mWz; // gespannt mit Werkzeug
+      )     ; 
+      )     ; 
+      U     "DB_WW".WW_Frg_ins_Mag; // FREIGABE FAHRE INS MAGAZIN
+      U(    ; 
+      U     "I_WW_Y_inWWPos"; // Y-ACHSE AUF WECHSELPOS
+      U     "I_E_gerichtet"; // SPINDEL IST GERICHTET IM ABLAUF
+      ON    "DB_WW".WW_Freifahren; // ABBRUCH -> FREIFAHREN NOETIG
+      )     ; 
+      U     "DB_WW".Schritt_T[1]; // SCHRITT1 WARTEPOS, RICHTEN, WZ-ENTSPANNE
+      U     #Schritt_vorwaerts; // SCHRITTKETTE VORWAERTS
+
+      O     ; 
+      U(    ; 
+      U     "DB_WW".WW_T_Auftrag_3; // AUFTRAG3 ABLEGEN II ->Z-HUB EINGEFAHREN
+      U     #gespannt; 
+//      U     #gespannt_mWz               // gespannt mit Werkzeug
+      O     "DB_WW".WW_T_Auftrag_1; // AUFTRAG1 ABLEGEN I ->Z-HUB AUSGEFAHREN
+      )     ; 
+      U     "DB_WW".Schritt_T[3]; // SCHRITT3 QUITT, WZ ENTSPANNEN
+      U     #Schritt_rueckwaerts; // SCHRITTKETTE RUECKWAERTS
+
+      S     "DB_WW".Schritt_T[2]; // SCHRITT2 MAGPOS, WZ-ZANGE AUF
+      R     "DB_WW".Schritt_T[1]; // SCHRITT1 WARTEPOS, RICHTEN, WZ-ENTSPANNE
+      R     "DB_WW".Schritt_T[3]; // SCHRITT3 QUITT, WZ ENTSPANNEN
+
+NETWORK
+TITLE =WW: SCHRITT_3
+// VORW. AUFTRAG1 : QUITTIEREN
+// VORW. AUFTRAG3 : WZ-SPANNER OEFFNEN, WZ-ZANGE SCHLIESSEN
+// RUECK.AUFTRAG1 : QUITTIEREN
+// RUECK.AUFTRAG3 : WZ-SPANNER SCHLIESSEN
+      U(    ; 
+      U     "DB_WW".WW_T_Auftrag_1; // AUFTRAG1 ABLEGEN I ->Z-HUB AUSGEFAHREN
+      U     "I_WZ_SPA_geloest"; // Werkzeug gelöst
+      O     ; 
+      U     "DB_WW".WW_T_Auftrag_3; // AUFTRAG3 ABLEGEN II ->Z-HUB EINGEFAHREN
+      U     "I_WW_1_ZYL_GST"; // Z-HUB IST EINGEFAHREN
+      U     #HalterSp_auf; // WZ-Halter offen Spindelseite
+      )     ; 
+      U     "Mx_X_ACHSE_WZW_POS"; // X-ACHSE IST AUF MAGAZINPOSITION
+      U     "DB_WW".Schritt_T[2]; // SCHRITT2 MAGPOS, WZ-ZANGE AUF
+      U     #Schritt_vorwaerts; // SCHRITTKETTE VORWAERTS
+
+      O     ; 
+      U     "DB_WW".WW_T_Auftrag_3; // AUFTRAG3 ABLEGEN II ->Z-HUB EINGEFAHREN
+      U     "I_WW_1_ZYL_GST"; // Z-HUB IST EINGEFAHREN
+      U     #HalterSp_zu; // WZ-Halter geschlossen Spindelseite
+      U     "DB_WW".Schritt_T[4]; // SCHRITT4 QUITT, WZ-DATENTAUSCH
+      U     #Schritt_rueckwaerts; // SCHRITTKETTE RUECKWAERTS
+
+      S     "DB_WW".Schritt_T[3]; // SCHRITT3 QUITT, WZ ENTSPANNEN
+      R     "DB_WW".Schritt_T[2]; // SCHRITT2 MAGPOS, WZ-ZANGE AUF
+      R     "DB_WW".Schritt_T[4]; // SCHRITT4 QUITT, WZ-DATENTAUSCH
+
+NETWORK
+TITLE =WW: SCHRITT_4
+// VORW. AUFTRAG1  : QUITTIEREN
+// VORW. AUFTRAG3  : WZ-DATENTAUSCH NC-STOP
+// RUECK. AUFTRAG1 : QUITTIEREN
+// RUECK. AUFTRAG3 : WZ-DATENTAUSCH NC-STOP
+      U(    ; 
+      U     "DB_WW".WW_T_Auftrag_3; // AUFTRAG3 ABLEGEN II ->Z-HUB EINGEFAHREN
+      U     #WW_von_WZV; // Werkzeugwechsel Schnittstelle 1
+      U     #HalterSp_zu; // WZ-Halter geschlossen Spindelseite
+      U     "I_WZ_SPA_geloest"; // Werkzeug gelöst
+      O     "DB_WW".WW_T_Auftrag_1; // AUFTRAG1 ABLEGEN I ->Z-HUB AUSGEFAHREN
+      )     ; 
+      U     "Mx_X_ACHSE_WZW_POS"; // X-ACHSE IST AUF MAGAZINPOSITION
+      UN    "DB_WW".WW_DT_ablegen; // Datentausch 1
+      UN    "DB_WW".WW_Freifahren; // Abbruch -> Freifahren nötig
+      U     #Schritt_vorwaerts; // SCHRITTKETTE VORWAERTS
+      U     "DB_WW".Schritt_T[3]; // SCHRITT3 QUITT, WZ ENTSPANNEN
+      S     "DB_WW".Schritt_T[4]; // SCHRITT4 QUITT, WZ-DATENTAUSCH
+      R     "DB_WW".Schritt_T[3]; // SCHRITT3 QUITT, WZ ENTSPANNEN
+      R     "DB_WW".Schritt_T[5]; // SCHRITT5 QUITT, WZ-ZANGE ZU
+
+NETWORK
+TITLE =WW: Datentausch ablegen
+
+      U     "DB_WW".Schritt_T[4]; // SCHRITT7 SONDERSCHRITT
+      UN    "DB_WW".WW_T_Auftrag_1; // AUFTRAG3 ABLEGEN II ->Z-HUB EINGEFAHREN
+      S     "DB_WW".WW_DT_ablegen; 
+
+
+NETWORK
+TITLE =WW: SCHRITT_5
+// VORW.AUFTRAG1,3: QUITTIEREN
+// RUECK.AUFTRAG1 : KEIN ZURUECK
+// RUECK.AUFTRAG3 : QUITTIEREN
+      U(    ; 
+      O     "DB_WW".WW_T_Auftrag_1; // AUFTRAG1 ABLEGEN I ->Z-HUB AUSGEFAHREN
+      O     "DB_WW".WW_T_Auftrag_3; // AUFTRAG3 ABLEGEN II ->Z-HUB EINGEFAHREN
+      )     ; 
+      U     "Mx_X_ACHSE_WZW_POS"; // X-ACHSE IST AUF MAGAZINPOSITION
+      U     #Schritt_vorwaerts; // SCHRITTKETTE VORWAERTS
+      U     "DB_WW".Schritt_T[4]; // SCHRITT4 QUITT, WZ-DATENTAUSCH
+      O     ; 
+      U     "DB_WW".WW_T_Auftrag_3; // AUFTRAG3 ABLEGEN II ->Z-HUB EINGEFAHREN
+      U     "I_WW_1_ZYL_GST"; // Z-HUB IST EINGEFAHREN
+      U     "DB_WW".WW_Mag_ein; // BEFEHL MAGAZIN EINFAHREN
+      U     #HalterSp_zu; // WZ-Halter geschlossen Spindelseite
+      U     "DB_WW".Schritt_T[6]; // SCHRITT6 QUITT, Z-HUB EINFAHREN
+      U     #Schritt_rueckwaerts; // SCHRITTKETTE RUECKWAERTS
+      S     "DB_WW".Schritt_T[5]; // SCHRITT5 QUITT, WZ-ZANGE ZU
+      R     "DB_WW".Schritt_T[4]; // SCHRITT4 QUITT, WZ-DATENTAUSCH
+      R     "DB_WW".Schritt_T[6]; // SCHRITT6 QUITT, Z-HUB EINFAHREN
+
+NETWORK
+TITLE =WW: SCHRITT_6
+// VORW.AUFTRAG1   : QUITTIEREN
+// VORW.AUFTRAG3   : Z-HUB AUSFAHREN
+// RUECK.AUFTRAG1,3: KEIN ZURUECK
+      U(    ; 
+      U     "DB_WW".WW_T_Auftrag_3; // AUFTRAG3 ABLEGEN II ->Z-HUB EINGEFAHREN
+      U     "Mx_X_ACHSE_WZW_POS"; // X-ACHSE IST AUF MAGAZINPOSITION
+      U     "I_WZ_SPA_geloest"; // Werkzeug gelöst
+      U     #HalterSp_zu; // WZ-Halter geschlossen Spindelseite
+      O     "DB_WW".WW_T_Auftrag_1; // AUFTRAG1 ABLEGEN I ->Z-HUB AUSGEFAHREN
+      )     ; 
+      U     #Schritt_vorwaerts; // SCHRITTKETTE VORWAERTS
+      U     "DB_WW".Schritt_T[5]; // SCHRITT5 QUITT, WZ-ZANGE ZU
+      S     "DB_WW".Schritt_T[6]; // SCHRITT6 QUITT, Z-HUB EINFAHREN
+      R     "DB_WW".Schritt_T[5]; // SCHRITT5 QUITT, WZ-ZANGE ZU
+
+NETWORK
+TITLE =WW: SCHRITT_7 SONDERSCHRITT
+// SCHRITT7 SONDERSCHRITT WARTEN AUF NEUE BEFEHLE ODER
+//                        ABBRUCH FREIFAHREN NOETIG
+      U(    ; 
+      U     "DB_WW".WW_T_Auftrag_3; // AUFTRAG3 ABLEGEN II ->Z-HUB EINGEFAHREN
+      U     "I_WW_1_ZYL_GST"; // Z-HUB IST AUSGEFAHREN
+      UN    "DB_WW".WW_DT_ablegen; // Datentausch 1
+      O     "DB_WW".WW_T_Auftrag_1; // AUFTRAG1 ABLEGEN I ->Z-HUB AUSGEFAHREN
+      )     ; 
+      U     #HalterSp_zu; // WZ-Halter geschlossen Spindelseite
+      U     "I_WZ_SPA_geloest"; // Werkzeug gelöst
+      U     #Schritt_vorwaerts; // SCHRITTKETTE VORWAERTS
+      U     "DB_WW".Schritt_T[6]; // SCHRITT6 QUITT, Z-HUB EINFAHREN
+      O     ; 
+      U(    ; 
+      U     "DB_WW".WW_T_Auftrag_2; // AUFTRAG2 HOLEN II ->Z-HUB EINGEFAHREN
+      U     "I_WZ_SPA_geloest"; // Werkzeug gelöst
+      U     "I_WW_1_ZYL_GST"; // Z-HUB IST AUSGEFAHREN
+      U     #HalterSp_zu; // WZ-Halter geschlossen Spindelseite
+      O     "DB_WW".WW_T_Auftrag_4; // AUFTRAG4 HOLEN I ->Z-HUB AUSGEFAHREN
+      )     ; 
+      U     #Schritt_rueckwaerts; // SCHRITTKETTE RUECKWAERTS
+      U     "DB_WW".Schritt_T[8]; // SCHRITT8 Z-HUB EINFAHREN, QUITT
+      S     "DB_WW".Schritt_T[7]; // SCHRITT7 SONDERSCHRITT
+      R     "DB_WW".Schritt_T[6]; // SCHRITT6 QUITT, Z-HUB EINFAHREN
+      R     "DB_WW".Schritt_T[8]; // SCHRITT8 Z-HUB EINFAHREN, QUITT
+
+NETWORK
+TITLE =WW: Rücksetzen Auftrag 1 und 3
+
+      U     "DB_WW".Schritt_T[7]; // SCHRITT7 SONDERSCHRITT
+      U     #Schritt_vorwaerts; // SCHRITTKETTE VORWAERTS
+      R     "DB_WW".WW_T_Auftrag_1; // AUFTRAG1 ABLEGEN I ->Z-HUB AUSGEFAHREN
+      R     "DB_WW".WW_T_Auftrag_3; // AUFTRAG3 ABLEGEN II ->Z-HUB EINGEFAHREN
+
+NETWORK
+TITLE =WW: SCHRITT_8
+// VORW.AUFTRAG2  : Z-HUB EINFAHREN
+// VORW.AUFTRAG4  : QUITTIEREN
+// RUECK.AUFTRAG2 : Z-HUB AUSFAHREN
+// RUECK.AUFTRAG4 : QUITTIEREN
+      U(    ; 
+      O     "DB_WW".WW_T_Auftrag_2; // AUFTRAG2 HOLEN II ->Z-HUB EINGEFAHREN
+      O     "DB_WW".WW_T_Auftrag_4; // AUFTRAG4 HOLEN I ->Z-HUB AUSGEFAHREN
+      )     ; 
+      U     "Mx_X_ACHSE_WZW_POS"; // X-ACHSE IST AUF MAGAZINPOSITION
+      U     "I_WZ_SPA_geloest"; // Werkzeug gelöst
+      U     "DB_WW".WW_Spanner_auf; // WZ in Spindel lösen
+      U     "DB_WW".Schritt_T[7]; // SCHRITT7 SONDERSCHRITT
+      U     #Schritt_vorwaerts; // SCHRITTKETTE VORWAERTS
+      O     ; 
+      U(    ; 
+      U     "DB_WW".WW_T_Auftrag_2; // AUFTRAG2 HOLEN II ->Z-HUB EINGEFAHREN
+      U     "I_WW_1_ZYL_GST"; // Z-HUB IST EINGEFAHREN
+      O     "DB_WW".WW_T_Auftrag_4; // AUFTRAG4 HOLEN I ->Z-HUB AUSGEFAHREN
+      )     ; 
+      U     "I_WZ_SPA_geloest"; // Werkzeug gelöst
+      U     #HalterSp_zu; // WZ-Halter geschlossen Spindelseite
+      U     "Mx_X_ACHSE_WZW_POS"; // X-ACHSE IST AUF MAGAZINPOSITION
+      U     "DB_WW".Schritt_T[9]; // SCHRITT9 WZ-DATENTAUSCH, QUITT
+      U     #Schritt_rueckwaerts; // SCHRITTKETTE RUECKWAERTS
+      S     "DB_WW".Schritt_T[8]; // SCHRITT8 Z-HUB EINFAHREN, QUITT
+      R     "DB_WW".Schritt_T[7]; // SCHRITT7 SONDERSCHRITT
+      R     "DB_WW".Schritt_T[9]; // SCHRITT9 WZ-DATENTAUSCH, QUITT
+
+NETWORK
+TITLE =WW: SCHRITT_9
+// VORW.AUFTRAG2   : WZ-DATENTAUSCH
+// VORW.AUFTRAG4   : QUITTIEREN
+// RUECK.AUFTRAG2,4: KEIN ZURUECK
+      U(    ; 
+      U     "DB_WW".WW_T_Auftrag_2; // AUFTRAG2 HOLEN II ->Z-HUB EINGEFAHREN
+      U     "I_WW_1_ZYL_GST"; // Z-HUB IST AUSGEFAHREN
+      U     #WW_von_WZV; // Werkzeugwechsel von Werkzeugverwaltung
+      O     "DB_WW".WW_T_Auftrag_4; // AUFTRAG4 HOLEN I ->Z-HUB AUSGEFAHREN
+      )     ; 
+      U     "I_WZ_SPA_geloest"; // Werkzeug gelöst
+      U     #HalterSp_zu; // WZ-Halter geschlossen Spindelseite
+      U     "Mx_X_ACHSE_WZW_POS"; // X-ACHSE IST AUF MAGAZINPOSITION
+      U     "DB_WW".Schritt_T[8]; // SCHRITT8 Z-HUB EINFAHREN, QUITT
+      U     #Schritt_vorwaerts; // SCHRITTKETTE VORWAERTS
+      UN    "DB_WW".WW_DT_aufnehmen; // Datentausch 2
+      UN    "DB_WW".WW_Freifahren; // Abbruch -> Freifahren nötig
+      S     "DB_WW".Schritt_T[9]; // SCHRITT9 WZ-DATENTAUSCH, QUITT
+      R     "DB_WW".Schritt_T[8]; // SCHRITT8 Z-HUB EINFAHREN, QUITT
+      R     "DB_WW".Schritt_T[10]; // SCHRITT10 WZ-SPANNEN
+
+NETWORK
+TITLE =WW: Datentausch aufnehmen
+
+      U     "DB_WW".Schritt_T[9]; // SCHRITT9
+      UN    "DB_WW".WW_T_Auftrag_4; // AUFTRAG2 HOLEN II ->Z-HUB EINGEFAHREN
+      S     "DB_WW".WW_DT_aufnehmen; 
+
+NETWORK
+TITLE =WW: SCHRITT_10
+// VORW.AUFTRAG2    : WZ-SPANNEN, WZ-ZANGE OEFFNEN
+// VORW.Auftrag4    : WZ-SPANNEN
+// RUECK.AUFTRAG2,4 : KEIN ZURUECK
+      U(    ; 
+      U     "DB_WW".WW_T_Auftrag_2; // AUFTRAG2 HOLEN II ->Z-HUB EINGEFAHREN
+      U     "I_WW_1_ZYL_GST"; // Z-HUB IST EINGEFAHREN
+      O     "DB_WW".WW_T_Auftrag_4; 
+      )     ; // AUFTRAG4 HOLEN I ->Z-HUB AUSGEFAHREN
+      U     "I_WZ_SPA_geloest"; 
+      U     #HalterSp_zu; // Werkzeug gelöst
+      U     "Mx_X_ACHSE_WZW_POS"; // WZ-Halter geschlossen Spindelseite
+      U     "DB_WW".Schritt_T[9]; // X-ACHSE IST AUF MAGAZINPOSITION
+      U     #Schritt_vorwaerts; // SCHRITT9 WZ-DATENTAUSCH, QUITT
+      S     "DB_WW".Schritt_T[10]; // SCHRITTKETTE VORWAERTS
+      R     "DB_WW".Schritt_T[9]; // SCHRITT10 WZ-SPANNEN
+      R     "DB_WW".Schritt_T[11]; // SCHRITT9 WZ-DATENTAUSCH, QUITT
+NETWORK
+TITLE =WW: SCHRITT_11
+// VORW.AUFTRAG2    : X-ACHSE AUF WARTEPOSITION, WZ-ZANGE OEFFNEN
+// VORW.AUFTRAG4    : X-ACHSE AUF WARTEPOSITION
+// RUECK.AUFTRAG2,4 : KEIN ZURUECK
+      U(    ; 
+      U     "DB_WW".WW_T_Auftrag_2; // AUFTRAG2 HOLEN II ->Z-HUB EINGEFAHREN
+      U     #HalterSp_auf; // WZ-Halter offen Spindelseite
+      O     ; 
+      U     "DB_WW".WW_T_Auftrag_4; // AUFTRAG4 HOLEN I ->Z-HUB AUSGEFAHREN
+      U     #HalterSp_zu; // WZ-Halter geschlossen Spindelseite
+      )     ; 
+      U     #gespannt; // gespannt mit oder ohne Werkzeug
+      U     "DB_WW".Schritt_T[10]; // SCHRITT10 WZ-SPANNEN
+      U     #Schritt_vorwaerts; // SCHRITTKETTE VORWAERTS
+      S     "DB_WW".Schritt_T[11]; // SCHRITT11 WZ-ZANGE AUF, X-ACHSE WARTPOS
+
+NETWORK
+TITLE =WW: Rücksetzen Schritt 10
+
+      U     "DB_WW".Schritt_T[10]; // SCHRITT10 WZ-SPANNEN
+      U     "DB_WW".Schritt_T[11]; // SCHRITT11 WZ-ZANGE AUF, X-ACHSE WARTPOS
+      R     "DB_WW".Schritt_T[10]; // SCHRITT10 WZ-SPANNEN
+
+NETWORK
+TITLE =WW: SCHRITT_12
+// VORW.AUFTRAG2,4  : WZ-ZANGE UND MAGAZINKLAPPE SCHLIESSEN, ESP FREIGEBEN
+// RUECK.AUFTRAG2,4 : KEIN ZURUECK
+      U(    ; 
+      U     "DB_WW".WW_T_Auftrag_2; // AUFTRAG2 HOLEN II ->Z-HUB EINGEFAHREN
+      U     #HalterSp_auf; // WZ-Halter offen Spindelseite
+      O     ; 
+      U     "DB_WW".WW_T_Auftrag_4; // AUFTRAG4 HOLEN I ->Z-HUB AUSGEFAHREN
+      U     #HalterSp_zu; // WZ-Halter geschlossen Spindelseite
+      )     ; 
+      U     #gespannt; // gespannt mit oder ohne Werkzeug
+      U     "M_WW_X_imArbeitsraum"; // X-ACHSE NICHT IM WZW 
+      U     "DB_WW".Schritt_T[11]; // SCHRITT11 WZ-ZANGE AUF, X-ACHSE WARTPOS
+      U     #Schritt_vorwaerts; // SCHRITTKETTE VORWAERTS
+      S     "DB_WW".Schritt_T[12]; // SCHRITT12 WZ-ZANGE ZU, Z-HUB EINFAHREN
+      R     "DB_WW".Schritt_T[11]; // SCHRITT11 WZ-ZANGE AUF, X-ACHSE WARTPOS
+
+NETWORK
+TITLE =WW: Prüfen, ob Ablageplatz im Magazin leer ist
+
+      U(    ; 
+      ON    "O_WW_1_Klappe_auf"; // Magazinklappe öffnen
+      O     "DB_WW".Schritt_T[1]; // Schritt_1 M: Spindel richten,X-Achse auf Warteposition
+      )     ; 
+      U     "DB_WZV".Mag1_inPos_WST; 
+      U(    ; 
+      O     #Vorbedingung_AF2; 
+      O     #Vorbedingung_AF3; 
+      )     ; 
+      =     #PruefeAblageplatz; // kommt
+
+NETWORK
+TITLE =WW: Prüfen, ob Abholplatz im Magazin belegt ist
+
+      U(    ; 
+      ON    "O_WW_1_Klappe_auf"; // Magazinklappe öffnen
+      O     "DB_WW".Schritt_T[1]; // Schritt_1 M: Spindel richten,X-Achse auf Warteposition
+      O     "DB_WW".Schritt_T[2]; 
+      )     ; 
+      U     "DB_WZV".Mag1_inPos_WST; 
+      U     #Vorbedingung_AF1; 
+      =     #PruefeAbholplatz; 
+
+NETWORK
+TITLE =WW: Magazinplatz Belegung kontrolliert und i.O.
+
+      U(    ; 
+      U     #PruefeAblageplatz; 
+      U(    ; 
+      O     "I_WW_MagPlatz_frei"; 
+      O     #IB_MagKontr_aus; 
+      )     ; 
+      O     ; 
+      U     #PruefeAbholplatz; 
+      U(    ; 
+      ON    "I_WW_MagPlatz_frei"; 
+      O     "M_Ruecksetze_Fehler"; 
+      O     #IB_MagKontr_aus; 
+      )     ; 
+      )     ; 
+      S     "DB_WW".MagPlatz_ok; 
+
+      U(    ; 
+      U     #PruefeAblageplatz; 
+      UN    "I_WW_MagPlatz_frei"; 
+      UN    #IB_MagKontr_aus; 
+      O     ; 
+      U     #PruefeAbholplatz; 
+      U     "I_WW_MagPlatz_frei"; 
+      UN    "M_Ruecksetze_Fehler"; 
+      UN    #IB_MagKontr_aus; 
+      O     ; 
+      UN    #PruefeAblageplatz; // Magazinplatz Belegung kontrolliert und i.O.
+      UN    #PruefeAbholplatz; 
+
+      O     #WZM_Fahrbefehl; 
+      )     ; 
+      R     "DB_WW".MagPlatz_ok; 
+      NOP   0; 
+NETWORK
+TITLE ============ Magazinklappe (Werkzeugwechslertür) =============
+
+
+
+NETWORK
+TITLE =WWT: öffnen mit Freigabe
+
+      U     "DB_WW".WW_gestartet; // Werkzeugwechsler gestartet
+      U(    ; 
+      O     "DB_WW".WW_Frg_ins_Mag; // Freigabe fahre ins Magazin     
+      O     "DB_WW".Schritt_T[7]; // SCHRITT7 SONDERSCHRITT
+      )     ; 
+
+// Die Magazinklappe darf nur geöffnet werden, wenn der Magazinplatz kontrolliert wurde
+
+      U(    ; 
+      O     "DB_WW".MagPlatz_ok; // Magazinplatz Belegung kontrolliert und i.O.
+      O     "O_WW_1_Klappe_auf"; // Magazinklappe öffnen
+      )     ; 
+
+// Klappe schliessen im Schritt 12 bei vorwärts
+      U(    ; 
+      ON    "DB_WW".Schritt_T[12]; // SCHRITT12 WZ-ZANGE ZU, Z-HUB EINFAHREN
+      ON    "DB_WW".WW_vorwaerts; // SCHRITTKETTE VORWAERTS
+      )     ; 
+
+// Kein Öffnen der Klappe in BA3,4 solange die Magazinklappe geschlossen ist 
+      U(    ; 
+      ON    #BA_3_4; 
+      O     "I_AL_Kabine_Verriegelt"; // Arbeitsraumtür geschlossen und verriegelt
+      ON    "I_WW_1_Klappe_zu"; // Magazinklappe geschlossen
+      )     ; 
+
+      =     #Klappe_auf_1; // Magazinklappe öffnen mit Freigabe
+
+NETWORK
+TITLE =WWT: öffnen ohne Freigabe
+
+      UN    #Schritt_gesetzt; 
+      UN    "DB_WW".Schritt_T[0]; 
+      O     "DB_WW".WW_Freifahren; 
+      =     #Klappe_auf_2; 
+
+NETWORK
+TITLE =WWT: Einzelbewegung Freigabe öffnen
+
+      O     #EB_Hand_WW; 
+      O     #Frg_Service; 
+      =     #EB_Frg_Klappe_auf; 
+
+NETWORK
+TITLE =WWT: Einzelbewegung öffnen
+
+      U     #EB_Frg_Klappe_auf; 
+      U(    ; 
+      O     "DB_EINRICHTFUNKTION".Bewegung_4_Minus; // Funktionstaste Magazinklappe öffnen
+      O     "DB_EINRICHTFUNKTION".Bewegung_207_Minus; 
+      )     ; 
+      =     #EB_Klappe_auf; 
+
+NETWORK
+TITLE =WWT: Einzelbewegung Freigabe schliessen 
+
+      U     "M_WW_X_imArbeitsraum"; // X-ACHSE NICHT IM WERKZEUGWECHSLER
+      U     #EB_Hand_WW; 
+      O     #Frg_Service; 
+      =     #EB_Frg_Klappe_zu; 
+
+NETWORK
+TITLE =WWT: Einzelbewegung schliessen 
+
+      U     #EB_Frg_Klappe_zu; 
+      U(    ; 
+      O     "DB_EINRICHTFUNKTION".Bewegung_4_Plus; // Funktionstaste Magazinklappe schliessen
+      O     "DB_EINRICHTFUNKTION".Bewegung_207_Plus; 
+      )     ; 
+      =     #EB_Klappe_zu; 
+
+NETWORK
+TITLE =WWT: Einzelbewegung öffnen speichern
+
+      U     #EB_Klappe_auf; 
+      UN    #EB_Klappe_zu; 
+      S     "DB_WW".Klappe_auf_EB; 
+
+      U(    ; 
+      UN    #EB_Klappe_auf; 
+      U     #EB_Klappe_zu; 
+      O     ; 
+      UN    #EB_Hand_WW; // Bild Einzelfunktionen angewählt
+      UN    "DB_PLC_MD_DB20".UDHex._04_BIT4_EINRICHT_BETR; 
+      )     ; 
+      R     "DB_WW".Klappe_auf_EB; 
+      NOP   0; 
+
+NETWORK
+TITLE =WWT: Einzelbewegung schliessen speichern
+
+      UN    #EB_Klappe_auf; 
+      U     #EB_Klappe_zu; 
+      S     "DB_WW".Klappe_zu_EB; 
+
+      U(    ; 
+      U     #EB_Klappe_auf; 
+      UN    #EB_Klappe_zu; 
+      O     ; 
+      UN    #EB_Hand_WW; // Bild Einzelfunktionen angewählt
+      UN    "DB_PLC_MD_DB20".UDHex._04_BIT4_EINRICHT_BETR; 
+      )     ; 
+      R     "DB_WW".Klappe_zu_EB; 
+      NOP   0; 
+
+NETWORK
+TITLE =WWT: Einzelbewegung Ansteuerung Anzeige
+
+      U     #EB_Frg_Klappe_auf; 
+      =     L     24.0; 
+      BLD   103; 
+      U     #EB_Frg_Klappe_zu; 
+      =     L     24.1; 
+      BLD   103; 
+      U     "I_WW_1_Klappe_auf"; 
+      =     L     24.2; 
+      BLD   103; 
+      U     "I_WW_1_Klappe_zu"; 
+      =     L     24.3; 
+      BLD   103; 
+      U     "O_WW_1_Klappe_auf"; 
+      =     L     24.4; 
+      BLD   103; 
+      U     "O_WW_1_Klappe_zu"; 
+      =     L     24.5; 
+      BLD   103; 
+      CALL "FC_HMI_IO_TO_TLINE" (
+           Freigabe_AST_Hand        := L     24.0,
+           Freigabe_GST_Hand        := L     24.1,
+           Endlage_AST              := L     24.2,
+           Endlage_GST              := L     24.3,
+           Ventil_AST               := L     24.4,
+           Ventil_GST               := L     24.5,
+           Bewegungsnummer          := 4);
+      NOP   0; 
+NETWORK
+TITLE =HMI-Bild 35 (WZW7): WWT: Einzelbewegung Ansteuerung Anzeige
+
+      U     #EB_Frg_Klappe_auf; 
+      =     L     24.0; 
+      BLD   103; 
+      U     #EB_Frg_Klappe_zu; 
+      =     L     24.1; 
+      BLD   103; 
+      U     "I_WW_1_Klappe_auf"; 
+      =     L     24.2; 
+      BLD   103; 
+      U     "I_WW_1_Klappe_zu"; 
+      =     L     24.3; 
+      BLD   103; 
+      U     "O_WW_1_Klappe_auf"; 
+      =     L     24.4; 
+      BLD   103; 
+      U     "O_WW_1_Klappe_zu"; 
+      =     L     24.5; 
+      BLD   103; 
+      CALL "FC_HMI_IO_TO_TLINE" (
+           Freigabe_AST_Hand        := L     24.0,
+           Freigabe_GST_Hand        := L     24.1,
+           Endlage_AST              := L     24.2,
+           Endlage_GST              := L     24.3,
+           Ventil_AST               := L     24.4,
+           Ventil_GST               := L     24.5,
+           Bewegungsnummer          := 207);
+      NOP   0; 
+NETWORK
+TITLE =WWT: Ausgang öffnen
+
+      UN    "DB_WW".Klappe_zu_EB; 
+      U     #Klappe_auf_1; // Magazinklappe öffnen mit Freigabe
+      U(    ; 
+      U     "I_WW_1_Klappe_auf"; // Magazinklappe geöffnet
+      UN    "I_WW_1_Klappe_zu"; // Magazinklappe geschlossen
+      O     "DB_WW".WW_Frg_Ausgaenge; // FREIGABE AUSGAENGE FUER ABLAUF
+      )     ; 
+      O     #Klappe_auf_2; // Magazinklappe öffnen ohne Freigabe
+      O     ; 
+      UN    "M_WW_X_imArbeitsraum"; // X-ACHSE NICHT IM WERKZEUGWECHSLER
+      UN    "DB_NC_PLC".LASER_Aktiv; 
+      U     "M_Leistung_Steht_an"; 
+      O     "DB_WW".Klappe_auf_EB; 
+      O     ; 
+      U     "M_H5000_H5004_WW_Start"; // Magazinklappe öffnen
+      UN    "DB_WZV".Mag1_Laden_aktiv; // Be- Entladen Magazin 1 oder Spindel aktiv
+      S     "O_WW_1_Klappe_auf"; 
+
+      R     "Mx_Klappe_WZW_zu"; 
+NETWORK
+TITLE =WWT: Ausgang schliessen
+
+      U(    ; 
+      UN    #Klappe_auf_1; // Magazinklappe öffnen mit Freigabe
+      UN    #Klappe_auf_2; // Magazinklappe öffnen ohne Freigabe
+      UN    "DB_WW".Klappe_auf_EB; 
+      U     "M_WW_X_imArbeitsraum"; // X-ACHSE NICHT IM WERKZEUGWECHSLER
+//      U     "I_WW_1_Klappe_zu"
+      U(    ; 
+      O     "DB_WW".WW_rueckwaerts; // Schrittkette rückwärts
+      O     "DB_WW".WW_vorwaerts; // Schrittkette vorwärts
+      )     ; 
+      O     "DB_WW".Klappe_zu_EB; 
+      )     ; 
+      UN    "M_H5000_H5004_WW_Start"; 
+      O     ; 
+      U     "M_WW_X_imArbeitsraum"; 
+      U     "DB_DM_M_FUNKTION".MX_M[272]; 
+      UN    "M_H5000_H5004_WW_Start"; 
+      S     "Mx_Klappe_WZW_zu"; 
+      R     "O_WW_1_Klappe_auf"; 
+
+NETWORK
+TITLE =WWT: Ausgang schliessen Reset M272 
+
+      U     "DB_DM_M_FUNKTION".MX_M[272]; 
+      U     "I_WW_1_Klappe_zu"; 
+      O     "M_H5000_H5004_WW_Start"; 
+      O     "M_Reset_Taste"; 
+      R     "DB_DM_M_FUNKTION".MX_M[272]; 
+
+NETWORK
+TITLE =WWT: Reset Ausgang schliessen
+
+      U     "Mx_Klappe_WZW_zu"; 
+      U(    ; 
+      ON    "I_WW_1_Klappe_zu"; 
+      ON    "DB_PLC_MD_DB20".UDHex._17_BIT3_WZW_Klappe_druc; 
+      )     ; 
+      =     "O_WW_1_Klappe_zu"; 
+
+NETWORK
+TITLE =========== Werkzeug in / aus Spindel ===============
+
+
+
+NETWORK
+TITLE =WZHUB: BEFEHL FAHRE auf AUSFAHRPOSITION
+// AUS DEN SCHRITTMERKERN WERDEN VERSCHIEDENE BEFEHLE ERZEUGT, DIE
+// WIEDERUM VERSCHIEDENE AKTION AUSLOESEN.
+//
+// BEFEHL FAHRE Z-Achse auf AUSFAHRPOSITION
+      U(    ; 
+      U(    ; 
+      U(    ; 
+      U     "DB_WW".Schritt_T[1]; // SCHRITT1 WARTEPOS, RICHTEN, WZ-ENTSPANNE
+      U     "DB_WW".WW_T_Auftrag_1; // AUFTRAG1 ABLEGEN I ->Z-HUB AUSGEFAHREN
+      U     "DB_WW".WW_Freifahren; // Freifahren nötig
+      U(    ; 
+      ON    "I_WW_MagPlatz_frei"; // WZ in Wechselposition (Magazinplatz frei)
+      O     #IB_MagKontr_aus; // Kontrolle Magazinplatz ausblenden
+      O     "M_Ruecksetze_Fehler"; // Fehlermeldung löschen
+      )     ; 
+      O     ; 
+      U     "DB_WW".Schritt_T[6]; // SCHRITT6 QUITT, Z-HUB EINFAHREN
+      U     "DB_WW".WW_T_Auftrag_3; // AUFTRAG3 ABLEGEN II ->Z-HUB EINGEFAHREN
+      )     ; 
+      U     "DB_WW".WW_vorwaerts; // SCHRITTKETTE VORWAERTS sja
+      O     ; 
+      U     "DB_WW".Schritt_T[8]; // SCHRITT8 Z-HUB EINFAHREN, QUITT
+      U     "DB_WW".WW_T_Auftrag_2; // AUFTRAG2 HOLEN II ->Z-HUB EINGEFAHREN
+      UN    "M_Reset_Taste"; // RESET Taste    
+      U     "DB_WW".WW_rueckwaerts; // SCHRITTKETTE RUECKWAERTS  sja
+      )     ; 
+      UN    "DB_WW".WW_Mag_ein; // BEFEHL Z-Achse einfahren
+      UN    "I_WW_1_ZYL_GST"; // Z-Hub ist ausgefahren (von FC15)
+      O     "Mx_H5011"; 
+      )     ; 
+      UN    "Mx_H5010"; // hub in spindel aus MAkro
+      =     "DB_WW".WW_Mag_aus; // BEFEHL Z-Achse ausfahren
+
+NETWORK
+TITLE =WZHUB: BEFEHL FAHRE WW-Achse auf Einfahrposition
+
+      U(    ; 
+      U     "DB_WW".Schritt_T[1]; 
+      U     "DB_WW".WW_T_Auftrag_3; // SCHRITT1 WARTEPOS, RICHTEN, WZ-ENTSPANNE
+      U     "DB_WW".WW_Freifahren; // AUFTRAG3 ABLEGEN II ->Z-HUB EINGEFAHREN
+      U     "DB_WW".WW_vorwaerts; // Freifahren nötig
+      UN    "DB_WW".WW_Mag_aus; //sja raus für messe SCHRITTKETTE VORWAERTS
+//      O     
+//      U     "DB_WW".Schritt_T[1]        // SCHRITT1 WARTEPOS, RICHTEN, WZ-ENTSPANNE
+//      U     "DB_WW".WW_T_Auftrag_1      // AUFTRAG1 ABLEGEN I ->Z-HUB AUSGEFAHREN
+//      UN    "M_Reset_Taste"             // RESET Taste    
+//      U     "DB_WW".WW_rueckwaerts      // sja raus für messe SCHRITTKETTE RUECKWAERTS
+      UN    "I_WW_1_ZYL_SPI"; 
+      U     "DB_WZV".Mag1_inPos_WST; // BEFEHL Z-Achse ausfahren
+      O     "Mx_H5010"; // Z-Hub ist eingefahren (von FC15) 
+      )     ; 
+      UN    "Mx_H5011"; 
+      =     "DB_WW".WW_Mag_ein; 
+NETWORK
+TITLE =Hub in Spindelstellung
+
+      U     "Mx_H5010"; 
+      U     "DB_WW".WW_Mag_ein; 
+      O     "DB_WZV".MAG_Hub_einfahren; 
+      R     "Mx_H5010"; 
+NETWORK
+TITLE =Hub in Grundstellung
+
+      U     "Mx_H5011"; 
+      U     "DB_WW".WW_Mag_aus; 
+      R     "Mx_H5011"; 
+NETWORK
+TITLE =WZHUB: Einzelbewegung Freigabe Werkzeug Spindel aus- einfahren
+
+      U(    ; 
+      U     "Mx_X_ACHSE_WZW_POS"; 
+      U     "I_WZ_SPA_geloest"; 
+      U     "O_AL_WZ_Spanner_Loesen"; 
+      O     "M_WW_X_imArbeitsraum"; 
+      )     ; 
+      U     "DB_ACHSE7".E_IndexAxisPos; 
+      U     #EB_Hand_WW; 
+      O     #Frg_Service; 
+      =     L     24.0; 
+      U     L     24.0; 
+      U(    ; 
+      O     "I_WW_Rein_in_GST"; 
+      ON    "DB_WZV".AB_HSK; 
+      O     #Frg_Service; 
+      )     ; 
+      =     #EB_Frg_Wz_ein; 
+      U     L     24.0; 
+      BLD   102; 
+      =     #EB_Frg_Wz_aus; 
+NETWORK
+TITLE =WZHUB: Einzelbewegung Werkzeug aus Spindel ausfahren
+
+      U(    ; 
+      U(    ; 
+      O     "DB_EINRICHTFUNKTION".Bewegung_2_Plus; 
+      O     "DB_EINRICHTFUNKTION".Bewegung_205_Plus; 
+      )     ; 
+      U     #EB_Frg_Wz_aus; 
+      U     #EB_Hand_WW; // BEFEHL Z-Achse ausfahren
+//      O     "DB_WZV".MAG_Hub_einfahren  // xxx sja
+      O     "DB_WW".WW_Mag_aus; // x xx sja
+      O     "DB_WZV".MAG_Hub_ausfahren; 
+      )     ; 
+// =     "DB_WW".ASUP_Rettung.WW_Hub_ausfahren
+
+      UN    "DB_WW".WW_Mag_ein; 
+      UN    "DB_WZV".MAG_Hub_einfahren; 
+      =     #TX_O_WW_1_ZYL_GST; 
+      U     #TX_O_WW_1_ZYL_GST; 
+      S     "DB_WW".O_WW_1_ZYL_GST; 
+      R     "DB_WW".O_WW_1_ZYL_SPI; 
+NETWORK
+TITLE =WZHUB: Einzelbewegung WW-Achse auf Einfahrposition
+
+      U(    ; 
+      U(    ; 
+      O     "DB_EINRICHTFUNKTION".Bewegung_2_Minus; 
+      O     "DB_EINRICHTFUNKTION".Bewegung_205_Minus; 
+      )     ; 
+      U     #EB_Frg_Wz_ein; 
+      U     #EB_Hand_WW; // BEFEHL Z-Achse einfahren
+      O     "DB_WW".WW_Mag_ein; 
+      O     "DB_WZV".MAG_Hub_einfahren; 
+      )     ; 
+
+// =     "DB_WW".ASUP_Rettung.WW_Hub_einfahren
+
+      UN    "DB_WW".WW_Mag_aus; 
+      UN    "DB_WZV".MAG_Hub_ausfahren; 
+      =     #TX_O_WW_1_ZYL_SPI; 
+      U     #TX_O_WW_1_ZYL_SPI; 
+      S     "DB_WW".O_WW_1_ZYL_SPI; 
+      R     "DB_WW".O_WW_1_ZYL_GST; 
+NETWORK
+TITLE =WZHUB: Reset Einzelbewegung WW-Achse wenn nicht in Position
+
+      U     "M_MA_Maschine_Ein"; 
+      U     #EB_Hand_WW; 
+      UN    #TX_O_WW_1_ZYL_GST; 
+      UN    #TX_O_WW_1_ZYL_SPI; 
+      =     L     24.0; 
+      U     L     24.0; 
+      UN    "I_WW_1_ZYL_SPI"; 
+      R     "DB_WW".O_WW_1_ZYL_SPI; 
+      U     L     24.0; 
+      UN    "I_WW_1_ZYL_GST"; 
+      R     "DB_WW".O_WW_1_ZYL_GST; 
+NETWORK
+TITLE =WZHUB: Freigabe Ansteuerung Ventil Hub ein- / ausfahren
+
+      U     "Mx_X_ACHSE_WZW_POS"; 
+      U     "I_WZ_SPA_geloest"; 
+      U     "O_AL_WZ_Spanner_Loesen"; 
+      O     ; 
+      U     "DB_WW".O_WW_1_ZYL_SPI; 
+      U     "I_WW_1_ZYL_SPI"; 
+      O     ; 
+      U     "DB_WW".O_WW_1_ZYL_GST; 
+      U     "I_WW_1_ZYL_GST"; 
+      ON    "Mx_X_ACHSE_WZW_POS"; 
+      =     #Frg_Ventil_Hub; 
+
+NETWORK
+TITLE =WZHUB: Ventil Hub einfahren
+
+      U     #Frg_Ventil_Hub; 
+      U     "DB_WW".O_WW_1_ZYL_SPI; 
+      UN    "DB_WW".VSP_WW_Wechsler; 
+      U(    ; 
+      O     "DB_ACHSE7".E_IndexAxisPos; 
+      O     "O_WW_1_ZYL_SPI"; 
+      )     ; 
+
+      UN    "DB_ACHSE7".E_TCMinus; 
+      UN    "DB_ACHSE7".E_TCPlus; 
+      UN    "DB_SPL".IPLC_ZD_GR1_RUN; 
+      =     "O_WW_1_ZYL_SPI"; 
+NETWORK
+TITLE =WZHUB: Ventil Hub ausfahren
+
+      U     #Frg_Ventil_Hub; 
+      U(    ; 
+      O     "DB_WW".O_WW_1_ZYL_GST; 
+      ON    "DB_ACHSE7".E_IndexAxisPos; 
+      )     ; 
+      UN    "DB_SPL".IPLC_ZD_GR1_RUN; 
+
+      =     "O_WW_1_ZYL_GST"; 
+NETWORK
+TITLE =WZHUB: (WZW1) Einzelbewegung Ansteuerung Anzeige
+
+      U     #EB_Frg_Wz_aus; 
+      =     L     24.0; 
+      BLD   103; 
+      U     #EB_Frg_Wz_ein; 
+      =     L     24.1; 
+      BLD   103; 
+      U     "I_WW_1_ZYL_SPI"; 
+      =     L     24.2; 
+      BLD   103; 
+      U     "I_WW_1_ZYL_GST"; 
+      =     L     24.3; 
+      BLD   103; 
+      U     "O_WW_1_ZYL_SPI"; //"DB_WW".ASUP_Rettung.WW_Hub_ausfahren sja
+      =     L     24.4; 
+      BLD   103; 
+      U     "O_WW_1_ZYL_GST"; //"DB_WW".ASUP_Rettung.WW_Hub_einfahren    sja
+      =     L     24.5; 
+      BLD   103; 
+      CALL "FC_HMI_IO_TO_TLINE" (
+           Freigabe_AST_Hand        := L     24.0,
+           Freigabe_GST_Hand        := L     24.1,
+           Endlage_AST              := L     24.2,
+           Endlage_GST              := L     24.3,
+           Ventil_AST               := L     24.4,
+           Ventil_GST               := L     24.5,
+           Bewegungsnummer          := 2);
+      NOP   0; 
+NETWORK
+TITLE =WZHUB: (WZW7) Einzelbewegung Ansteuerung Anzeige
+
+      U     #EB_Frg_Wz_aus; 
+      =     L     24.0; 
+      BLD   103; 
+      U     #EB_Frg_Wz_ein; 
+      =     L     24.1; 
+      BLD   103; 
+      U     "I_WW_1_ZYL_SPI"; 
+      =     L     24.2; 
+      BLD   103; 
+      U     "I_WW_1_ZYL_GST"; 
+      =     L     24.3; 
+      BLD   103; 
+      U     "O_WW_1_ZYL_SPI"; //"DB_WW".ASUP_Rettung.WW_Hub_ausfahren sja
+      =     L     24.4; 
+      BLD   103; 
+      U     "O_WW_1_ZYL_GST"; //"DB_WW".ASUP_Rettung.WW_Hub_einfahren    sja
+      =     L     24.5; 
+      BLD   103; 
+      CALL "FC_HMI_IO_TO_TLINE" (
+           Freigabe_AST_Hand        := L     24.0,
+           Freigabe_GST_Hand        := L     24.1,
+           Endlage_AST              := L     24.2,
+           Endlage_GST              := L     24.3,
+           Ventil_AST               := L     24.4,
+           Ventil_GST               := L     24.5,
+           Bewegungsnummer          := 205);
+      NOP   0; 
+NETWORK
+TITLE ============ Spindel in / aus Werkzeugwechsler ============
+
+
+
+NETWORK
+TITLE =X-Achse: Befehl auf Warteposition fahren
+
+      U(    ; 
+      U     "DB_WW".WW_vorwaerts; // Schrittkette vorwärts
+      U     "DB_WW".Schritt_T[11]; // SCHRITT 11
+      O     ; 
+      U     "DB_WW".WW_rueckwaerts; // Schrittkette rückwärts
+      U     "DB_WW".Schritt_T[2]; // SCHRITT 2
+      O     ; 
+      U(    ; 
+      O     "DB_WW".WW_vorwaerts; // Schrittkette rückwärts
+      O     "DB_WW".WW_rueckwaerts; // Schrittkette vorwärts
+      )     ; 
+      U     "DB_WW".Schritt_T[7]; // SCHRITT 7
+      )     ; 
+      U     "DB_WW".WW_Freifahren; // ABBRUCH -> FREIFAHREN NOETIG
+      UN    "I_WW_X_inWartePos"; // X-ACHSE AUF WARTE-POS
+      UN    "M_WW_X_imArbeitsraum"; // X-ACHSE NICHT IM WZW 
+      U     "DB_WW".WW_Frg_Ausgaenge; // FREIGABE AUSGAENGE FUER ABLAUF
+      =     "DB_WW".WW_X_auf_WartePos; // Befehl: fahre auf Warteposition X
+
+NETWORK
+TITLE =X-Achse: Befehl auf Wechselposition fahren
+
+      U     "m_null"; 
+      =     "DB_WW".WW_X_auf_WWPos; 
+
+NETWORK
+TITLE =X-Achse: Einzelbewegung Freigabe auf Warteposition
+
+      U(    ; 
+      O     #gespannt; 
+      O     "I_WW_1_ZYL_GST"; 
+      O     #Frg_Service; 
+
+      )     ; 
+      U     #EB_Hand_WW; 
+      =     #EB_Frg_X_WartePos; 
+NETWORK
+TITLE =X-Achse: Einzelbewegung auf Warteposition fahren
+
+      U     "DB_EINRICHTFUNKTION".Bewegung_14_Minus; 
+      U     #EB_Frg_X_WartePos; 
+      U     #EB_Hand_WW; 
+      O     "DB_WW".WW_X_auf_WartePos; // Befehl: fahre auf Warteposition X
+      =     "DB_WW".ASUP_Rettung.X_Warteposition; 
+
+NETWORK
+TITLE =X-Achse: Einzelbewegung Freigabe auf Wechselposition
+
+      U(    ; 
+      O     "I_WW_1_ZYL_GST"; 
+      O     "I_WW_1_ZYL_SPI"; 
+      O     #Frg_Service; 
+      O     "DB_PLC_MD_DB20".UDHex._04_BIT4_EINRICHT_BETR; 
+      )     ; 
+      U     "I_WW_Y_inWWPos"; 
+      U     "I_WW_1_Klappe_auf"; 
+
+      U     "M_Sp_in_M19Pos"; 
+      U     #EB_Hand_WW; 
+      =     #EB_Frg_X_WWPos; 
+NETWORK
+TITLE =X-Achse: Einzelbewegung auf Wechselposition fahren
+
+      U     "DB_EINRICHTFUNKTION".Bewegung_14_Plus; 
+      U     #EB_Frg_X_WWPos; 
+      U     #EB_Hand_WW; 
+      O     "DB_WW".WW_X_auf_WWPos; 
+      =     "DB_WW".ASUP_Rettung.X_Wechselposition; 
+
+NETWORK
+TITLE =X-Achse: Einzelbewegung Ansteuerung Anzeige
+
+      U     #EB_Frg_X_WartePos; //#EB_Frg_X_WWPos
+      =     L     24.0; 
+      BLD   103; 
+      U     #EB_Frg_X_WWPos; 
+      =     L     24.1; 
+      BLD   103; 
+      U     "M_WW_X_imArbeitsraum"; 
+      =     L     24.2; 
+      BLD   103; 
+      U     "Mx_X_ACHSE_WZW_POS"; 
+      =     L     24.3; 
+      BLD   103; 
+      U     "DB_WW".ASUP_Rettung.X_Warteposition; 
+      =     L     24.4; 
+      BLD   103; 
+      U     "DB_WW".ASUP_Rettung.X_Wechselposition; 
+      =     L     24.5; 
+      BLD   103; 
+      CALL "FC_HMI_IO_TO_TLINE" (
+           Freigabe_AST_Hand        := L     24.0,
+           Freigabe_GST_Hand        := L     24.1,
+           Endlage_AST              := L     24.2,
+           Endlage_GST              := L     24.3,
+           Ventil_AST               := L     24.4,
+           Ventil_GST               := L     24.5,
+           Bewegungsnummer          := 14);//176
+      NOP   0; 
+NETWORK
+TITLE =Y-Achse: Freigabe
+
+      UN    "DB_SIEM_NCK".E_SWCamPlus[15]; 
+      UN    "Mx_X_ACHSE_WZW_POS"; 
+      U     "M_Leistung_Steht_an"; 
+      U     "M_Handbetrieb"; // "DB_SIEM_BAG".E_JOG
+      =     #t_AxFrg_y; 
+
+NETWORK
+TITLE =Y-Achse: Fahrbefehl
+
+      O     "DB_ACHSE2_Y".E_TCPlus; 
+      O     "DB_ACHSE2_Y".E_TCMinus; 
+      =     #t_Fahrbefehl_y; 
+NETWORK
+TITLE =Y-Achse: HMI Rettung
+//
+//
+      U     #t_AxFrg_y; 
+      =     L     24.0; 
+      BLD   103; 
+      U     #t_AxFrg_y; 
+      =     L     24.1; 
+      BLD   103; 
+      U     "I_WW_Y_inWWPos"; 
+      =     L     24.2; 
+      BLD   103; 
+      U     "m_null"; 
+      =     L     24.3; 
+      BLD   103; 
+      U     #t_Fahrbefehl_y; 
+      =     L     24.4; 
+      BLD   103; 
+      U     #t_Fahrbefehl_y; 
+      =     L     24.5; 
+      BLD   103; 
+      CALL "FC_HMI_IO_TO_TLINE" (
+           Freigabe_AST_Hand        := L     24.0,
+           Freigabe_GST_Hand        := L     24.1,
+           Endlage_AST              := L     24.2,
+           Endlage_GST              := L     24.3,
+           Ventil_AST               := L     24.4,
+           Ventil_GST               := L     24.5,
+           Bewegungsnummer          := 15);
+      NOP   0; 
+NETWORK
+TITLE =Spindel: Befehl auf Werkzeugwechselposition
+
+      U     "DB_SIEM_NCK".E_SWCamPlus[16]; 
+      =     "M_Sp_in_M19Pos"; 
+
+NETWORK
+TITLE =Spindel: HMI Rettung
+//Spindel
+      U     "m_null"; 
+      =     L     24.0; 
+      BLD   103; 
+      U     "M_Leistung_Steht_an"; 
+      U     "I_WZ_SPA_gespannt"; 
+      UN    "Mx_XAx_in_WZW_RAUM"; 
+      U     "M_Handbetrieb"; // "DB_SIEM_BAG".E_JOG
+      =     L     24.1; 
+      BLD   103; 
+      U     "m_null"; 
+      =     L     24.2; 
+      BLD   103; 
+      U     "M_Sp_in_M19Pos"; 
+      =     L     24.3; 
+      BLD   103; 
+      U     "m_null"; 
+      =     L     24.4; 
+      BLD   103; 
+      U     "m_null"; 
+      =     L     24.5; 
+      BLD   103; 
+      CALL "FC_HMI_IO_TO_TLINE" (
+           Freigabe_AST_Hand        := L     24.0,
+           Freigabe_GST_Hand        := L     24.1,
+           Endlage_AST              := L     24.2,
+           Endlage_GST              := L     24.3,
+           Ventil_AST               := L     24.4,
+           Ventil_GST               := L     24.5,
+           Bewegungsnummer          := 16);
+      NOP   0; 
+NETWORK
+TITLE ========= Werkzeug im Magazin entsichern Wechselstelle ========
+
+
+
+NETWORK
+TITLE =WW_MagTasche: BEFEHL Werkzeug entsichern Spindelseite
+
+      U(    ; 
+      U(    ; 
+      U     "DB_WW".Schritt_T[1]; 
+      U     "DB_WW".WW_T_Auftrag_3; 
+      U(    ; 
+      O     "I_WW_1_ZYL_GST"; 
+      ON    "DB_WW".WW_Freifahren; 
+      )     ; 
+      O     ; 
+      U(    ; 
+      O     "DB_WW".Schritt_T[11]; 
+      O     "DB_WW".Schritt_T[10]; 
+      )     ; 
+      U     "DB_WW".WW_T_Auftrag_2; 
+      U     "I_WW_1_ZYL_GST"; 
+      )     ; 
+      U     "DB_WW".WW_vorwaerts; 
+      O     ; 
+      U     "DB_WW".Schritt_T[3]; 
+      U     "DB_WW".WW_T_Auftrag_3; 
+      U     "DB_WW".WW_rueckwaerts; 
+      U     "I_WW_1_ZYL_GST"; 
+
+      )     ; 
+      S     "DB_WW".WW_Zange_auf; 
+      U(    ; 
+      U(    ; 
+      U     "DB_WW".Schritt_T[3]; 
+      U     "DB_WW".WW_T_Auftrag_3; 
+      O     "DB_WW".Schritt_T[12]; 
+      )     ; 
+      U     "DB_WW".WW_vorwaerts; 
+      O     ; 
+      U(    ; 
+      U     "DB_WW".Schritt_T[10]; 
+      U     "Mx_X_ACHSE_WZW_POS"; 
+      O     "DB_WW".Schritt_T[1]; 
+      O     "DB_WW".Schritt_T[0]; 
+      )     ; 
+
+      U     "DB_WW".WW_rueckwaerts; 
+      )     ; 
+      R     "DB_WW".WW_Zange_auf; 
+      NOP   0; 
+NETWORK
+TITLE =WW_MagTasche: Ausgang Werkzeug entsichern Spindelseite
+
+      U(    ; 
+      U     "DB_WW".WW_Zange_auf; // BEFEHL WZ-ZANGE AUF ->MAGAZIN ENTSICHERN
+      UN    "DB_WW".WW_Wz_loesen; // BEFEHL Spindelspanner oeffnen
+      U     "DB_ACHSE7".E_IndexAxisPos; 
+      O     ; 
+      U(    ; 
+      U     "M_H5000_H5004_WW_Start"; 
+      U     "DB_WW".Schritt_T[1]; 
+      O     "DB_WW".Schritt_T[2]; // SCHRITT 2 MAGAZINPOS, ZANGE AUF, WZ-ENTSPANNEN
+      )     ; 
+      U     "DB_WW".WW_T_Auftrag_3; // AUFTRAG3 ABLEGEN II ->Z-HUB EINGEFAHREN
+      O     ; 
+      U     "DB_WW".Schritt_T[11]; // SCHRITT11 WZ-ZANGE AUF, X-ACHSE WARTPOS
+      U     "DB_WW".WW_T_Auftrag_2; // AUFTRAG2 HOLEN II ->Z-HUB EINGEFAHREN
+      )     ; 
+      U     #AB_mit_Entriegeln; 
+      =     "O_WM_WZ_ZYL_RELEASE2"; // WZ-Halter öffnen (Spindelseite) Magazin 1
+
+NETWORK
+TITLE ========= Werkzeug im Magazin entsichern Ladestelle ========
+
+
+
+NETWORK
+TITLE =WM_MagTasche: Ausgang Werkzeug entsichern an BELADESTATION
+
+      UN    "DB_WW".WW_T_Auftrag_1; // AUFTRAG1 ABLEGEN I ->Z-HUB AUSGEFAHREN
+      UN    "DB_WW".WW_T_Auftrag_2; // AUFTRAG2 HOLEN II ->Z-HUB EINGEFAHREN
+      UN    "DB_WW".WW_T_Auftrag_3; // AUFTRAG3 ABLEGEN II ->Z-HUB EINGEFAHREN
+      UN    "DB_WW".WW_T_Auftrag_4; // AUFTRAG4 HOLEN I ->Z-HUB AUSGEFAHREN
+      UN    "DB_WW".Schritt_T[7]; // SCHRITT7 SONDERSCHRITT
+      UN    "I_WM_Taste_rechts"; // Rechtslauf WZ-Magazin
+      UN    "I_WM_Taste_links"; // Linkslauf WZ-Magazin
+      U(    ; 
+      O     "DB_WZV".Mag1_inPos_LST; 
+      O     "DB_ACHSE7".E_IndexAxisPos; // TEILUNGSACHSE WZ-MAG 1 IN POSITION
+      O     "DB_WW".M1_LS_entsichern; // Freigabe Werkzeug entsichern Beladestation 1
+      )     ; 
+      =     #FRG_WZ_MAN_RELEASE; 
+
+//      U     #FRG_WZ_MAN_RELEASE
+//      UN    "I_WM_Energiefreigabe"      // Wz-Magazintür geschlossen
+//      UN    "O_Bremse_oeffnen_Ax_7"     //"O_Bremse_oeffnen_Ax_7"// Bremse lüften WZ-Magazin 1
+//      U     "I_WM_WZ_MAN_RELEASE"       // Fussschalter Werkzeughalter
+//      O     
+//      U     "O_WM_WZ_ZYL_RELEASE"       // WZ-Halter öffnen (Beladestation) Magazin 1
+//      U     "I_WM_WZ_MAN_RELEASE"       // Fussschalter Werkzeughalter
+//      =     "O_WM_WZ_ZYL_RELEASE"       // WZ-Halter öffnen (Beladestation) Magazin 1
+
+NETWORK
+TITLE =WM_MagTasche: Werkzeug wurde an BELADESTATION entsichert
+// BEFEHL DIE WZ-ZANGE OEFFNEN AM DER BELADESTATION MIT DEM
+// FUSSSCHALTER
+      U     "O_WM_WZ_ZYL_RELEASE"; // WZ-Halter öffnen (Beladestation) Magazin 1
+      S     "DB_WW".M1_LS_entsichern; // Freigabe Werkzeug entsichern Beladestation 1
+
+      U     #WZM_Fahrbefehl; 
+      R     "DB_WW".M1_LS_entsichern; // Freigabe Werkzeug entsichern Beladestation 1
+      NOP   0; 
+
+NETWORK
+TITLE ========== Werkzeug entspannen im Ablauf ===========
+
+
+
+NETWORK
+TITLE =WZ-Spanner: Einzelbewegung Freigabe Werkzeug entspannen
+
+      O     #EB_Hand_WW; 
+      O     #Frg_Service; 
+      =     #EB_Frg_entspannen; 
+NETWORK
+TITLE =WZ-Spanner: Einzelbewegung Werkzeug entspannen
+
+      U     #EB_Frg_entspannen; 
+      U     "DB_EINRICHTFUNKTION".Bewegung_5_Minus; 
+      =     #EB_entspannen; 
+
+NETWORK
+TITLE =WZ-Spanner: Einzelbewegung Freigabe Werkzeug spannen
+
+      O     #EB_Hand_WW; 
+      O     #Frg_Service; 
+      =     #EB_Frg_spannen; 
+
+NETWORK
+TITLE =WZ-Spanner: Einzelbewegung Werkzeug spannen
+
+      U     #EB_Frg_spannen; 
+      U     "DB_EINRICHTFUNKTION".Bewegung_5_Plus; 
+      =     #EB_spannen; 
+
+NETWORK
+TITLE =WZ-Spanner: Einzelbewegung Ansteuerung Anzeige
+
+      U     #EB_Frg_entspannen; 
+      =     L     24.0; 
+      BLD   103; 
+      U     #EB_Frg_spannen; 
+      =     L     24.1; 
+      BLD   103; 
+      U     "I_WZ_SPA_geloest"; 
+      =     L     24.2; 
+      BLD   103; 
+      U     #gespannt; 
+      =     L     24.3; 
+      BLD   103; 
+      U     "O_AL_WZ_Spanner_Loesen"; 
+      =     L     24.4; 
+      BLD   103; 
+      UN    "O_AL_WZ_Spanner_Loesen"; 
+      =     L     24.5; 
+      BLD   103; 
+      CALL "FC_HMI_IO_TO_TLINE" (
+           Freigabe_AST_Hand        := L     24.0,
+           Freigabe_GST_Hand        := L     24.1,
+           Endlage_AST              := L     24.2,
+           Endlage_GST              := L     24.3,
+           Ventil_AST               := L     24.4,
+           Ventil_GST               := L     24.5,
+           Bewegungsnummer          := 5);
+      NOP   0; 
+NETWORK
+TITLE =WZ-Spanner: Einzelbewegung Ansteuerung Anzeige
+//    U     #EB_Frg_entspannen
+//      =     L24.0
+//      BLD   103
+//      U     #EB_Frg_spannen
+//      =     #tx_Y_WP_frg
+//      BLD   103
+//      U     "I_WZ_SPA_geloest"
+//      =     L24.2
+//      BLD   103
+//      U     #gespannt
+//      =     L     24.3
+//      BLD   103
+//      U     "O_AL_WZ_Spanner_Loesen"
+//      =     L     24.4
+//      BLD   103
+//      UN    "O_AL_WZ_Spanner_Loesen"
+//      =     L     24.5
+//      BLD   103
+//      CALL  "FC_HMI_IO_TO_TLINE"
+//       Freigabe_AST_Hand:=L24.0
+//       Freigabe_GST_Hand:=#tx_Y_WP_frg
+//       Endlage_AST      :=L24.2
+//       Endlage_GST      :=L24.3
+//       Ventil_AST       :=L24.4
+//       Ventil_GST       :=L24.5
+//       Bewegungsnummer  :=15
+//      NOP   0
+//
+
+
+NETWORK
+TITLE =WZ-Spanner: BEFEHL WZ ENTSPANNEN
+
+      U(    ; 
+      U     "DB_WW".Schritt_T[2]; // SCHRITT 2 MAGAZINPOS, ZANGE AUF, WZ-ENTSPANNEN
+      U     "DB_WW".WW_T_Auftrag_1; // AUFTRAG1 ABLEGEN I ->Z-HUB AUSGEFAHREN
+      U     "I_E_gerichtet"; 
+      UN    "M_WW_X_imArbeitsraum"; // X-ACHSE NICHT IM WERKZEUGWECHSLER
+      O     ; 
+      U(    ; 
+      U     "DB_WW".Schritt_T[3]; // SCHRITT3 QUITT, WZ ENTSPANNEN
+      U     "Mx_X_ACHSE_WZW_POS"; // X-ACHSE IST AUF MAGAZINPOSITION
+      O     ; 
+      U     "DB_WW".Schritt_T[2]; // SCHRITT2 MAGPOS, WZ-ZANGE AUF
+      UN    "M_WW_X_imArbeitsraum"; 
+      UN    "DB_WW".WW_Freifahren; // ABBRUCH FREIFAHREN NÖTIG
+      )     ; 
+      U     "DB_WW".WW_T_Auftrag_3; // AUFTRAG3 ABLEGEN II ->Z-HUB EINGEFAHREN
+      O     ; 
+      U     "DB_WW".Schritt_T[8]; // SCHRITT 8 Z-HUB EINGEFAHREN
+      U     "DB_WW".WW_T_Auftrag_2; // AUFTRAG2 HOLEN II ->Z-HUB EINGEFAHREN
+      O     ; 
+      U     "DB_WW".Schritt_T[6]; // SCHRITT 6
+      U     "DB_WW".WW_T_Auftrag_3; // AUFTRAG3 ABLEGEN II ->Z-HUB EINGEFAHREN
+      )     ; 
+      U     "DB_WW".WW_vorwaerts; // SCHRITTKETTE VORWAERTS
+      O     ; 
+      U(    ; 
+      U     "DB_WW".Schritt_T[10]; // SCHRITT10 WZ-SPANNEN
+      U     "Mx_X_ACHSE_WZW_POS"; // X-ACHSE IST AUF MAGAZINPOSITION
+      O     ; 
+      U     "DB_WW".Schritt_T[8]; // SCHRITT 8 Z-HUB EINGEFAHREN
+      U     "DB_WW".WW_T_Auftrag_2; // AUFTRAG2 HOLEN II ->Z-HUB EINGEFAHREN
+      )     ; 
+      U     "DB_WW".WW_rueckwaerts; // SCHRITTKETTE RUECKWAERTS
+      S     "DB_WW".WW_Wz_loesen; // BEFEHL WZ-SPANNER ENTSPANNEN
+      R     "DB_WW".WW_Wz_spannen; // BEFEHL WZ-SPANNER SPANNEN
+      S     "M_Auto_WZSP_Auf"; 
+
+NETWORK
+TITLE =WZ-Spanner: BEFEHL WZ SPANNEN
+
+      U(    ; 
+      O     "DB_WW".Schritt_T[10]; 
+      O     "DB_WW".Schritt_T[12]; 
+      )     ; 
+      U     "DB_WW".WW_vorwaerts; 
+      O     ; 
+      U(    ; 
+      U     "DB_WW".Schritt_T[1]; 
+      U     "DB_WW".WW_T_Auftrag_1; 
+      O     ; 
+      U(    ; 
+      O     "DB_WW".Schritt_T[3]; 
+      O     "DB_WW".Schritt_T[2]; 
+      )     ; 
+      U     "DB_WW".WW_T_Auftrag_3; 
+      )     ; 
+      U     "DB_WW".WW_rueckwaerts; 
+      O     ; 
+      U(    ; 
+      O     "DB_WW".WW_vorwaerts; 
+      O     "DB_WW".WW_rueckwaerts; 
+      )     ; 
+      U     "DB_WW".Schritt_T[7]; 
+      U     "DB_WW".WW_Freifahren; 
+      O     "DB_WW".Schritt_T[0]; 
+      S     "DB_WW".WW_Wz_spannen; 
+      R     "DB_WW".WW_Wz_loesen; 
+      R     "M_Auto_WZSP_Auf"; 
+
+NETWORK
+TITLE =WZ-Spanner: Ausgang Spanner öffnen
+// WZ IN DER SPINDEL WIRD GESPANNT
+      U     "DB_WW".WW_Wz_loesen; // BEFEHL WZ-SPANNER ENTSPANNEN
+      UN    "DB_WW".WW_Wz_spannen; // BEFEHL WZ-SPANNER SPANNEN
+      U(    ; 
+      U     "DB_WW".Schritt_T[8]; // SCHRITT 8 Z-HUB EINGEFAHREN
+      U     "DB_WW".WW_T_Auftrag_2; // AUFTRAG2 HOLEN II ->Z-HUB EINGEFAHREN
+      O     ; 
+      U     "DB_WW".WW_T_Auftrag_3; // AUFTRAG3 ABLEGEN II ->Z-HUB EINGEFAHREN
+      U     "DB_WW".Schritt_T[6]; 
+      O     "I_E_gerichtet"; // SPINDEL GERICHTET
+      O     "DB_WW".WW_Mag_aus; // BEFEHL MAGAZIN AUSFAHREN
+      O     "DB_WW".WW_Mag_ein; // BEFEHL MAGAZIN EINFAHREN
+      O     "M_H5002_Wz_loesen"; 
+      )     ; 
+      U     "M_MA_Maschine_Ein"; // Antriebe eingeschaltet
+      =     "DB_WW".WW_Spanner_auf; 
+NETWORK
+TITLE =Ausgang SPINDELKONUS AUSBLASEN
+
+      U(    ; 
+      O     "DB_WW".WW_Mag_aus; // BEFEHL Z-Achse ausfahren
+      O     "DB_WW".WW_Mag_ein; // BEFEHL Z-Achse einfahren
+      O     ; 
+      U     "M_H5002_Wz_loesen"; 
+      UN    "I_WW_1_ZYL_GST"; // Z-HUB IST AUSGEFAHREN
+      )     ; 
+      U     "I_AL_Kabine_Verriegelt"; // Arbeitsraumtür geschlossen und verriegelt
+      =     "O_WZKegel_Blasluft"; // Spindelkonus ausblasen
+
+NETWORK
+TITLE =Positive Flanke Taste quittieren Entladen
+
+      U     "I_WM_WZ_entnehmen"; 
+      FP    DB179.DBX    9.7; 
+      =     #t_PI_T_quitt_Entladen; 
+NETWORK
+TITLE =Pneumatikzyl. Verriegelung WZ lösen
+
+      U     "DB_WZV".Mag1_inPos_LST; 
+      U     "DB_WZV".Mag1_Laden_aktiv; // Be- Entladen Magazin 1 oder Spindel aktiv
+      U(    ; 
+      O     "TMLoadIF".IF[2].Loading; // Befehl Beladen
+      O     "TMLoadIF".IF[2].Unloading; // Befehl Entladen
+      )     ; 
+      FP    "DB_WW".PF_Mag_in_pos_LST; 
+      O     ; 
+      UN    "I_WM_WZ_MAN_CLAMP"; 
+      U(    ; 
+      UN    "DB_WZV".Mag1_Laden_aktiv; // Be- Entladen Magazin 1 oder Spindel aktiv
+      U     #t_PI_T_quitt_Entladen; 
+      O     "I_WM_WZ_MAN_RELEASE"; 
+      )     ; 
+      U     #FRG_WZ_MAN_RELEASE; 
+      O     ; 
+
+      U     "M_MA_FP_Maschine_Ein"; 
+      U     "I_WM_WZ_ZYL_RELEASE"; 
+      S     "O_WM_WZ_ZYL_RELEASE"; 
+      R     "O_WM_WZ_ZYL_CLAMP"; 
+NETWORK
+TITLE =Pneumatikzyl. Verriegelung WZ verriegeln
+
+      U     "I_AL_MASCHINE_EIN"; 
+      U     "I_WM_Beladung_zu"; 
+      FP    "DB_WW".PF_WZ_Beladetuer_zu; 
+      U     "I_WM_WZ_ZYL_RELEASE"; 
+      O     ; 
+
+      UN    "I_WM_WZ_MAN_RELEASE"; 
+      U(    ; 
+      UN    "DB_WZV".Mag1_Laden_aktiv; // Be- Entladen Magazin 1 oder Spindel aktiv
+      U     "I_WM_WZ_einlegen"; 
+      O     "I_WM_WZ_MAN_CLAMP"; 
+      )     ; 
+      O     ; 
+      U     "M_MA_FP_Maschine_Ein"; 
+      U     "I_WM_WZ_ZYL_CLAMP"; 
+      R     "O_WM_WZ_ZYL_RELEASE"; 
+      S     "O_WM_WZ_ZYL_CLAMP"; 
+NETWORK
+TITLE ========== Vorschubsperren ===============
+
+
+
+NETWORK
+TITLE =VSP, alle Achsen
+
+      UN    "I_WW_1_Klappe_zu"; // Magazinklappe geschlossen
+      U(    ; 
+      ON    "I_AL_Kabine_Verriegelt"; 
+      ON    "I_WM_Energiefreigabe"; // Wz-Magazintür geschlossen
+      )     ; 
+      =     #Achssperre; 
+
+NETWORK
+TITLE =VSP-X, Werkzeugwechsler
+//Die X-Achse soll bei Überschreiten der Warteposition gesperrt werden:
+//1. Wenn kein Verfahrschritt (1,2,7,11,12) und kein Werkzeugvermessen ansteht, 
+//   ausser der Wechsler ist noch nicht initialisiert (kein Schrittmerker) oder   
+// 
+//   ist in Grundstellung oder es steht Werkzeugvermessen an. Dann darf die 
+//   Freigabe aber auch nur im JOG und mit Fahrbefehl X- gegeben werden.
+//2. Wenn im Schritt 7 Automatik ansteht oder im Freifahrmodus Fahrbefehl X- 
+//   ansteht.
+//3. Wenn im Schritt 1,2,11 oder 12 im Freifahrmodus Fahrbefehl X- ansteht.
+//4. Wenn im Schritt 1 oder 2 die Spindel nicht gerichtet ist. (nur AUTO)
+//5. Wenn die Magazinklappe nicht geöffnet ist.(nur bei elektrischer Klappe)
+//6. Wenn im Verfahrschritt keine Freigabe Ausgänge ansteht
+//7. Wenn im Schritt 2 oder 11 die Werkzeugtasche nicht verriegelt ist.
+//
+      UN    "M_WW_X_imArbeitsraum"; // X-ACHSE NICHT IM WERKZEUGWECHSLER
+      UN    #Bild_MAGEinstellung; 
+      UN    "M_H5000_H5004_WW_Start"; 
+      U(    ; 
+
+      UN    "DB_WW".Schritt_T[1]; // SCHRITT 1 Spindel Richten
+      UN    "DB_WW".Schritt_T[2]; // SCHRITT 2 MAGAZINPOS, ZANGE AUF, WZ-ENTSPANNEN
+      UN    "DB_WW".Schritt_T[7]; // SCHRITT 7 Fahren der X-Achse nur beim Freifahren
+      UN    "DB_WW".Schritt_T[11]; // SCHRITT 11
+      UN    "DB_WW".Schritt_T[12]; // SCHRITT 12 WZ-ZANGE ZU, Z-HUB EINFAHREN
+      U(    ; 
+      U     #Schritt_gesetzt; 
+      UN    "DB_WW".Schritt_T[0]; // Grundschritt
+      ON    #Handbetrieb; 
+      O     ; // Fahrbefehl X minus
+      UN    "DB_ACHSE1_X".E_TCMinus; 
+
+      U(    ; 
+      ON    "DB_ACHSE1_X".E_TCPlus; // SCHRITT 7
+      ON    "DB_PLC_MD_DB20".UDHex._04_BIT4_EINRICHT_BETR; 
+      )     ; // ABBRUCH FREIFAHREN NÖTIG
+      )     ; // Fahrbefehl X minus
+      O     ; // ABBRUCH FREIFAHREN NÖTIG
+      U     "DB_WW".Schritt_T[7]; 
+
+      U(    ; 
+      U     "DB_WW".WW_Freifahren; 
+      UN    "DB_ACHSE1_X".E_TCMinus; // SCHRITT 1 Spindel Richten
+      ON    "DB_WW".WW_Freifahren; // SCHRITT 2 MAGAZINPOS, ZANGE AUF, WZ-ENTSPANNEN
+      )     ; // SCHRITT 11
+      O     ; // SCHRITT 12 WZ-ZANGE ZU, Z-HUB EINFAHREN
+      U(    ; 
+      O     "DB_WW".Schritt_T[1]; // ABBRUCH FREIFAHREN NÖTIG
+      O     "DB_WW".Schritt_T[2]; // Fahrbefehl X minus
+
+      O     "DB_WW".Schritt_T[11]; 
+      O     "DB_WW".Schritt_T[12]; // Magazinklappe geöffnet
+      )     ; // Grundschritt
+
+      U     "DB_WW".WW_Freifahren; 
+      UN    "DB_ACHSE1_X".E_TCMinus; 
+      O     ; // SCHRITT 1 Spindel Richten
+      UN    "I_WW_1_Klappe_auf"; // SCHRITT 2 MAGAZINPOS, ZANGE AUF, WZ-ENTSPANNEN
+      UN    "DB_WW".Schritt_T[0]; // SCHRITT 11
+      O     ; // SCHRITT 12 WZ-ZANGE ZU, Z-HUB EINFAHREN
+      U(    ; 
+      O     "DB_WW".Schritt_T[1]; // FREIGABE AUSGAENGE FUER ABLAUF
+
+      O     "DB_WW".Schritt_T[2]; 
+      O     "DB_WW".Schritt_T[11]; 
+      O     "DB_WW".Schritt_T[12]; // SCHRITT 2 MAGAZINPOS, ZANGE AUF, WZ-ENTSPANNEN
+      )     ; // AUFTRAG3 ABLEGEN II ->Z-HUB EINGEFAHREN
+      UN    "DB_WW".WW_Frg_Ausgaenge; 
+      O     ; // SCHRITT11 WZ-ZANGE AUF, X-ACHSE WARTPOS
+      U(    ; // AUFTRAG2 HOLEN II ->Z-HUB EINGEFAHREN
+      U     "DB_WW".Schritt_T[2]; 
+      U     "DB_WW".WW_T_Auftrag_3; // WZ-Halter offen Spindelseite
+      O     ; 
+
+      U     "DB_WW".Schritt_T[11]; 
+      U     "DB_WW".WW_T_Auftrag_2; 
+      )     ; 
+      UN    "I_WW_MagTasche_auf"; 
+      U     #AB_mit_Entriegeln; 
+
+      )     ; 
+      UN    "DB_WW".ASUP_Rettung.X_Wechselposition; 
+      UN    "DB_WW".ASUP_Rettung.X_Warteposition; 
+      O     #Achssperre; 
+      =     "DB_WW".VSP_X_Wechsler; 
+NETWORK
+TITLE =_701303 Vorschubsperre X Werkzeugwechsler
+
+      U     "DB_WW".VSP_X_Wechsler; 
+      UN    "DB_ACHSE1_X".E_ExactFine; 
+      =     "DB_FEHLERMELDUNG".MELDUNG2._701303; 
+
+NETWORK
+TITLE =VSP-Y, Werkzeugwechsler
+// Die Y-Achse soll bei Überschreiten der Warteposition gesperrt werden:
+// 1. Wenn Freifahren nötig ansteht.
+// 2. Wenn der WZW in keinem Verfahrschritt (1,2,11,12) steht.
+//    Für die freigegebenen Schritte ist Voraussetzung dass vorwärts ansteht.
+      UN    "M_WW_X_imArbeitsraum"; // X-ACHSE NICHT IM WERKZEUGWECHSLER
+      UN    #Bild_MAGEinstellung; 
+      U(    ; 
+      UN    "DB_WW".Schritt_T[1]; 
+      UN    "DB_WW".Schritt_T[2]; 
+      UN    "DB_WW".Schritt_T[11]; 
+      UN    "DB_WW".Schritt_T[12]; 
+//      ON    "DB_WW".WW_vorwaerts
+      O     "DB_WW".WW_Freifahren; 
+      )     ; 
+      O     #Achssperre; 
+      =     "DB_WW".VSP_Y_Wechsler; 
+
+NETWORK
+TITLE =Fehler Vorschubsperre Y Werkzeugwechsler
+
+      U     "DB_WW".VSP_Y_Wechsler; 
+      UN    "DB_ACHSE2_Y".E_ExactFine; 
+      =     #F_VSP_Y_WW; 
+
+NETWORK
+TITLE =VSP-Z, Werkzeugwechsler
+
+      U     #Achssperre; 
+      =     "DB_WW".VSP_Z_Wechsler; 
+
+NETWORK
+TITLE =_701305 Vorschubsperre Z Werkzeugwechsler
+
+      U     "DB_WW".VSP_Z_Wechsler; 
+      UN    "DB_ACHSE3_Z".E_ExactFine; 
+      =     "DB_FEHLERMELDUNG".MELDUNG2._701305; // VS-SP-Z, Werkzeugwechsler
+
+NETWORK
+TITLE =VSP-M, Bohrerbruchkontrolle nicht in Grundstellung
+
+      ON    "I_WZB_Parkstellung"; 
+      O     "O_WZB_Messung_Start"; 
+      =     #VSP_M_BBK; 
+NETWORK
+TITLE =VSP-M, Magazin nicht in Position aus Spindel ausgefahren
+//Damit im automatischen Werkzeugwechselablauf ein Verschleifen von Hub- und Dreh-
+//achse möglich ist, darf in den Schritten 6..8 keine Vorschubsperre gegeben 
+//werden.
+      U(    ; 
+      UN    "DB_WW".Schritt_T[6]; 
+      UN    "DB_WW".Schritt_T[7]; 
+      UN    "DB_WW".Schritt_T[8]; 
+      O     "DB_WW".WW_Freifahren; 
+      O     "DB_CONFIG".ANWAHL_DURCH_USER_DATA.WZW_RAD_MIT_ZYLINDER; 
+      )     ; 
+      UN    "I_WW_1_ZYL_GST"; 
+      UN    "I_WW_ZYL1_FRG_MAG"; 
+      =     #VSP_M_aus_n; 
+NETWORK
+TITLE =VSP-M, Werkzeugwechsler
+// FREIGABE ZUM DREHEN DES MAGAZIN. BEI FEHLEN VON MERKER M76.3 MUSS
+// ACHSE DES MAGAZINS SOFORT STEHEN BLEIBEN.
+//   ON    "I_WM_WZ_ZYL_CLAMP"         // WZ-Halter geschlossen
+//    ON    #HalterSp_zu
+//   U     "DB_ACHSE7".E_IndexAxisPos  // "DB_ACHSE7".E_ExactFine
+      UN    #HalterSp_zu; 
+      U     "DB_ACHSE7".E_IndexAxisPos; // "DB_ACHSE7".E_ExactFine
+      O     #Achssperre; 
+      =     #VSP_M_Wechsler; 
+
+NETWORK
+TITLE =VSP-M, Waschstation nicht in Grundstellung
+
+      U(    ; 
+      ON    "I_WW_Rein_in_GST"; // HSK-Spuelen eingefahren
+      O     "O_WW_Hub_ZYL_in_Rein"; // HSK-Spuelen ausfahren
+      )     ; 
+      U     "DB_WZV".AB_HSK; // ABST: Werkzeugwaschen
+      =     #VSP_M_KR_GRSTn; 
+
+NETWORK
+TITLE =Positive Flanke Grundstellung Werkzeug entriegeln Ladestation
+
+      U     "I_WM_WZ_ZYL_CLAMP"; 
+      FP    "DB_WW".PF_WZ_LS_GST; 
+      =     #PI_WZ_LS_GST; 
+
+NETWORK
+TITLE =Werkzeug wurde richtig eingelegt
+
+      U(    ; 
+      O     "I_WM_WZ_RPL_CLAMP"; 
+      O     ; 
+      U     "M_MA_FP_Maschine_Ein"; 
+      UN    "DB_ACHSE7".E_IndexAxisPos; 
+      )     ; 
+      S     "DB_WW".WZ_richtig_eingelegt; 
+      U     #PI_WZ_LS_GST; 
+      UN    "I_WM_WZ_RPL_CLAMP"; 
+      R     "DB_WW".WZ_richtig_eingelegt; 
+      NOP   0; 
+NETWORK
+TITLE =VSP-M, Werkzeug in Ladestation nicht gesichert
+//    
+      ON    "I_WM_WZ_ZYL_CLAMP"; 
+      O     "O_WM_WZ_ZYL_RELEASE"; // WZ-Halter geschlossen
+      ON    "DB_WW".WZ_richtig_eingelegt; 
+      =     #VSP_M_Ls_GRSTn; // WZ-Halter öffnen (Beladestelle) Magazin 1
+NETWORK
+TITLE =VSP-M, Werkzeugwechsler
+
+      O     #VSP_M_BBK; 
+      O     #VSP_M_aus_n; 
+      O     #VSP_M_Wechsler; 
+      O     #VSP_M_KR_GRSTn; 
+      O     #VSP_M_Ls_GRSTn; 
+      =     "DB_WW".VSP_WZM_Wechsler; 
+
+NETWORK
+TITLE =VSP-M, Verzögerung Fehlermeldung
+
+      U     "DB_WW".VSP_WZM_Wechsler; 
+      UN    "DB_ACHSE7".E_IndexAxisPos; 
+      L     S5T#7S; 
+      SE    "Te_FM_WW_Teller"; 
+
+NETWORK
+TITLE =701306 "MEL, Vorschubsperre Magazin Werkzeugwechsler"
+
+      U(    ; 
+      O(    ; 
+      L     "DB_OEM".Bildnummer; 
+      L     3; 
+      <>I   ; 
+      )     ; 
+      ON    "DB_PLC_MD_DB20".UDHex._04_BIT4_EINRICHT_BETR; 
+      )     ; 
+      U     #VSP_M_Wechsler; 
+      U     "Te_FM_WW_Teller"; 
+      =     "DB_FEHLERMELDUNG".MELDUNG2._701306; 
+NETWORK
+TITLE =701307 Vorschubsperre Magazin Waschstation nicht in Grundst
+
+      U     #VSP_M_KR_GRSTn; 
+      U     "Te_FM_WW_Teller"; 
+      =     "DB_FEHLERMELDUNG".MELDUNG2._701307; // VS-SP-M, Waschstation nicht in Grundstellung
+
+NETWORK
+TITLE =701308 VSP Magazin Bohrerbruchkontrolle nicht in Grundstellung
+
+      U     #VSP_M_BBK; 
+      U     "Te_FM_WW_Teller"; 
+      =     "DB_FEHLERMELDUNG".MELDUNG2._701308; 
+
+NETWORK
+TITLE =701309 VSP, Magazin nicht in Position aus Spindel ausgefahren
+
+      U     #VSP_M_aus_n; 
+      U     "Te_FM_WW_Teller"; 
+      =     "DB_FEHLERMELDUNG".MELDUNG2._701309; 
+
+NETWORK
+TITLE =700363 Warnung: Werkzeug in Ladestation nicht gesichert
+
+      U     #VSP_M_Ls_GRSTn; 
+      UN    "DB_ACHSE7".E_ExactFine; 
+      =     "DB_FEHLERMELDUNG".WARNUNG3._700363; 
+
+NETWORK
+TITLE =511214: Meldung: Werkzeug in Ladestation nicht gesichert
+
+      U     #VSP_M_Ls_GRSTn; 
+      U     "TE_MASCHINE_EIN"; 
+      U     "DB_ACHSE7".E_IndexAxisPos; 
+      =     "DB_FEHLERMELDUNG".MELDEFENSTER2._511214_WZ_NICHT_GESICH; 
+NETWORK
+TITLE =_700434 VS-H, ENDSCHALTERSTOERUNG Werkzeugwechsel
+// FEHLERAUSWERTUNG DER EINGAENGE DES WZ-WECHSLERS
+// 1.TEIL GEGENSEITIGE AUSWERTUNG -> VSP
+// 2.TEIL WARTEN AUF RUECKMELDUNGEN -> NUR ANZEIGE
+      U     "M_Ruecksetze_Fehler"; // FEHLERMELDUNG LOESCHEN
+      R     "DB_FEHLERMELDUNG".VS_Halt._700434; // VS-H, Endschalterfehler Werkzeugwechsler
+
+      U(    ; 
+      U     #gespannt_mWz; 
+      U     "I_WZ_SPA_geloest"; 
+      O     ; 
+      U     #gespannt_oWz; 
+      U     "I_WZ_SPA_geloest"; 
+      O     ; 
+      U     "I_WW_1_ZYL_GST"; 
+      U     "I_WW_1_ZYL_SPI"; 
+      O     ; 
+      U     "I_WW_MagTasche_zu"; 
+      U     "I_WW_MagTasche_auf"; 
+      O     ; 
+      U     "I_WW_1_Klappe_auf"; 
+      U     "I_WW_1_Klappe_zu"; 
+      O     ; 
+
+      U     "I_WM_WZ_ZYL_RELEASE"; 
+      U     "I_WM_WZ_ZYL_CLAMP"; 
+      )     ; 
+      S     "DB_FEHLERMELDUNG".VS_Halt._700434; 
+      NOP   0; 
+NETWORK
+TITLE ============= Überwachung Endposition ==========
+
+
+
+NETWORK
+TITLE =Fehler MAGAZIN NICHT AUSGEFAHREN
+
+      UN    "I_WW_1_ZYL_GST"; // Z-HUB IST AUSGEFAHREN
+      U(    ; 
+      O     "DB_WW".WW_Mag_aus; // BEFEHL Z-Achse ausfahren
+      O     ; 
+      U     "O_WW_1_ZYL_GST"; 
+      UN    "O_WW_1_ZYL_SPI"; 
+      )     ; 
+
+      FP    "DB_WW".PF_F_Mag_aus; 
+      =     #F_ZHub_n_ausgefahren; 
+NETWORK
+TITLE =Fehler MAGAZIN NICHT EINGEFAHREN
+
+      UN    "I_WW_1_ZYL_SPI"; // Z-HUB IST EINGEFAHREN
+      U(    ; 
+      O     "DB_WW".WW_Mag_ein; // BEFEHL Z-Achse einfahren
+      O     "O_WW_1_ZYL_SPI"; 
+      )     ; 
+      FP    "DB_WW".PF_F_Mag_ein; 
+      =     #F_ZHub_n_eingefahren; 
+
+NETWORK
+TITLE =Fehler MAGAZIN NICHT IN POSITION
+
+      U(    ; 
+      U     "DB_WW".Schritt_T[1]; // SCHRITT1 WARTEPOS, RICHTEN, WZ-ENTSPANNE
+      U     "DB_WW".Schritt_T[2]; // SCHRITT 2
+      O     ; 
+      U     "DB_WW".Schritt_T[7]; // SCHRITT7 SONDERSCHRITT
+      UN    "M_H5000_H5004_WW_Start"; 
+      )     ; 
+      UN    "DB_WW".WW_Frg_ins_Mag; // FREIGABE FAHRE INS MAGAZIN
+      UN    "DB_FEHLERMELDUNG".WARNUNG3._700348; 
+      UN    "DB_WW".WW_Freifahren; 
+      FP    "DB_WW".PF_F_Mag_Pos; 
+      =     #F_Mag_n_in_Position; 
+
+NETWORK
+TITLE =Fehler WZ-ZANGE NICHT OFFEN
+
+      U     "O_WM_WZ_ZYL_RELEASE"; // WZ-Halter öffnen (Spindelseite) Magazin 1
+      UN    #HalterSp_auf; // WZ-Halter offen Spindelseite
+      FP    "DB_WW".PF_F_Zange_auf; 
+      =     #F_Zange_n_auf; 
+
+NETWORK
+TITLE =Fehler WZ-ZANGE NICHT GESCHLOSSEN
+
+      UN    #HalterSp_zu; // WZ-Halter geschlossen Spindelseite
+      U     "m_null"; 
+      FP    "DB_WW".PF_F_Zange_zu; 
+      =     #F_Zange_n_zu; 
+
+NETWORK
+TITLE =Fehler WZ-SPANNER NICHT GESPANNT
+
+      UN    "DB_WW".WW_gestartet; // WZW GESTARTET
+      UN    "O_AL_WZ_Spanner_Loesen"; // WZ in Spindel lösen
+      UN    #gespannt; // Werkzeug gespannt mit oder ohne Werkzeug
+      O     ; 
+      U(    ; 
+      O     "DB_WW".WW_T_Auftrag_2; // AUFTRAG2 HOLEN II ->Z-HUB EINGEFAHREN
+      O     "DB_WW".WW_T_Auftrag_3; // AUFTRAG3 ABLEGEN II ->Z-HUB EINGEFAHREN
+      )     ; 
+      UN    "DB_WW".WW_Spanner_auf; // WZ in Spindel lösen
+      UN    #gespannt; // gespannt mit oder ohne Werkzeug
+      O     ; 
+      U(    ; 
+      O     "DB_WW".WW_T_Auftrag_1; // AUFTRAG1 ABLEGEN I ->Z-HUB AUSGEFAHREN
+      O     "DB_WW".WW_T_Auftrag_4; // AUFTRAG4 HOLEN I ->Z-HUB AUSGEFAHREN
+      )     ; 
+      UN    "DB_WW".WW_Spanner_auf; // WZ in Spindel lösen
+      UN    #gespannt_oWz; // gespannt ohne Werkzeug
+      FP    "DB_WW".PF_F_Wz_gespannt; 
+      =     #F_Spanner_n_zu; 
+
+NETWORK
+TITLE =Fehler WZ-SPANNER NICHT GELOEST
+
+      U     "DB_WW".WW_Spanner_auf; // WZ in Spindel lösen
+      UN    "I_WZ_SPA_geloest"; // Werkzeug gelöst
+      FP    "DB_WW".PF_F_Wz_geloest; 
+      =     #F_Spanner_n_auf; 
+
+NETWORK
+TITLE =Fehler SPINDEL NICHT GERICHTET
+
+      U(    ; 
+      O     "DB_WW".Schritt_T[1]; // SCHRITT1 WARTEPOS, RICHTEN, WZ-ENTSPANNEN
+      O     "DB_WW".Schritt_T[2]; // SCHRITT2 MAGPOS, WZ-ZANGE AUF
+      O     "DB_WW".Schritt_T[7]; // Schritt_7 M: Sonderschritt
+      )     ; 
+      U     "DB_WW".WW_vorwaerts; // SCHRITTKETTE VORWAERTS
+      UN    "I_E_gerichtet"; // SPINDEL IST GERICHTET IM ABLAUF
+      FP    "DB_WW".PF_F_Spindelpos; 
+      =     #F_Sp_n_gerichtet; 
+
+NETWORK
+TITLE =Fehler Magazinklappe nicht geöffnet
+
+      U     "O_WW_1_Klappe_auf"; // Magazinklappe öffnen
+      UN    "I_WW_1_Klappe_auf"; // Magazinklappe geöffnet
+      FP    "DB_WW".PF_F_Klappe_auf; 
+      =     #F_MagKlappe_n_auf; 
+
+NETWORK
+TITLE =Fehler Magazinklappe nicht geschlossen
+
+      U     "O_WW_1_Klappe_zu"; // Magazinklappe schliessen
+      UN    "I_WW_1_Klappe_zu"; // Magazinklappe geschlossen
+      FP    "DB_WW".PF_F_Klappe_zu; 
+      =     #F_MagKlappe_n_zu; 
+
+NETWORK
+TITLE =Fehler Spindel leer
+
+      U(    ; 
+      O     "DB_WW".Schritt_T[0]; // SCHRITT0 GRUNDSTELLUNG
+      O     "DB_WW".Schritt_T[1]; // SCHRITT1 WARTEPOS, RICHTEN, WZ-ENTSPANNEN
+      )     ; 
+      U     "DB_WW".WW_T_Auftrag_3; // AUFTRAG3 ABLEGEN II ->Z-HUB EINGEFAHREN
+      UN    #gespannt_mWz; // gespannt mit Werkzeug
+      UN    #IB_MagKontr_aus; // Kontrolle Magazinplatz ausblenden
+      O     ; 
+      U(    ; 
+      O     "DB_WW".Schritt_T[10]; // SCHRITT10 WZ-SPANNEN
+      O     "DB_WW".Schritt_T[11]; // SCHRITT11 WZ-ZANGE AUF, X-ACHSE WARTPOS
+      O     "DB_WW".Schritt_T[12]; // SCHRITT12 WZ-ZANGE ZU, Z-HUB EINFAHREN
+      )     ; 
+      U     "DB_WW".WW_T_Auftrag_2; // AUFTRAG2 HOLEN II ->Z-HUB EINGEFAHREN
+      UN    #gespannt_mWz; // gespannt mit Werkzeug
+      UN    #IB_MagKontr_aus; // Kontrolle Magazinplatz ausblenden
+      O     ; 
+      U(    ; 
+      O     "MX_Spdl_M3"; //M3
+      O     "MX_Spdl_M4"; //M4
+      )     ; 
+      UN    #gespannt_Frg_Sp; // gespannt mit Werkzeug Freigabe Spindeldrehen
+      U     "m_null"; 
+      FP    "DB_WW".PF_F_Spindel_leer; 
+      =     #F_Spindel_leer; 
+      =     "M_Spindel_leer"; 
+//      =     "DB_FEHLERMELDUNG".Spi_VS_Halt._700152_WZW_Nicht_Erlaub
+
+NETWORK
+TITLE =gespeicherte Fehlermeldungen löschen
+
+      U     "M_Ruecksetze_Fehler"; 
+      R     "DB_FEHLERMELDUNG".WARNUNG3._700351; 
+      R     "DB_FEHLERMELDUNG".WARNUNG3._700353; 
+      R     "DB_FEHLERMELDUNG".WARNUNG3._700354; 
+      R     "DB_FEHLERMELDUNG".WARNUNG3._700355; 
+      R     "DB_FEHLERMELDUNG".WARNUNG3._700356; 
+      R     "DB_FEHLERMELDUNG".WARNUNG3._700357; 
+      R     "DB_FEHLERMELDUNG".WARNUNG3._700358; 
+      R     "DB_FEHLERMELDUNG".WARNUNG3._700360; 
+      R     "DB_FEHLERMELDUNG".WARNUNG3._700361; 
+      R     "DB_FEHLERMELDUNG".WARNUNG3._700362; 
+      R     "DB_FEHLERMELDUNG".MELDUNG2._701302; 
+      R     "DB_FEHLERMELDUNG".MELDUNG2._701304; 
+
+      R     "DB_FEHLERMELDUNG".VS_Halt_Async1._701556_MAG_Tuer_offen; 
+      R     #F_VSP_Y_WW; 
+      R     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700953_WZW_ni_erlaubt; 
+NETWORK
+TITLE =WZW nicht erlaubt
+
+      U(    ; 
+      O     "M_Einrichtbetrieb"; 
+      O     "M_3Te_Betriebsart"; 
+      O     "M_4Te_Betriebsart"; 
+      )     ; 
+      U     "M_WZW_Aktiv"; 
+      S     "DB_FEHLERMELDUNG".Spi_VS_Halt_Haupt._700953_WZW_ni_erlaubt; 
+NETWORK
+TITLE =Start Wartezeit für Endlagenkontrolle
+
+      U(    ; 
+      O     "DB_WW".PF_F_Spindel_leer; 
+      O     "DB_WW".PF_F_Klappe_zu; 
+      O     "DB_WW".PF_F_Klappe_auf; 
+      O     "DB_WW".PF_F_Spindelpos; 
+      O     "DB_WW".PF_F_Wz_geloest; 
+      O     "DB_WW".PF_F_Wz_gespannt; 
+      O     "DB_WW".PF_F_Zange_zu; 
+      O     "DB_WW".PF_F_Zange_auf; 
+      O     "DB_WW".PF_F_Mag_Pos; 
+      O     "DB_WW".PF_F_Mag_ein; 
+      O     "DB_WW".PF_F_Mag_aus; 
+      )     ; 
+      UN    #F_ZHub_n_ausgefahren; 
+      UN    #F_ZHub_n_eingefahren; 
+      UN    #F_Mag_n_in_Position; 
+      UN    #F_Zange_n_auf; 
+      UN    #F_Zange_n_zu; 
+      UN    #F_Spanner_n_zu; 
+      UN    #F_Spanner_n_auf; 
+      UN    #F_Sp_n_gerichtet; 
+      UN    #F_MagKlappe_n_auf; 
+      UN    #F_MagKlappe_n_zu; 
+      UN    #F_Spindel_leer; 
+      UN    #F_VSP_Y_WW; 
+
+      =     "DB_TIMER".Zeit_35.Start; 
+NETWORK
+TITLE =Wartezeit für Endlagenkontrolle abgelaufen ?
+
+      U     "DB_TIMER".Zeit_35.Ausgang; 
+      SPBN  E_SF; 
+
+NETWORK
+TITLE =_700355 Werkzeugmagazin nicht ausgefahren
+
+      U     "DB_WW".PF_F_Mag_aus; 
+      S     "DB_FEHLERMELDUNG".WARNUNG3._700355; 
+
+NETWORK
+TITLE =_700356 Werkzeugmagazin nicht eingefahren
+
+      U     "DB_WW".PF_F_Mag_ein; 
+      S     "DB_FEHLERMELDUNG".WARNUNG3._700356; 
+
+NETWORK
+TITLE =_700361 Magazin nicht in Position
+
+      U     "DB_WW".PF_F_Mag_Pos; 
+      S     "DB_FEHLERMELDUNG".WARNUNG3._700361; 
+
+NETWORK
+TITLE =_700354 Werkzeug im Magazin nicht entsichert
+
+      U     "DB_WW".PF_F_Zange_auf; 
+      U     "m_null"; 
+      S     "DB_FEHLERMELDUNG".WARNUNG3._700354; 
+
+NETWORK
+TITLE =_700362 Werkzeug in Magazin nicht gesichert
+
+      U     "DB_WW".PF_F_Zange_zu; 
+      U     "m_null"; 
+      S     "DB_FEHLERMELDUNG".WARNUNG3._700362; 
+
+NETWORK
+TITLE =_700353 Werkzeug in Spindel nicht gespannt
+
+      U     "DB_WW".PF_F_Wz_gespannt; 
+      S     "DB_FEHLERMELDUNG".WARNUNG3._700353; 
+
+NETWORK
+TITLE =_700351 Werkzeug in Spindel nicht entspannt
+
+      U     "DB_WW".PF_F_Wz_geloest; 
+      S     "DB_FEHLERMELDUNG".WARNUNG3._700351; 
+
+NETWORK
+TITLE =_700360 Spindel nicht gerichtet
+
+      U     "DB_WW".PF_F_Spindelpos; 
+      S     "DB_FEHLERMELDUNG".WARNUNG3._700360; 
+
+NETWORK
+TITLE =_700357 Magazinklappe nicht geöffnet
+
+      U     "DB_WW".PF_F_Klappe_auf; 
+      S     "DB_FEHLERMELDUNG".WARNUNG3._700357; 
+NETWORK
+TITLE =_700358 Magazinklappe nicht geschlossen
+
+      U     "DB_WW".PF_F_Klappe_zu; 
+      S     "DB_FEHLERMELDUNG".WARNUNG3._700358; 
+
+NETWORK
+TITLE =_701302 Spindel leer
+//  U     "DB_WW".PF_F_Spindel_leer
+//  S     "DB_FEHLERMELDUNG".MELDUNG2._701302    // Spindel leer
+
+
+NETWORK
+TITLE =_701304 VSP-Y Werkzeugwechsler
+
+      U     #F_VSP_Y_WW; 
+      S     "DB_FEHLERMELDUNG".MELDUNG2._701304; 
+NETWORK
+TITLE ========= Sonstige Fehler- Betriebsmeldungen ===========
+
+
+
+NETWORK
+TITLE =_700348 Magazinplatz/Greifer belegt
+
+E_SF: U     #PruefeAblageplatz; 
+      UN    "DB_WW".MagPlatz_ok; // Magazinplatz Belegung kontrolliert und i.O.
+      U     "I_WW_1_Klappe_auf"; 
+      U     "DB_NC_PLC".WZW_NC_Aktiv; 
+
+      =     "DB_FEHLERMELDUNG".WARNUNG3._700348; 
+NETWORK
+TITLE =_700349 Magazinplatz/Greifer leer
+
+      U     #PruefeAbholplatz; 
+      UN    "DB_WW".MagPlatz_ok; // Magazinplatz Belegung kontrolliert und i.O.
+      U     "DB_NC_PLC".WZW_NC_Aktiv; 
+      =     "DB_FEHLERMELDUNG".WARNUNG3._700349; 
+
+NETWORK
+TITLE =_700350 Ladestation nicht geschlossen
+
+      U(    ; 
+      U(    ; // M6
+      O     "DB_WW".MFkt_06; // WZW GESTARTET
+      O     "DB_WW".WW_gestartet; 
+      )     ; // Wz-Magazintür geschlossen
+      UN    "I_WM_Energiefreigabe"; 
+      UN    "DB_NC_PLC".MANWZW_NC_Aktiv; 
+      UN    "DB_FEHLERMELDUNG".Meldung._702105_Quit_Entladen; 
+      UN    "DB_FEHLERMELDUNG".Meldung._702026_Quit_Beladen; 
+      O     ; // Wz-Magazintür geschlossen
+      UN    "I_WM_Energiefreigabe"; 
+      U     #WZM_Fahrbefehl; 
+
+      )     ; 
+      L     S5T#2S; 
+      SE    "te_FM_700350"; 
+      NOP   0; 
+      NOP   0; 
+      NOP   0; 
+      U     "te_FM_700350"; 
+      =     "DB_FEHLERMELDUNG".WARNUNG3._700350; 
+NETWORK
+TITLE =_701321 Spindel belegt
+
+      U     "DB_WW".Schritt_T[0]; // SCHRITT0 GRUNDSTELLUNG
+      U     "DB_WW".WW_T_Auftrag_1; // AUFTRAG1 ABLEGEN I ->Z-HUB AUSGEFAHREN
+      UN    #gespannt_oWz; // gespannt ohne Werkzeug
+      =     "DB_FEHLERMELDUNG".MELDUNG2._701321; // Spindel belegt
+
+NETWORK
+TITLE =_700352 Werkzeug Be- oder Entladen aktiv
+// Fehlermeldung wenn Be- oder Entladen aktiv
+      U     "DB_WW".MFkt_06; // M6 programmiert
+      U     "DB_WZV".Mag1_Laden_aktiv; // WZ-BE/ENTLADEN IST AKTIV
+      UN    "DB_FEHLERMELDUNG".Meldung._702105_Quit_Entladen; 
+      UN    "DB_FEHLERMELDUNG".Meldung._702026_Quit_Beladen; 
+      =     "DB_FEHLERMELDUNG".WARNUNG3._700352; 
+
+NETWORK
+TITLE =Taste für Einzelbewegung Achsen betätigt
+
+      O     "DB_WW".ASUP_Rettung.X_Wechselposition; 
+      O     "DB_WW".ASUP_Rettung.X_Warteposition; 
+      O     "DB_WW".ASUP_Rettung.WW_Hub_einfahren; 
+      O     "DB_WW".ASUP_Rettung.WW_Hub_ausfahren; 
+      O     "DB_WW".WW_X_auf_WartePos; // Befehl: fahre auf Warteposition X
+      O     "DB_WW".WW_X_auf_WWPos; 
+      =     #EB_Taste_steht_an; 
+
+NETWORK
+TITLE =_700550 EINLESESPERRE, Werkzeugwechsel
+
+      U     "DB_WW".WW_Freifahren; // ABBRUCH -> FREIFAHREN NOETIG
+      UN    #EB_Taste_steht_an; 
+      =     "DB_FEHLERMELDUNG".Einlesesperre._700550; // EINLSP, Werkzeugwechsel
+
+NETWORK
+TITLE ========= ASUP Einzelbewegung Achsen ========
+
+
+
+NETWORK
+TITLE =ASUP-EB: Schnittstelle Dual-Port-RAM 16.0
+
+      U     #EB_Taste_steht_an; 
+      =     #A_DPR[0]; 
+
+NETWORK
+TITLE =ASUP-EB: Schnittstelle Dual-Port-RAM 16.1
+
+      U     "DB_WW".ASUP_Rettung.WW_Hub_einfahren; 
+      =     #A_DPR[1]; 
+
+NETWORK
+TITLE =ASUP-EB: Schnittstelle Dual-Port-RAM 16.2
+
+      U     "DB_WW".ASUP_Rettung.WW_Hub_ausfahren; 
+      =     #A_DPR[2]; 
+
+NETWORK
+TITLE =ASUP-EB: Schnittstelle Dual-Port-RAM 16.3
+
+      O     "DB_WW".WW_X_auf_WartePos; // Befehl: fahre auf Warteposition X
+      O     "DB_WW".ASUP_Rettung.X_Warteposition; 
+      FP    "HM_PI_X_AX_auf_WFKpos"; 
+      SPBN  n20e; 
+
+      SET   ; 
+      S     "Start_ASUP_Machine_Nr.1"; 
+      L     2; 
+      T     "DB_NC_PLC".Rettung_FktNr; 
+
+n20e: NOP   0; 
+
+
+//  =     #A_DPR[3]
+
+NETWORK
+TITLE =ASUP-EB: Schnittstelle Dual-Port-RAM 16.4
+
+      O     "DB_WW".WW_X_auf_WWPos; 
+      O     "DB_WW".ASUP_Rettung.X_Wechselposition; 
+      FP    "HM_PI_Bew_68_Minus"; 
+      SPBN  n22e; 
+
+      SET   ; 
+      S     "Start_ASUP_Machine_Nr.1"; 
+      L     1; 
+      T     "DB_NC_PLC".Rettung_FktNr; 
+
+n22e: U     "DB_EINRICHTFUNKTION".Bewegung_15_Minus; //Vert-Achse auf Wechselposition
+      FP    "HM_PI_Bew_69_Plus"; 
+      SPBN  n20c; 
+      S     "Start_ASUP_Machine_Nr.1"; 
+      L     3; 
+      T     "DB_NC_PLC".Rettung_FktNr; 
+
+n20c: U     "DB_EINRICHTFUNKTION".Bewegung_16_Plus; //Spindel auf Wechselposition
+      U     "M_Leistung_Steht_an"; 
+      U     "I_WZ_SPA_gespannt"; 
+      FP    "HM_PI_Bew_70_Plus"; 
+      SPBN  n20z; 
+      S     "Start_ASUP_Machine_Nr.1"; 
+      L     4; 
+      T     "DB_NC_PLC".Rettung_FktNr; 
+
+
+n20z: NOP   0; 
+
+
+
+
+NETWORK
+TITLE =Asup abbrechen wenn Taste wieder losgelassen wird
+
+      UN    "DB_EINRICHTFUNKTION".Bewegung_14_Plus; 
+      UN    "DB_EINRICHTFUNKTION".Bewegung_14_Minus; 
+      U(    ; 
+      L     "DB_OEM".Bewegungsnummer; 
+      L     14; 
+      ==I   ; 
+      )     ; 
+      O     ; 
+      UN    "DB_EINRICHTFUNKTION".Bewegung_15_Minus; 
+      U(    ; 
+      L     "DB_OEM".Bewegungsnummer; 
+      L     15; 
+      ==I   ; 
+      )     ; 
+      O     ; 
+      UN    "DB_EINRICHTFUNKTION".Bewegung_16_Plus; 
+      U(    ; 
+      L     "DB_OEM".Bewegungsnummer; 
+      L     16; 
+      ==I   ; 
+      )     ; 
+      O     ; 
+      UN    "DB_EINRICHTFUNKTION".Bewegung_1_Plus; 
+      UN    "DB_EINRICHTFUNKTION".Bewegung_1_Minus; 
+      U(    ; 
+      L     "DB_OEM".Bewegungsnummer; 
+      L     1; 
+      ==I   ; 
+      )     ; 
+      O     ; 
+      U     "DB_WW".WW_Freifahren; 
+      UN    "M_T_WW_Gst_rueckwaerts"; 
+      UN    "M_T_WW_Gst_vorwaerts"; 
+      U     "DB_SIEM_KANAL_1".E_ProgRunn; 
+      U(    ; 
+      L     "DB_OEM".Bewegungsnummer; 
+      L     0; 
+      ==I   ; 
+      )     ; 
+      SPBN  n20v; // ABBRUCH -> FREIFAHREN NOETIG
+NETWORK
+TITLE =Eingang "MSSTstReset" auf "1" zuweisen
+
+      U     "m_eins"; 
+      =     "m_WZWAsupAbbrechen"; 
+NETWORK
+TITLE =ASUP-Rettung: Werkzeugwechsler automatisch in Grundstellung
+
+n20v: U     "DB_EINRICHTFUNKTION".Bewegung_92_Plus; 
+      =     #A_DPR[5]; 
+
+NETWORK
+TITLE =ASUP-EB: Schnittstelle Dual-Port-RAM nicht benutzte Bits
+
+      U     "m_null"; 
+      =     #A_DPR[6]; 
+      =     #A_DPR[7]; 
+      =     #A_DPR[8]; 
+      =     #A_DPR[9]; 
+      =     #A_DPR[10]; 
+      =     #A_DPR[11]; 
+      =     #A_DPR[12]; 
+      =     #A_DPR[13]; 
+      =     #A_DPR[14]; 
+      =     #A_DPR[15]; 
+
+NETWORK
+TITLE =ASUP-EB: Aufruf Kanal-DB für FC21
+
+      AUF   "DB_SIEM_KANAL_1"; 
+
+NETWORK
+TITLE =ASUP-EB: Übergabe an DUAL-PORT-RAM
+
+      U     "m_eins"; 
+      =     L     24.0; 
+      BLD   103; 
+      CALL "FC_SIEM_PLC_NCK" (
+           Enable                   := L     24.0,
+           Funct                    := B#16#4,
+           S7Var                    := #A_DPR,
+           IVAR1                    := 16,
+           IVAR2                    := -1,
+           Error                    := #FC21_Error,
+           ErrCode                  := #FC21_ErrCode);
+      NOP   0; 
+NETWORK
+TITLE =ASUP-EB: Start für Einzelbewegung Achsen
+
+      U     #EB_Taste_steht_an; 
+      FP    "DB_WW".ASUP_Rettung.PF_Start; 
+      =     "DB_SIEM_NCK".A_Set_Inp8; 
+
+NETWORK
+TITLE =GRundstelltung Radmagazin
+
+
+
+NETWORK
+TITLE ============= Signale an andere Module =============
+//  dieses Netzwerk ins Saftey Modul, da CS kein Profisafe 
+//
+//      U     "DB_WW".WW_Gst; // WZW IN GRUNDSTELLUNG
+//      U     "I_WW_1_Klappe_zu"; // Magazinklappe geschlossen
+//      UN    "DB_WW".MFkt_06; 
+//      UN    "DB_WW".WW_gestartet; 
+//      =     "DB_HR".SI.WW_nicht_aktiv; 
+
+
+NETWORK
+TITLE =Übergabe der Schrittnummer Werkzeugwechsel an HMI
+
+      CALL "FC_UT_BIT_TO_DEZ" (
+           Bit_Zeiger               := "DB_WW".Schritt_T,
+           Anzahl_Byte              := 2,
+           Dezimal                  := "DB_OEM".WZW_Ablauf_Schritt);
+
+
+NETWORK
+TITLE =An NC: PLC-Freigabe Werkzeugwechsel
+
+      U     "I_WW_Freigabe"; // WZW Freigabe 1-Signal
+      U     "M_WZW_Grdst"; // und der WZW ist in Grundstellung
+      U     "I_AL_Kabine_Verriegelt"; 
+      UN    "M_3Te_Betriebsart"; 
+      UN    "M_4Te_Betriebsart"; 
+      UN    "M_Einrichtbetrieb"; 
+      U     "M_Leistung_Steht_an"; 
+      UN    "MX_TDS_Aktiv"; 
+      U(    ; 
+      U     "I_LA_eingeschwenkt"; 
+      O(    ; 
+      L     "DB_PLC_MD_DB20".UDInt._032_ANWAHL_WZVERMESSUNG; 
+      L     0; 
+      ==I   ; 
+      )     ; 
+      O(    ; 
+      TAK   ; 
+      L     3; 
+      ==I   ; 
+      )     ; 
+      )     ; 
+      UN    "DB_OUT".AmxLockToolChanger; 
+      =     "DB_NC_PLC".WZW_PLC_Freigabe; // Alle Bedingungen ok Startsignal an NC 
+NETWORK
+TITLE =An NC: Rad in Wechselstellung nach Be./Enladen an Beladestelle
+
+      UN    "DB_WZV".Mag1_Laden_aktiv; 
+      UN    "DB_WZV".Mag1_inPos_LST; 
+      U(    ; 
+
+
+      U     "DB_WZV".Mag1_inPos_WST; 
+      U     "DB_WZV".M1_Rueckmeldung_Pos; 
+      O     "DB_NC_PLC".WZW_Rad_in_WZW_Pos; 
+      O     "m_neustart"; 
+      )     ; 
+      =     "DB_NC_PLC".WZW_Rad_in_WZW_Pos; 
+END_FUNCTION
+
